@@ -23,15 +23,16 @@ IT{i}_ref_{j}    → Complete transformation with reference weights (branch leng
 
 On the frontend, consecutive transition frames fall into three stages detected by `animationStageDetector.js`:
 
-| Stage | What happens | Frontend detection |
-|-------|-------------|-------------------|
-| **COLLAPSE** | Remove zero-length branches | Nodes in `fromTree` missing from `toTree` |
-| **EXPAND** | Insert zero-length branches | Nodes in `toTree` missing from `fromTree` |
-| **REORDER** | Same topology, different positions and/or branch lengths | Same node IDs in both trees |
+| Stage        | What happens                                             | Frontend detection                        |
+| ------------ | -------------------------------------------------------- | ----------------------------------------- |
+| **COLLAPSE** | Remove zero-length branches                              | Nodes in `fromTree` missing from `toTree` |
+| **EXPAND**   | Insert zero-length branches                              | Nodes in `toTree` missing from `fromTree` |
+| **REORDER**  | Same topology, different positions and/or branch lengths | Same node IDs in both trees               |
 
 **Key insight:** Branch length changes (steps 1, 4, 5) produce **REORDER** frames, not COLLAPSE/EXPAND. During these REORDER frames, matched elements have both angular changes (Δθ) and radial changes (Δr = branch length difference).
 
 Each stage receives its own easing curve:
+
 - COLLAPSE → `ease-out` (fast start, slow settle as branches vanish)
 - EXPAND → `ease-in` (slow start, accelerating as branches spring into existence)
 - REORDER → `ease-in-out` (S-curve for smooth transitions)
@@ -40,10 +41,10 @@ Each stage receives its own easing curve:
 
 During REORDER frames, elements can move in two orthogonal dimensions in polar space:
 
-| Dimension | What changes | Example |
-|-----------|-------------|---------|
-| **Angular** (Δθ) | Subtree rotates to new position | A subtree moves from 45° to 120° |
-| **Radial** (Δr) | Branch length changes | A branch of length 0.3 collapses to 0 |
+| Dimension        | What changes                    | Example                               |
+| ---------------- | ------------------------------- | ------------------------------------- |
+| **Angular** (Δθ) | Subtree rotates to new position | A subtree moves from 45° to 120°      |
+| **Radial** (Δr)  | Branch length changes           | A branch of length 0.3 collapses to 0 |
 
 Both should be normalised with the same strategy: **find the longest path, make it the reference, and let shorter paths arrive early.**
 
@@ -59,12 +60,12 @@ elementT_angular = min(1, t × maxΔθ / elementΔθ)
 
 For each matched element, compute the radial displacement:
 
-| Element type | Radial distance |
-|-------------|----------------|
-| **Node** | `|toNode.polarPosition - fromNode.polarPosition|` |
-| **Label** | `|toLabel.polarPosition - fromLabel.polarPosition|` (label ring may shift) |
-| **Link** | `|toLink.polarData.target.radius - fromLink.polarData.target.radius|` (child end) |
-| **Extension** | `|toExt.polarData.source.radius - fromExt.polarData.source.radius|` (leaf end shifts) |
+| Element type  | Radial distance |
+| ------------- | --------------- | ----------------------------------------------------------------- | ------------------------ |
+| **Node**      | `               | toNode.polarPosition - fromNode.polarPosition                     | `                        |
+| **Label**     | `               | toLabel.polarPosition - fromLabel.polarPosition                   | ` (label ring may shift) |
+| **Link**      | `               | toLink.polarData.target.radius - fromLink.polarData.target.radius | ` (child end)            |
+| **Extension** | `               | toExt.polarData.source.radius - fromExt.polarData.source.radius   | ` (leaf end shifts)      |
 
 The element with the largest radial displacement uses the raw `t`; all others get:
 
@@ -81,8 +82,8 @@ A single REORDER frame can have **both** angular and radial changes simultaneous
 Normalise angular and radial independently. Each element gets TWO remapped t values — one for its angular interpolation, one for its radial interpolation. The `PolarNodeInterpolator.interpolatePosition()` already computes radius and angle separately:
 
 ```js
-const interpolatedRadius = lerp(fromR, toR, elementT_radial);   // radial normalised
-const interpolatedAngle  = fromAngle + delta * elementT_angular; // angular normalised
+const interpolatedRadius = lerp(fromR, toR, elementT_radial); // radial normalised
+const interpolatedAngle = fromAngle + delta * elementT_angular; // angular normalised
 ```
 
 This means an element can arrive at its target angle before arriving at its target radius (or vice versa), which is physically coherent — the angular sweep and the radial stretch are independent motions.
@@ -200,7 +201,7 @@ function _polarRadiusMap(elementMap) {
   const result = new Map();
   for (const [id, el] of elementMap) {
     result.set(id, {
-      polarPosition: el.polarData?.target?.radius ?? 0
+      polarPosition: el.polarData?.target?.radius ?? 0,
     });
   }
   return result;
@@ -227,10 +228,10 @@ AnimationRunner._processFrame()
 
 ## 7. Summary
 
-| Stage | Angular normalisation | Radial normalisation | Reference |
-|-------|----------------------|---------------------|-----------|
-| COLLAPSE | None | None | — |
-| EXPAND | None | None | — |
-| REORDER | `elementT = min(1, t × maxΔθ / Δθ)` | `elementT = min(1, t × maxΔr / Δr)` | Global max across all element types |
+| Stage    | Angular normalisation               | Radial normalisation                | Reference                           |
+| -------- | ----------------------------------- | ----------------------------------- | ----------------------------------- |
+| COLLAPSE | None                                | None                                | —                                   |
+| EXPAND   | None                                | None                                | —                                   |
+| REORDER  | `elementT = min(1, t × maxΔθ / Δθ)` | `elementT = min(1, t × maxΔr / Δr)` | Global max across all element types |
 
 Both normalisations use the "early arrival" strategy: elements with shorter displacements arrive first and hold at their target. The element with the longest path (angular or radial, independently) dictates the animation duration for that dimension.
