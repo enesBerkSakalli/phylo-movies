@@ -184,7 +184,11 @@ function getBackendPath() {
   const execName = platform === 'win32' ? 'brancharchitect-server.exe' : 'brancharchitect-server';
 
   // Production: prefer archived backend to avoid huge copy trees during packaging
-  const archivePath = path.join(process.resourcesPath, 'BranchArchitect', 'brancharchitect-server.tar.gz');
+  const archivePath = path.join(
+    process.resourcesPath,
+    'BranchArchitect',
+    'brancharchitect-server.tar.gz'
+  );
   if (fs.existsSync(archivePath)) {
     logToFile(`Found backend archive at ${archivePath}`);
     const extractedDir = ensureBackendExtracted(archivePath);
@@ -196,7 +200,12 @@ function getBackendPath() {
   }
 
   // Fallback: backend is in extraResources as a directory
-  const backendPath = path.join(process.resourcesPath, 'BranchArchitect', 'brancharchitect-server', execName);
+  const backendPath = path.join(
+    process.resourcesPath,
+    'BranchArchitect',
+    'brancharchitect-server',
+    execName
+  );
   if (fs.existsSync(backendPath)) {
     backendRootDir = path.dirname(backendPath);
     logToFile(`Using bundled backend at ${backendRootDir}`);
@@ -220,7 +229,10 @@ function ensureBackendExtracted(archivePath) {
 
   try {
     logToFile(`Preparing backend extraction to ${targetRoot} (version ${expectedVersion})`);
-    if (fs.existsSync(markerPath) && fs.readFileSync(markerPath, 'utf8').trim() === expectedVersion) {
+    if (
+      fs.existsSync(markerPath) &&
+      fs.readFileSync(markerPath, 'utf8').trim() === expectedVersion
+    ) {
       if (fs.existsSync(extractedDir)) {
         logToFile('Backend already extracted for this version');
         return extractedDir;
@@ -263,13 +275,23 @@ function getFastTreePath() {
 
   if (isDev) {
     // Development: look in engine/BranchArchitect/bin
-    const devPath = path.join(__dirname, '..', 'engine', 'BranchArchitect', 'bin', platformDir, execName);
+    const devPath = path.join(
+      __dirname,
+      '..',
+      'engine',
+      'BranchArchitect',
+      'bin',
+      platformDir,
+      execName
+    );
     if (fs.existsSync(devPath)) {
       return devPath;
     }
   } else {
     // Production: FastTree is bundled inside _internal by PyInstaller
-    const backendRoot = backendRootDir || path.join(process.resourcesPath, 'BranchArchitect', 'brancharchitect-server');
+    const backendRoot =
+      backendRootDir ||
+      path.join(process.resourcesPath, 'BranchArchitect', 'brancharchitect-server');
     const prodPath = path.join(backendRoot, '_internal', 'bin', platformDir, execName);
     if (fs.existsSync(prodPath)) {
       return prodPath;
@@ -294,7 +316,14 @@ async function startBackend() {
 
   if (isDev || !backendPath) {
     // Development: run Python through Poetry (engine/BranchArchitect's venv)
-    const serverScript = path.join(__dirname, '..', 'engine', 'BranchArchitect', 'webapp', 'run.py');
+    const serverScript = path.join(
+      __dirname,
+      '..',
+      'engine',
+      'BranchArchitect',
+      'webapp',
+      'run.py'
+    );
     const branchArchitectDir = path.join(__dirname, '..', 'engine', 'BranchArchitect');
 
     const env = {
@@ -309,19 +338,23 @@ async function startBackend() {
       console.log(`Using bundled FastTree at: ${fasttreePath}`);
     }
 
-    pythonProcess = spawn('poetry', ['run', 'python', serverScript, '--port', backendPort.toString()], {
-      cwd: branchArchitectDir,
-      env: env,
-      stdio: ['pipe', 'pipe', 'pipe'],
-      shell: true,
-    });
+    pythonProcess = spawn(
+      'poetry',
+      ['run', 'python', serverScript, '--port', backendPort.toString()],
+      {
+        cwd: branchArchitectDir,
+        env: env,
+        stdio: ['pipe', 'pipe', 'pipe'],
+        shell: true,
+      }
+    );
     logToFile(`Spawned backend via poetry in ${branchArchitectDir}`);
   } else {
     // Production: run bundled executable
     const env = {
       ...process.env,
       PORT: backendPort.toString(),
-      FLASK_DEBUG: '0',  // Disable debug mode in production to avoid reloader issues
+      FLASK_DEBUG: '0', // Disable debug mode in production to avoid reloader issues
       FLASK_ENV: 'production',
     };
 
@@ -363,14 +396,20 @@ async function startBackend() {
   pythonProcess.on('error', (err) => {
     console.error('Failed to start backend:', err);
     logToFile(`Backend process error: ${err && err.message ? err.message : String(err)}`);
-    dialog.showErrorBox('Backend Error', `Failed to start backend: ${err.message}\n\n${stderrBuffer}`);
+    dialog.showErrorBox(
+      'Backend Error',
+      `Failed to start backend: ${err.message}\n\n${stderrBuffer}`
+    );
   });
 
   pythonProcess.on('exit', (code) => {
     console.log(`Backend exited with code ${code}`);
     logToFile(`Backend exited with code ${code}`);
     if (code !== 0 && code !== null) {
-      dialog.showErrorBox('Backend Crashed', `Backend exited with code ${code}\n\nError output:\n${stderrBuffer.slice(-2000)}`);
+      dialog.showErrorBox(
+        'Backend Crashed',
+        `Backend exited with code ${code}\n\nError output:\n${stderrBuffer.slice(-2000)}`
+      );
     }
     pythonProcess = null;
   });
@@ -420,6 +459,7 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      sandbox: true,
     },
     show: false,
   });
@@ -433,10 +473,36 @@ function createWindow() {
 
   // Enable DevTools shortcut in production (Cmd+Option+I / Ctrl+Shift+I)
   mainWindow.webContents.on('before-input-event', (event, input) => {
-    if ((input.meta && input.alt && input.key === 'i') ||
-        (input.control && input.shift && input.key === 'I')) {
+    if (
+      (input.meta && input.alt && input.key === 'i') ||
+      (input.control && input.shift && input.key === 'I')
+    ) {
       mainWindow.webContents.toggleDevTools();
     }
+  });
+
+  // Content Security Policy
+  mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [
+          isDev
+            ? "default-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*; " +
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:*; " +
+              "style-src 'self' 'unsafe-inline'; " +
+              "img-src 'self' data: blob:; " +
+              "connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*; " +
+              "font-src 'self' data:"
+            : "default-src 'self'; " +
+              "script-src 'self'; " +
+              "style-src 'self' 'unsafe-inline'; " +
+              "img-src 'self' data: blob:; " +
+              "connect-src 'self' http://127.0.0.1:*; " +
+              "font-src 'self' data:",
+        ],
+      },
+    });
   });
 
   mainWindow.on('closed', () => {
