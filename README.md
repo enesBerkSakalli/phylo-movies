@@ -3,6 +3,7 @@
 [![CI](https://github.com/enesBerkSakalli/phylo-movies/actions/workflows/ci.yml/badge.svg)](https://github.com/enesBerkSakalli/phylo-movies/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![bioRxiv](https://img.shields.io/badge/bioRxiv-10.64898%2F2026.04.01.715821-B31B1B.svg)](https://doi.org/10.64898/2026.04.01.715821)
+
 <!-- [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX) -->
 
 <p align="center">
@@ -13,7 +14,7 @@
 
 Sliding-window phylogenetic analyses of multiple sequence alignments (MSAs) generate sequences of phylogenetic trees that can reveal recombination and other sources of phylogenetic conflict, yet comparing trees across genomic windows remains challenging. **Phylo-Movies** is a browser-based tool—also available as a standalone desktop application—that decomposes topological differences between consecutive phylogenetic trees into interpretable subtree migrations and animates these transformations.
 
-We demonstrate its utility in two contexts: identifying recombination breakpoints in norovirus genomes, where lineages shift from polymerase-based to capsid-based clustering at the ORF1/ORF2 junction, and detecting rogue taxa that change position across bootstrap replicates. Phylo-Movies complements summary statistics such as Robinson–Foulds distances by showing *which* lineages move, *where* they move from, and *which* new groupings they form.
+We demonstrate its utility in two contexts: identifying recombination breakpoints in norovirus genomes, where lineages shift from polymerase-based to capsid-based clustering at the ORF1/ORF2 junction, and detecting rogue taxa that change position across bootstrap replicates. Phylo-Movies complements summary statistics such as Robinson–Foulds distances by showing _which_ lineages move, _where_ they move from, and _which_ new groupings they form.
 
 The method and case studies are described in the bioRxiv preprint [Animating Phylogenetic Trees from Sliding-Window Analyses](https://doi.org/10.64898/2026.04.01.715821).
 
@@ -153,6 +154,14 @@ cd phylo-movies
 npm install   # ← automatically fetches the BranchArchitect submodule
 ```
 
+For Electron desktop app development, see the dedicated build script:
+
+```bash
+npm run dev:electron   # Launches the Electron app in development mode
+```
+
+This requires the Electron dependencies installed via `cd electron-app && npm install` and the Python backend prepared with `cd engine/BranchArchitect && poetry install`.
+
 #### Method 2: One-command start (recommended for local use)
 
 The included `start.sh` script handles **everything** — submodule init, dependency installation, starting the BranchArchitect Flask backend, and launching the Vite dev server:
@@ -212,6 +221,7 @@ Use when deploying optimized static assets to your own infrastructure.
    ```
 
    Serves `dist/` at `http://localhost:4173`.
+
 3. Deploy the contents of `dist/` to your preferred web server or CDN.
 
 #### Method 5: Docker (containerized deployment)
@@ -277,12 +287,12 @@ Some targeted suites load fixtures from the `publication_data/` directory; keep 
 
 The repository intentionally uses separate toolchains for the browser app, Python engine, and desktop wrapper. Run validation in the directory that owns the layer you changed:
 
-| Layer | Directory | Install command | Validation command | Scope |
-| --- | --- | --- | --- | --- |
-| Frontend | repository root | `npm install` | `npm run validate` | ESLint, TypeScript, frontend/domain tests, production build |
-| Backend engine | `engine/BranchArchitect` | `poetry install` | `poetry run mypy brancharchitect --ignore-missing-imports && poetry run pytest test/ -v --timeout=120` | Python typing and BranchArchitect scientific/Flask tests |
-| Desktop wrapper | `electron-app` | `npm install` | `npm run test:sse` after backend setup; use `npm run build:mac`, `npm run build:win`, or `npm run build:linux` for packaging checks | Electron shell and packaged backend/frontend integration |
-| Full stack container | repository root | Docker | `docker compose up --build` | nginx frontend plus BranchArchitect backend in one container |
+| Layer                | Directory                | Install command  | Validation command                                                                                                                  | Scope                                                        |
+| -------------------- | ------------------------ | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Frontend             | repository root          | `npm install`    | `npm run validate`                                                                                                                  | ESLint, TypeScript, frontend/domain tests, production build  |
+| Backend engine       | `engine/BranchArchitect` | `poetry install` | `poetry run mypy brancharchitect --ignore-missing-imports && poetry run pytest test/ -v --timeout=120`                              | Python typing and BranchArchitect scientific/Flask tests     |
+| Desktop wrapper      | `electron-app`           | `npm install`    | `npm run test:sse` after backend setup; use `npm run build:mac`, `npm run build:win`, or `npm run build:linux` for packaging checks | Electron shell and packaged backend/frontend integration     |
+| Full stack container | repository root          | Docker           | `docker compose up --build`                                                                                                         | nginx frontend plus BranchArchitect backend in one container |
 
 See [docs/development/dependency-structure.md](docs/development/dependency-structure.md) for the repository dependency-file ownership map.
 
