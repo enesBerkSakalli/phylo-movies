@@ -32,7 +32,7 @@ export class StaticRenderer {
 
     if (!this.controller.deckContext?.deck) return;
 
-    const { treeIndex, leftIndex, rightIndex, comparisonMode } = options;
+    const { treeIndex, leftIndex, rightIndex, comparisonMode, skipAutoFit = false } = options;
     const state = useAppStore.getState();
     const { frameIndex, comparisonMode: comparisonModeFromStore } = state;
     const treeList = selectActiveTreeList(state);
@@ -45,7 +45,9 @@ export class StaticRenderer {
     }
 
     // Single tree mode
-    this._renderSingleTree(treeIndex, frameIndex, treeList, state, linkGeometryMode);
+    this._renderSingleTree(treeIndex, frameIndex, treeList, state, linkGeometryMode, {
+      skipAutoFit,
+    });
   }
 
   /*
@@ -66,7 +68,14 @@ export class StaticRenderer {
   /*
    * Helper to render a single tree in static mode.
    */
-  _renderSingleTree(treeIndex, frameIndex, treeList, state, linkGeometryMode = 'radial-elbow') {
+  _renderSingleTree(
+    treeIndex,
+    frameIndex,
+    treeList,
+    state,
+    linkGeometryMode = 'radial-elbow',
+    options = {}
+  ) {
     if (!treeList?.length) return;
 
     const targetIndex = Number.isInteger(treeIndex)
@@ -97,7 +106,7 @@ export class StaticRenderer {
 
     this.controller._updateLayersEfficiently(layerData);
 
-    if (this.controller._lastFocusedTreeIndex !== targetIndex) {
+    if (!options.skipAutoFit && this.controller._lastFocusedTreeIndex !== targetIndex) {
       this.controller.viewportManager.focusOnTree(layerData.nodes, layerData.labels, {
         fitMode: VIEWPORT_FIT_MODES.BRANCH,
         obstructionScope: VIEWPORT_FIT_OBSTRUCTION_SCOPES.CANVAS,
@@ -105,7 +114,8 @@ export class StaticRenderer {
         maxZoomOverAutoVisibleFit: VIEWPORT_AUTOMATIC_BRANCH_DETAIL_ZOOM_DELTA,
         links: layerData.links,
       });
-      this.controller._lastFocusedTreeIndex = targetIndex;
     }
+
+    this.controller._lastFocusedTreeIndex = targetIndex;
   }
 }

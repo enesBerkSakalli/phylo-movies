@@ -327,11 +327,11 @@ function getLifecycleClock(lifecycle, clocks, fallback) {
 function getLifecycleLengthScale(lifecycle, clock, frameTimeFactor) {
   switch (lifecycle) {
     case LINK_LIFECYCLES.ENTERING:
-      return clock;
+      return frameTimeFactor;
     case LINK_LIFECYCLES.REVIVING:
       return frameTimeFactor;
     case LINK_LIFECYCLES.EXITING:
-      return 1 - clock;
+      return 1 - frameTimeFactor;
     case LINK_LIFECYCLES.ZEROING:
       return 1 - frameTimeFactor;
     default:

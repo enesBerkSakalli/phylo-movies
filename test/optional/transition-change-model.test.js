@@ -465,7 +465,7 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     expect(firstPathRadius(result.links[0].path)).to.be.closeTo(15, 0.001);
   });
 
-  it('scales entering branch length with expand timing while parent movement uses frame timing', () => {
+  it('scales entering branch length with frame timing while parent movement uses frame timing', () => {
     const entering = {
       ...link('enter-3', 20, 30),
       sourceId: 'node-parent-1',
@@ -485,14 +485,14 @@ describe('TreeInterpolator lifecycle-aware links', () => {
 
     const sourceRadius = 10 + (20 - 10) * frameTimeFactor;
     const expandT = createLifecycleClocks(rawTimeFactor).expandT;
-    const expectedTargetRadius = sourceRadius + (30 - sourceRadius) * expandT;
+    const expectedTargetRadius = sourceRadius + (30 - sourceRadius) * frameTimeFactor;
 
     expect(expandT).to.be.greaterThan(0);
     expect(firstPathRadius(result.links[0].path)).to.be.closeTo(sourceRadius, 0.001);
     expect(lastPathRadius(result.links[0].path)).to.be.closeTo(expectedTargetRadius, 0.001);
   });
 
-  it('scales exiting branch length with collapse timing while parent movement uses frame timing', () => {
+  it('scales exiting branch length with frame timing while parent movement uses frame timing', () => {
     const exiting = {
       ...link('exit-3', 20, 30),
       sourceId: 'node-parent-1',
@@ -512,7 +512,7 @@ describe('TreeInterpolator lifecycle-aware links', () => {
 
     const sourceRadius = 10 + (20 - 10) * frameTimeFactor;
     const collapseT = createLifecycleClocks(rawTimeFactor).collapseT;
-    const expectedTargetRadius = sourceRadius + (30 - sourceRadius) * (1 - collapseT);
+    const expectedTargetRadius = sourceRadius + (30 - sourceRadius) * (1 - frameTimeFactor);
 
     expect(collapseT).to.be.greaterThan(0);
     expect(firstPathRadius(result.links[0].path)).to.be.closeTo(sourceRadius, 0.001);
@@ -548,7 +548,7 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     expect(pointAngle(exitingLink.sourcePosition)).to.be.closeTo(expectedAngle, 0.001);
   });
 
-  it('does not create an arc ring when lifecycle branch length is zero', () => {
+  it('does not create an arc ring before entering branch growth starts', () => {
     const entering = {
       ...link('enter-3', 20, 30, Math.PI / 2),
       sourceId: 'node-parent-1',
@@ -560,8 +560,8 @@ describe('TreeInterpolator lifecycle-aware links', () => {
       [node('node-parent-1', 20, 0), node('node-enter-3', 30, Math.PI / 2)]
     );
     const transitionChangeModel = buildTransitionChangeModel(from, to);
-    const rawTimeFactor = 0.25;
-    const frameTimeFactor = 1 - Math.pow(1 - rawTimeFactor, 3);
+    const rawTimeFactor = 0;
+    const frameTimeFactor = 0;
 
     const interpolator = new TreeInterpolator();
     const result = interpolator.interpolateTreeData(from, to, frameTimeFactor, {
