@@ -8,7 +8,7 @@ Phylo-Movies is a React and Flask web tool for inspecting ordered phylogenetic t
 
 ![Phylo-Movies screenshot](assets/screenshot.png)
 
-The project information page at [enesberksakalli.github.io/phylo-movies](https://enesberksakalli.github.io/phylo-movies/) is documentation-only. Dataset loading, interpolation, and MSA-driven workflows require the full-stack app from source, Docker, or the Electron desktop build.
+The project information page at [enesberksakalli.github.io/phylo-movies](https://enesberksakalli.github.io/phylo-movies/) includes documentation and a precomputed browser demo. Dataset loading, interpolation, and MSA-driven workflows require the full-stack app from source, Docker, or the Electron desktop build.
 
 ## Quick Start
 

@@ -52,10 +52,22 @@ describe('publication data hygiene', () => {
         seed: 50025,
       },
       {
+        filename: 'msprime_500taxa_5trees_seed50005.nwk',
+        taxa: 500,
+        treeCount: 5,
+        seed: 50005,
+      },
+      {
         filename: 'msprime_1000taxa_10trees_seed100010.nwk',
         taxa: 1000,
         treeCount: 10,
         seed: 100010,
+      },
+      {
+        filename: 'msprime_1000taxa_5trees_seed100005.nwk',
+        taxa: 1000,
+        treeCount: 5,
+        seed: 100005,
       },
     ]);
     expect(report.maxPublicationTaxa).toBe(1000);

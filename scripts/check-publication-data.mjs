@@ -25,12 +25,28 @@ const MSPRIME_PERFORMANCE_FIXTURES = [
     seed: 50025,
   },
   {
+    dataset: 'msprime-performance-500-short',
+    fileName: 'msprime_500taxa_5trees_seed50005.nwk',
+    metadataName: 'msprime_500taxa_5trees_seed50005.metadata.tsv',
+    taxa: 500,
+    trees: 5,
+    seed: 50005,
+  },
+  {
     dataset: 'msprime-performance-1000',
     fileName: 'msprime_1000taxa_10trees_seed100010.nwk',
     metadataName: 'msprime_1000taxa_10trees_seed100010.metadata.tsv',
     taxa: 1000,
     trees: 10,
     seed: 100010,
+  },
+  {
+    dataset: 'msprime-performance-1000-short',
+    fileName: 'msprime_1000taxa_5trees_seed100005.nwk',
+    metadataName: 'msprime_1000taxa_5trees_seed100005.metadata.tsv',
+    taxa: 1000,
+    trees: 5,
+    seed: 100005,
   },
 ];
 

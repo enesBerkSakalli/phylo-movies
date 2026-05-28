@@ -33,6 +33,7 @@ New Project or Example Library
 - `DeckGLCanvas` renders the tree view.
 - `MoviePlayerBar` mounts the timeline manager and controls playback.
 - `ToolsSidebar` exposes dataset, layout, style, analysis, and focus controls.
+- Tree camera, viewport, auto-fit, and DPR rules are documented in [camera-viewport.md](camera-viewport.md).
 
 ## Where to Add Features
 

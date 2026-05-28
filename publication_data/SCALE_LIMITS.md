@@ -12,7 +12,9 @@ Committed publication data now covers these app-facing taxa tiers:
 | `synthetic-performance-stress` | 1000 | msprime committed performance fixture | Stress-testing maximum visible taxa. |
 
 The committed msprime files are tree-only visualization fixtures, not biological
-case studies. They are generated as deterministic independent-tree replicates in:
+case studies. They are generated as deterministic independent-tree replicates in
+two forms: longer timeline fixtures at 250/50, 500/25, and 1000/10, plus short
+high-taxon fixtures at 500/5 and 1000/5 for quick rendering checks:
 
 ```text
 publication_data/scale_fixtures/msprime_performance/

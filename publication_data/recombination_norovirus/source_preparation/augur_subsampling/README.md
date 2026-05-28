@@ -4,6 +4,11 @@
 
 This dataset contains 334 full-genome Norovirus sequences used for the sliding-window phylogenetic analysis demonstrating recombination-driven topological changes in the PhyloMovies paper.
 
+The single source-of-truth for the public sequence snapshot is
+`01_raw/full_genome_accession_versions.txt`. The FASTA files and metadata
+tables in this folder are generated from that locked accession-version list by
+`scripts/recreate_nextstrain_augur_snapshot.sh`.
+
 ## Data Summary
 
 | Property                 | Value                                     |
@@ -160,8 +165,8 @@ resolved capsid suffix in the locked metadata and therefore use
 | File                           | Description                               |
 | ------------------------------ | ----------------------------------------- |
 | `full_genome_sequences.fasta`  | All full-genome sequences from Nextstrain |
-| `full_genome_accessions.txt`   | GenBank accession numbers                 |
-| `full_genome_accession_versions.txt` | GenBank accession versions that lock the Nextstrain/Augur source snapshot |
+| `full_genome_accessions.txt`   | Generated convenience list of GenBank accession numbers without version suffixes |
+| `full_genome_accession_versions.txt` | **Source truth**: GenBank accession versions that lock the Nextstrain/Augur source snapshot |
 | `subsampled_350.fasta`         | Sequences after Augur subsampling         |
 | `subsampled_350_renamed.fasta` | Subsampled with simplified IDs            |
 
@@ -183,10 +188,10 @@ resolved capsid suffix in the locked metadata and therefore use
 
 | File                          | Description                        |
 | ----------------------------- | ---------------------------------- |
-| `full_genome_metadata.tsv`    | Original Nextstrain metadata       |
-| `subsampled_350_metadata.tsv` | Metadata for subsampled sequences  |
-| `subsampled_350_metadata.csv` | CSV format                         |
-| `rename_map.tsv`              | ID mapping (original → simplified) |
+| `full_genome_metadata.tsv`    | Generated metadata for the locked full-genome accession-version snapshot |
+| `subsampled_350_metadata.tsv` | Generated metadata for subsampled sequences  |
+| `subsampled_350_metadata.csv` | Generated CSV metadata for retained final taxa |
+| `rename_map.tsv`              | Generated mapping: original ID → simplified ID |
 | `group_weights.tsv`           | Augur sampling weights             |
 
 ---
