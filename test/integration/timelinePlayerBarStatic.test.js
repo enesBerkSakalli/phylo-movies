@@ -98,9 +98,11 @@ describe('movie timeline player bar semantics', () => {
     expect(statusStripSource).toContain(
       'text-[10px] text-muted-foreground/80 leading-tight font-medium'
     );
-    expect(statusStripSource).toContain('inline-flex w-[18rem] max-w-[40vw] shrink-0');
-    expect(statusStripSource).toContain('inline-flex w-[10rem] shrink-0');
-    expect(statusStripSource).toContain('inline-flex w-[14rem] shrink-0');
+    expect(statusStripSource).toContain('<StatusItem icon={Film} label="Cursor">');
+    expect(statusStripSource).toContain('inline-flex w-[12rem] max-w-[30vw] shrink-0');
+    expect(statusStripSource).toContain('inline-flex w-[6.5rem] shrink-0');
+    expect(statusStripSource).toContain('hidden w-[14rem] shrink-0');
+    expect(statusStripSource).toContain('2xl:inline-flex');
     expect(statusStripSource).toContain("Window size {msaWindowSize ?? '-'}");
     expect(statusStripSource).toContain("Step size {msaStepSize ?? '-'}");
     expect(statusStripSource).toContain('text-[10px] text-foreground leading-tight font-semibold');

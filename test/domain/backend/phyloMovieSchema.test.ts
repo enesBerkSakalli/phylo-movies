@@ -124,8 +124,8 @@ function makePayload(overrides: Record<string, unknown> = {}) {
       ],
       semantics: {
         robinson_foulds: {
-          topology: 'rooted_clades',
-          normalization: 'symmetric_difference_over_union',
+          topology: 'unrooted_internal_bipartitions',
+          normalization: 'symmetric_difference_over_split_count_sum',
           scope: 'adjacent_processed_input_trees',
         },
         weighted_robinson_foulds: {

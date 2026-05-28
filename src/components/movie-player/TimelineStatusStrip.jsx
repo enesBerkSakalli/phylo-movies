@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Activity, Columns, Film } from 'lucide-react';
+import { Activity, ArrowRight, Columns, Film, GitBranch } from 'lucide-react';
 import { AppTooltip } from '../ui/app-tooltip';
 import {
   selectActiveTreeListLength,
@@ -89,8 +89,9 @@ function CursorStatus({ status }) {
       <AppTooltip
         content={
           <div className="flex flex-col gap-1">
+            <div>Current position in the tree sequence.</div>
             <div>{status.segment.tooltip}</div>
-            <div>Sequence position, 0=start and 1=end:</div>
+            <div>Normalized sequence coordinate:</div>
             <div className="font-bold text-primary tabular-nums">
               {status.position.fullPrecision}
             </div>
@@ -98,13 +99,50 @@ function CursorStatus({ status }) {
         }
         contentClassName="border-border/60 bg-popover text-2xs font-mono text-popover-foreground"
       >
-        <span className="inline-flex w-[18rem] max-w-[40vw] shrink-0 items-center justify-center rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-primary cursor-help">
-          <span className="min-w-0 truncate text-center text-[10px] text-foreground leading-tight font-semibold tabular-nums">
-            {status.position.display}
-          </span>
+        <span className="inline-flex w-[12rem] max-w-[30vw] shrink-0 items-center justify-center rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-primary cursor-help">
+          <CursorPositionValue position={status.position} />
         </span>
       </AppTooltip>
     </StatusItem>
+  );
+}
+
+function CursorPositionValue({ position }) {
+  if (position?.kind === 'transition') {
+    return (
+      <span className="inline-flex min-w-0 items-center justify-center gap-1 text-[10px] leading-tight font-semibold tabular-nums">
+        <GitBranch className="size-3 shrink-0 text-primary" aria-hidden />
+        <span className="min-w-[1rem] shrink-0 text-center text-foreground">
+          {position.sourceInputTreeIndex + 1}
+        </span>
+        <ArrowRight className="size-3 shrink-0 text-muted-foreground" aria-hidden />
+        <GitBranch className="size-3 shrink-0 text-muted-foreground" aria-hidden />
+        <span className="min-w-[1rem] shrink-0 text-center text-foreground">
+          {position.targetInputTreeIndex + 1}
+        </span>
+        <span className="shrink-0 text-muted-foreground/60">|</span>
+        <span className="shrink-0 text-foreground">
+          {position.frameNumber}/{position.frameCount}
+        </span>
+      </span>
+    );
+  }
+
+  if (position?.kind === 'input') {
+    return (
+      <span className="inline-flex min-w-0 items-center justify-center gap-1 text-[10px] leading-tight font-semibold tabular-nums">
+        <GitBranch className="size-3 shrink-0 text-primary" aria-hidden />
+        <span className="min-w-0 truncate text-center text-foreground">
+          {position.inputTreeIndex + 1}/{position.inputTreeCount}
+        </span>
+      </span>
+    );
+  }
+
+  return (
+    <span className="min-w-0 truncate text-center text-[10px] text-foreground leading-tight font-semibold tabular-nums">
+      {position.display}
+    </span>
   );
 }
 
@@ -159,7 +197,7 @@ function StatusItem({ icon: Icon, label, children }) {
 function MsaWindowStatus({ msaWindow }) {
   if (!msaWindow) {
     return (
-      <span className="inline-flex w-[10rem] shrink-0 items-center justify-center rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-primary">
+      <span className="inline-flex w-[6.5rem] shrink-0 items-center justify-center rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-primary">
         <span className="truncate text-center text-[10px] text-muted-foreground/80 leading-tight font-medium">
           Unavailable
         </span>
@@ -168,7 +206,7 @@ function MsaWindowStatus({ msaWindow }) {
   }
 
   return (
-    <span className="inline-flex w-[10rem] shrink-0 items-center justify-center rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-primary">
+    <span className="inline-flex w-[6.5rem] shrink-0 items-center justify-center rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-primary">
       <span className="min-w-0 truncate text-center text-[10px] text-foreground leading-tight font-semibold tabular-nums">
         <span>{msaWindow.startPosition}</span>
         <span className="mx-1 text-muted-foreground/50 text-2xs">-</span>
@@ -182,7 +220,7 @@ function MsaWindowStatus({ msaWindow }) {
 
 function MsaWindowConfigStatus({ msaWindowSize, msaStepSize }) {
   return (
-    <span className="inline-flex w-[14rem] shrink-0 items-center justify-center rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-primary">
+    <span className="hidden w-[14rem] shrink-0 items-center justify-center rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-primary 2xl:inline-flex">
       <span className="truncate text-center text-[10px] text-foreground leading-tight font-semibold tabular-nums">
         Window size {msaWindowSize ?? '-'} / Step size {msaStepSize ?? '-'}
       </span>

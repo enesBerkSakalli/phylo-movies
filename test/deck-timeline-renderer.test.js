@@ -202,7 +202,7 @@ describe('DeckTimelineRenderer', () => {
     renderer.setCustomTime(1500);
 
     expect(renderer.canvas.getAttribute('aria-valuetext')).to.equal(
-      'Segment 2 of 3, generated frames 1-9, from source input tree 1 to target input tree 2'
+      'Segment 2 of 3, generated frames 1-9, input tree 1 to 2'
     );
   });
 
