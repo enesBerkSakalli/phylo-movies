@@ -332,7 +332,7 @@ export class DeckGLContext {
     return this.views[this.cameraMode];
   }
 
-  setCameraMode(mode, { preserveTarget = true } = {}) {
+  setCameraMode(mode, { preserveTarget = true, preserveZoom = true } = {}) {
     if (mode !== 'orthographic' && mode !== 'orbit') {
       console.warn(
         `[DeckGLContext] Ignoring unsupported camera mode "${mode}". Expected "orthographic" or "orbit".`
@@ -342,11 +342,15 @@ export class DeckGLContext {
     if (mode === this.cameraMode) return;
 
     const fromId = this._activeViewId();
+    const fromViewState = this.viewStates[fromId];
     this.cameraMode = mode;
     const toId = this._activeViewId();
 
     if (preserveTarget) {
-      this.viewStates[toId].target = [...(this.viewStates[fromId].target || [0, 0, 0])];
+      this.viewStates[toId].target = [...(fromViewState.target || [0, 0, 0])];
+    }
+    if (preserveZoom) {
+      this.viewStates[toId].zoom = this._clampZoom(toId, fromViewState.zoom);
     }
 
     this.setProps({

@@ -5,7 +5,6 @@ import {
   calculateFocusViewport,
   selectFitAreaForBounds,
   VIEWPORT_FIT_MODES,
-  VIEWPORT_AUTOMATIC_BRANCH_DETAIL_ZOOM_DELTA,
   VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO,
   VIEWPORT_AUTO_VISIBLE_FIT_PADDING,
   VIEWPORT_AUTO_VISIBLE_HIGH_DENSITY_PADDING,
@@ -22,6 +21,7 @@ import {
 } from '../src/treeVisualisation/viewport/viewportFit.js';
 import {
   calculateBranchBounds,
+  calculateLabelAnchorBounds,
   calculateLabelBounds,
   calculateMaxPositionRadius,
   calculateNodeBounds,
@@ -89,36 +89,6 @@ describe('ViewportManager', () => {
 
     expect(transitionTo).toHaveBeenCalledOnce();
     expect(transitionTo.mock.calls[0][0].zoom).toBeGreaterThan(1.5);
-  });
-
-  it('forwards automatic visible-fit zoom caps from the viewport manager', () => {
-    const transitionTo = vi.fn();
-    const manager = new ViewportManager({
-      deckContext: {
-        container: null,
-        getCanvasDimensions: () => ({ width: 1200, height: 800 }),
-        getActiveView: () => null,
-        getViewState: () => ({ target: [0, 0, 0], zoom: 0 }),
-        transitionTo,
-      },
-      layerManager: {
-        layerStyles: {
-          getLabelSize: () => 16,
-        },
-      },
-    });
-
-    manager.focusOnTree(
-      [{ position: [-12, 0, 0] }, { position: [12, 0, 0] }],
-      [{ position: [3000, 0, 0], text: 'Norovirus-like dense label ring' }],
-      {
-        duration: 0,
-        maxZoomOverAutoVisibleFit: 1,
-      }
-    );
-
-    expect(transitionTo).toHaveBeenCalledOnce();
-    expect(transitionTo.mock.calls[0][0].zoom).toBeLessThan(0);
   });
 
   it('manual label fit includes label bounds exactly once', () => {
@@ -241,7 +211,7 @@ describe('ViewportManager', () => {
     expect(branchFit.target).toEqual([0, 0, 0]);
   });
 
-  it('caps automatic branch zoom against visible label-ring fit when requested', () => {
+  it('keeps branch fit independent from visible label text bounds', () => {
     const branchFit = calculateFocusViewport({
       nodes: [{ position: [-12, 0, 0] }, { position: [12, 0, 0] }],
       labels: [
@@ -255,23 +225,6 @@ describe('ViewportManager', () => {
       canvasWidth: 1200,
       canvasHeight: 800,
       fitAreas: null,
-      activeView: null,
-      currentViewState: { target: [0, 0, 0], zoom: 0 },
-    });
-    const cappedFit = calculateFocusViewport({
-      nodes: [{ position: [-12, 0, 0] }, { position: [12, 0, 0] }],
-      labels: [
-        {
-          position: [650, 0, 0],
-          text: 'Norovirus-like dense label ring',
-        },
-      ],
-      fitMode: VIEWPORT_FIT_MODES.BRANCH,
-      padding: 1,
-      canvasWidth: 1200,
-      canvasHeight: 800,
-      fitAreas: null,
-      maxZoomOverAutoVisibleFit: 1,
       activeView: null,
       currentViewState: { target: [0, 0, 0], zoom: 0 },
     });
@@ -292,8 +245,48 @@ describe('ViewportManager', () => {
     });
 
     expect(branchFit.zoom).toBeGreaterThan(autoVisibleFit.zoom + 4);
-    expect(cappedFit.zoom).toBeCloseTo(autoVisibleFit.zoom + 1, 10);
-    expect(cappedFit.target).toEqual([0, 0, 0]);
+    expect(branchFit.target).toEqual([0, 0, 0]);
+  });
+
+  it('can reserve label-anchor glyph height without fitting long label text', () => {
+    const label = {
+      position: [600, 0, 0],
+      text: 'This very long label should not define automatic branch zoom',
+    };
+    const anchorAwareFit = calculateFocusViewport({
+      nodes: [{ position: [-12, 0, 0] }, { position: [12, 0, 0] }],
+      labels: [label],
+      fitMode: VIEWPORT_FIT_MODES.BRANCH,
+      includeLabelAnchorBounds: true,
+      padding: 1,
+      labelSizePx: 20,
+      canvasWidth: 1200,
+      canvasHeight: 800,
+      fitAreas: null,
+      activeView: null,
+      currentViewState: { target: [0, 0, 0], zoom: 0 },
+    });
+    const textFit = calculateFocusViewport({
+      nodes: [{ position: [-12, 0, 0] }, { position: [12, 0, 0] }],
+      labels: [label],
+      fitMode: VIEWPORT_FIT_MODES.LABELS,
+      padding: 1,
+      labelSizePx: 20,
+      canvasWidth: 1200,
+      canvasHeight: 800,
+      fitAreas: null,
+      activeView: null,
+      currentViewState: { target: [0, 0, 0], zoom: 0 },
+    });
+
+    expect(calculateLabelAnchorBounds([label], { labelSizePx: 20 })).toEqual({
+      minX: 588,
+      maxX: 612,
+      minY: -12,
+      maxY: 12,
+    });
+    expect(anchorAwareFit.zoom).toBeGreaterThan(textFit.zoom);
+    expect(anchorAwareFit.target).toEqual([300, 0, 0]);
   });
 
   it('auto-visible fit includes labels with a tighter default margin than manual label fit', () => {
@@ -448,7 +441,6 @@ describe('ViewportManager', () => {
     expect(VIEWPORT_AUTO_VISIBLE_LOW_DENSITY_PADDING).toBe(0.1);
     expect(VIEWPORT_BRANCH_FIT_PADDING).toBe(1.12);
     expect(VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO).toBe(0.2);
-    expect(VIEWPORT_AUTOMATIC_BRANCH_DETAIL_ZOOM_DELTA).toBe(1);
     expect(VIEWPORT_HIGH_DENSITY_NODE_THRESHOLD).toBe(400);
     expect(VIEWPORT_MEDIUM_DENSITY_NODE_THRESHOLD).toBe(200);
     expect(VIEWPORT_LOW_DENSITY_NODE_THRESHOLD).toBe(100);

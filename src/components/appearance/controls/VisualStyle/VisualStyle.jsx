@@ -51,7 +51,7 @@ export function GeometryDimensionsSection() {
     try {
       setLabelsVisible(!!value);
       for (const controller of treeControllers) {
-        await controller.renderAllElements();
+        await controller.renderAllElements({ skipAutoFit: true });
       }
     } catch {}
   };

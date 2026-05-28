@@ -23,19 +23,54 @@ export function removeChildren(element) {
 }
 
 export function getCanvasDimensions(canvas, container) {
+  const containerElement = resolveContainerElement(container);
+  const containerDimensions = getCssPixelDimensions(containerElement);
+  if (containerDimensions) return containerDimensions;
+
   if (canvas) {
-    const width = canvas.clientWidth || canvas.width || 800;
-    const height = canvas.clientHeight || canvas.height || 600;
+    const canvasDimensions = getCssPixelDimensions(canvas);
+    if (canvasDimensions) return canvasDimensions;
+
+    const dpr = getDevicePixelRatio();
+    const width = canvas.width ? Math.max(1, Math.round(canvas.width / dpr)) : 800;
+    const height = canvas.height ? Math.max(1, Math.round(canvas.height / dpr)) : 600;
     return { width, height };
   }
 
-  const node = container?.node?.();
-  if (node) {
-    const rect = node.getBoundingClientRect();
-    return { width: rect.width || 800, height: rect.height || 600 };
+  return { width: 800, height: 600 };
+}
+
+function resolveContainerElement(container) {
+  if (container?.getBoundingClientRect) return container;
+  return container?.node?.() || null;
+}
+
+function getCssPixelDimensions(element) {
+  if (!element) return null;
+
+  if (typeof element.getBoundingClientRect === 'function') {
+    const rect = element.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) {
+      return {
+        width: Math.max(1, Math.round(rect.width)),
+        height: Math.max(1, Math.round(rect.height)),
+      };
+    }
   }
 
-  return { width: 800, height: 600 };
+  if (element.clientWidth > 0 && element.clientHeight > 0) {
+    return {
+      width: Math.max(1, Math.round(element.clientWidth)),
+      height: Math.max(1, Math.round(element.clientHeight)),
+    };
+  }
+
+  return null;
+}
+
+function getDevicePixelRatio() {
+  const value = typeof window !== 'undefined' ? Number(window.devicePixelRatio) : 1;
+  return Number.isFinite(value) && value > 0 ? value : 1;
 }
 
 export function getDefaultControllerConfig() {

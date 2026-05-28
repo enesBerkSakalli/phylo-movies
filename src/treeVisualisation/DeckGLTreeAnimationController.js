@@ -279,14 +279,16 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     const nodes = this._lastLayerData?.nodes;
     if (!Array.isArray(nodes) || nodes.length === 0 || !this.viewportManager) return;
     this._hasUserViewportInteraction = true;
+    const labelsVisible = useAppStore.getState().labelsVisible !== false;
     const links = [
       ...(this._lastLayerData.links || []),
       ...(this._lastLayerData.extensions || []),
       ...(this._lastLayerData.connectors || []),
     ];
 
-    this.viewportManager.focusOnTree(nodes, this._lastLayerData.labels, {
-      fitMode: options.fitMode ?? VIEWPORT_FIT_MODES.LABELS,
+    this.viewportManager.focusOnTree(nodes, labelsVisible ? this._lastLayerData.labels : [], {
+      fitMode:
+        options.fitMode ?? (labelsVisible ? VIEWPORT_FIT_MODES.LABELS : VIEWPORT_FIT_MODES.BRANCH),
       duration: options.duration ?? 350,
       padding: options.padding,
       links,

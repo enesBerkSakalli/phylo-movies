@@ -66,11 +66,11 @@ export class ViewportManager {
       padding: options.padding,
       labelSizePx: options.labelSizePx,
       getLabelSize,
+      includeLabelAnchorBounds: options.includeLabelAnchorBounds,
       canvasWidth,
       canvasHeight,
       fitAreas,
       maxFitAreaCenterDriftRatio: options.maxFitAreaCenterDriftRatio,
-      maxZoomOverAutoVisibleFit: options.maxZoomOverAutoVisibleFit,
       activeView,
       currentViewState,
     });

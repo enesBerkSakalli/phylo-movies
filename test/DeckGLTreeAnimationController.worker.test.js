@@ -121,6 +121,33 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     });
   });
 
+  it('excludes hidden label text from manual visible-content fit', () => {
+    useAppStore.setState({ labelsVisible: false });
+    const controller = Object.create(ControllerClass.prototype);
+    const node = { id: 'node-1', position: [0, 0, 0] };
+    const label = { id: 'label-1', position: [5000, 0, 0], text: 'hidden label text' };
+    const extension = { id: 'extension-1', path: new Float32Array([0, 0, 0, 10, 0, 0]) };
+    controller._lastLayerData = {
+      nodes: [node],
+      labels: [label],
+      links: [],
+      extensions: [extension],
+      connectors: [],
+    };
+    controller.viewportManager = {
+      focusOnTree: vi.fn(),
+    };
+
+    controller.fitTreeToViewport();
+
+    expect(controller.viewportManager.focusOnTree).toHaveBeenCalledWith([node], [], {
+      fitMode: VIEWPORT_FIT_MODES.BRANCH,
+      duration: 350,
+      padding: undefined,
+      links: [extension],
+    });
+  });
+
   it('pans to the matching rendered node without changing zoom', () => {
     const controller = Object.create(ControllerClass.prototype);
     const transitionTo = vi.fn();
