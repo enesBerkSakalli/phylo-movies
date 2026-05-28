@@ -7,10 +7,7 @@ import { handleContainerResize } from '../../src/treeVisualisation/interaction/I
 import { useAppStore } from '../../src/state/phyloStore/store.js';
 import { VIEWPORT_FIT_OBSTRUCTION_SCOPES } from '../../src/treeVisualisation/spatial/layout.js';
 import { StaticRenderer } from '../../src/treeVisualisation/systems/StaticRenderer.js';
-import {
-  VIEWPORT_AUTOMATIC_BRANCH_DETAIL_ZOOM_DELTA,
-  VIEWPORT_FIT_MODES,
-} from '../../src/treeVisualisation/viewport/viewportFit.js';
+import { VIEWPORT_FIT_MODES } from '../../src/treeVisualisation/viewport/viewportFit.js';
 
 class MockWorker {
   constructor() {
@@ -126,10 +123,10 @@ describe('tree viewport behavior', () => {
 
     expect(controller.viewportManager.focusOnTree).toHaveBeenCalledWith([node], [label], {
       fitMode: VIEWPORT_FIT_MODES.BRANCH,
+      includeLabelAnchorBounds: true,
       obstructionScope: VIEWPORT_FIT_OBSTRUCTION_SCOPES.CANVAS,
       maxFitAreaCenterDriftRatio: 0.2,
-      maxZoomOverAutoVisibleFit: VIEWPORT_AUTOMATIC_BRANCH_DETAIL_ZOOM_DELTA,
-      links: [link],
+      links: [link, extension],
     });
     expect(controller._lastFocusedTreeIndex).toBe(0);
   });
@@ -164,9 +161,9 @@ describe('tree viewport behavior', () => {
 
     expect(controller.viewportManager.focusOnTree).toHaveBeenCalledWith([treeOneNode], [], {
       fitMode: VIEWPORT_FIT_MODES.BRANCH,
+      includeLabelAnchorBounds: false,
       obstructionScope: VIEWPORT_FIT_OBSTRUCTION_SCOPES.CANVAS,
       maxFitAreaCenterDriftRatio: 0.2,
-      maxZoomOverAutoVisibleFit: VIEWPORT_AUTOMATIC_BRANCH_DETAIL_ZOOM_DELTA,
       links: [],
     });
     expect(controller._lastFocusedTreeIndex).toBe(1);
@@ -209,6 +206,15 @@ describe('tree viewport behavior', () => {
 
     expect(source).toContain('Fit all visible content');
     expect(source).not.toContain('Fit tree to viewport');
+  });
+
+  it('label visibility changes redraw without resetting the camera', () => {
+    const source = readFileSync(
+      join(process.cwd(), 'src/components/appearance/controls/VisualStyle/VisualStyle.jsx'),
+      'utf8'
+    );
+
+    expect(source).toContain('controller.renderAllElements({ skipAutoFit: true })');
   });
 
   it('resize marks an untouched single-tree view for refit', async () => {
@@ -269,10 +275,10 @@ describe('tree viewport behavior', () => {
 
     expect(controller.viewportManager.focusOnTree).toHaveBeenCalledWith([node], [label], {
       fitMode: VIEWPORT_FIT_MODES.BRANCH,
+      includeLabelAnchorBounds: true,
       obstructionScope: VIEWPORT_FIT_OBSTRUCTION_SCOPES.CANVAS,
       maxFitAreaCenterDriftRatio: 0.2,
-      maxZoomOverAutoVisibleFit: VIEWPORT_AUTOMATIC_BRANCH_DETAIL_ZOOM_DELTA,
-      links: [link],
+      links: [link, extension],
     });
   });
 

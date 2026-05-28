@@ -88,6 +88,29 @@ export function calculateLabelBounds(labels, options = {}) {
   return { minX, maxX, minY, maxY };
 }
 
+export function calculateLabelAnchorBounds(labels, options = {}) {
+  if (labels.length === 0) return null;
+
+  const sizePx = resolveLabelBoundsSize(options.labelSizePx, options.getLabelSize);
+  const halfHeight = (LABEL_BOUNDS_LINE_HEIGHT_RATIO * sizePx) / 2;
+  let minX = Infinity,
+    maxX = -Infinity,
+    minY = Infinity,
+    maxY = -Infinity;
+
+  for (const label of labels) {
+    const [x, y] = label.position;
+    if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+
+    if (x - halfHeight < minX) minX = x - halfHeight;
+    if (x + halfHeight > maxX) maxX = x + halfHeight;
+    if (y - halfHeight < minY) minY = y - halfHeight;
+    if (y + halfHeight > maxY) maxY = y + halfHeight;
+  }
+
+  return Number.isFinite(minX) ? { minX, maxX, minY, maxY } : null;
+}
+
 /**
  * Calculate bounds from node positions plus rendered branch path geometry.
  * @param {Array} nodes

@@ -4,6 +4,7 @@ import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { Deck } from '@deck.gl/core';
 import { DeckGLContext } from '../src/treeVisualisation/deckgl/context/DeckGLContext.js';
 import { VIEW_IDS } from '../src/treeVisualisation/deckgl/context/viewConstants.js';
+import { getCanvasDimensions } from '../src/treeVisualisation/deckgl/context/deckContextUtils.js';
 import { useAppStore } from '../src/state/phyloStore/store.js';
 
 vi.mock('@deck.gl/core', async () => {
@@ -124,6 +125,27 @@ describe('DeckGLContext view state handling', () => {
 
     expect(context.viewStates[VIEW_IDS.ORTHO].zoom).toBe(0);
     expect(context.viewStates[VIEW_IDS.ORTHO].target).toEqual([0, 0, 0]);
+  });
+
+  it('preserves zoom when switching between 2D and 3D camera modes', () => {
+    const context = createContext();
+    context.viewStates[VIEW_IDS.ORTHO].zoom = 2.5;
+    context.viewStates[VIEW_IDS.ORTHO].target = [40, -10, 0];
+
+    context.setCameraMode('orbit');
+
+    expect(context.viewStates[VIEW_IDS.ORBIT].zoom).toBe(2.5);
+    expect(context.viewStates[VIEW_IDS.ORBIT].target).toEqual([40, -10, 0]);
+  });
+
+  it('measures native container CSS pixels before canvas drawing-buffer pixels', () => {
+    const container = document.createElement('div');
+    container.getBoundingClientRect = () => ({ width: 500.4, height: 300.6 });
+    const canvas = document.createElement('canvas');
+    canvas.width = 1000;
+    canvas.height = 600;
+
+    expect(getCanvasDimensions(canvas, container)).toEqual({ width: 500, height: 301 });
   });
 
   it('escapes tooltip taxon and grouping values before returning HTML', () => {

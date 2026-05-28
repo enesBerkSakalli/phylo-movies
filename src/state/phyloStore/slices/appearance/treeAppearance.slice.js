@@ -1,3 +1,5 @@
+const MIN_NODE_SIZE = 0.01;
+
 export const createTreeAppearanceSlice = (set) => ({
   // ==========================================================================
   // STATE
@@ -26,7 +28,7 @@ export const createTreeAppearanceSlice = (set) => ({
 
   setNodeSize: (size) => {
     const numericSize = Number(size);
-    set({ nodeSize: Math.max(0.1, Math.min(10, numericSize)) });
+    set({ nodeSize: Math.max(MIN_NODE_SIZE, Math.min(10, numericSize)) });
   },
 
   setLabelsVisible: (visible) => set({ labelsVisible: !!visible }),

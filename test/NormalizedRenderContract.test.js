@@ -111,7 +111,7 @@ describe('normalized render contract', () => {
     expect(LAYER_CONFIGS.links.defaultProps).not.toHaveProperty('billboard');
     expect(LAYER_CONFIGS.nodes.defaultProps).toMatchObject({
       radiusUnits: 'common',
-      radiusMinPixels: 2,
+      radiusMinPixels: 0.5,
       billboard: true,
     });
     expect(LAYER_CONFIGS.nodes.defaultProps).not.toHaveProperty('radiusMaxPixels');

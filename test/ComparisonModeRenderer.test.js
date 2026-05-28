@@ -86,9 +86,147 @@ describe('ComparisonModeRenderer', () => {
     await renderer.renderStatic(0, 1);
 
     expect(focusOnTree).toHaveBeenCalledOnce();
+    expect(focusOnTree.mock.calls[0][2].includeLabelAnchorBounds).toBe(true);
     expect(focusOnTree.mock.calls[0][2].links).toContain(connector);
     expect(focusOnTree.mock.calls[0][2].links).toContain(leftExtension);
     expect(renderer._buildConnectors.mock.calls[0][6]).toBe(0);
+  });
+
+  it('uses each tree layout radius for static comparison labels and extensions', async () => {
+    const leftData = {
+      nodes: [{ id: 'left-node', position: [0, 0, 0], renderPosition: [0, 0, 0.1] }],
+      links: [],
+      labels: [],
+      extensions: [],
+    };
+    const rightData = {
+      nodes: [{ id: 'right-node', position: [100, 0, 0], renderPosition: [100, 0, 0.1] }],
+      links: [],
+      labels: [],
+      extensions: [],
+    };
+    const convertTreeToLayerData = vi.fn((layout) =>
+      layout.side === 'left' ? leftData : rightData
+    );
+
+    useAppStore.setState({
+      treeList: [{ side: 'left' }, { side: 'right' }],
+      viewsConnected: false,
+      leftTreeOffsetX: 0,
+      leftTreeOffsetY: 0,
+      rightTreeOffsetX: 0,
+      rightTreeOffsetY: 0,
+      labelsVisible: true,
+    });
+
+    const renderer = new ComparisonModeRenderer({
+      calculateLayout: (tree) => ({ side: tree.side, width: 100, height: 100 }),
+      _getConsistentRadii: (layout) =>
+        layout.side === 'left'
+          ? { extensionRadius: 11, labelRadius: 12 }
+          : { extensionRadius: 101, labelRadius: 102 },
+      dataConverter: {
+        convertTreeToLayerData,
+      },
+      deckContext: {
+        getCanvasDimensions: () => ({ width: 800, height: 600 }),
+      },
+      viewportManager: {
+        getRightTreeOffset: () => ({ x: 0, y: 0 }),
+        focusOnTree: vi.fn(),
+      },
+      _updateLayersEfficiently: vi.fn(),
+    });
+
+    await renderer.renderStatic(0, 1);
+
+    expect(convertTreeToLayerData.mock.calls[0][1]).toMatchObject({
+      extensionRadius: 11,
+      labelRadius: 12,
+      treeSide: 'left',
+    });
+    expect(convertTreeToLayerData.mock.calls[1][1]).toMatchObject({
+      extensionRadius: 101,
+      labelRadius: 102,
+      treeSide: 'right',
+    });
+  });
+
+  it('keeps comparison tree spacing stable when terminal labels are hidden', async () => {
+    const makeLayerData = (side) => {
+      if (side === 'left') {
+        return {
+          nodes: [
+            { id: 'left-root', position: [0, 0, 0], renderPosition: [0, 0, 0.1] },
+            { id: 'left-leaf', position: [10, 0, 0], renderPosition: [10, 0, 0.1] },
+          ],
+          links: [],
+          labels: [
+            {
+              id: 'left-label',
+              position: [30, 0, 0],
+              text: 'left terminal label '.repeat(40),
+            },
+          ],
+          extensions: [],
+        };
+      }
+
+      return {
+        nodes: [
+          { id: 'right-root', position: [100, 0, 0], renderPosition: [100, 0, 0.1] },
+          { id: 'right-leaf', position: [120, 0, 0], renderPosition: [120, 0, 0.1] },
+        ],
+        links: [],
+        labels: [
+          {
+            id: 'right-label',
+            position: [145, 0, 0],
+            text: 'right terminal label '.repeat(40),
+          },
+        ],
+        extensions: [],
+      };
+    };
+
+    const renderRightRootX = async (labelsVisible) => {
+      const updateLayers = vi.fn();
+
+      useAppStore.setState({
+        treeList: [{ side: 'left' }, { side: 'right' }],
+        viewsConnected: false,
+        leftTreeOffsetX: 0,
+        leftTreeOffsetY: 0,
+        rightTreeOffsetX: 0,
+        rightTreeOffsetY: 0,
+        labelsVisible,
+      });
+
+      const renderer = new ComparisonModeRenderer({
+        calculateLayout: (tree) => ({ side: tree.side, width: 100, height: 100 }),
+        _getConsistentRadii: () => ({ extensionRadius: 10, labelRadius: 20 }),
+        dataConverter: {
+          convertTreeToLayerData: (layout) => makeLayerData(layout.side),
+        },
+        deckContext: {
+          getCanvasDimensions: () => ({ width: 800, height: 600 }),
+        },
+        viewportManager: {
+          getRightTreeOffset: () => ({ x: 0, y: 0 }),
+          focusOnTree: vi.fn(),
+        },
+        _updateLayersEfficiently: updateLayers,
+      });
+
+      await renderer.renderStatic(0, 1);
+      const combinedData = updateLayers.mock.calls[0][0];
+      return combinedData.nodes.find((node) => node.id === 'right-root').position[0];
+    };
+
+    const visibleRightRootX = await renderRightRootX(true);
+    const hiddenRightRootX = await renderRightRootX(false);
+
+    expect(hiddenRightRootX).toBe(visibleRightRootX);
   });
 
   it('uses the rendered animated tree index for comparison connectors', async () => {

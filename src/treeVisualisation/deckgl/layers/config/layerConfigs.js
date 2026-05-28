@@ -14,6 +14,7 @@ export const CLIPBOARD_LAYER_ID_PREFIX = `${LAYER_ID_PREFIX}-clipboard`;
 
 // Minimum node radius for internal nodes
 export const MIN_NODE_RADIUS = 3;
+export const NODE_RADIUS_MIN_PIXELS = 0.5;
 
 // Base Z-offset for nodes to prevent Z-fighting and ensure they render above links
 export { Z_NODE };
@@ -78,7 +79,7 @@ export const LAYER_CONFIGS = {
     defaultProps: {
       lineWidthUnits: 'common',
       radiusUnits: 'common',
-      radiusMinPixels: 2,
+      radiusMinPixels: NODE_RADIUS_MIN_PIXELS,
       stroked: true,
       billboard: true,
       pointSize: 10,

@@ -17,6 +17,8 @@ const clampValue = (value, fallback) => {
   return Number.isFinite(numeric) ? numeric : fallback;
 };
 
+const MIN_NODE_SIZE = 0.01;
+
 export function GeometryDimensions({
   nodeSize,
   setNodeSize,
@@ -34,25 +36,28 @@ export function GeometryDimensions({
   const isRenderingRef = useRef(false);
   const needsRenderRef = useRef(false);
 
-  const renderControllers = useCallback(async (options = {}) => {
-    if (isRenderingRef.current) {
-      needsRenderRef.current = true;
-      return;
-    }
+  const renderControllers = useCallback(
+    async (options = {}) => {
+      if (isRenderingRef.current) {
+        needsRenderRef.current = true;
+        return;
+      }
 
-    isRenderingRef.current = true;
-    try {
-      do {
-        needsRenderRef.current = false;
-        for (const controller of treeControllers) {
-          await controller.renderAllElements(options);
-        }
-      } while (needsRenderRef.current);
-    } catch {
-    } finally {
-      isRenderingRef.current = false;
-    }
-  }, [treeControllers]);
+      isRenderingRef.current = true;
+      try {
+        do {
+          needsRenderRef.current = false;
+          for (const controller of treeControllers) {
+            await controller.renderAllElements(options);
+          }
+        } while (needsRenderRef.current);
+      } catch {
+      } finally {
+        isRenderingRef.current = false;
+      }
+    },
+    [treeControllers]
+  );
 
   const handleNodeSizeChange = useCallback(
     (vals) => {
@@ -98,9 +103,9 @@ export function GeometryDimensions({
             ariaLabel="Node size control"
             valueDisplay={clampValue(nodeSize, 1).toFixed(2)}
             value={clampValue(nodeSize, 1)}
-            min={0.05}
+            min={MIN_NODE_SIZE}
             max={5}
-            step={0.05}
+            step={0.01}
             onChange={handleNodeSizeChange}
           />
 

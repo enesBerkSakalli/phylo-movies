@@ -44,10 +44,11 @@ export function calculateComparisonFrameGeometry({
   rightTreeOffset = { x: 0, y: 0 },
   leftTreeOffsetX = 0,
   leftTreeOffsetY = 0,
+  includeLabelTextBounds = true,
 }) {
   const leftCenterBase = calculatePositionCenter(leftLayerData.nodes);
   const rightCenterBase = calculatePositionCenter(rightLayerData.nodes);
-  const labelSizePx = STABLE_LABEL_BOUNDS_SIZE_PX;
+  const labelSizePx = includeLabelTextBounds ? STABLE_LABEL_BOUNDS_SIZE_PX : 0;
   const leftRadius = calculateTreeVisualRadius(leftLayerData, leftCenterBase, labelSizePx);
   const rightRadius = calculateTreeVisualRadius(rightLayerData, rightCenterBase, labelSizePx);
   const rightOffset = calculateRightOffset(canvasWidth, rightTreeOffset, leftRadius, rightRadius);

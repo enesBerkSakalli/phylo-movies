@@ -131,6 +131,36 @@ describe('ComparisonUtils', () => {
     expect(geometry.rightSafeRadius).toBeGreaterThan(0);
   });
 
+  it('can ignore hidden label text when calculating comparison spacing', () => {
+    const leftLayerData = {
+      nodes: [{ position: [0, 0, 0] }, { position: [10, 0, 0] }],
+      labels: [{ position: [30, 0, 0], text: 'left '.repeat(100) }],
+      extensions: [],
+    };
+    const rightLayerData = {
+      nodes: [{ position: [100, 0, 0] }, { position: [120, 0, 0] }],
+      labels: [{ position: [145, 0, 0], text: 'right '.repeat(100) }],
+      extensions: [],
+    };
+
+    const textGeometry = ComparisonUtils.calculateComparisonFrameGeometry({
+      leftLayerData,
+      rightLayerData,
+      canvasWidth: 800,
+    });
+    const anchorGeometry = ComparisonUtils.calculateComparisonFrameGeometry({
+      leftLayerData,
+      rightLayerData,
+      canvasWidth: 800,
+      includeLabelTextBounds: false,
+    });
+
+    expect(anchorGeometry.labelSizePx).toBe(0);
+    expect(anchorGeometry.leftRadius).toBeLessThan(textGeometry.leftRadius);
+    expect(anchorGeometry.rightRadius).toBeLessThan(textGeometry.rightRadius);
+    expect(anchorGeometry.rightOffset).toBeLessThan(textGeometry.rightOffset);
+  });
+
   it('combines normalized layer data arrays directly', () => {
     const leftData = {
       nodes: [{ id: 'left-node' }],

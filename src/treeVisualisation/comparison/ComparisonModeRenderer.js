@@ -52,6 +52,7 @@ export class ComparisonModeRenderer {
       leftTreeOffsetY = 0,
       viewsConnected,
       linkGeometryMode = 'radial-elbow',
+      labelsVisible,
     } = useAppStore.getState();
 
     const clampIndex = (idx) => {
@@ -96,11 +97,12 @@ export class ComparisonModeRenderer {
       return;
     }
 
-    const { extensionRadius, labelRadius } = this.controller._getConsistentRadii(leftLayout);
+    const leftRadii = this.controller._getConsistentRadii(leftLayout);
+    const rightRadii = this.controller._getConsistentRadii(rightLayout);
 
     const leftLayerData = this.controller.dataConverter.convertTreeToLayerData(leftLayout, {
-      extensionRadius,
-      labelRadius,
+      extensionRadius: leftRadii.extensionRadius,
+      labelRadius: leftRadii.labelRadius,
       treeIndex: clampedLeftIndex,
       treeSide: 'left',
       renderMode: 'comparison',
@@ -108,8 +110,8 @@ export class ComparisonModeRenderer {
     });
 
     const rightLayerData = this.controller.dataConverter.convertTreeToLayerData(rightLayout, {
-      extensionRadius,
-      labelRadius,
+      extensionRadius: rightRadii.extensionRadius,
+      labelRadius: rightRadii.labelRadius,
       treeIndex: clampedRightIndex,
       treeSide: 'right',
       renderMode: 'comparison',
@@ -127,6 +129,11 @@ export class ComparisonModeRenderer {
       rightTreeOffset,
       leftTreeOffsetX,
       leftTreeOffsetY,
+      // Keep side-by-side spacing stable when terminal labels are toggled off.
+      // The camera fit intentionally ignores hidden label anchors below, but
+      // shrinking the tree-to-tree offset here can make comparison trees overlap
+      // without an auto-fit because fit state is keyed by tree indices.
+      includeLabelTextBounds: true,
     });
 
     // Apply independent offsets to both trees so centers/radii match screen coords
@@ -156,15 +163,16 @@ export class ComparisonModeRenderer {
 
     const indicesChanged =
       this._lastFittedIndices === null ||
-      this._lastFittedIndices.left !== leftIndex ||
-      this._lastFittedIndices.right !== rightIndex;
+      this._lastFittedIndices.left !== clampedLeftIndex ||
+      this._lastFittedIndices.right !== clampedRightIndex;
 
     if (indicesChanged) {
       this.controller.viewportManager.focusOnTree(combinedData.nodes, combinedData.labels, {
         fitMode: VIEWPORT_FIT_MODES.BRANCH,
+        includeLabelAnchorBounds: labelsVisible !== false,
         links: [...combinedData.links, ...combinedData.extensions, ...combinedData.connectors],
       });
-      this._lastFittedIndices = { left: leftIndex, right: rightIndex };
+      this._lastFittedIndices = { left: clampedLeftIndex, right: clampedRightIndex };
     }
   }
 
@@ -198,6 +206,7 @@ export class ComparisonModeRenderer {
       leftTreeOffsetY = 0,
       viewsConnected,
       linkGeometryMode = 'radial-elbow',
+      labelsVisible,
     } = useAppStore.getState();
     const rightBase = this._getAnimatedRightBaseLayerData({
       rightTreeData,
@@ -223,6 +232,7 @@ export class ComparisonModeRenderer {
       rightTreeOffset,
       leftTreeOffsetX,
       leftTreeOffsetY,
+      includeLabelTextBounds: true,
     });
     const rightFrame = this._getPreparedAnimatedRightFrame({
       base: rightBase,
@@ -265,6 +275,7 @@ export class ComparisonModeRenderer {
     if (indicesChanged) {
       this.controller.viewportManager.focusOnTree(combinedData.nodes, combinedData.labels, {
         fitMode: VIEWPORT_FIT_MODES.BRANCH,
+        includeLabelAnchorBounds: labelsVisible !== false,
         allowDuringPlayback: true,
         duration: 0,
         links: [...combinedData.links, ...combinedData.extensions, ...combinedData.connectors],
