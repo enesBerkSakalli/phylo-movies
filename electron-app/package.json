@@ -18,7 +18,7 @@
     "start": "electron .",
     "dev": "NODE_ENV=development electron .",
     "setup:backend": "cd ../engine/BranchArchitect && poetry install",
-    "build:frontend": "cd .. && ELECTRON_BUILD=true npm run build && rm -rf electron-app/frontend-dist && cp -r dist electron-app/frontend-dist",
+    "build:frontend": "rm -rf frontend-dist && cd .. && ELECTRON_BUILD=true npm run build && cp -r dist electron-app/frontend-dist && npm run check:electron-frontend-dist",
     "build:backend": "bash build-backend.sh",
     "test:sse": "bash sse_smoke.sh",
     "build:mac": "bash build.sh mac",

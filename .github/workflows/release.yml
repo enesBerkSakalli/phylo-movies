@@ -34,7 +34,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: Setup Python
@@ -74,14 +74,12 @@ jobs:
       - name: Install Root Dependencies
         run: npm ci
 
-      - name: Sync version from git tag
+      - name: Check version from git tag
         shell: bash
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          echo "Setting version to $VERSION (from tag $GITHUB_REF_NAME)"
-          npm --no-git-tag-version version "$VERSION"
-          cd electron-app
-          npm --no-git-tag-version version "$VERSION"
+          echo "Checking package versions against $VERSION (from tag $GITHUB_REF_NAME)"
+          npm run version:check -- "$VERSION"
 
       - name: Install Electron App Dependencies
         run: |

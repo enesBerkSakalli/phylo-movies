@@ -265,13 +265,13 @@ function ensureBackendExtracted(archivePath) {
 }
 
 /**
- * Get the path to the FastTree binary
+ * Get the path to a bundled tree-inference binary.
  */
-function getFastTreePath() {
+function getBundledTreeToolPath(toolName) {
   const platform = process.platform;
   // Map Node's process.platform to our bin folder names
   const platformDir = platform === 'darwin' ? 'darwin' : platform === 'win32' ? 'win32' : 'linux';
-  const execName = platform === 'win32' ? 'fasttree.exe' : 'fasttree';
+  const execName = platform === 'win32' ? `${toolName}.exe` : toolName;
 
   if (isDev) {
     // Development: look in engine/BranchArchitect/bin
@@ -288,7 +288,7 @@ function getFastTreePath() {
       return devPath;
     }
   } else {
-    // Production: FastTree is bundled inside _internal by PyInstaller
+    // Production: tools are bundled inside _internal by PyInstaller
     const backendRoot =
       backendRootDir ||
       path.join(process.resourcesPath, 'BranchArchitect', 'brancharchitect-server');
@@ -298,7 +298,7 @@ function getFastTreePath() {
     }
   }
 
-  return null; // Fallback to PATH
+  return null; // Fallback to backend discovery
 }
 
 /**
@@ -310,9 +310,11 @@ async function startBackend() {
   logToFile(`Starting backend on port ${backendPort}`);
 
   const backendPath = getBackendPath();
-  const fasttreePath = getFastTreePath();
+  const fasttreePath = getBundledTreeToolPath('fasttree');
+  const iqtreePath = getBundledTreeToolPath('iqtree3');
   logToFile(`Backend path: ${backendPath || 'dev (poetry)'}`);
   logToFile(`FastTree path: ${fasttreePath || 'not found'}`);
+  logToFile(`IQ-TREE path: ${iqtreePath || 'not found'}`);
 
   if (isDev || !backendPath) {
     // Development: run Python through Poetry (engine/BranchArchitect's venv)
@@ -337,6 +339,10 @@ async function startBackend() {
       env.FASTTREE_PATH = fasttreePath;
       console.log(`Using bundled FastTree at: ${fasttreePath}`);
     }
+    if (iqtreePath) {
+      env.IQTREE_PATH = iqtreePath;
+      console.log(`Using bundled IQ-TREE at: ${iqtreePath}`);
+    }
 
     pythonProcess = spawn(
       'poetry',
@@ -360,6 +366,9 @@ async function startBackend() {
 
     if (fasttreePath) {
       env.FASTTREE_PATH = fasttreePath;
+    }
+    if (iqtreePath) {
+      env.IQTREE_PATH = iqtreePath;
     }
 
     pythonProcess = spawn(backendPath, ['--port', backendPort.toString()], {

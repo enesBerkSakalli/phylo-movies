@@ -78,6 +78,7 @@ cd "$PROJECT_ROOT"
 step "3/7" "Running frontend unit tests..."
 
 npm run test:unit || fail "Frontend unit tests failed"
+npm run test:construction || fail "Timeline construction tests failed"
 success "Frontend unit tests passed"
 
 # =============================================================================
@@ -181,14 +182,9 @@ if [ "$MODE" == "--electron" ]; then
 
     cd "$ELECTRON_DIR"
 
-    # Build frontend for Electron
-    cd "$PROJECT_ROOT"
-    ELECTRON_BUILD=true npm run build
-    rm -rf "$ELECTRON_DIR/frontend-dist"
-    cp -r dist "$ELECTRON_DIR/frontend-dist"
+    npm run build:frontend || fail "Electron frontend preparation failed"
 
-    # Note: Full Electron build (with PyInstaller) takes ~10min
-    echo "  Frontend prepared for Electron"
+    echo "  Frontend prepared for Electron and checked for portable generated data"
     echo "  To complete Electron build, run: cd electron-app && ./build.sh mac"
 
     cd "$PROJECT_ROOT"
