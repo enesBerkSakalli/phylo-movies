@@ -20,8 +20,8 @@ export function ProjectFileSection({ treesFile, msaFile, setTreesFile, setMsaFil
       <div className="grid min-w-0 gap-4 md:grid-cols-2">
         <FileUploadZone
           id="trees-input"
-          label="Trees (.nwk, .newick, .json)"
-          description="Newick or JSON tree file (optional if MSA provided)"
+          label="Trees (.nwk, .newick, .tree)"
+          description="Newick tree file (optional if MSA provided)"
           disabled={disabled}
           value={treesFile}
           onFileSelect={setTreesFile}
