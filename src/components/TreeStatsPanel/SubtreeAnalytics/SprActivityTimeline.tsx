@@ -8,9 +8,10 @@ import {
   ChartTooltipContent,
 } from '../../ui/chart';
 import { buildSprActivityTimelinePoints } from '../../../domain/spr/sprAnalytics';
+import type { SprPairActivityRow } from '../../../domain/spr/sprAnalytics';
 
 interface SprActivityTimelineProps {
-  rows: any[];
+  rows: SprPairActivityRow[];
 }
 
 const chartConfig = {

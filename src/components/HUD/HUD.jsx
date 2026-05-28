@@ -35,6 +35,7 @@ export function HUD() {
             variant="outline"
             className="border-sidebar-border bg-sidebar/90 shadow-lg backdrop-blur-md"
             aria-label="Show comparison panel"
+            title="Show comparison panel"
             onClick={() => setIsVisible(true)}
           >
             <Eye className="size-3.5" aria-hidden />
@@ -73,6 +74,7 @@ export function HUD() {
               variant="ghost"
               className="-mr-2 size-6 text-muted-foreground hover:text-foreground"
               aria-label="Hide comparison panel"
+              title="Hide comparison panel"
               onClick={() => setIsVisible(false)}
             >
               <X className="size-3.5" aria-hidden />

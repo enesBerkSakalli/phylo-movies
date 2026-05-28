@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Film, ArrowLeft, Activity } from 'lucide-react';
 import { MsaSidebarSection } from './MsaSidebarSection.jsx';
 import { TreeStructureGroup } from '../appearance/layout/TreeStructureGroup.jsx';
-import { VisualStyle } from '../appearance/controls/VisualStyle/VisualStyle.jsx';
+import {
+  GeometryDimensionsSection,
+  LayoutTransformSection,
+} from '../appearance/controls/VisualStyle/VisualStyle.jsx';
 import { ViewModeSection } from '../appearance/ViewModeSection.jsx';
 import { TaxaAndHighlightsSection } from '../appearance/controls/VisualElements/TaxaAndHighlightsSection.jsx';
 import { FocusAndChangeEffects } from '../appearance/FocusAndChangeEffects.jsx';
@@ -83,7 +86,7 @@ export function ToolsSidebar({
             <SidebarGroupLabel>{TOOLS_SIDEBAR_GROUP_LABELS[1]}</SidebarGroupLabel>
             <SidebarMenu>
               <TreeStructureGroup />
-              <VisualStyle />
+              <LayoutTransformSection />
               <ViewModeSection />
             </SidebarMenu>
           </SidebarGroup>
@@ -92,6 +95,17 @@ export function ToolsSidebar({
 
           <SidebarGroup>
             <SidebarGroupLabel>{TOOLS_SIDEBAR_GROUP_LABELS[2]}</SidebarGroupLabel>
+            <SidebarMenu>
+              <GeometryDimensionsSection />
+              <TaxaAndHighlightsSection onOpenTaxaColoring={onOpenTaxaColoring} />
+              <TaxaGroupsLegend />
+            </SidebarMenu>
+          </SidebarGroup>
+
+          <SidebarSeparator />
+
+          <SidebarGroup>
+            <SidebarGroupLabel>{TOOLS_SIDEBAR_GROUP_LABELS[3]}</SidebarGroupLabel>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
@@ -112,10 +126,8 @@ export function ToolsSidebar({
           <SidebarSeparator />
 
           <SidebarGroup>
-            <SidebarGroupLabel>{TOOLS_SIDEBAR_GROUP_LABELS[3]}</SidebarGroupLabel>
+            <SidebarGroupLabel>{TOOLS_SIDEBAR_GROUP_LABELS[4]}</SidebarGroupLabel>
             <SidebarMenu>
-              <TaxaAndHighlightsSection onOpenTaxaColoring={onOpenTaxaColoring} />
-              <TaxaGroupsLegend />
               <FocusAndChangeEffects />
             </SidebarMenu>
           </SidebarGroup>

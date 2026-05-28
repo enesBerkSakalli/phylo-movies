@@ -49,18 +49,23 @@ export function TreeStructure() {
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectItem value="none">Use Branch Lengths</SelectItem>
-                <SelectItem value="normalized-sqrt">Normalized Square Root</SelectItem>
-                <SelectItem value="normalized">Normalize Tree Size</SelectItem>
-                <SelectItem value="normalized-log">Normalized Log Scale</SelectItem>
-                <SelectItem value="ignore">Ignore Branch Lengths</SelectItem>
-                <SelectItem value="log">Log Scale</SelectItem>
-                <SelectItem value="sqrt">Square Root Scale</SelectItem>
-                <SelectItem value="power2">Square Values (x²)</SelectItem>
-                <SelectItem value="linear-scale">Double Lengths (2x)</SelectItem>
+                <SelectItem value="none">Metric: raw branch lengths</SelectItem>
+                <SelectItem value="sqrt">Readable: global sqrt transform</SelectItem>
+                <SelectItem value="log">Readable: global log transform</SelectItem>
+                <SelectItem value="normalized-sqrt">Animation: normalized sqrt</SelectItem>
+                <SelectItem value="normalized">Animation: normalized raw lengths</SelectItem>
+                <SelectItem value="normalized-log">Animation: normalized log</SelectItem>
+                <SelectItem value="ignore">Topology only: cladogram-style</SelectItem>
+                <SelectItem value="linear-scale">Metric: doubled branch lengths</SelectItem>
+                <SelectItem value="power2">Experimental: square branch lengths</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
+          <p className="text-[11px] leading-snug text-muted-foreground">
+            Metric modes preserve proportional input branch lengths. Readable modes apply one global
+            transform. Animation modes normalize each tree for stable motion, so they are not
+            absolute evolutionary scale.
+          </p>
 
           <div className="flex items-center gap-2 text-muted-foreground">
             <GitGraph className="size-3.5" />

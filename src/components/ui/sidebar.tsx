@@ -540,7 +540,7 @@ const SidebarMenuButton = React.forwardRef<
     ref
   ) => {
     const Comp = asChild ? Slot : 'button';
-    const { isMobile, state } = useSidebar();
+    const { isMobile } = useSidebar();
 
     const button = (
       <Comp
@@ -558,7 +558,7 @@ const SidebarMenuButton = React.forwardRef<
       return button;
     }
 
-    if (state !== 'collapsed' || isMobile) {
+    if (isMobile) {
       return button;
     }
 

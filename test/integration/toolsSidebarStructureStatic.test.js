@@ -35,18 +35,22 @@ describe('tools sidebar structure', () => {
   it('orders tools by the research workflow', () => {
     const sidebarSource = source('src/components/sidebar/ToolsSidebar.jsx');
 
-    expect(TOOLS_SIDEBAR_GROUP_LABELS).toEqual([
-      'Dataset',
-      'Tree View',
-      'Analysis',
-      'Color & Focus',
-    ]);
-    const labelUsePositions = [0, 1, 2, 3].map((index) =>
+    expect(TOOLS_SIDEBAR_GROUP_LABELS).toEqual(['Dataset', 'Layout', 'Style', 'Analysis', 'Focus']);
+    const labelUsePositions = [0, 1, 2, 3, 4].map((index) =>
       sidebarSource.indexOf(`TOOLS_SIDEBAR_GROUP_LABELS[${index}]`)
     );
 
     expect(labelUsePositions.every((position) => position >= 0)).toBe(true);
     expect(labelUsePositions).toEqual([...labelUsePositions].sort((a, b) => a - b));
+    expect(sidebarSource.indexOf('<TreeStructureGroup />')).toBeLessThan(
+      sidebarSource.indexOf('<GeometryDimensionsSection />')
+    );
+    expect(sidebarSource.indexOf('<TaxaAndHighlightsSection')).toBeLessThan(
+      sidebarSource.indexOf('<TreeStatsPanel />')
+    );
+    expect(sidebarSource.indexOf('<TreeStatsPanel />')).toBeLessThan(
+      sidebarSource.indexOf('<FocusAndChangeEffects />')
+    );
   });
 
   it('keeps visual element and visual effect sections scoped to their responsibility', () => {
