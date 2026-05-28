@@ -98,6 +98,26 @@ The software metadata and preferred citation are also available in `CITATION.cff
 
 ## Quick Start
 
+### New machine setup (fastest path)
+
+If you are setting up Phylo-Movies on a fresh machine, start here:
+
+1. Install:
+   - Node.js 22.12.0+ with npm 10.0.0+
+   - Python 3.11+
+   - Poetry
+   - Git
+2. Clone the repo and fetch the backend submodule.
+3. Install all dependencies with `npm ci`.
+4. Run `./start.sh` to boot both backend and frontend.
+
+```bash
+git clone --recurse-submodules https://github.com/enesBerkSakalli/phylo-movies.git
+cd phylo-movies
+npm ci
+./start.sh
+```
+
 ### Prerequisites
 
 **System Requirements:**
@@ -584,7 +604,8 @@ This project is open source. Please check the license file for specific terms an
 **npm dependency install fails:**
 
 - Clear npm cache: `npm cache clean --force`
-- Delete `node_modules`, then run `npm ci` again
+- Clean local install/build artifacts, then run `npm ci` again:
+  - `npm run clean:local`
 - Ensure you have write permissions in the project directory
 - Check for disk space issues
 
@@ -600,6 +621,16 @@ This project is open source. Please check the license file for specific terms an
 - Check Node.js version compatibility (22.12+)
 - Clear Vite cache: `rm -rf node_modules/.vite`
 - Review error messages for missing dependencies
+
+### Local Workspace Cleanup
+
+Artifacts like `node_modules`, Python virtual environments, and build outputs are ignored by git but can grow large.
+
+Use this when you want a minimal working tree again:
+
+```bash
+npm run clean:local
+```
 
 **TypeScript/JSConfig warnings:**
 

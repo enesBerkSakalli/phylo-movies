@@ -7,7 +7,7 @@
 # ==============================================================================
 
 # ── Stage 1: Build frontend ──────────────────────────────────────────────────
-FROM node:20-slim AS frontend-build
+FROM node:22-slim AS frontend-build
 
 WORKDIR /app
 
