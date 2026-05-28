@@ -1,13 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import createTidyTreeLayout, {
-  TidyTreeLayout,
-} from '../src/treeVisualisation/layout/TidyTreeLayout.js';
+import { describe, it, expect } from 'vitest';
+import createTidyTreeLayout from '../src/treeVisualisation/layout/TidyTreeLayout.js';
 import { buildSubtreeConnectors } from '../src/treeVisualisation/deckgl/data/transforms/SubtreeConnectorBuilder.js';
-import {
-  chooseBundlePoint,
-  ensureOutside,
-} from '../src/treeVisualisation/deckgl/data/transforms/ComparisonGeometryUtils.js';
-import { calculateBranchCoordinates } from '../src/treeVisualisation/layout/RadialTreeGeometry.js';
 
 function flatPathPoint(path, index) {
   const offset = index * 3;
@@ -126,6 +119,7 @@ describe('Complex Data Layer Integration', () => {
       // Since it's radial 2PI (approx 6.28), 12 leaves total.
       // Each leaf gets ~0.5 rads.
       // Crowded center vs Sparse center should be ~5-6 slots apart.
+      expect(crowdedSector).toBeGreaterThan(0);
       expect(dist1).toBeGreaterThan(1.0); // 1 radian is approx 57 deg
     });
   });

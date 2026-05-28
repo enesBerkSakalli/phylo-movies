@@ -48,7 +48,7 @@ describe('Real Data Integration (test/data/ostrich_bug_response.json)', () => {
 
   const [edgeKey, solutionSets] = firstAffectedSubtreeEntry;
   const pivotEdge = edgeKey
-    .replace(/[\[\]\s]/g, '')
+    .replace(/\[|\]|\s/g, '')
     .split(',')
     .filter(Boolean)
     .map((value) => Number(value));

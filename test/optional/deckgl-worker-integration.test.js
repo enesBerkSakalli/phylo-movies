@@ -1,6 +1,5 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
-import proxyquire from 'proxyquire';
 import { JSDOM } from 'jsdom';
 
 // Setup JSDOM environment for d3/DOM dependency
@@ -22,7 +21,7 @@ class MockWorker {
     this.url = url;
     this.onmessage = null;
   }
-  postMessage(data) {
+  postMessage(_data) {
     // To be spied on
   }
   terminate() {
@@ -62,7 +61,7 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
       play: sandbox.stub(),
     };
 
-    const mockUseAppStore = {
+    const _mockUseAppStore = {
       getState: sandbox.stub().returns(mockStore),
       setState: sandbox.stub(),
     };

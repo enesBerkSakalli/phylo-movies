@@ -4,7 +4,68 @@ import type {
   TemporalEvent,
   TimelineFrame,
   TimelinePair,
+  TreeNode,
+  SubtreeHighlightTracking,
 } from '../domain/backend/phyloMovieTypes';
+
+export type NavigationDirection = 'forward' | 'backward' | 'jump';
+export type CameraMode = 'orthographic' | 'orbit';
+export type AnimationStage = 'COLLAPSE' | 'EXPAND' | 'REORDER' | null;
+export type LinkGeometryMode = 'radial-elbow' | 'straight';
+
+export interface FloatingWindowRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface MsaRegionRange {
+  start: number;
+  end: number;
+}
+
+export interface TreeControllerRuntime {
+  calculateLayout?: () => unknown;
+  renderAllElements?: () => void;
+  resetInterpolationCaches?: () => void;
+  setCameraMode?: (mode: CameraMode) => void;
+  startAnimationPlayback?: () => Promise<void> | void;
+  stopAnimation?: () => void;
+  [key: string]: unknown;
+}
+
+export interface MovieTimelineManagerRuntime {
+  destroy?: () => void;
+  getCursorAtTimelineProgress?: (timelineProgress: number) => TimelineCursorState | null;
+  getCursorForFrame?: (
+    frameIndex: number,
+    options?: { occurrence?: number | null }
+  ) => TimelineCursorState | null;
+  getSegment?: (segmentIndex: number) => unknown;
+  getSegmentCount?: () => number;
+  getTimelineProgressForLinearTreeProgress?: (progress: number, treeCount: number) => number | null;
+  getTransitionFrameForTimelineProgress?: (timelineProgress: number) => unknown;
+  hasTransitionSegments?: () => boolean;
+  mount?: (container: HTMLElement) => void;
+  scrubController?: { isScrubbing?: boolean };
+  timelineData?: { totalDuration?: number };
+  unmount?: () => void;
+  [key: string]: unknown;
+}
+
+export interface ColorManagerRuntime {
+  [key: string]: unknown;
+}
+
+export interface TreeContext {
+  treeIndex: number;
+  tree: TreeNode | null;
+  metadata: unknown;
+  pairId: string | null;
+  isOriginal: boolean;
+  isInputTree: boolean;
+}
 
 export interface ContextMenuPosition {
   x: number;
@@ -54,6 +115,14 @@ export interface TimelineCursorState {
   holdKind: string | null;
 }
 
+export interface TimelineStateUpdate {
+  frameIndex?: number;
+  playhead?: PlaybackPlayheadUpdate;
+  timelineCursor?: TimelineCursorState | null;
+  timelineProgress?: number | null;
+  [key: string]: unknown;
+}
+
 export type PlaybackPlayheadUpdate = Partial<PlaybackCursorState>;
 
 export interface PlaybackSeekOptions {
@@ -62,14 +131,14 @@ export interface PlaybackSeekOptions {
 
 export interface AppStoreState {
   // From treeDataset.slice
-  treeList: any[];
+  treeList: TreeNode[];
   timelineFrames: TimelineFrame[];
   leafNamesByIndex: string[];
   fileName: string | null;
   datasetVersion: number;
   pairMetrics: PhyloMovieData['pair_metrics'] | null;
   pairs: TimelinePair[];
-  subtreeHighlightTracking: any[];
+  subtreeHighlightTracking: SubtreeHighlightTracking;
   temporalEvents: TemporalEvent[];
 
   // From datasetLifecycle.slice
@@ -91,16 +160,16 @@ export interface AppStoreState {
   renderInProgress: boolean;
 
   // From treeControllersRuntime.slice
-  treeControllers: any[];
+  treeControllers: TreeControllerRuntime[];
 
   // From timelineRuntime.slice
-  movieTimelineManager: any;
+  movieTimelineManager: MovieTimelineManagerRuntime | null;
 
   // From treeTimeline.slice
   barOptionValue: string;
   hoveredSegmentIndex: number | null;
-  hoveredSegmentData: any;
-  hoveredSegmentPosition: any;
+  hoveredSegmentData: unknown;
+  hoveredSegmentPosition: unknown;
   selectedTimelineSegmentIndex: number | null;
   isTooltipHovered: boolean;
 
@@ -108,7 +177,7 @@ export interface AppStoreState {
   fontSize: string;
   strokeWidth: number;
   nodeSize: number;
-  styleConfig: any;
+  styleConfig: Record<string, unknown>;
   labelsVisible: boolean;
   branchAnnotationLabelKey: string;
 
@@ -123,11 +192,11 @@ export interface AppStoreState {
 
   // From taxonomyColoringPanel.slice
   taxaColoringOpen: boolean;
-  taxaColoringWindow: any;
+  taxaColoringWindow: FloatingWindowRect;
 
   // From taxonomyColoring.slice
   monophyleticColoringEnabled: boolean;
-  taxaGrouping: any;
+  taxaGrouping: Record<string, unknown>;
   taxaColorVersion: number;
 
   // From treeHighlightOpacity.slice
@@ -137,12 +206,12 @@ export interface AppStoreState {
   msaSequences: Record<string, string> | null;
   msaWindowSize: number;
   msaStepSize: number;
-  msaRegion: any;
-  msaPreviousRegion: any;
-  msaRowOrder: any;
+  msaRegion: MsaRegionRange | null;
+  msaPreviousRegion: MsaRegionRange | null;
+  msaRowOrder: string[] | null;
   isMsaViewerOpen: boolean;
   syncMSAEnabled: boolean;
-  msaWindow: any;
+  msaWindow: FloatingWindowRect;
 
   // From treeComparison.slice
   comparisonMode: boolean;
@@ -156,7 +225,7 @@ export interface AppStoreState {
 
   // From subtreeSelection.slice
   subtreeHighlightScope: string;
-  manuallyMarkedNodes: any[];
+  manuallyMarkedNodes: unknown[];
 
   // From treeHighlightState.slice
   pivotEdgesEnabled: boolean;
@@ -168,16 +237,16 @@ export interface AppStoreState {
   subtreeDimmingEnabled: boolean;
   subtreeDimmingOpacity: number;
   upcomingChangesEnabled: boolean;
-  upcomingChangeEdges: any[];
-  completedChangeEdges: any[];
+  upcomingChangeEdges: unknown[];
+  completedChangeEdges: unknown[];
   changePulseEnabled: boolean;
   pivotEdgeDashingEnabled: boolean;
   highlightColorMode: string;
 
   // From treeRuntimeSync.slice
-  colorManager: any;
+  colorManager: ColorManagerRuntime | null;
   colorVersion: number;
-  currentAnimationStage: 'COLLAPSE' | 'EXPAND' | 'REORDER' | null;
+  currentAnimationStage: AnimationStage;
   changePulsePhase: number;
 
   // From treeClipboard.slice
@@ -193,43 +262,40 @@ export interface AppStoreState {
   // Actions
   initialize: (movieData: PhyloMovieData) => void;
   reset: () => void;
-  getTreeContext: (index: number) => {
-    treeIndex: number;
-    tree: any;
-    metadata: any;
-    pairId: string | null;
-    isOriginal: boolean;
-    isInputTree: boolean;
-  } | null;
+  getTreeContext: (index: number) => TreeContext | null;
 
   play: () => void;
   stop: () => void;
   setAnimationSpeed: (newSpeed: number) => void;
   adjustAnimationStartTime: (deltaMs: number) => void;
-  setNavigationDirection: (direction: 'forward' | 'backward' | 'jump') => void;
+  setNavigationDirection: (direction: NavigationDirection) => void;
   goToPosition: (
     position: number,
-    direction?: 'forward' | 'backward' | 'jump',
+    direction?: NavigationDirection,
     options?: PlaybackSeekOptions
   ) => void;
   forward: () => void;
   backward: () => void;
   goToNextInputTree: () => void;
   goToPreviousInputTree: () => void;
-  updateTimelineState: (timelineState: any) => void;
+  updateTimelineState: (timelineState: TimelineStateUpdate) => void;
   setScrubPosition: (progress: number) => void;
   setTimelineProgress: (progress: number, treeIndex: number) => void;
   setPlayhead: (playhead: PlaybackPlayheadUpdate, frameIndex?: number) => void;
   setRenderInProgress: (inProgress: boolean) => void;
   resetPlayback: () => void;
 
-  setTreeControllers: (controllers: any[]) => void;
+  setTreeControllers: (controllers: TreeControllerRuntime[]) => void;
   startAnimationPlayback: () => Promise<void>;
   resetInterpolationCaches: () => void;
   stopAnimationPlayback: () => void;
   resetControllers: () => void;
 
-  setHoveredSegment: (segmentIndex: number | null, segmentData?: any, position?: any) => void;
+  setHoveredSegment: (
+    segmentIndex: number | null,
+    segmentData?: unknown,
+    position?: unknown
+  ) => void;
   setTooltipHovered: (isHovered: boolean) => void;
   setSelectedTimelineSegment: (segmentIndex: number | null) => void;
   setBarOption: (option: string) => void;
@@ -250,11 +316,11 @@ export interface AppStoreState {
   setLayoutAngleDegrees: (degrees: number) => void;
   setLayoutRotationDegrees: (degrees: number) => void;
 
-  toggleCameraMode: () => 'orthographic' | 'orbit';
+  toggleCameraMode: () => CameraMode;
 
   setTaxaColoringOpen: (isOpen: boolean) => void;
-  setTaxaColoringWindow: (partial: any) => void;
-  setTaxaGrouping: (grouping: any) => void;
+  setTaxaColoringWindow: (partial: Partial<FloatingWindowRect>) => void;
+  setTaxaGrouping: (grouping: Record<string, unknown>) => void;
   setMonophyleticColoring: (enabled: boolean) => void;
 
   setSubtreeHighlightOpacity: (opacity: number) => void;
@@ -269,11 +335,11 @@ export interface AppStoreState {
   clearMsaRegion: () => void;
   setMsaPreviousRegion: (start: number, end: number) => void;
   clearMsaPreviousRegion: () => void;
-  setMsaRowOrder: (order: any[]) => void;
+  setMsaRowOrder: (order: string[]) => void;
   clearMsaRowOrder: () => void;
   openMsaViewer: () => void;
   closeMsaViewer: () => void;
-  setMsaWindow: (partial: any) => void;
+  setMsaWindow: (partial: Partial<FloatingWindowRect>) => void;
   setSyncMSAEnabled: (enabled: boolean) => void;
 
   toggleComparisonMode: () => void;
@@ -286,13 +352,16 @@ export interface AppStoreState {
   setLinkConnectionOpacity: (opacity: number) => void;
   resetComparison: () => void;
 
-  getCurrentPivotEdge: (indexOverride?: number | null) => any[];
-  getSubtreeHighlightData: (indexOverride?: number | null) => any;
-  getSubtreeHistoryData: (indexOverride?: number | null) => any;
-  getActiveMoverSubtreeData: (indexOverride?: number | null) => any;
-  getSourceDestinationEdgeData: (indexOverride?: number | null) => { source: any[]; dest: any[] };
+  getCurrentPivotEdge: (indexOverride?: number | null) => unknown[];
+  getSubtreeHighlightData: (indexOverride?: number | null) => unknown[];
+  getSubtreeHistoryData: (indexOverride?: number | null) => unknown[];
+  getActiveMoverSubtreeData: (indexOverride?: number | null) => unknown[];
+  getSourceDestinationEdgeData: (indexOverride?: number | null) => {
+    source: unknown[];
+    dest: unknown[];
+  };
   setSubtreeHighlightScope: (scope: string) => void;
-  setManuallyMarkedNodes: (nodeIds: any[]) => void;
+  setManuallyMarkedNodes: (nodeIds: unknown[]) => void;
 
   setDimmingEnabled: (enabled: boolean) => void;
   setDimmingOpacity: (opacity: number) => void;
@@ -309,19 +378,19 @@ export interface AppStoreState {
   setChangePulseEnabled: (enabled: boolean) => void;
   setPivotEdgeDashingEnabled: (enabled: boolean) => void;
 
-  setAnimationStage: (stage: 'COLLAPSE' | 'EXPAND' | 'REORDER' | null) => void;
-  getColorManager: () => any;
+  setAnimationStage: (stage: AnimationStage) => void;
+  getColorManager: () => ColorManagerRuntime | null;
   calculateHighlightChangePreviews: (index?: number | null) => {
-    upcoming: any[];
-    completed: any[];
+    upcoming: unknown[];
+    completed: unknown[];
   };
   initializeColors: () => void;
   resetColors: () => void;
-  updateColorManagerPivotEdge: (edge: any) => void;
-  updateColorManagerHighlightedSubtrees: (subtrees: any[]) => void;
-  updateColorManagerHistorySubtrees: (subtrees: any[]) => void;
-  updateColorManagerSourceDestinationEdges: (sourceEdges: any[], destEdges: any[]) => void;
-  updateColorManagerActiveMoverSubtrees: (subtree: any) => void;
+  updateColorManagerPivotEdge: (edge: unknown) => void;
+  updateColorManagerHighlightedSubtrees: (subtrees: unknown[]) => void;
+  updateColorManagerHistorySubtrees: (subtrees: unknown[]) => void;
+  updateColorManagerSourceDestinationEdges: (sourceEdges: unknown[], destEdges: unknown[]) => void;
+  updateColorManagerActiveMoverSubtrees: (subtree: unknown) => void;
   updateColorManagerForIndex: (index?: number | null) => void;
   updateColorManagerForCurrentIndex: () => void;
   getPulseOpacity: () => number;

@@ -116,7 +116,7 @@ describe('dimmingUtils', () => {
       // Let's assume the entity structure matches what isNodeInSubtree expects.
       // Ideally we successfully mock the data structure so it returns true.
       // If isNodeInSubtree checks id equality:
-      const highlightedSubtreeData = [nodeEntity]; // Assuming simple check
+      const _highlightedSubtreeData = [nodeEntity]; // Assuming simple check
       // But wait, isNodeInSubtree might be more complex.
       // Let's check imports in dimmingUtils.js: `import { isLinkInSubtree, isNodeInSubtree } from './subtreeMatching.js';`
       // We might need to ensure our test data satisfies `isNodeInSubtree`.

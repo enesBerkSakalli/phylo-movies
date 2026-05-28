@@ -47,7 +47,7 @@ export function getGroupForTaxon(taxon, separators, strategyType, options = {}) 
       const regex = new RegExp(options.regexPattern);
       const match = taxon.match(regex);
       return match && match[1] ? match[1] : null;
-    } catch (e) {
+    } catch (_error) {
       return null;
     }
   }
