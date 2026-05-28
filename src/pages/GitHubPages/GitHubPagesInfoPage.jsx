@@ -150,6 +150,9 @@ export function GitHubPagesInfoPage() {
                 <Link to="/demo">Open Browser Demo</Link>
               </Button>
               <Button variant="outline" asChild>
+                <Link to="/usage">View Usage Examples</Link>
+              </Button>
+              <Button variant="outline" asChild>
                 <a href={RELEASES_URL} target="_blank" rel="noopener noreferrer">
                   Download Desktop App
                 </a>
@@ -334,6 +337,9 @@ export function GitHubPagesInfoPage() {
             </p>
             <Button asChild>
               <Link to="/demo">Open Generated Examples</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to="/usage">View Usage Walkthrough</Link>
             </Button>
           </CardContent>
         </Card>
