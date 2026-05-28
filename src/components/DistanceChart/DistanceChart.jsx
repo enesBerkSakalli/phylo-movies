@@ -2,8 +2,12 @@ import React, { useCallback, useMemo } from 'react';
 import { Area, AreaChart, CartesianGrid, ReferenceLine, XAxis, YAxis } from 'recharts';
 import {
   selectBarOptionValue,
+  selectHasMsa,
   selectInputFrameIndices,
   selectGoToPosition,
+  selectMsaColumnCount,
+  selectMsaStepSize,
+  selectMsaWindowSize,
   selectPairMetrics,
   selectPairs,
   selectScaleList,
@@ -29,12 +33,21 @@ const useTimelineData = ({
   barOptionValue,
   timelineCursor,
   inputFrameIndices,
+  hasMsa,
+  msaStepSize,
+  msaWindowSize,
+  msaColumnCount,
   pairMetrics,
   pairs,
   scaleList,
 }) =>
   useMemo(() => {
-    const { points, yMax } = buildSeriesPoints(barOptionValue, pairMetrics, scaleList, pairs);
+    const { points, yMax } = buildSeriesPoints(barOptionValue, pairMetrics, scaleList, pairs, {
+      hasMsa,
+      msaStepSize,
+      msaWindowSize,
+      msaColumnCount,
+    });
 
     const hasData = points.length > 0;
     const activePointIndex = resolveActivePointIndex(
@@ -52,12 +65,27 @@ const useTimelineData = ({
       activePointIndex,
       hasData,
     };
-  }, [barOptionValue, timelineCursor, inputFrameIndices, pairMetrics, pairs, scaleList]);
+  }, [
+    barOptionValue,
+    timelineCursor,
+    inputFrameIndices,
+    hasMsa,
+    msaStepSize,
+    msaWindowSize,
+    msaColumnCount,
+    pairMetrics,
+    pairs,
+    scaleList,
+  ]);
 
 export function DistanceChart() {
   const barOptionValue = useAppStore(selectBarOptionValue);
   const timelineCursor = useAppStore(selectTimelineCursor);
   const inputFrameIndices = useAppStore(selectInputFrameIndices);
+  const hasMsa = useAppStore(selectHasMsa);
+  const msaStepSize = useAppStore(selectMsaStepSize);
+  const msaWindowSize = useAppStore(selectMsaWindowSize);
+  const msaColumnCount = useAppStore(selectMsaColumnCount);
   const pairs = useAppStore(selectPairs);
   const pairMetrics = useAppStore(selectPairMetrics);
   const scaleList = useAppStore(selectScaleList);
@@ -67,6 +95,10 @@ export function DistanceChart() {
     barOptionValue,
     timelineCursor,
     inputFrameIndices,
+    hasMsa,
+    msaStepSize,
+    msaWindowSize,
+    msaColumnCount,
     pairMetrics,
     pairs,
     scaleList,
@@ -146,7 +178,7 @@ export function DistanceChart() {
       className="h-full w-full cursor-pointer rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70"
       role="slider"
       tabIndex={0}
-      aria-label={`${metric.label} input-tree metric chart`}
+      aria-label={`${metric.label} genome-window metric chart`}
       aria-orientation="horizontal"
       aria-valuemin={1}
       aria-valuemax={points.length}

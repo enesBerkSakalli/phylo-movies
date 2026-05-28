@@ -39,3 +39,27 @@ export const formatDistancePointLabel = (sourceInputTreeIndex, targetInputTreeIn
   `Tree ${sourceInputTreeIndex + 1} -> ${targetInputTreeIndex + 1}`;
 
 export const formatScalePointLabel = (inputTreeOrdinal) => `Input tree ${inputTreeOrdinal}`;
+
+export const formatMsaWindowRangeLabel = (window) =>
+  window ? `${window.startPosition}-${window.endPosition}` : null;
+
+export const formatGenomeDistancePointLabel = ({
+  sourceInputTreeIndex,
+  targetInputTreeIndex,
+  sourceWindow,
+  targetWindow,
+}) => {
+  const sourceWindowLabel = formatMsaWindowRangeLabel(sourceWindow);
+  const targetWindowLabel = formatMsaWindowRangeLabel(targetWindow);
+  const treeLabel = formatDistancePointLabel(sourceInputTreeIndex, targetInputTreeIndex);
+
+  if (!sourceWindowLabel || !targetWindowLabel) return treeLabel;
+  return `${treeLabel}; genome windows ${sourceWindowLabel} -> ${targetWindowLabel}`;
+};
+
+export const formatGenomeScalePointLabel = (inputTreeOrdinal, window) => {
+  const windowLabel = formatMsaWindowRangeLabel(window);
+  return windowLabel
+    ? `Input tree ${inputTreeOrdinal}; genome window ${windowLabel}`
+    : formatScalePointLabel(inputTreeOrdinal);
+};
