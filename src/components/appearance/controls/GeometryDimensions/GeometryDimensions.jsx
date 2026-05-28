@@ -34,7 +34,7 @@ export function GeometryDimensions({
   const isRenderingRef = useRef(false);
   const needsRenderRef = useRef(false);
 
-  const renderControllers = useCallback(async () => {
+  const renderControllers = useCallback(async (options = {}) => {
     if (isRenderingRef.current) {
       needsRenderRef.current = true;
       return;
@@ -45,7 +45,7 @@ export function GeometryDimensions({
       do {
         needsRenderRef.current = false;
         for (const controller of treeControllers) {
-          await controller.renderAllElements();
+          await controller.renderAllElements(options);
         }
       } while (needsRenderRef.current);
     } catch {
@@ -81,7 +81,7 @@ export function GeometryDimensions({
       const nextValue = clampValue(Array.isArray(vals) ? vals[0] : null, fontSizeNumber ?? 1.8);
       if (nextValue !== fontSizeNumber) {
         setFontSize(nextValue);
-        renderControllers();
+        renderControllers({ skipAutoFit: true });
       }
     },
     [fontSizeNumber, setFontSize, renderControllers]

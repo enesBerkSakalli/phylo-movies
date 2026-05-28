@@ -69,6 +69,34 @@ describe('TreeLayoutController radii', () => {
     expect(radii.extensionRadius).toBeCloseTo(radii.labelRadius - 1);
   });
 
+  it('keeps label and extension rings stable when visual label size changes', () => {
+    const controller = new TreeLayoutController(null);
+    const leaves = Array.from({ length: 350 }, (_value, index) => ({
+      angle: (index / 350) * Math.PI * 2,
+    }));
+    const layout = {
+      width: 1000,
+      height: 1000,
+      margin: 60,
+      max_radius: 200,
+      leaves,
+    };
+
+    useAppStore.setState({
+      fontSize: '0.8em',
+      styleConfig: { labelOffsets: { DEFAULT: 1, EXTENSION: 1 } },
+    });
+    const smallLabelRadii = controller._getConsistentRadii(layout);
+
+    useAppStore.setState({
+      fontSize: '8em',
+      styleConfig: { labelOffsets: { DEFAULT: 1, EXTENSION: 1 } },
+    });
+    const largeLabelRadii = controller._getConsistentRadii(layout);
+
+    expect(largeLabelRadii).toEqual(smallLabelRadii);
+  });
+
   it('uses zero maxGlobalScale as an intentional uniform scale input', () => {
     const controller = new TreeLayoutController(null);
     controller.maxGlobalScale = 0;

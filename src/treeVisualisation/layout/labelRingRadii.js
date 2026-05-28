@@ -6,6 +6,8 @@ const LABEL_FONT_SIZE_UNIT = 12;
 const DEFAULT_LABEL_SIZE = 24;
 const LABEL_TANGENTIAL_SPACING_FACTOR = 1.15;
 const MIN_ANGLE_SPAN_RADIANS = Math.PI / 6;
+export const STABLE_LABEL_LAYOUT_FONT_SIZE = '1.8em';
+export const STABLE_LABEL_BOUNDS_SIZE_PX = parseFloat(STABLE_LABEL_LAYOUT_FONT_SIZE) * 12;
 
 function finiteNumber(value, fallback) {
   const number = Number(value);

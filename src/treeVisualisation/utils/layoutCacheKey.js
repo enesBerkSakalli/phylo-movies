@@ -36,12 +36,6 @@ function normalizedOffsets(state) {
   };
 }
 
-function normalizedFontSize(state) {
-  const value = state?.fontSize;
-  const number = typeof value === 'string' ? parseFloat(value) : Number(value);
-  return Number.isFinite(number) ? number : 'default';
-}
-
 function normalizedOptionalNumber(value) {
   if (value === null || value === undefined) {
     return 'none';
@@ -112,7 +106,6 @@ export function createLayoutCacheKey({
     `rotation=${finiteNumber(state?.layoutRotationDegrees, 0)}`,
     `labelOffset=${offsets.label}`,
     `extensionOffset=${offsets.extension}`,
-    `fontSize=${normalizedFontSize(state)}`,
     `maxGlobalScale=${scale}`,
   ].join('|');
 }
