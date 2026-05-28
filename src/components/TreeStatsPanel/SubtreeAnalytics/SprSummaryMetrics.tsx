@@ -128,9 +128,9 @@ export const SprSummaryMetrics = ({
         </TooltipTrigger>
         <TooltipContent side="top" className="text-2xs font-mono bg-popover border-border">
           <div className="flex flex-col gap-1">
-            <div>Average per movement:</div>
+            <div>Average per SPR move:</div>
             <div className="font-bold text-primary">{averagePathHops.toFixed(3)}</div>
-            <div className="text-muted-foreground">Movements: {sprMoveEventCount}</div>
+            <div className="text-muted-foreground">SPR moves: {sprMoveEventCount}</div>
           </div>
         </TooltipContent>
       </Tooltip>
@@ -145,9 +145,9 @@ export const SprSummaryMetrics = ({
         </TooltipTrigger>
         <TooltipContent side="top" className="text-2xs font-mono bg-popover border-border">
           <div className="flex flex-col gap-1">
-            <div>Average per movement:</div>
+            <div>Average per SPR move:</div>
             <div className="font-bold text-primary">{averagePathLength.toFixed(6)}</div>
-            <div className="text-muted-foreground">Movements: {sprMoveEventCount}</div>
+            <div className="text-muted-foreground">SPR moves: {sprMoveEventCount}</div>
           </div>
         </TooltipContent>
       </Tooltip>

@@ -159,8 +159,8 @@ export const AnalyticsDashboard = ({
             variant="ghost"
             size="icon-xs"
             onClick={onClose}
-            aria-label="Close moving subtrees"
-            title="Close moving subtrees"
+            aria-label="Close moved subtrees"
+            title="Close moved subtrees"
             className="spr-analytics-no-drag hover:bg-destructive/10 hover:text-destructive transition-colors"
           >
             <X aria-hidden />
@@ -269,7 +269,7 @@ const AnalyticsDashboardBody = () => {
       <Tabs defaultValue="overview" className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <TabsList
           className="mb-4 grid w-full shrink-0 grid-cols-3"
-          aria-label="Moving subtree analytics views"
+          aria-label="Moved subtree analytics views"
         >
           <TabsTrigger value="overview" className="text-xs font-medium">
             {SPR_ANALYTICS_COPY.tabs.overview}
@@ -337,7 +337,7 @@ const AnalyticsDashboardBody = () => {
               <ExportCsvButton
                 onClick={handleExportEventCsv}
                 disabled={sprMoveEvents.length === 0}
-                label="Export movement events CSV"
+                label="Export SPR moves CSV"
               />
             }
           >

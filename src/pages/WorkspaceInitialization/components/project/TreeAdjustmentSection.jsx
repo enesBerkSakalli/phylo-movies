@@ -26,7 +26,7 @@ export function TreeAdjustmentSection({ disabled, embedded = false }) {
       )}
 
       <p className="text-2xs leading-relaxed text-muted-foreground">
-        Normalize roots before movement comparison.
+        Normalize roots before SPR move comparison.
       </p>
 
       <FormField

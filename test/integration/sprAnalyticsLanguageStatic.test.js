@@ -53,35 +53,35 @@ describe('SPR analytics phylogenetic language', () => {
       SPR_ANALYTICS_COPY.title,
       SPR_ANALYTICS_COPY.tabs.details,
       SPR_MOVE_EVENT_TABLE_COPY.columns.movedSubtree,
-    ]).toEqual(['Moving Subtrees', 'Recurrent Subtrees', 'Moved Subtree']);
+    ]).toEqual(['Moved Subtrees', 'Recurrent Subtrees', 'Moved Subtree']);
   });
 
-  it('uses movement terminology instead of exposing event-ledger setup in the UI', () => {
+  it('uses SPR move terminology instead of exposing event-ledger setup in the UI', () => {
     const timelineTooltipSource = fs.readFileSync(
       path.join(process.cwd(), 'src/components/timeline/TimelineSegmentTooltip.jsx'),
       'utf8'
     );
 
     expect(SPR_ANALYTICS_COPY).toMatchObject({
-      title: 'Moving Subtrees',
+      title: 'Moved Subtrees',
       description: 'Quantifies which taxa or subtrees change attachment across neighboring trees.',
       countedDescription:
-        'A movement is one subtree that changes attachment between two neighboring trees. Each row shows what moved, where it moved from, and where it moved to.',
+        'An SPR move is one moved subtree that changes attachment between two neighboring trees. Each row shows the moved subtree, its source attachment, and its target attachment.',
       eventDescription:
-        'One row per movement, showing what moved, the pivot/from/to edges, and source-to-target values for the selected branch annotation.',
+        'One row per SPR move, showing the moved subtree, pivot edge, source and target attachments, and source-to-target values for the selected branch annotation.',
     });
-    expect(SPR_ANALYTICS_COPY.tabs.events).toBe('Movement Events');
+    expect(SPR_ANALYTICS_COPY.tabs.events).toBe('SPR Moves');
     const analyticsCopyText = collectCopyText(SPR_ANALYTICS_COPY);
     expect(analyticsCopyText).not.toContain('event ledger');
     expect(analyticsCopyText).not.toContain('backend driver subtree');
 
-    expect(SPR_SUMMARY_LABELS.movementEvents).toBe('Movement Events');
+    expect(SPR_SUMMARY_LABELS.movementEvents).toBe('SPR Moves');
     expect(Object.values(SPR_SUMMARY_LABELS)).not.toContain('SPR Movements');
     expect(Object.values(SPR_SUMMARY_LABELS)).not.toContain('SPR Move Events');
 
-    expect(SPR_MOVE_EVENT_TABLE_COPY.searchLabel).toBe('Search movements');
-    expect(SPR_MOVE_EVENT_TABLE_COPY.noSearchResults).toBe('No movements match these filters.');
-    expect(SPR_MOVE_EVENT_TABLE_COPY.columns.movement).toBe('Movement');
+    expect(SPR_MOVE_EVENT_TABLE_COPY.searchLabel).toBe('Search SPR moves');
+    expect(SPR_MOVE_EVENT_TABLE_COPY.noSearchResults).toBe('No SPR moves match these filters.');
+    expect(SPR_MOVE_EVENT_TABLE_COPY.columns.movement).toBe('SPR Move');
     expect(SPR_MOVE_EVENT_TABLE_COPY.columns).not.toHaveProperty('pair');
     expect(collectCopyText(SPR_MOVE_EVENT_TABLE_COPY)).not.toContain('High conflict');
 

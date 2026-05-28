@@ -26,7 +26,7 @@ const USE_CASES = [
   {
     title: 'Rogue Taxa Analysis',
     description:
-      'Track taxa that move between subtrees across bootstrap trees and identify which lineages move and where they attach.',
+      'Track taxa that change attachment across bootstrap trees and identify which subtrees move and where they attach.',
   },
   {
     title: 'Sliding-Window Phylogenetics',
@@ -84,7 +84,7 @@ const PLATFORM_DOWNLOADS = [
 
 const HOW_IT_WORKS = [
   'Upload trees directly or derive them from sliding-window MSA workflows.',
-  'BranchArchitect computes subtree movements and interpolated intermediate states.',
+  'BranchArchitect computes SPR moves and interpolated intermediate states.',
   'Phylo-Movies renders animated transitions, linked statistics, and optional MSA context.',
 ];
 

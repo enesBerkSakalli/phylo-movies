@@ -37,7 +37,7 @@ export function IqTreeSupportSection({
     <TreeInferenceOptionGroup
       icon={ShieldCheck}
       title="Branch support annotations"
-      description="Optional IQ-TREE labels for movement review."
+      description="Optional IQ-TREE labels for SPR move review."
     >
       <FormField
         control={control}

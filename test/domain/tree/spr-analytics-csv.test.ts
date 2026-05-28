@@ -16,12 +16,12 @@ describe('createSprMovedSubtreeRecurrenceCsv', () => {
     expect(sprAnalyticsCsv.createSprFrequencyExportName).toBeUndefined();
   });
 
-  it('uses movement terminology in exported headers', () => {
+  it('uses SPR move terminology in exported headers', () => {
     const csv = createSprMovedSubtreeRecurrenceCsv([], []);
     const header = csv.split('\n')[0];
 
-    expect(header).toContain('Movement Count');
-    expect(header).toContain('% of Movements');
+    expect(header).toContain('SPR Move Count');
+    expect(header).toContain('% of SPR Moves');
     expect(header).toContain('Tree Pair Count');
     expect(header).toContain('Total Path Hops');
     expect(header).toContain('Total Path Length');
@@ -62,7 +62,7 @@ describe('createSprMovedSubtreeRecurrenceCsv', () => {
 });
 
 describe('createSprMoveEventCsv', () => {
-  it('exports one auditable row per movement', () => {
+  it('exports one auditable row per SPR move', () => {
     const csv = createSprMoveEventCsv(
       [
         {
@@ -91,13 +91,13 @@ describe('createSprMoveEventCsv', () => {
 
     const [header, row] = csv.split('\n');
 
-    expect(header).toContain('Movement ID');
-    expect(header).toContain('Movement Index');
+    expect(header).toContain('SPR Move ID');
+    expect(header).toContain('SPR Move Index');
     expect(header).toContain('Context Subtree');
-    expect(header).toContain('From Attachment');
-    expect(header).toContain('To Attachment');
-    expect(header).toContain('From Moved Subtree Value');
-    expect(header).toContain('To Placement Context Value');
+    expect(header).toContain('Source Attachment');
+    expect(header).toContain('Target Attachment');
+    expect(header).toContain('Source Moved Subtree Value');
+    expect(header).toContain('Target Placement Context Value');
     expect(header).toContain('Moved Subtree Value Class');
     expect(header).toContain('Placement Context Value Class');
     expect(header).not.toContain('Measured Path');
@@ -153,9 +153,9 @@ describe('createSprMoveEventCsv', () => {
     expect(row[20]).toBe('0');
   });
 
-  it('uses movement terminology in exported filenames', () => {
+  it('uses SPR move terminology in exported filenames', () => {
     expect(createSprMoveEventExportName('sample.tree', new Date('2026-05-15T00:00:00.000Z'))).toBe(
-      'sample-spr-movements-2026-05-15.csv'
+      'sample-spr-moves-2026-05-15.csv'
     );
   });
 });

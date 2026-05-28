@@ -297,7 +297,7 @@ export const SprMoveEventTable = ({
   const hasBranchValueFilter =
     subtreeBranchValueFilter !== BRANCH_VALUE_FILTER_ALL ||
     contextBranchValueFilter !== BRANCH_VALUE_FILTER_ALL;
-  const movementCountLabel = `${filteredEventRows.length} / ${events.length} movements`;
+  const movementCountLabel = `${filteredEventRows.length} / ${events.length} SPR moves`;
   const handleBranchValueThresholdInputChange = React.useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const nextValue = event.target.value;
@@ -487,7 +487,7 @@ export const SprMoveEventTable = ({
       >
         <table
           className={`${SPR_MOVE_EVENT_TABLE_COPY.minWidthClassName} w-full table-fixed text-xs`}
-          aria-label="Movement events"
+          aria-label="SPR moves"
           aria-rowcount={filteredEventRows.length}
         >
           <thead className="sticky top-0 z-20 border-b border-border bg-card text-muted-foreground font-bold shadow-sm">
@@ -723,7 +723,7 @@ function MovementTableEmptyState({ hasFilter }: { hasFilter: boolean }) {
       </div>
       {hasFilter ? (
         <div className="text-2xs">
-          Try a taxon name, branch value, attachment label, movement ID, or different value filter.
+          Try a taxon name, branch value, attachment label, SPR move ID, or different value filter.
         </div>
       ) : null}
     </div>

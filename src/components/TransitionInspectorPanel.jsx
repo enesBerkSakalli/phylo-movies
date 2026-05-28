@@ -109,8 +109,8 @@ export function TransitionInspectorPanel() {
           <KeyValue label="Local steps" value={details.localStepLabel} />
         </Section>
 
-        <Section title="Movement">
-          <KeyValue label="Moving taxa" value={details.movingTaxaLabel} />
+        <Section title="SPR Move">
+          <KeyValue label="Moved taxa" value={details.movingTaxaLabel} />
           <KeyValue label="Generated frames" value={details.generatedFrameLabel} />
           <KeyValue label="Animation steps" value={details.animationStepLabel} />
           <KeyValue label="Pivot edge" value={details.pivotEdgeLabel} />
