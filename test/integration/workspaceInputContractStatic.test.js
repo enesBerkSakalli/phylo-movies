@@ -72,4 +72,73 @@ describe('workspace initialization input contract', () => {
     expect(slidingWindowSource).not.toMatch(/\bmin=\{1\}/);
     expect(slidingWindowSource).not.toMatch(/\bmax=\{100000\}/);
   });
+
+  it('uses specific validation copy for windowing and IQ-TREE support fields', async () => {
+    const { workspaceInitializationFormSchema } = await import(
+      '../../src/pages/WorkspaceInitialization/workspaceInitializationFormModel.js'
+    );
+
+    const result = workspaceInitializationFormSchema.safeParse({
+      windowSize: 0,
+      stepSize: 1.5,
+      midpointRooting: false,
+      treeInferenceEngine: 'iqtree',
+      iqtreeFastSearch: true,
+      iqtreeSupportMode: 'ufboot',
+      iqtreeUfbootReplicates: 99,
+      iqtreeShAlrtReplicates: 1000,
+      iqtreeBnni: false,
+      useGtr: true,
+      useGamma: true,
+      usePseudo: false,
+      noMl: true,
+    });
+
+    expect(result.success).toBe(false);
+    const messages = result.error.issues.map((issue) => issue.message);
+    expect(messages).toContain('Window size must be at least 1 alignment column.');
+    expect(messages).toContain('Step size must be a whole number of alignment columns.');
+    expect(messages).toContain('UFBoot requires at least 100 replicates.');
+  });
+
+  it('gates backend-dependent workspace actions on backend readiness', () => {
+    const pageSource = readFileSync(
+      join(
+        repoRoot,
+        'src',
+        'pages',
+        'WorkspaceInitialization',
+        'WorkspaceInitializationPage.jsx'
+      ),
+      'utf8'
+    );
+    const hookSource = readFileSync(
+      join(
+        repoRoot,
+        'src',
+        'pages',
+        'WorkspaceInitialization',
+        'useWorkspaceInitializationForm.js'
+      ),
+      'utf8'
+    );
+    const exampleTabSource = readFileSync(
+      join(
+        repoRoot,
+        'src',
+        'pages',
+        'WorkspaceInitialization',
+        'components',
+        'ExampleTab.jsx'
+      ),
+      'utf8'
+    );
+
+    expect(pageSource).toContain("const backendReady = backendStatus.state === 'ready';");
+    expect(pageSource).toContain('const disabled = submitting || loadingExample || !backendReady;');
+    expect(pageSource).toContain('backendReady={backendReady}');
+    expect(exampleTabSource).toContain('loadingExample || submitting || !backendReady');
+    expect(hookSource).toContain("resolveApiUrl('/health')");
+    expect(hookSource).toContain("if (backendStatus.state !== 'ready')");
+  });
 });
