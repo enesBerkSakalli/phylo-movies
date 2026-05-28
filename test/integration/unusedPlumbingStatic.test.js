@@ -19,6 +19,19 @@ describe('unused plumbing cleanup', () => {
     expect(existsSync(statusSummaryPath), relative(repoRoot, statusSummaryPath)).toBe(false);
   });
 
+  it('does not keep the removed SPR activity overview chart component', () => {
+    const activityTimelinePath = join(
+      repoRoot,
+      'src',
+      'components',
+      'TreeStatsPanel',
+      'SubtreeAnalytics',
+      'SprActivityTimeline.tsx'
+    );
+
+    expect(existsSync(activityTimelinePath), relative(repoRoot, activityTimelinePath)).toBe(false);
+  });
+
   it('does not keep dependency-only chart packages', () => {
     const packageJson = JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8'));
     const dependencies = new Set([

@@ -13,7 +13,6 @@ const SPR_FILES = [
   'src/components/TreeStatsPanel/SubtreeAnalytics/SprSummaryMetrics.contract.ts',
   'src/components/TreeStatsPanel/SubtreeAnalytics/MovedSubtreeRecurrenceTable.tsx',
   'src/components/TreeStatsPanel/SubtreeAnalytics/SprMoveEventTable.tsx',
-  'src/components/TreeStatsPanel/SubtreeAnalytics/SprActivityTimeline.tsx',
   'src/components/TreeStatsPanel/SubtreeAnalytics/sprAnalyticsCsv.ts',
   'src/components/appearance/color/ColoringPanel.jsx',
   'src/components/appearance/FocusHighlightingSection.jsx',
@@ -88,6 +87,33 @@ describe('SPR analytics phylogenetic language', () => {
     expect(timelineTooltipSource).toContain('Affected subtrees');
     expect(timelineTooltipSource).not.toContain('Moved groups');
     expect(timelineTooltipSource).not.toContain('Moved subtrees');
+  });
+
+  it('keeps the overview metrics focused on decision-level counts', () => {
+    expect(SPR_SUMMARY_LABELS).toEqual({
+      uniqueMovedSubtrees: 'Unique Moved Subtrees',
+      movementEvents: 'SPR Moves',
+      treePairsWithMoves: 'Tree Pairs With Moves',
+    });
+
+    const overviewSource = fs.readFileSync(
+      path.join(
+        process.cwd(),
+        'src/components/TreeStatsPanel/SubtreeAnalytics/SprSummaryMetrics.tsx'
+      ),
+      'utf8'
+    );
+
+    [
+      'Solver Steps',
+      'Single-Taxon Moves',
+      'Top Subtree Share',
+      'Path Hops',
+      'Path Length',
+      'Farthest Subtree',
+    ].forEach((removedMetric) => {
+      expect(overviewSource).not.toContain(removedMetric);
+    });
   });
 
   it('makes the main recurrent-subtree table highlightable like the sidebar summary', () => {
