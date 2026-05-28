@@ -131,7 +131,7 @@ export class InterpolationRenderer {
 
     // Safety check for single tree
     if (totalTrees === 1) {
-      return this.controller.renderAllElements({ treeIndex: 0 });
+      return this.controller.renderAllElements({ treeIndex: 0, skipAutoFit: true });
     }
 
     const exactTreeIndex = progress * (totalTrees - 1);
@@ -142,7 +142,7 @@ export class InterpolationRenderer {
     // Optimization: Snap to nearest integer if very close, avoiding interpolation overhead
     if (t <= 0.001 || fromIndex === toIndex) {
       const snapIndex = Math.round(exactTreeIndex);
-      return this.controller.renderAllElements({ treeIndex: snapIndex });
+      return this.controller.renderAllElements({ treeIndex: snapIndex, skipAutoFit: true });
     }
 
     // Get tree data
@@ -199,7 +199,10 @@ export class InterpolationRenderer {
     }
 
     if (transitionFrame.transitionProgress <= 0.001 || transitionFrame.isStatic) {
-      return this.controller.renderAllElements({ treeIndex: transitionFrame.sourceTreeIndex });
+      return this.controller.renderAllElements({
+        treeIndex: transitionFrame.sourceTreeIndex,
+        skipAutoFit: true,
+      });
     }
 
     const { dataFrom, dataTo, transitionChangeModel } =

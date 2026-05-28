@@ -151,9 +151,11 @@ export class PolarPathInterpolator {
       ? arcAngleDiff
       : shortestAngle(startAngle, arcProperties.endAngle);
 
-    // Dynamic segment count based on arc length
-    const arcLength = Math.abs(angleDiff * radius);
-    const segmentCount = Math.min(100, Math.max(this.segmentCount, Math.ceil(arcLength / 15)));
+    // Keep animated path complexity stable across the transition.
+    // Dynamic arc-length sampling makes long/growing branches allocate and draw
+    // progressively more vertices per frame, which makes branch growth appear
+    // to slow the animation down.
+    const segmentCount = this.segmentCount;
 
     const totalPoints = segmentCount + 2;
     const result = new Float32Array(totalPoints * 3);
