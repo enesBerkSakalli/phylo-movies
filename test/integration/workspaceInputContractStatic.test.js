@@ -146,7 +146,7 @@ describe('workspace initialization input contract', () => {
     expect(pageSource).toContain("const backendReady = backendStatus.state === 'ready';");
     expect(pageSource).toContain('const disabled = submitting || loadingExample || !backendReady;');
     expect(pageSource).toContain('backendReady={backendReady}');
-    expect(exampleTabSource).toContain('loadingExample || submitting || !backendReady');
+    expect(exampleTabSource).toContain('loadingExample || submitting || (!demoOnly && !backendReady)');
     expect(hookSource).toContain("resolveApiUrl('/health')");
     expect(hookSource).toContain("if (backendStatus.state !== 'ready')");
   });
@@ -208,7 +208,7 @@ describe('workspace initialization input contract', () => {
       'utf8'
     );
 
-    expect(pageSource).toContain('onCancel={cancelOperation}');
+    expect(pageSource).toContain('onCancel={demoOnly ? undefined : cancelOperation}');
     expect(hookSource).toContain('function cancelOperation()');
     expect(hookSource).toContain('controller.abort()');
     expect(overlaySource).toContain('Cancel processing');
