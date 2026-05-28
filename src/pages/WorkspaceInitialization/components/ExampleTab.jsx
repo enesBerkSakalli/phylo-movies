@@ -56,6 +56,18 @@ export function ExampleTab({ loadingExample, loadingExampleId, submitting, handl
                   <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                     {example.description}
                   </p>
+                  {example.provenance && (
+                    <div className="mt-2 space-y-1 text-2xs leading-relaxed text-muted-foreground">
+                      <p>
+                        <span className="font-semibold text-foreground/70">Tree source:</span>{' '}
+                        {example.provenance.treeSource}
+                      </p>
+                      <p>
+                        <span className="font-semibold text-foreground/70">Settings:</span>{' '}
+                        {formatExampleSettings(example.provenance.settings)}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -143,4 +155,9 @@ export function ExampleTab({ loadingExample, loadingExampleId, submitting, handl
       </div>
     </div>
   );
+}
+
+function formatExampleSettings(settings = []) {
+  if (!Array.isArray(settings) || settings.length === 0) return 'Not specified';
+  return settings.map(({ label, value }) => `${label}: ${value}`).join('; ');
 }

@@ -334,6 +334,8 @@ export async function finalizeMovieData(data, formData, onProgress) {
   if (formData.treesFile && formData.treesFile.name) {
     data.file_name = formData.treesFile.name;
   }
+  data.dataset_provenance =
+    formData.datasetProvenance ?? data.dataset_provenance ?? createDatasetProvenance(formData);
 
   onProgress({ percent: 92, message: 'Saving data locally...' });
   updateElectronProgress(92, 'Saving data locally...');
@@ -354,4 +356,79 @@ export async function finalizeMovieData(data, formData, onProgress) {
 
   onProgress({ percent: 100, message: 'Complete!' });
   updateElectronProgress(100, 'Complete!');
+}
+
+function createDatasetProvenance(formData) {
+  const hasTrees = !!formData.treesFile;
+  const hasMsa = !!formData.msaFile;
+  const treeFileName = formData.treesFile?.name;
+  const msaFileName = formData.msaFile?.name;
+  const settings = [
+    { label: 'Input trees', value: treeFileName || 'Generated from MSA' },
+    ...(hasMsa ? [{ label: 'Alignment', value: msaFileName || 'Uploaded MSA' }] : []),
+    ...(hasMsa
+      ? [
+          {
+            label: 'Windowing',
+            value: `${formData.windowSize ?? 1} sites, ${formData.stepSize ?? 1}-site step`,
+          },
+        ]
+      : []),
+    {
+      label: 'Rooting',
+      value: formData.midpointRooting ? 'Midpoint rooting' : 'Input rooting preserved',
+    },
+  ];
+
+  if (hasMsa && !hasTrees) {
+    const engine = formData.treeInferenceEngine === 'fasttree' ? 'FastTree 2' : 'IQ-TREE';
+    const model = `${formData.useGtr ? 'GTR' : 'JC'}${formData.useGamma ? '+G' : ''}`;
+    settings.push({ label: 'Tree inference', value: `${engine}, ${model}` });
+    if (formData.treeInferenceEngine === 'iqtree') {
+      settings.push({
+        label: 'IQ-TREE search',
+        value: formData.iqtreeFastSearch ? 'Fast search' : 'Default search',
+      });
+      settings.push({
+        label: 'Branch support',
+        value: getIqTreeSupportSetting(formData),
+      });
+    } else {
+      settings.push({
+        label: 'FastTree flags',
+        value:
+          [formData.usePseudo ? '-pseudo' : null, formData.noMl ? '-noml' : null]
+            .filter(Boolean)
+            .join(', ') || 'Default',
+      });
+    }
+  }
+
+  return {
+    source_type:
+      hasTrees && hasMsa
+        ? 'Uploaded trees with MSA context'
+        : hasTrees
+          ? 'Uploaded tree series'
+          : 'MSA-derived tree sequence',
+    source_label: treeFileName || msaFileName || 'Uploaded dataset',
+    tree_source: hasTrees
+      ? `Input tree file: ${treeFileName || 'uploaded tree file'}`
+      : `Trees inferred from uploaded MSA: ${msaFileName || 'uploaded alignment'}`,
+    ...(hasMsa ? { alignment_source: msaFileName || 'Uploaded MSA' } : {}),
+    settings,
+  };
+}
+
+function getIqTreeSupportSetting(formData) {
+  switch (formData.iqtreeSupportMode) {
+    case 'ufboot':
+      return `UFBoot, ${formData.iqtreeUfbootReplicates ?? 1000} replicates`;
+    case 'sh_alrt':
+      return `SH-aLRT, ${formData.iqtreeShAlrtReplicates ?? 1000} replicates`;
+    case 'sh_alrt_ufboot':
+      return `SH-aLRT ${formData.iqtreeShAlrtReplicates ?? 1000} + UFBoot ${formData.iqtreeUfbootReplicates ?? 1000}`;
+    default:
+      return 'None';
+  }
 }

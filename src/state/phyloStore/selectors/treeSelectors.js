@@ -23,6 +23,7 @@ export { selectTimelineCursor } from './selectTimelineCursor.js';
 export { selectDimmingEnabled } from './selectDimmingEnabled.js';
 export { selectDimmingOpacity } from './selectDimmingOpacity.js';
 export { selectFileName } from './selectFileName.js';
+export { selectDatasetProvenance } from './selectDatasetProvenance.js';
 export { selectFitTimeline } from './selectFitTimeline.js';
 export { selectFontSize } from './selectFontSize.js';
 export { selectForward } from './selectForward.js';

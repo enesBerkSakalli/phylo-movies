@@ -22,6 +22,18 @@ export const EXAMPLE_DATASETS = [
       import.meta.env.BASE_URL +
       'examples/recombination_norovirus/source_preparation/augur_subsampling/03_trimmed/subsampled_350_gappyout_final.fasta',
     fileType: 'msa',
+    provenance: {
+      sourceType: 'Publication example',
+      sourceLabel: 'publication_data/recombination_norovirus',
+      treeSource:
+        'Trees are inferred from sliding windows of the supplied norovirus MSA during processing.',
+      alignmentSource: 'subsampled_350_gappyout_final.fasta',
+      settings: [
+        { label: 'Tree inference', value: 'IQ-TREE, GTR+G, fast search' },
+        { label: 'Windowing', value: '750 sites, 500-site step' },
+        { label: 'Rooting', value: 'Midpoint rooting' },
+      ],
+    },
     parameters: {
       windowSize: 750,
       stepSize: 500,
@@ -50,6 +62,17 @@ export const EXAMPLE_DATASETS = [
     msaFilePath:
       import.meta.env.BASE_URL + 'examples/quick_msa_demo/quick_msa_demo_30taxa_10windows.fasta',
     fileType: 'tree-msa',
+    provenance: {
+      sourceType: 'Synthetic demo',
+      sourceLabel: 'examples/quick_msa_demo',
+      treeSource: 'Precomputed 10-tree Newick sequence bundled with the reviewer demo.',
+      alignmentSource: 'quick_msa_demo_30taxa_10windows.fasta',
+      settings: [
+        { label: 'Tree source', value: 'Precomputed trees plus MSA context' },
+        { label: 'Window mapping', value: '200 sites, 100-site step' },
+        { label: 'Rooting', value: 'Input rooting preserved' },
+      ],
+    },
     parameters: {
       windowSize: 200,
       stepSize: 100,
@@ -73,6 +96,16 @@ export const EXAMPLE_DATASETS = [
     fileName: 'paper_example.tree',
     filePath: import.meta.env.BASE_URL + 'examples/figure_example/paper_example.tree',
     fileType: 'newick',
+    provenance: {
+      sourceType: 'Publication figure example',
+      sourceLabel: 'examples/figure_example',
+      treeSource: 'Precomputed two-tree Newick example used for the manuscript figure.',
+      settings: [
+        { label: 'Tree source', value: 'Precomputed trees' },
+        { label: 'Windowing', value: 'Not applicable' },
+        { label: 'Rooting', value: 'Input rooting preserved' },
+      ],
+    },
     parameters: {
       windowSize: null,
       stepSize: null,
@@ -91,12 +124,24 @@ export const EXAMPLE_DATASETS = [
       'Composition-ranked rogue-taxon bootstrap tree sequence inferred with IQ-TREE default mode (200 trees, 24 taxa, source alignment 14,190 sites)',
     workflow: 'Bootstrap tree series',
     scale: '24 taxa / 200 trees',
-    bestFor: 'Rogue-taxon movement review',
+    bestFor: 'Rogue-taxon SPR move review',
     fileName: 'all_trees_24_source-24_taxa24_sites14190.nwk',
     filePath:
       import.meta.env.BASE_URL +
       'examples/bootstrap_rogue_taxa/current_results/dataset_24_source-24_taxa24_sites14190/ranked/all_trees_24_source-24_taxa24_sites14190.nwk',
     fileType: 'newick',
+    provenance: {
+      sourceType: 'Publication bootstrap example',
+      sourceLabel: 'publication_data/bootstrap_rogue_taxa/current_results/dataset_24',
+      treeSource:
+        '200 composition-ranked bootstrap-replicate trees inferred with IQ-TREE 2 default search mode after RAxML replicate alignment generation.',
+      settings: [
+        { label: 'Tree inference', value: 'IQ-TREE 2 default search mode' },
+        { label: 'Bootstrap inputs', value: 'RAxML replicate alignments, 200 trees' },
+        { label: 'Support labels', value: 'Split-frequency support across the 200 trees' },
+        { label: 'Rooting', value: 'Midpoint rooting' },
+      ],
+    },
     parameters: {
       windowSize: null,
       stepSize: null,
@@ -121,6 +166,18 @@ export const EXAMPLE_DATASETS = [
       import.meta.env.BASE_URL +
       'examples/bootstrap_rogue_taxa/current_results/dataset_125_source-125_taxa125_sites29149/ranked/all_trees_125_source-125_taxa125_sites29149.nwk',
     fileType: 'newick',
+    provenance: {
+      sourceType: 'Publication bootstrap example',
+      sourceLabel: 'publication_data/bootstrap_rogue_taxa/current_results/dataset_125',
+      treeSource:
+        '200 composition-ranked bootstrap-replicate trees inferred with IQ-TREE 2 default search mode after RAxML replicate alignment generation.',
+      settings: [
+        { label: 'Tree inference', value: 'IQ-TREE 2 default search mode' },
+        { label: 'Bootstrap inputs', value: 'RAxML replicate alignments, 200 trees' },
+        { label: 'Support labels', value: 'Split-frequency support across the 200 trees' },
+        { label: 'Rooting', value: 'Midpoint rooting' },
+      ],
+    },
     parameters: {
       windowSize: null,
       stepSize: null,

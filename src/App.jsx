@@ -16,6 +16,7 @@ import { SidebarProvider, SidebarInset } from './components/ui/sidebar';
 
 import {
   selectFileName,
+  selectDatasetProvenance,
   selectInitialize,
   selectReset,
   selectSetTaxaColoringOpen,
@@ -26,6 +27,7 @@ import { useTreeController } from './hooks/useTreeController.js';
 
 export function App() {
   const fileName = useAppStore(selectFileName) || 'Loading...';
+  const datasetProvenance = useAppStore(selectDatasetProvenance);
   const initializeStore = useAppStore(selectInitialize);
   const resetStore = useAppStore(selectReset);
   const setTaxaColoringOpen = useAppStore(selectSetTaxaColoringOpen);
@@ -94,6 +96,7 @@ export function App() {
         <div className="flex min-h-0 w-full flex-1 overflow-hidden">
           <ToolsSidebar
             fileName={fileName}
+            datasetProvenance={datasetProvenance}
             error={error}
             sprAnalyticsOpen={sprAnalyticsOpen}
             isSprAnalyticsActive={activeFloatingWindow === 'spr-analytics'}

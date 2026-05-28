@@ -1,4 +1,10 @@
-import type { PhyloMovieData, TemporalEvent, TimelineFrame, TimelinePair } from './phyloMovieTypes';
+import type {
+  DatasetProvenance,
+  PhyloMovieData,
+  TemporalEvent,
+  TimelineFrame,
+  TimelinePair,
+} from './phyloMovieTypes';
 import { assertExactRecordKeys, assertRecord } from './schemaValidation';
 import {
   validateFrames,
@@ -11,6 +17,7 @@ import {
 } from './treePayloadValidators';
 
 export type {
+  DatasetProvenance,
   MsaData,
   PairMetricRow,
   PairMetrics,
@@ -37,6 +44,7 @@ export function validatePhyloMovieData(data: unknown): PhyloMovieData {
     'pair_metrics',
     'msa',
     'file_name',
+    'dataset_provenance',
   ]);
 
   const interpolatedTrees = validateTreeList(data.interpolated_trees);
@@ -55,6 +63,7 @@ export function validatePhyloMovieData(data: unknown): PhyloMovieData {
   if (typeof data.file_name !== 'string') {
     throw new Error('Invalid phyloMovieData payload: file_name must be a string');
   }
+  const datasetProvenance = validateDatasetProvenance(data.dataset_provenance);
 
   return {
     interpolated_trees: interpolatedTrees,
@@ -65,6 +74,78 @@ export function validatePhyloMovieData(data: unknown): PhyloMovieData {
     pair_metrics: pairMetrics,
     msa,
     file_name: data.file_name,
+    dataset_provenance: datasetProvenance,
+  };
+}
+
+function optionalString(value: unknown, fieldName: string): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'string') {
+    throw new Error(`Invalid phyloMovieData payload: ${fieldName} must be a string`);
+  }
+  return value;
+}
+
+function requiredString(value: unknown, fieldName: string): string {
+  if (typeof value !== 'string' || value.length === 0) {
+    throw new Error(`Invalid phyloMovieData payload: ${fieldName} must be a non-empty string`);
+  }
+  return value;
+}
+
+function validateDatasetProvenance(value: unknown): DatasetProvenance | null {
+  if (value === undefined || value === null) return null;
+  assertRecord(value, 'phyloMovieData.dataset_provenance');
+  assertExactRecordKeys(value, 'phyloMovieData.dataset_provenance', [
+    'source_type',
+    'source_label',
+    'tree_source',
+    'alignment_source',
+    'settings',
+    'citation',
+  ]);
+
+  const settingsValue = value.settings;
+  if (!Array.isArray(settingsValue)) {
+    throw new Error('Invalid phyloMovieData payload: dataset_provenance.settings must be an array');
+  }
+  const settings = settingsValue.map((setting, index) => {
+    assertRecord(setting, `phyloMovieData.dataset_provenance.settings[${index}]`);
+    assertExactRecordKeys(setting, `phyloMovieData.dataset_provenance.settings[${index}]`, [
+      'label',
+      'value',
+    ]);
+    return {
+      label: requiredString(
+        setting.label,
+        `phyloMovieData.dataset_provenance.settings[${index}].label`
+      ),
+      value: requiredString(
+        setting.value,
+        `phyloMovieData.dataset_provenance.settings[${index}].value`
+      ),
+    };
+  });
+
+  return {
+    source_type: requiredString(value.source_type, 'phyloMovieData.dataset_provenance.source_type'),
+    source_label: requiredString(
+      value.source_label,
+      'phyloMovieData.dataset_provenance.source_label'
+    ),
+    tree_source: requiredString(value.tree_source, 'phyloMovieData.dataset_provenance.tree_source'),
+    ...(optionalString(value.alignment_source, 'phyloMovieData.dataset_provenance.alignment_source')
+      ? {
+          alignment_source: optionalString(
+            value.alignment_source,
+            'phyloMovieData.dataset_provenance.alignment_source'
+          ),
+        }
+      : {}),
+    settings,
+    ...(optionalString(value.citation, 'phyloMovieData.dataset_provenance.citation')
+      ? { citation: optionalString(value.citation, 'phyloMovieData.dataset_provenance.citation') }
+      : {}),
   };
 }
 

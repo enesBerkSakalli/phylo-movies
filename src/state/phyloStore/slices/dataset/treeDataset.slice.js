@@ -13,6 +13,7 @@ export const createTreeDatasetSlice = (_set, get) => ({
   timelineFrames: [],
   leafNamesByIndex: [],
   fileName: null,
+  datasetProvenance: null,
   datasetVersion: 0,
 
   // ==========================================================================
