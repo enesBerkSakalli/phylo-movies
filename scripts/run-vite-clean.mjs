@@ -74,8 +74,8 @@ export function formatBackendUnavailableWarning(healthUrl = DEFAULT_BACKEND_HEAL
   return [
     `[backend] WARNING: BranchArchitect backend is not reachable at ${healthUrl}.`,
     '[backend] npm run dev starts the Vite frontend only.',
-    '[backend] Tree interpolation, examples, and MSA workflows need the backend.',
-    '[backend] Start the full stack with ./start.sh, or run:',
+    '[backend] Loading examples, processing uploaded trees, interpolation, and MSA-derived tree inference need the backend.',
+    '[backend] Start it with ./start.sh, or run:',
     '[backend]   cd engine/BranchArchitect && ./start_movie_server.sh',
   ].join('\n');
 }
