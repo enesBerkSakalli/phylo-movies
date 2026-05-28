@@ -86,13 +86,21 @@ describe('createSprMoveEventCsv', () => {
           weightedRfDistance: 1.25,
         },
       ],
-      ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']
+      ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'],
+      {
+        hasMsa: true,
+        msaStepSize: 50,
+        msaWindowSize: 100,
+        msaColumnCount: 1000,
+      }
     );
 
     const [header, row] = csv.split('\n');
 
     expect(header).toContain('SPR Move ID');
     expect(header).toContain('SPR Move Index');
+    expect(header).toContain('Source Window');
+    expect(header).toContain('Target Window');
     expect(header).toContain('Context Subtree');
     expect(header).toContain('Source Attachment');
     expect(header).toContain('Target Attachment');
@@ -103,6 +111,8 @@ describe('createSprMoveEventCsv', () => {
     expect(header).not.toContain('Measured Path');
     expect(header).not.toContain('Event ID');
     expect(row).toContain('pair_0_1:0');
+    expect(row).toContain('Input 1 sites 1-50 (mid 1)');
+    expect(row).toContain('Input 2 sites 1-100 (mid 51)');
     expect(row).toContain('"b, c"');
     expect(row).toContain('"h, i"');
     expect(row).toContain('"f, g"');
@@ -140,8 +150,6 @@ describe('createSprMoveEventCsv', () => {
 
     const row = csv.split('\n')[1].split(',');
 
-    expect(row[10]).toBe('');
-    expect(row[11]).toBe('');
     expect(row[12]).toBe('');
     expect(row[13]).toBe('');
     expect(row[14]).toBe('');
@@ -150,7 +158,9 @@ describe('createSprMoveEventCsv', () => {
     expect(row[17]).toBe('');
     expect(row[18]).toBe('');
     expect(row[19]).toBe('');
-    expect(row[20]).toBe('0');
+    expect(row[20]).toBe('');
+    expect(row[21]).toBe('');
+    expect(row[22]).toBe('0');
   });
 
   it('uses SPR move terminology in exported filenames', () => {

@@ -38,7 +38,7 @@ describe('SPR analytics window shell', () => {
     );
 
     expect(ANALYTICS_WINDOW_BOUNDS.minWidth).toBeGreaterThanOrEqual(620);
-    expect(SPR_MOVE_EVENT_TABLE_COPY.minWidthClassName).toBe('min-w-[940px]');
+    expect(SPR_MOVE_EVENT_TABLE_COPY.minWidthClassName).toBe('min-w-[1040px]');
     expect(SPR_MOVE_EVENT_TABLE_COPY.metrics.rfDistance).toBe('RF Distance');
     expect(SPR_MOVE_EVENT_TABLE_COPY.metrics.weightedRf).toBe('Weighted RF');
     expect(tableSource).toContain('VIRTUAL_ROW_HEIGHT');
@@ -68,7 +68,9 @@ describe('SPR analytics window shell', () => {
 
     expect(tableSource).not.toContain('@tanstack/react-table');
     expect(tableSource).not.toContain('columns.pair');
-    expect(tableSource).toContain('buildSprMoveEventSearchText(event, leafNamesByIndex)');
+    expect(tableSource).toContain(
+      'buildSprMoveEventSearchText(event, leafNamesByIndex, windowRangeOptions)'
+    );
     expect(tableSource).toContain('queryTerms.every((term) => searchText.includes(term))');
     expect(SPR_MOVE_EVENT_TABLE_COPY.searchLabel).toBe('Search SPR moves');
     expect(SPR_MOVE_EVENT_TABLE_COPY.noSearchResults).toBe('No SPR moves match these filters.');

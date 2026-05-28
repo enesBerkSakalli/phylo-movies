@@ -41,7 +41,13 @@ describe('SPR move event search text', () => {
       'SourceB',
       'DestinationA',
       'DestinationB',
-    ]);
+    ],
+    {
+      hasMsa: true,
+      msaStepSize: 50,
+      msaWindowSize: 100,
+      msaColumnCount: 1000,
+    });
 
     expect(text).toContain('spr-12');
     expect(text).toContain('pair_2_3');
@@ -50,6 +56,7 @@ describe('SPR move event search text', () => {
     expect(text).toContain('contexttaxon');
     expect(text).toContain('sourcea');
     expect(text).toContain('destinationb');
+    expect(text).toContain('sites 51-150 -> 101-200');
     expect(text).toContain('4-8');
     expect(text).toContain('0.75');
     expect(text).toContain('1.25');

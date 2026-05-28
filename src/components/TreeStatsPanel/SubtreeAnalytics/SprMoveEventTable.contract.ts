@@ -1,6 +1,6 @@
 export const SPR_MOVE_EVENT_TABLE_COPY = {
   searchLabel: 'Search SPR moves',
-  searchPlaceholder: 'Search SPR moves by taxa, pivot edge, attachment, branch value...',
+  searchPlaceholder: 'Search SPR moves by taxa, window range, pivot edge, attachment...',
   subtreeValueFilterLabel: 'Filter SPR moves by moved-subtree branch value category',
   contextValueFilterLabel: 'Filter SPR moves by placement-context branch value category',
   branchValueThresholdLabel: 'Value threshold',
@@ -42,5 +42,5 @@ export const SPR_MOVE_EVENT_TABLE_COPY = {
     rfDistance: 'RF Distance',
     weightedRf: 'Weighted RF',
   },
-  minWidthClassName: 'min-w-[940px]',
+  minWidthClassName: 'min-w-[1040px]',
 };

@@ -1,5 +1,9 @@
 import { formatSubtreeLabel } from '../../../domain/spr/sprAnalytics';
 import type { SprMovedSubtreeRecurrence, SprMoveEventRow } from './types';
+import {
+  buildSprMoveWindowRange,
+  type SprMoveWindowRangeOptions,
+} from './sprMoveWindowRange';
 
 const escapeCsvValue = (value: unknown): string => {
   const str = value === null || value === undefined ? '' : String(value);
@@ -71,13 +75,16 @@ const formatStepRange = (stepRange: [number, number] | null | undefined): string
 
 export const createSprMoveEventCsv = (
   events: SprMoveEventRow[],
-  leafNamesByIndex: string[]
+  leafNamesByIndex: string[],
+  windowRangeOptions: SprMoveWindowRangeOptions = {}
 ): string => {
   const headers = [
     'SPR Move ID',
     'Tree Pair',
     'Pair ID',
     'SPR Move Index',
+    'Source Window',
+    'Target Window',
     'Moved Subtree',
     'Context Subtree',
     'Taxa Count',
@@ -102,38 +109,44 @@ export const createSprMoveEventCsv = (
     'Context Split Indices',
   ];
 
-  const rows = events.map((event) => [
-    event.eventId,
-    event.pairLabel,
-    event.pairId,
-    event.eventIndex,
-    formatLabel(event.splitIndices, leafNamesByIndex),
-    formatLabel(event.contextSplitIndices, leafNamesByIndex),
-    event.splitIndices.length,
-    formatLabel(event.pivotEdge, leafNamesByIndex),
-    formatLabel(event.sourceAttachment, leafNamesByIndex),
-    formatLabel(event.destinationAttachment, leafNamesByIndex),
-    formatOptionalFixed(event.sourceAttachmentSupport?.primary),
-    formatOptionalFixed(event.destinationAttachmentSupport?.primary),
-    event.sourceMovedSubtreeBranchValue?.displayValue ?? '',
-    event.destinationMovedSubtreeBranchValue?.displayValue ?? '',
-    event.sourceAncestorBranchValue?.displayValue ?? '',
-    event.destinationAncestorBranchValue?.displayValue ?? '',
-    event.sourceMovedSubtreeBranchValue?.label ??
-      event.destinationMovedSubtreeBranchValue?.label ??
-      event.sourceAncestorBranchValue?.label ??
-      event.destinationAncestorBranchValue?.label ??
-      '',
-    event.branchValueClass ?? '',
-    event.contextBranchValueClass ?? '',
-    formatStepRange(event.stepRange),
-    event.totalPathHops,
-    formatFixed(event.totalPathLength),
-    formatOptionalFixed(event.rfDistance),
-    formatOptionalFixed(event.weightedRfDistance),
-    formatIndexList(event.splitIndices),
-    formatIndexList(event.contextSplitIndices),
-  ]);
+  const rows = events.map((event) => {
+    const windowRange = buildSprMoveWindowRange(event, windowRangeOptions);
+
+    return [
+      event.eventId,
+      event.pairLabel,
+      event.pairId,
+      event.eventIndex,
+      windowRange?.sourceLabel ?? '',
+      windowRange?.targetLabel ?? '',
+      formatLabel(event.splitIndices, leafNamesByIndex),
+      formatLabel(event.contextSplitIndices, leafNamesByIndex),
+      event.splitIndices.length,
+      formatLabel(event.pivotEdge, leafNamesByIndex),
+      formatLabel(event.sourceAttachment, leafNamesByIndex),
+      formatLabel(event.destinationAttachment, leafNamesByIndex),
+      formatOptionalFixed(event.sourceAttachmentSupport?.primary),
+      formatOptionalFixed(event.destinationAttachmentSupport?.primary),
+      event.sourceMovedSubtreeBranchValue?.displayValue ?? '',
+      event.destinationMovedSubtreeBranchValue?.displayValue ?? '',
+      event.sourceAncestorBranchValue?.displayValue ?? '',
+      event.destinationAncestorBranchValue?.displayValue ?? '',
+      event.sourceMovedSubtreeBranchValue?.label ??
+        event.destinationMovedSubtreeBranchValue?.label ??
+        event.sourceAncestorBranchValue?.label ??
+        event.destinationAncestorBranchValue?.label ??
+        '',
+      event.branchValueClass ?? '',
+      event.contextBranchValueClass ?? '',
+      formatStepRange(event.stepRange),
+      event.totalPathHops,
+      formatFixed(event.totalPathLength),
+      formatOptionalFixed(event.rfDistance),
+      formatOptionalFixed(event.weightedRfDistance),
+      formatIndexList(event.splitIndices),
+      formatIndexList(event.contextSplitIndices),
+    ];
+  });
 
   return [headers, ...rows].map((row) => row.map(escapeCsvValue).join(',')).join('\n');
 };
