@@ -25,6 +25,7 @@ source_preparation/augur_subsampling/
 ├── 01_raw/                          # Raw sequences (before alignment)
 │   ├── full_genome_sequences.fasta  # Original sequences from Nextstrain
 │   ├── full_genome_accessions.txt   # List of GenBank accession numbers
+│   ├── full_genome_accession_versions.txt # Locked accession versions
 │   ├── subsampled_350.fasta         # After Augur subsampling
 │   └── subsampled_350_renamed.fasta # With simplified sequence IDs
 │
@@ -60,11 +61,13 @@ source_preparation/augur_subsampling/
 
 ## Data Source
 
-Sequences were obtained from the **Nextstrain Norovirus repository**:
+Sequences are recreated through the **Nextstrain Norovirus repository**:
 
 - **Repository**: https://github.com/nextstrain/norovirus
-- **Data files**: `data/sequences.fasta` and `data/metadata.tsv`
-- **Curation**: Sequences curated by Nextstrain team from GenBank submissions
+- **Workflow commit**: `bce398d15a14c82a2a8c3574da289205e2c5844f`
+- **Workflow**: `ingest/`, run with `nextstrain build`
+- **Snapshot lock**: `01_raw/full_genome_accession_versions.txt`
+- **Curation**: Nextstrain/Augur workflow over public GenBank submissions
 
 The Nextstrain Norovirus dataset is a curated collection of full-genome Norovirus sequences with standardized metadata including:
 - Genotype assignments (VP1/capsid and RdRp/polymerase)
@@ -75,17 +78,18 @@ The Nextstrain Norovirus dataset is a curated collection of full-genome Noroviru
 
 ## Data Processing Pipeline
 
-### Step 1: Download from Nextstrain
+### Step 1: Recreate the pinned Nextstrain/Augur source snapshot
 
 ```bash
-# Clone the Nextstrain Norovirus repository
-git clone https://github.com/nextstrain/norovirus.git
-cd norovirus
-
-# Copy sequences and metadata
-cp data/sequences.fasta ../full_genome_sequences.fasta
-cp data/metadata.tsv ../full_genome_metadata.tsv
+PATH="$PWD/.venv-publication/bin:$PATH" \
+  ./publication_data/recombination_norovirus/source_preparation/augur_subsampling/scripts/recreate_nextstrain_augur_snapshot.sh
 ```
+
+This script checks out the pinned Nextstrain norovirus workflow commit, runs
+`nextstrain build --ambient` for the ingest workflow, locks the generated output
+to the 4565 accession versions retained in
+`01_raw/full_genome_accession_versions.txt`, and then runs the
+Augur/MAFFT/trimAl steps below.
 
 ### Step 2: Subsampling with Augur
 
@@ -119,7 +123,7 @@ mafft --auto --thread -1 \
 
 ### Step 4: Alignment Trimming
 
-Using trimAl v1.4.1 with the gappyout algorithm to remove poorly aligned regions:
+Using trimAl v1.5.1 with the gappyout algorithm to remove poorly aligned regions:
 
 ```bash
 trimal \
@@ -135,6 +139,11 @@ trimal \
 Genotypes were pre-assigned in the Nextstrain metadata using Nextclade:
 - **VP1/ORF2**: Capsid genotype (e.g., GII.4)
 - **RdRp/ORF1**: Polymerase genotype (e.g., GII.P31)
+
+Final FASTA IDs use `accession_polymerase_capsid` when both labels are
+resolved, for example `PV588655_P17_GII-17`. Eight retained records have no
+resolved capsid suffix in the locked metadata and therefore use
+`accession_polymerase`, for example `PX458208_P1`.
 
 ---
 
@@ -152,6 +161,7 @@ Genotypes were pre-assigned in the Nextstrain metadata using Nextclade:
 | ------------------------------ | ----------------------------------------- |
 | `full_genome_sequences.fasta`  | All full-genome sequences from Nextstrain |
 | `full_genome_accessions.txt`   | GenBank accession numbers                 |
+| `full_genome_accession_versions.txt` | GenBank accession versions that lock the Nextstrain/Augur source snapshot |
 | `subsampled_350.fasta`         | Sequences after Augur subsampling         |
 | `subsampled_350_renamed.fasta` | Subsampled with simplified IDs            |
 

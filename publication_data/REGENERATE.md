@@ -16,6 +16,15 @@ Create or update the publication-analysis environment:
 conda env create -f publication_data/environment.yml
 ```
 
+On Apple Silicon/macOS, use the project-local publication venv documented in
+`publication_data/recombination_norovirus/REGENERATE.md` for Nextstrain/Augur
+workflows:
+
+```bash
+source .venv-publication/bin/activate
+nextstrain check-setup --set-default ambient
+```
+
 If conda is not installed on the host, use the publication container instead:
 
 ```bash
@@ -54,6 +63,13 @@ Verify the norovirus/ReCAN result set:
 
 The commands should report `OK` for every file.
 
+Verify manifest cleanliness, retained source-file counts, promoted bootstrap
+tree counts, checksums, and app-facing taxa scale tiers:
+
+```bash
+npm run publication:data:check
+```
+
 ## Regenerate Rogue-Taxon Bootstrap Results
 
 Run a quick smoke check:
@@ -91,7 +107,7 @@ publication_data/bootstrap_rogue_taxa/REGENERATE.md
 Run the ReCAN validation workflow:
 
 ```bash
-conda run -n phylomovies-publication \
+PATH="$PWD/.venv-publication/bin:$PATH" \
   ./publication_data/recombination_norovirus/scripts/recan_recombination_analysis/run_recombination_analysis.sh
 ```
 
@@ -114,6 +130,22 @@ For copy-only checks:
 
 ```bash
 npm run copy-examples
+```
+
+## Generate Local Large-Scale Fixtures
+
+Use the publication venv and msprime for larger local taxa-limit probes without
+committing generated stress data:
+
+```bash
+PATH="$PWD/.venv-publication/bin:$PATH" npm run fixtures:msprime-scale -- --taxa 500 --trees 25
+PATH="$PWD/.venv-publication/bin:$PATH" npm run fixtures:msprime-scale -- --taxa 1000 --trees 10
+```
+
+The generated files are written under:
+
+```text
+publication_data/scale_fixtures/generated/
 ```
 
 ## Archive Boundary
