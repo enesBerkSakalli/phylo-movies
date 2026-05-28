@@ -27,8 +27,8 @@ git archive --format=tar.gz \
 
 | Layer | Include in archive | Purpose |
 | --- | --- | --- |
-| `README.md`, `PUBLICATION_DATA_RELATIONSHIP_MAP.md`, `REGENERATE.md`, `PUBLICATION_ARCHIVE.md` | yes | Reader entry points and archive contract. |
-| `environment.yml`, `publication_data.env`, `ENVIRONMENT_VERIFICATION.md` | yes | Reproducible environment and shared workflow constants. |
+| `README.md`, `REGENERATE.md`, `PUBLICATION_ARCHIVE.md`, `SCALE_LIMITS.md` | yes | Reader entry points, archive contract, and committed scale limits. |
+| `environment.yml`, `publication_data.env` | yes | Reproducible environment and shared workflow constants. |
 | `bootstrap_rogue_taxa/source_alignments/` | yes | Selected Aberer/RogueNaRok source alignments with checksums. |
 | `bootstrap_rogue_taxa/scripts/bootstrap_ordering/` | yes | Bootstrap replicate generation, tree inference, ordering, and promotion scripts. |
 | `bootstrap_rogue_taxa/current_results/` | yes | Promoted IQ-TREE result set, manifests, checksums, and verification report. |
@@ -36,6 +36,7 @@ git archive --format=tar.gz \
 | `recombination_norovirus/source_preparation/` | yes | Retained preprocessing inputs, metadata, and source-preparation scripts. |
 | `recombination_norovirus/scripts/recan_recombination_analysis/` | yes | ReCAN validation workflow scripts. |
 | `recombination_norovirus/current_results/` | yes | Promoted ReCAN validation outputs and manifest. |
+| `scale_fixtures/msprime_performance/` | yes | Deterministic synthetic tree-only fixtures for visualization scale checks. |
 | `quick_msa_demo/` | yes | Lightweight app/demo input used for smoke tests and examples. |
 | `figure_example/` | yes | Small figure/demo tree input. |
 
