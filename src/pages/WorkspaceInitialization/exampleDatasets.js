@@ -9,12 +9,12 @@ const PUBLICATION_CITATION =
 
 export const EXAMPLE_DATASETS = [
   {
-    id: 'norovirus-350',
-    name: 'Norovirus GII.17',
+    id: 'norovirus-334',
+    name: 'Norovirus Polymerase-Capsid Recombination',
     description:
-      'Human norovirus GII.17 pandemic variant phylogeny (350 sequences, full genome alignment)',
+      'Human norovirus polymerase-capsid recombination panel (334 retained sequences from a 350-sequence Augur target, 8,058 bp full-genome alignment)',
     workflow: 'Sliding-window MSA',
-    scale: '350 taxa',
+    scale: '334 taxa / 8,058 bp',
     bestFor: 'Recombination breakpoint exploration',
     fileName: 'subsampled_350_gappyout_final.fasta',
     // Path maps to publication_data/ via Vite plugin (see vite.config.mts)
@@ -46,6 +46,49 @@ export const EXAMPLE_DATASETS = [
     },
     citation: PUBLICATION_CITATION,
     badge: 'Publication',
+  },
+  {
+    id: 'norovirus-334-bootstrap',
+    name: 'Norovirus Bootstrap Tree Search',
+    description:
+      'Same 334-sequence norovirus recombination panel, processed with IQ-TREE thorough search and UFBoot branch support',
+    workflow: 'Sliding-window MSA',
+    scale: '334 taxa / 8,058 bp',
+    bestFor: 'Genome-window topology changes with branch-support labels',
+    fileName: 'subsampled_350_gappyout_final.fasta',
+    filePath:
+      import.meta.env.BASE_URL +
+      'examples/recombination_norovirus/source_preparation/augur_subsampling/03_trimmed/subsampled_350_gappyout_final.fasta',
+    fileType: 'msa',
+    provenance: {
+      sourceType: 'Publication example',
+      sourceLabel: 'publication_data/recombination_norovirus',
+      treeSource:
+        'Trees are inferred from sliding windows of the supplied norovirus MSA using IQ-TREE thorough search with UFBoot support.',
+      alignmentSource: 'subsampled_350_gappyout_final.fasta',
+      settings: [
+        { label: 'Tree inference', value: 'IQ-TREE, GTR+G, thorough search' },
+        { label: 'Branch support', value: 'UFBoot, 1000 replicates, BNNI optimization' },
+        { label: 'Windowing', value: '750 sites, 500-site step' },
+        { label: 'Rooting', value: 'Midpoint rooting' },
+      ],
+    },
+    parameters: {
+      windowSize: 750,
+      stepSize: 500,
+      midpointRooting: true,
+      treeInferenceEngine: 'iqtree',
+      iqtreeFastSearch: false,
+      iqtreeSupportMode: 'ufboot',
+      iqtreeUfbootReplicates: 1000,
+      iqtreeShAlrtReplicates: 1000,
+      iqtreeBnni: true,
+      useGtr: true,
+      useGamma: true,
+      usePseudo: false,
+    },
+    citation: PUBLICATION_CITATION,
+    badge: 'Bootstrap',
   },
   {
     id: 'quick-msa-demo',
@@ -188,6 +231,114 @@ export const EXAMPLE_DATASETS = [
     },
     citation: PUBLICATION_CITATION,
     badge: 'IQ-TREE',
+  },
+  {
+    id: 'msprime-performance-250',
+    name: 'msprime Performance 250',
+    description:
+      'Deterministic msprime tree-only performance fixture (250 taxa, 50 independent trees)',
+    workflow: 'Synthetic tree series',
+    scale: '250 taxa / 50 trees',
+    bestFor: 'Baseline large-tree visualization',
+    fileName: 'msprime_250taxa_50trees_seed25050.nwk',
+    filePath:
+      import.meta.env.BASE_URL +
+      'examples/scale_fixtures/msprime_performance/msprime_250taxa_50trees_seed25050.nwk',
+    fileType: 'newick',
+    provenance: {
+      sourceType: 'Synthetic performance fixture',
+      sourceLabel: 'publication_data/scale_fixtures/msprime_performance',
+      treeSource:
+        'Generated with msprime as 50 deterministic independent single-tree replicates.',
+      settings: [
+        { label: 'Simulator', value: 'msprime' },
+        { label: 'Mode', value: 'Independent single-tree replicates' },
+        { label: 'Seed', value: '25050' },
+        { label: 'Rooting', value: 'Input rooting preserved' },
+      ],
+    },
+    parameters: {
+      windowSize: null,
+      stepSize: null,
+      midpointRooting: false,
+      useGtr: false,
+      useGamma: false,
+      usePseudo: false,
+    },
+    citation: 'Synthetic msprime performance fixture generated locally for Phylo-Movies.',
+    badge: 'Performance',
+  },
+  {
+    id: 'msprime-performance-500',
+    name: 'msprime Performance 500',
+    description:
+      'Deterministic msprime tree-only performance fixture (500 taxa, 25 independent trees)',
+    workflow: 'Synthetic tree series',
+    scale: '500 taxa / 25 trees',
+    bestFor: 'Large-tree visualization limits',
+    fileName: 'msprime_500taxa_25trees_seed50025.nwk',
+    filePath:
+      import.meta.env.BASE_URL +
+      'examples/scale_fixtures/msprime_performance/msprime_500taxa_25trees_seed50025.nwk',
+    fileType: 'newick',
+    provenance: {
+      sourceType: 'Synthetic performance fixture',
+      sourceLabel: 'publication_data/scale_fixtures/msprime_performance',
+      treeSource:
+        'Generated with msprime as 25 deterministic independent single-tree replicates.',
+      settings: [
+        { label: 'Simulator', value: 'msprime' },
+        { label: 'Mode', value: 'Independent single-tree replicates' },
+        { label: 'Seed', value: '50025' },
+        { label: 'Rooting', value: 'Input rooting preserved' },
+      ],
+    },
+    parameters: {
+      windowSize: null,
+      stepSize: null,
+      midpointRooting: false,
+      useGtr: false,
+      useGamma: false,
+      usePseudo: false,
+    },
+    citation: 'Synthetic msprime performance fixture generated locally for Phylo-Movies.',
+    badge: 'Performance',
+  },
+  {
+    id: 'msprime-performance-1000',
+    name: 'msprime Performance 1000',
+    description:
+      'Deterministic msprime tree-only performance fixture (1000 taxa, 10 independent trees)',
+    workflow: 'Synthetic tree series',
+    scale: '1000 taxa / 10 trees',
+    bestFor: 'Stress-testing maximum visible taxa',
+    fileName: 'msprime_1000taxa_10trees_seed100010.nwk',
+    filePath:
+      import.meta.env.BASE_URL +
+      'examples/scale_fixtures/msprime_performance/msprime_1000taxa_10trees_seed100010.nwk',
+    fileType: 'newick',
+    provenance: {
+      sourceType: 'Synthetic performance fixture',
+      sourceLabel: 'publication_data/scale_fixtures/msprime_performance',
+      treeSource:
+        'Generated with msprime as 10 deterministic independent single-tree replicates.',
+      settings: [
+        { label: 'Simulator', value: 'msprime' },
+        { label: 'Mode', value: 'Independent single-tree replicates' },
+        { label: 'Seed', value: '100010' },
+        { label: 'Rooting', value: 'Input rooting preserved' },
+      ],
+    },
+    parameters: {
+      windowSize: null,
+      stepSize: null,
+      midpointRooting: false,
+      useGtr: false,
+      useGamma: false,
+      usePseudo: false,
+    },
+    citation: 'Synthetic msprime performance fixture generated locally for Phylo-Movies.',
+    badge: 'Performance',
   },
 ];
 
