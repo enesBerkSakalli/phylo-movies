@@ -399,7 +399,6 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     const treeData = treeList[treeIndex];
     const {
       branchTransformation,
-      fontSize,
       layoutAngleDegrees,
       layoutRotationDegrees,
       styleConfig,
@@ -429,7 +428,6 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
           layoutAngleDegrees,
           layoutRotationDegrees,
           labelOffsets: offsets,
-          fontSize,
           treeIndex,
           treeSide: 'left',
           renderMode: 'animation',

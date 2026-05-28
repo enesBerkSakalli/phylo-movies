@@ -12,7 +12,11 @@ import {
   createUniformScalingCacheKey,
 } from './utils/layoutCacheKey.js';
 import { createLayoutResult } from './layout/LayoutResultAdapter.js';
-import { calculateLabelAngleSpan, calculateReadableLabelRadii } from './layout/labelRingRadii.js';
+import {
+  calculateLabelAngleSpan,
+  calculateReadableLabelRadii,
+  STABLE_LABEL_LAYOUT_FONT_SIZE,
+} from './layout/labelRingRadii.js';
 
 const TREE_LAYOUT_MARGIN = 60;
 
@@ -257,7 +261,7 @@ export class TreeLayoutController {
    * Calculates label and extension radii with dynamic positioning.
    */
   _getConsistentRadii(layout) {
-    const { fontSize, styleConfig } = useAppStore.getState();
+    const { styleConfig } = useAppStore.getState();
     const offsets = styleConfig?.labelOffsets || { DEFAULT: 20, EXTENSION: 5 };
     const layoutRadius = Number(layout?.max_radius);
     const globalRenderedRadius = this._getStableGlobalRenderedRadius(layout);
@@ -274,7 +278,7 @@ export class TreeLayoutController {
       baseRadius,
       labelOffsets: offsets,
       labelCount: Array.isArray(layout?.leaves) ? layout.leaves.length : 0,
-      fontSize,
+      fontSize: STABLE_LABEL_LAYOUT_FONT_SIZE,
       angleSpanRadians: calculateLabelAngleSpan(layout?.leaves),
     });
   }

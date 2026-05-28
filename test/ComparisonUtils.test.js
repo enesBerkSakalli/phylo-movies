@@ -107,12 +107,22 @@ describe('ComparisonUtils', () => {
       leftTreeOffsetY: 11,
       fontSize: '3em',
     });
+    const geometryWithLargeLabels = ComparisonUtils.calculateComparisonFrameGeometry({
+      leftLayerData,
+      rightLayerData,
+      canvasWidth: 800,
+      rightTreeOffset: { x: 7, y: -3 },
+      leftTreeOffsetX: 5,
+      leftTreeOffsetY: 11,
+      fontSize: '8em',
+    });
 
     expect(leftLayerData.nodes[0].position).toEqual([0, 0, 0]);
     expect(rightLayerData.nodes[0].position).toEqual([100, 0, 0]);
     expect(geometry.leftCenterBase).toEqual([5, 0]);
     expect(geometry.rightCenterBase).toEqual([110, 0]);
-    expect(geometry.labelSizePx).toBe(36);
+    expect(geometry.labelSizePx).toBeCloseTo(21.6);
+    expect(geometryWithLargeLabels.rightOffset).toBe(geometry.rightOffset);
     expect(geometry.leftCenter).toEqual([10, 11]);
     expect(geometry.rightCenter).toEqual([geometry.rightOffset + 110, -3]);
     expect(geometry.leftRadius).toBeGreaterThan(0);

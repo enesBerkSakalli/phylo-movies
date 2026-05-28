@@ -55,13 +55,21 @@ describe('layout cache key', () => {
         state: { ...baseState, styleConfig: { labelOffsets: { DEFAULT: 20, EXTENSION: 10 } } },
       })
     ).not.toBe(baseKey);
-    expect(
-      createLayoutCacheKey({
-        ...baseOptions,
-        state: { ...baseState, fontSize: '2.4em' },
-      })
-    ).not.toBe(baseKey);
     expect(createLayoutCacheKey({ ...baseOptions, maxGlobalScale: 20 })).not.toBe(baseKey);
+  });
+
+  it('keeps visual-only label size out of layout cache identity', () => {
+    const baseKey = createLayoutCacheKey({
+      ...baseOptions,
+      state: { ...baseState, fontSize: '0.8em' },
+    });
+    const largeLabelKey = createLayoutCacheKey({
+      ...baseOptions,
+      state: { ...baseState, fontSize: '8em' },
+    });
+
+    expect(largeLabelKey).toBe(baseKey);
+    expect(largeLabelKey).not.toContain('fontSize=');
   });
 
   it('distinguishes intentional zero scale from missing scale', () => {

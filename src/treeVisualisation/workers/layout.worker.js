@@ -2,7 +2,11 @@ import { TidyTreeLayout } from '../layout/TidyTreeLayout.js';
 import { createLayoutResult } from '../layout/LayoutResultAdapter.js';
 import { DeckGLTreeLayerDataFactory } from '../deckgl/DeckGLTreeLayerDataFactory.js';
 import { transformBranchLengths } from '../../domain/tree/branchTransform.js';
-import { calculateLabelAngleSpan, calculateReadableLabelRadii } from '../layout/labelRingRadii.js';
+import {
+  calculateLabelAngleSpan,
+  calculateReadableLabelRadii,
+  STABLE_LABEL_LAYOUT_FONT_SIZE,
+} from '../layout/labelRingRadii.js';
 
 const dataFactory = new DeckGLTreeLayerDataFactory();
 
@@ -54,7 +58,7 @@ export function calculateLayoutWorkerResult(treeData, options) {
     baseRadius,
     labelOffsets: offsets,
     labelCount: layoutResult.leaves.length,
-    fontSize: options.fontSize,
+    fontSize: STABLE_LABEL_LAYOUT_FONT_SIZE,
     angleSpanRadians: calculateLabelAngleSpan(layoutResult.leaves),
   });
 

@@ -52,7 +52,6 @@ export class ComparisonModeRenderer {
       leftTreeOffsetY = 0,
       viewsConnected,
       linkGeometryMode = 'radial-elbow',
-      fontSize = '2.6em',
     } = useAppStore.getState();
 
     const clampIndex = (idx) => {
@@ -122,7 +121,6 @@ export class ComparisonModeRenderer {
       rightTreeOffset,
       leftTreeOffsetX,
       leftTreeOffsetY,
-      fontSize,
     });
 
     // Apply independent offsets to both trees so centers/radii match screen coords
@@ -194,7 +192,6 @@ export class ComparisonModeRenderer {
       leftTreeOffsetY = 0,
       viewsConnected,
       linkGeometryMode = 'radial-elbow',
-      fontSize = '2.6em',
     } = useAppStore.getState();
     const rightBase = this._getAnimatedRightBaseLayerData({
       rightTreeData,
@@ -220,7 +217,6 @@ export class ComparisonModeRenderer {
       rightTreeOffset,
       leftTreeOffsetX,
       leftTreeOffsetY,
-      fontSize,
     });
     const rightFrame = this._getPreparedAnimatedRightFrame({
       base: rightBase,
@@ -230,7 +226,6 @@ export class ComparisonModeRenderer {
       leftTreeOffsetX,
       leftTreeOffsetY,
       viewsConnected,
-      fontSize,
     });
 
     // Apply independent offsets to both trees
@@ -374,7 +369,6 @@ export class ComparisonModeRenderer {
     leftTreeOffsetX,
     leftTreeOffsetY,
     viewsConnected,
-    fontSize,
   }) {
     this._ensureAnimatedRightCaches();
     const preparedCacheKey = [
@@ -386,7 +380,6 @@ export class ComparisonModeRenderer {
       leftTreeOffsetY,
       comparisonGeometry.rightOffset,
       comparisonGeometry.rightOffsetY,
-      fontSize,
       viewsConnected ? 'connected' : 'disconnected',
     ].join('|');
 

@@ -136,6 +136,46 @@ describe('layout worker metadata', () => {
     );
   });
 
+  it('keeps worker label and extension rings stable when visual label size changes', () => {
+    const leafCount = 160;
+    const treeData = {
+      name: '',
+      length: 0,
+      split_indices: Array.from({ length: leafCount }, (_value, index) => index),
+      children: Array.from({ length: leafCount }, (_value, index) => ({
+        name: `taxon_${index}`,
+        length: 1,
+        split_indices: [index],
+        children: [],
+      })),
+    };
+    const options = {
+      width: 800,
+      height: 600,
+      margin: 60,
+      branchTransformation: 'none',
+      layoutAngleDegrees: 360,
+      layoutRotationDegrees: 0,
+      labelOffsets: { DEFAULT: 1, EXTENSION: 1 },
+    };
+
+    const smallLabelResult = calculateLayoutWorkerResult(treeData, {
+      ...options,
+      fontSize: '0.8em',
+    });
+    const largeLabelResult = calculateLayoutWorkerResult(treeData, {
+      ...options,
+      fontSize: '8em',
+    });
+
+    expect(largeLabelResult.layerData.labels[0].polarPosition).toBe(
+      smallLabelResult.layerData.labels[0].polarPosition
+    );
+    expect(largeLabelResult.layerData.extensions[0].polarData.target.radius).toBe(
+      smallLabelResult.layerData.extensions[0].polarData.target.radius
+    );
+  });
+
   it('ignores worker-provided minimum visual branch length for coordinate geometry', () => {
     const treeData = {
       name: '',
