@@ -4,7 +4,6 @@ import { Rnd } from 'react-rnd';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { ScrollArea } from '../ui/scroll-area';
 import { Activity, ListTree, BookOpen, Download, X } from 'lucide-react';
-import { SprActivityTimeline } from './SubtreeAnalytics/SprActivityTimeline';
 import { MovedSubtreeRecurrenceTable } from './SubtreeAnalytics/MovedSubtreeRecurrenceTable';
 import { SprMoveEventTable } from './SubtreeAnalytics/SprMoveEventTable';
 import { SprSummaryMetrics } from './SubtreeAnalytics/SprSummaryMetrics';
@@ -29,7 +28,7 @@ import {
   selectTimelineFrames,
   useAppStore,
 } from '../../state/phyloStore/store.js';
-import { buildSprAnalyticsModel, formatSubtreeLabel } from '../../domain/spr/sprAnalytics';
+import { buildSprAnalyticsModel } from '../../domain/spr/sprAnalytics';
 import type { SprAnalyticsModel } from '../../domain/spr/sprAnalytics';
 import { buildBranchSupportIndex } from '../../domain/tree/branchSupportIndex';
 import { Button } from '../ui/button';
@@ -221,33 +220,8 @@ const AnalyticsDashboardBody = () => {
   const {
     eventRows: sprMoveEvents,
     movedSubtreeRecurrences,
-    pairActivityRows,
     summary: sprSummary,
   } = analyticsModel;
-
-  const singleTaxonMoveEventPercentage =
-    sprSummary.sprMoveEventCount > 0
-      ? (sprSummary.singleTaxonMoveEventCount / sprSummary.sprMoveEventCount) * 100
-      : 0;
-
-  const farthestMovedSubtree = useMemo(() => {
-    if (!sprSummary.farthestMovedSubtree) return null;
-
-    const fullLabel = formatSubtreeLabel(
-      sprSummary.farthestMovedSubtree.splitIndices,
-      leafNamesByIndex
-    );
-    const label = fullLabel.length > 28 ? `${fullLabel.slice(0, 25)}...` : fullLabel;
-
-    return {
-      label,
-      fullLabel,
-      totalPathHops: sprSummary.farthestMovedSubtree.totalPathHops,
-      totalPathLength: sprSummary.farthestMovedSubtree.totalPathLength,
-      averagePathHops: sprSummary.farthestMovedSubtree.averagePathHops,
-      averagePathLength: sprSummary.farthestMovedSubtree.averagePathLength,
-    };
-  }, [sprSummary.farthestMovedSubtree, leafNamesByIndex]);
 
   const handleExportRecurrenceCsv = () => {
     const recurrenceCsvContent = createSprMovedSubtreeRecurrenceCsv(
@@ -296,29 +270,15 @@ const AnalyticsDashboardBody = () => {
               <SprSummaryMetrics
                 uniqueMovedSubtreeCount={sprSummary.uniqueMovedSubtreeCount}
                 sprMovementCount={sprSummary.sprMoveEventCount}
-                transitionEventCount={sprSummary.transitionEventCount}
                 activePairCount={sprSummary.activePairCount}
-                singleTaxonMoveEventPercentage={singleTaxonMoveEventPercentage}
-                topMovedSubtreePercentage={sprSummary.topMovedSubtreeSharePercentage}
-                sprMoveEventCount={sprSummary.sprMoveEventCount}
-                totalPathHops={sprSummary.totalPathHops}
-                averagePathHops={sprSummary.averagePathHops}
-                totalPathLength={sprSummary.totalPathLength}
-                averagePathLength={sprSummary.averagePathLength}
-                farthestMovedSubtree={farthestMovedSubtree}
               />
 
-              <AnalyticsSectionCard
-                title={SPR_ANALYTICS_COPY.activityTitle}
-                description={SPR_ANALYTICS_COPY.activityDescription}
-                icon={<Activity className="size-4 text-primary" aria-hidden />}
-                className="h-80"
-                contentClassName="p-2"
-              >
-                <div className="h-full min-h-0">
-                  <SprActivityTimeline rows={pairActivityRows} />
-                </div>
-              </AnalyticsSectionCard>
+              <Alert className="border-border/70 bg-muted/20">
+                <AlertTitle>{SPR_ANALYTICS_COPY.distanceChartTitle}</AlertTitle>
+                <AlertDescription className="text-xs leading-relaxed">
+                  {SPR_ANALYTICS_COPY.distanceChartDescription}
+                </AlertDescription>
+              </Alert>
             </div>
           </ScrollArea>
         </TabsContent>

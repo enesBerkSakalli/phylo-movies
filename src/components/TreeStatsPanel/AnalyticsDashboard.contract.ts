@@ -20,8 +20,9 @@ export const SPR_ANALYTICS_COPY = {
   countedTitle: 'What is being counted?',
   countedDescription:
     'An SPR move is one moved subtree that changes attachment between two neighboring trees. Each row shows the moved subtree, its source attachment, and its target attachment.',
-  activityTitle: 'SPR Moves Across Tree Pairs',
-  activityDescription: 'SPR moves and unique moved subtrees per neighboring tree pair.',
+  distanceChartTitle: 'Use the distance chart for genome-window signal',
+  distanceChartDescription:
+    'The RF and weighted RF chart below the movie is the place to inspect where neighboring genome-window trees diverge. Peaks there indicate windows with stronger topology change.',
   eventTitle: SPR_ANALYTICS_LABELS.sprMoves,
   eventDescription:
     'One row per SPR move, showing the moved subtree, pivot edge, source and target attachments, and source-to-target values for the selected branch annotation.',
