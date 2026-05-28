@@ -7,8 +7,6 @@ not be edited as source data.
 
 ## Start Here
 
-- `PUBLICATION_DATA_RELATIONSHIP_MAP.md` maps the retained source layers,
-  scripts, promoted results, and provenance files.
 - `PUBLICATION_ARCHIVE.md` defines the public archive boundary and release
   verification checks.
 - `SCALE_LIMITS.md` records the committed taxa scale tiers and the local
@@ -17,7 +15,6 @@ not be edited as source data.
 - `publication_data.env` defines shared workflow constants consumed by shell
   entry points and Python scripts.
 - `environment.yml` defines the shared publication-analysis conda environment.
-- `ENVIRONMENT_VERIFICATION.md` records the clean environment checks.
 - `bootstrap_rogue_taxa/` contains the selected Aberer/RogueNaRok source
   alignments for the rogue-taxon bootstrap example.
 - `bootstrap_rogue_taxa/current_results/` contains the promoted
