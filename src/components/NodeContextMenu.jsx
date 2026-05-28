@@ -107,18 +107,19 @@ export function NodeContextMenu() {
           toast.success(`Subtree copied from ${nodeName}`);
         })
         .catch(() => {
-          // Fallback for clipboard API failure
           const textarea = document.createElement('textarea');
           textarea.value = newick;
           document.body.appendChild(textarea);
           textarea.select();
           document.execCommand('copy');
           document.body.removeChild(textarea);
-          toast.success('Subtree copied (fallback)');
+          toast.success('Subtree copied with browser clipboard fallback');
         });
     } catch (error) {
-      console.error('Failed to extract subtree:', error);
-      toast.error('Failed to extract subtree');
+      console.error('[NodeContextMenu] Failed to extract subtree as Newick:', error);
+      toast.error('Could not copy this subtree.', {
+        description: 'The selected node is not a valid subtree root for Newick export.',
+      });
     }
     hideMenu();
   }, [node, hideMenu]);
@@ -132,7 +133,9 @@ export function NodeContextMenu() {
       setManuallyMarkedNodes(splitIndices);
       toast.success(`Highlighted subtree with ${splitIndices.length} taxa`);
     } else {
-      toast.warning('Could not identify subtree taxa');
+      toast.warning('Could not highlight this subtree.', {
+        description: 'The selected node is missing split indices from the processed tree data.',
+      });
     }
     hideMenu();
   }, [node, setManuallyMarkedNodes, hideMenu]);
@@ -142,14 +145,18 @@ export function NodeContextMenu() {
 
     const controller = treeControllers[0];
     if (!controller) {
-      toast.warning('Could not focus on node');
+      toast.warning('Tree view is not ready for focusing yet.', {
+        description: 'Wait until the current tree finishes rendering, then try again.',
+      });
       hideMenu();
       return;
     }
 
     const focused = controller.focusOnNode(node);
     if (!focused) {
-      toast.warning('Could not focus on node');
+      toast.warning('Could not focus this node.', {
+        description: 'The selected node is not present in the current rendered tree view.',
+      });
     }
     hideMenu();
   }, [node, treeControllers, hideMenu]);
@@ -179,11 +186,13 @@ Max Depth: ${stats.maxDepth}`;
           textarea.select();
           document.execCommand('copy');
           document.body.removeChild(textarea);
-          toast.success('Node info copied (fallback)');
+          toast.success('Node info copied with browser clipboard fallback');
         });
     } catch (error) {
-      console.error('Failed to copy node info:', error);
-      toast.error('Failed to copy node info');
+      console.error('[NodeContextMenu] Failed to copy node details:', error);
+      toast.error('Could not copy node details.', {
+        description: 'The selected node metadata could not be summarized.',
+      });
     }
     hideMenu();
   }, [node, hideMenu]);
@@ -203,7 +212,7 @@ Max Depth: ${stats.maxDepth}`;
     nodeStats = `${stats.totalNodes} nodes, ${stats.leafCount} leaves`;
     canExtract = SubtreeExtractor.isValidSubtreeRoot(node);
   } catch (error) {
-    console.error('Error getting node stats:', error);
+    console.error('[NodeContextMenu] Failed to summarize selected node:', error);
   }
 
   // ==========================================================================

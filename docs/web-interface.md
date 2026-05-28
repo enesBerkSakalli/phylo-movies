@@ -122,6 +122,8 @@ Selecting a timeline segment opens the **Transition Inspector**. It reports:
 | What you see                       | What it means                                                     | What to do next                                                           |
 | ---------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | Engine Offline                     | Frontend cannot reach the backend.                                | Run `./start.sh` or start `engine/BranchArchitect/start_movie_server.sh`. |
+| Dataset processing failed          | Backend rejected the upload, stalled, or sent a malformed stream event. | Read the alert details, retry a small example, and check `engine/BranchArchitect/logs/backend.log`. |
+| PNG export is not ready yet        | Tree rendering has not exposed a deck.gl canvas.                  | Wait for the tree to finish rendering or reload the dataset if the canvas is blank. |
 | Processing overlay                 | Upload accepted and backend processing is in progress.            | Wait for progress or inspect backend logs if it stalls.                   |
 | Timeline input tree markers        | Observed input trees from the uploaded or inferred series.        | Jump with previous/next input tree controls.                              |
 | Generated frame controls enabled   | At least two frames exist in the active sequence.                 | Step or play the movie.                                                   |

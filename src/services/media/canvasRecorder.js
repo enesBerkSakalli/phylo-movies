@@ -39,7 +39,7 @@ export class CanvasRecorder {
       primaryController?.deckContext?.canvas || document.querySelector('#webgl-container canvas');
     if (!canvas) {
       throw new Error(
-        'Visualization canvas not found. Make sure the movie has finished rendering.'
+        'Visualization canvas is not available yet. Wait until the tree finishes rendering, then start recording again.'
       );
     }
     this.deck =
@@ -49,7 +49,7 @@ export class CanvasRecorder {
 
   _initializeMediaRecorder() {
     if (!this.stream) {
-      throw new Error('Canvas stream not initialized');
+      throw new Error('Canvas recording stream was not initialized.');
     }
 
     // Prioritize MP4 (H.264), then WebM
@@ -82,7 +82,7 @@ export class CanvasRecorder {
       options.mimeType = selectedType;
     } else {
       console.warn(
-        '[CanvasRecorder] No preferred mimeType supported, letting browser choose default.'
+        '[CanvasRecorder] Browser does not support preferred video formats; using the browser default MediaRecorder format.'
       );
     }
 
@@ -96,7 +96,7 @@ export class CanvasRecorder {
     };
 
     this.mediaRecorder.onerror = (event) => {
-      console.error('[CanvasRecorder] MediaRecorder error:', event.error);
+      console.error('[CanvasRecorder] MediaRecorder emitted an error:', event.error);
     };
   }
 
@@ -138,7 +138,9 @@ export class CanvasRecorder {
       this.stream = this.proxyCanvas.captureStream(this.framerate);
 
       if (!this.stream || this.stream.getTracks().length === 0) {
-        throw new Error('Failed to capture canvas stream');
+        throw new Error(
+          'Browser could not capture the visualization canvas stream. Check browser recording support and try again.'
+        );
       }
 
       this._initializeMediaRecorder();
@@ -149,7 +151,7 @@ export class CanvasRecorder {
       this.recordedBlob = null;
     } catch (error) {
       this._cleanup();
-      console.error('[CanvasRecorder] Start error:', error);
+      console.error('[CanvasRecorder] Failed to start canvas recording:', error);
       throw error;
     }
   }
@@ -181,7 +183,7 @@ export class CanvasRecorder {
           resolve(blob);
         } catch (error) {
           this._cleanup();
-          console.error('[CanvasRecorder] Stop error:', error);
+          console.error('[CanvasRecorder] Failed to finalize recording blob:', error);
           reject(error);
         }
       };
@@ -190,7 +192,7 @@ export class CanvasRecorder {
         this.mediaRecorder.stop();
       } catch (error) {
         this._cleanup();
-        console.error('[CanvasRecorder] Stop error:', error);
+        console.error('[CanvasRecorder] MediaRecorder stop failed:', error);
         reject(error);
       }
     });
@@ -255,14 +257,12 @@ export class CanvasRecorder {
     return link.download;
   }
 
-  // Removed - UI prompts should be handled by React components, not service layer
-
   _buildFilename(filename = null) {
     if (filename) return filename;
     return `phylo-movie-recording-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
   }
 
   _notifyError(error) {
-    console.error('[CanvasRecorder] Recording error:', error);
+    console.error('[CanvasRecorder] Recording failed:', error);
   }
 }

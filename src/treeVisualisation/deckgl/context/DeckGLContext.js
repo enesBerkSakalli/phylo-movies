@@ -105,7 +105,7 @@ export class DeckGLContext {
       onWebGLInitialized: (gl) => this._onWebGLInitialized?.(gl),
       onError: (error) => {
         this._onError?.(error);
-        console.error('[DeckGLContext] Deck.gl error:', error);
+        console.error('[DeckGLContext] deck.gl reported a rendering error:', error);
       },
     });
 
@@ -253,7 +253,10 @@ export class DeckGLContext {
       try {
         listener(viewState);
       } catch (err) {
-        console.warn('[DeckGLContext] viewState listener failed:', err);
+        console.warn('[DeckGLContext] View-state listener failed; camera update will continue.', {
+          error: err,
+          viewState,
+        });
       }
     });
   }
@@ -273,7 +276,9 @@ export class DeckGLContext {
 
   setProps(props) {
     if (!this.deck) {
-      console.warn('[DeckGLContext] Deck not initialized, cannot set props');
+      console.warn('[DeckGLContext] Ignoring setProps before deck.gl is initialized.', {
+        propKeys: props ? Object.keys(props) : [],
+      });
       return;
     }
     this.deck.setProps(props);
@@ -330,7 +335,7 @@ export class DeckGLContext {
   setCameraMode(mode, { preserveTarget = true } = {}) {
     if (mode !== 'orthographic' && mode !== 'orbit') {
       console.warn(
-        `[DeckGLContext] Invalid camera mode: ${mode}. Must be 'orthographic' or 'orbit'.`
+        `[DeckGLContext] Ignoring unsupported camera mode "${mode}". Expected "orthographic" or "orbit".`
       );
       return;
     }
@@ -448,7 +453,7 @@ export class DeckGLContext {
         this.canvas.parentNode.removeChild(this.canvas);
       }
     } catch (e) {
-      console.warn('[DeckGLContext] Failed to remove canvas:', e);
+      console.warn('[DeckGLContext] Failed to remove deck.gl canvas during cleanup:', e);
     }
 
     this.canvas = null;
@@ -509,7 +514,7 @@ export class DeckGLContext {
       });
       this._resizeObserver.observe(this.container);
     } catch (err) {
-      console.warn('[DeckGLContext] ResizeObserver unavailable:', err);
+      console.warn('[DeckGLContext] ResizeObserver setup failed; canvas size may not auto-update.', err);
     }
   }
 

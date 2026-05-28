@@ -94,7 +94,12 @@ export function useTreeController() {
               await controller.renderProgress(state.playhead?.animationProgress ?? 0);
             }
           } catch (error) {
-            console.error('Error during tree rendering:', error);
+            console.error('[useTreeController] Tree render failed:', {
+              error,
+              frameIndex: state.frameIndex,
+              comparisonMode: state.comparisonMode,
+              treeCount: state.treeList.length,
+            });
           } finally {
             if (!disposed) {
               state.setRenderInProgress(false);
