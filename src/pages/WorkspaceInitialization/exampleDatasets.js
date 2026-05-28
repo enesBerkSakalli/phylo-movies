@@ -7,6 +7,106 @@
 const PUBLICATION_CITATION =
   'Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). Animating Phylogenetic Trees from Sliding-Window Analyses. bioRxiv. doi:10.64898/2026.04.01.715821';
 
+const PRECOMPUTED_EXAMPLE_BASE = import.meta.env.BASE_URL + 'examples/precomputed/';
+const NOROVIRUS_SOURCE_BASE =
+  import.meta.env.BASE_URL +
+  'examples/recombination_norovirus/source_preparation/augur_subsampling/';
+const NOROVIRUS_SOURCE_TRUTH = {
+  label: 'Locked accession versions',
+  fileName: 'full_genome_accession_versions.txt',
+  filePath: NOROVIRUS_SOURCE_BASE + '01_raw/full_genome_accession_versions.txt',
+};
+const NOROVIRUS_REGENERATION_GUIDE = {
+  label: 'Regeneration workflow',
+  fileName: 'REGENERATE.md',
+  filePath: import.meta.env.BASE_URL + 'examples/recombination_norovirus/REGENERATE.md',
+};
+const NOROVIRUS_PHYLO_MOVIES_BASE =
+  import.meta.env.BASE_URL + 'examples/recombination_norovirus/current_results/phylo_movies/';
+const NOROVIRUS_WINDOW_TABLE_BASE =
+  import.meta.env.BASE_URL + 'examples/recombination_norovirus/current_results/window_tables/';
+const NOROVIRUS_FAST_TREE_SERIES = {
+  label: 'Generated IQ-TREE window trees',
+  fileName: 'norovirus_334_iqtree_fast_window750_step500.nwk',
+  filePath: NOROVIRUS_PHYLO_MOVIES_BASE + 'norovirus_334_iqtree_fast_window750_step500.nwk',
+};
+const NOROVIRUS_STABILITY_WINDOW_TABLE = {
+  label: 'Exact publication window table',
+  fileName: 'norovirus_334_window1000_step500_windows.tsv',
+  filePath: NOROVIRUS_WINDOW_TABLE_BASE + 'norovirus_334_window1000_step500_windows.tsv',
+};
+const NOROVIRUS_STABILITY_TREE_SERIES = {
+  label: 'Generated SH-aLRT window trees',
+  fileName: 'norovirus_334_iqtree_fast_sh_alrt_window1000_step500.nwk',
+  filePath:
+    NOROVIRUS_PHYLO_MOVIES_BASE + 'norovirus_334_iqtree_fast_sh_alrt_window1000_step500.nwk',
+};
+const NOROVIRUS_GENERATED_METADATA_FILES = [
+  {
+    label: 'Full metadata table',
+    fileName: 'full_genome_metadata.tsv',
+    filePath: NOROVIRUS_SOURCE_BASE + 'metadata/full_genome_metadata.tsv',
+  },
+  {
+    label: 'Selected metadata table',
+    fileName: 'subsampled_350_metadata.csv',
+    filePath: NOROVIRUS_SOURCE_BASE + 'metadata/subsampled_350_metadata.csv',
+  },
+  {
+    label: 'Taxon rename map',
+    fileName: 'rename_map.tsv',
+    filePath: NOROVIRUS_SOURCE_BASE + 'metadata/rename_map.tsv',
+  },
+];
+const BOOTSTRAP_SOURCE_BASE = import.meta.env.BASE_URL + 'examples/bootstrap_rogue_taxa/';
+const BOOTSTRAP_REGENERATION_GUIDE = {
+  label: 'Regeneration workflow',
+  fileName: 'REGENERATE.md',
+  filePath: BOOTSTRAP_SOURCE_BASE + 'REGENERATE.md',
+};
+const BOOTSTRAP_ORDERING_SEMANTICS = {
+  label: 'Ordering semantics',
+  fileName: 'ORDERING_SEMANTICS.md',
+  filePath: BOOTSTRAP_SOURCE_BASE + 'current_results/ORDERING_SEMANTICS.md',
+};
+const BOOTSTRAP_24_DATASET = 'dataset_24_source-24_taxa24_sites14190';
+const BOOTSTRAP_125_DATASET = 'dataset_125_source-125_taxa125_sites29149';
+const makeBootstrapSourceTruthFile = ({ taxa, sites }) => ({
+  label: 'Source alignment',
+  fileName: `aberer_roguenarok_dataset_${taxa}_taxa${taxa}_sites${sites}.phy`,
+  filePath:
+    BOOTSTRAP_SOURCE_BASE +
+    `source_alignments/aberer_roguenarok_dataset_${taxa}_taxa${taxa}_sites${sites}.phy`,
+});
+const makeBootstrapGeneratedArtifacts = ({ taxa, sites, dataset }) => {
+  const rankedPath = `${BOOTSTRAP_SOURCE_BASE}current_results/${dataset}/ranked/`;
+  const sourceId = `${taxa}_source-${taxa}_taxa${taxa}_sites${sites}`;
+
+  return [
+    {
+      label: 'Dataset manifest',
+      fileName: 'DATASET_MANIFEST.json',
+      filePath: `${BOOTSTRAP_SOURCE_BASE}current_results/${dataset}/DATASET_MANIFEST.json`,
+    },
+    {
+      label: 'Ranked replicate table',
+      fileName: `composition_ranked_bootstrap_replicates_${sourceId}.tsv`,
+      filePath: `${rankedPath}composition_ranked_bootstrap_replicates_${sourceId}.tsv`,
+    },
+    {
+      label: 'Split support table',
+      fileName: `split_support_${sourceId}.tsv`,
+      filePath: `${rankedPath}split_support_${sourceId}.tsv`,
+    },
+    BOOTSTRAP_ORDERING_SEMANTICS,
+  ];
+};
+const PAPER_FIGURE_SOURCE_TRUTH = {
+  label: 'Source tree file',
+  fileName: 'paper_example.tree',
+  filePath: import.meta.env.BASE_URL + 'examples/figure_example/paper_example.tree',
+};
+
 export const EXAMPLE_DATASETS = [
   {
     id: 'norovirus-334',
@@ -18,10 +118,13 @@ export const EXAMPLE_DATASETS = [
     bestFor: 'Recombination breakpoint exploration',
     fileName: 'subsampled_350_gappyout_final.fasta',
     // Path maps to publication_data/ via Vite plugin (see vite.config.mts)
-    filePath:
-      import.meta.env.BASE_URL +
-      'examples/recombination_norovirus/source_preparation/augur_subsampling/03_trimmed/subsampled_350_gappyout_final.fasta',
+    filePath: NOROVIRUS_SOURCE_BASE + '03_trimmed/subsampled_350_gappyout_final.fasta',
     fileType: 'msa',
+    precomputedPayloadPath:
+      PRECOMPUTED_EXAMPLE_BASE + 'norovirus_334_iqtree_fast_window750_step500.input.movie.json',
+    sourceTruthFile: NOROVIRUS_SOURCE_TRUTH,
+    regenerationGuide: NOROVIRUS_REGENERATION_GUIDE,
+    generatedArtifactFiles: [...NOROVIRUS_GENERATED_METADATA_FILES, NOROVIRUS_FAST_TREE_SERIES],
     provenance: {
       sourceType: 'Publication example',
       sourceLabel: 'publication_data/recombination_norovirus',
@@ -48,47 +151,57 @@ export const EXAMPLE_DATASETS = [
     badge: 'Publication',
   },
   {
-    id: 'norovirus-334-bootstrap',
-    name: 'Norovirus Bootstrap Tree Search',
+    id: 'norovirus-334-stability',
+    name: 'Norovirus Stability Scan',
     description:
-      'Same 334-sequence norovirus recombination panel, processed with IQ-TREE thorough search and UFBoot branch support',
+      'Same 334-sequence norovirus recombination panel, processed with IQ-TREE fast search and SH-aLRT support scores',
     workflow: 'Sliding-window MSA',
     scale: '334 taxa / 8,058 bp',
-    bestFor: 'Genome-window topology changes with branch-support labels',
+    bestFor: 'Genome-window topology changes with on-the-fly stability scores',
     fileName: 'subsampled_350_gappyout_final.fasta',
-    filePath:
-      import.meta.env.BASE_URL +
-      'examples/recombination_norovirus/source_preparation/augur_subsampling/03_trimmed/subsampled_350_gappyout_final.fasta',
+    filePath: NOROVIRUS_SOURCE_BASE + '03_trimmed/subsampled_350_gappyout_final.fasta',
     fileType: 'msa',
+    precomputedPayloadPath:
+      PRECOMPUTED_EXAMPLE_BASE +
+      'norovirus_334_iqtree_fast_sh_alrt_window1000_step500.input.movie.json',
+    sourceTruthFile: NOROVIRUS_SOURCE_TRUTH,
+    regenerationGuide: NOROVIRUS_REGENERATION_GUIDE,
+    generatedArtifactFiles: [
+      ...NOROVIRUS_GENERATED_METADATA_FILES,
+      NOROVIRUS_STABILITY_WINDOW_TABLE,
+      NOROVIRUS_STABILITY_TREE_SERIES,
+    ],
     provenance: {
       sourceType: 'Publication example',
       sourceLabel: 'publication_data/recombination_norovirus',
       treeSource:
-        'Trees are inferred from sliding windows of the supplied norovirus MSA using IQ-TREE thorough search with UFBoot support.',
+        'Trees are inferred from sliding windows of the supplied norovirus MSA using IQ-TREE fast search with SH-aLRT support.',
       alignmentSource: 'subsampled_350_gappyout_final.fasta',
       settings: [
-        { label: 'Tree inference', value: 'IQ-TREE, GTR+G, thorough search' },
-        { label: 'Branch support', value: 'UFBoot, 1000 replicates, BNNI optimization' },
-        { label: 'Windowing', value: '750 sites, 500-site step' },
+        { label: 'Tree inference', value: 'IQ-TREE, GTR+G, fast search' },
+        { label: 'Stability scores', value: 'SH-aLRT, 1000 replicates' },
+        { label: 'Windowing', value: '1000 sites, 500-site step' },
         { label: 'Rooting', value: 'Midpoint rooting' },
       ],
     },
     parameters: {
-      windowSize: 750,
+      windowSize: 1000,
       stepSize: 500,
       midpointRooting: true,
       treeInferenceEngine: 'iqtree',
-      iqtreeFastSearch: false,
-      iqtreeSupportMode: 'ufboot',
+      iqtreeFastSearch: true,
+      iqtreeSupportMode: 'sh_alrt',
       iqtreeUfbootReplicates: 1000,
       iqtreeShAlrtReplicates: 1000,
-      iqtreeBnni: true,
+      iqtreeBnni: false,
       useGtr: true,
       useGamma: true,
       usePseudo: false,
     },
     citation: PUBLICATION_CITATION,
-    badge: 'Bootstrap',
+    badge: 'Stability',
+    runtimeWarning:
+      'Runs IQ-TREE on every genome window. Uses larger windows and SH-aLRT support for live stability review.',
   },
   {
     id: 'quick-msa-demo',
@@ -104,6 +217,7 @@ export const EXAMPLE_DATASETS = [
     msaFileName: 'quick_msa_demo_30taxa_10windows.fasta',
     msaFilePath:
       import.meta.env.BASE_URL + 'examples/quick_msa_demo/quick_msa_demo_30taxa_10windows.fasta',
+    precomputedPayloadPath: PRECOMPUTED_EXAMPLE_BASE + 'quick_msa_demo_30taxa_10trees.movie.json',
     fileType: 'tree-msa',
     provenance: {
       sourceType: 'Synthetic demo',
@@ -138,10 +252,12 @@ export const EXAMPLE_DATASETS = [
     bestFor: 'Minimal transformation walkthrough',
     fileName: 'paper_example.tree',
     filePath: import.meta.env.BASE_URL + 'examples/figure_example/paper_example.tree',
+    precomputedPayloadPath: PRECOMPUTED_EXAMPLE_BASE + 'paper_example.movie.json',
     fileType: 'newick',
+    sourceTruthFile: PAPER_FIGURE_SOURCE_TRUTH,
     provenance: {
       sourceType: 'Publication figure example',
-      sourceLabel: 'examples/figure_example',
+      sourceLabel: 'publication_data/figure_example',
       treeSource: 'Precomputed two-tree Newick example used for the manuscript figure.',
       settings: [
         { label: 'Tree source', value: 'Precomputed trees' },
@@ -170,12 +286,21 @@ export const EXAMPLE_DATASETS = [
     bestFor: 'Rogue-taxon SPR move review',
     fileName: 'all_trees_24_source-24_taxa24_sites14190.nwk',
     filePath:
-      import.meta.env.BASE_URL +
-      'examples/bootstrap_rogue_taxa/current_results/dataset_24_source-24_taxa24_sites14190/ranked/all_trees_24_source-24_taxa24_sites14190.nwk',
+      BOOTSTRAP_SOURCE_BASE +
+      `current_results/${BOOTSTRAP_24_DATASET}/ranked/all_trees_24_source-24_taxa24_sites14190.nwk`,
+    precomputedPayloadPath:
+      PRECOMPUTED_EXAMPLE_BASE + 'all_trees_24_source-24_taxa24_sites14190.input.movie.json',
     fileType: 'newick',
+    sourceTruthFile: makeBootstrapSourceTruthFile({ taxa: 24, sites: 14190 }),
+    regenerationGuide: BOOTSTRAP_REGENERATION_GUIDE,
+    generatedArtifactFiles: makeBootstrapGeneratedArtifacts({
+      taxa: 24,
+      sites: 14190,
+      dataset: BOOTSTRAP_24_DATASET,
+    }),
     provenance: {
       sourceType: 'Publication bootstrap example',
-      sourceLabel: 'publication_data/bootstrap_rogue_taxa/current_results/dataset_24',
+      sourceLabel: 'publication_data/bootstrap_rogue_taxa',
       treeSource:
         '200 composition-ranked bootstrap-replicate trees inferred with IQ-TREE 2 default search mode after RAxML replicate alignment generation.',
       settings: [
@@ -206,12 +331,21 @@ export const EXAMPLE_DATASETS = [
     bestFor: 'Larger topology-change example',
     fileName: 'all_trees_125_source-125_taxa125_sites29149.nwk',
     filePath:
-      import.meta.env.BASE_URL +
-      'examples/bootstrap_rogue_taxa/current_results/dataset_125_source-125_taxa125_sites29149/ranked/all_trees_125_source-125_taxa125_sites29149.nwk',
+      BOOTSTRAP_SOURCE_BASE +
+      `current_results/${BOOTSTRAP_125_DATASET}/ranked/all_trees_125_source-125_taxa125_sites29149.nwk`,
+    precomputedPayloadPath:
+      PRECOMPUTED_EXAMPLE_BASE + 'all_trees_125_source-125_taxa125_sites29149.input.movie.json',
     fileType: 'newick',
+    sourceTruthFile: makeBootstrapSourceTruthFile({ taxa: 125, sites: 29149 }),
+    regenerationGuide: BOOTSTRAP_REGENERATION_GUIDE,
+    generatedArtifactFiles: makeBootstrapGeneratedArtifacts({
+      taxa: 125,
+      sites: 29149,
+      dataset: BOOTSTRAP_125_DATASET,
+    }),
     provenance: {
       sourceType: 'Publication bootstrap example',
-      sourceLabel: 'publication_data/bootstrap_rogue_taxa/current_results/dataset_125',
+      sourceLabel: 'publication_data/bootstrap_rogue_taxa',
       treeSource:
         '200 composition-ranked bootstrap-replicate trees inferred with IQ-TREE 2 default search mode after RAxML replicate alignment generation.',
       settings: [
@@ -248,8 +382,7 @@ export const EXAMPLE_DATASETS = [
     provenance: {
       sourceType: 'Synthetic performance fixture',
       sourceLabel: 'publication_data/scale_fixtures/msprime_performance',
-      treeSource:
-        'Generated with msprime as 50 deterministic independent single-tree replicates.',
+      treeSource: 'Generated with msprime as 50 deterministic independent single-tree replicates.',
       settings: [
         { label: 'Simulator', value: 'msprime' },
         { label: 'Mode', value: 'Independent single-tree replicates' },
@@ -284,8 +417,7 @@ export const EXAMPLE_DATASETS = [
     provenance: {
       sourceType: 'Synthetic performance fixture',
       sourceLabel: 'publication_data/scale_fixtures/msprime_performance',
-      treeSource:
-        'Generated with msprime as 25 deterministic independent single-tree replicates.',
+      treeSource: 'Generated with msprime as 25 deterministic independent single-tree replicates.',
       settings: [
         { label: 'Simulator', value: 'msprime' },
         { label: 'Mode', value: 'Independent single-tree replicates' },
@@ -320,8 +452,7 @@ export const EXAMPLE_DATASETS = [
     provenance: {
       sourceType: 'Synthetic performance fixture',
       sourceLabel: 'publication_data/scale_fixtures/msprime_performance',
-      treeSource:
-        'Generated with msprime as 10 deterministic independent single-tree replicates.',
+      treeSource: 'Generated with msprime as 10 deterministic independent single-tree replicates.',
       settings: [
         { label: 'Simulator', value: 'msprime' },
         { label: 'Mode', value: 'Independent single-tree replicates' },
@@ -340,11 +471,129 @@ export const EXAMPLE_DATASETS = [
     citation: 'Synthetic msprime performance fixture generated locally for Phylo-Movies.',
     badge: 'Performance',
   },
+  {
+    id: 'msprime-performance-500-short',
+    name: 'msprime Performance 500 Short',
+    description:
+      'Deterministic msprime tree-only performance fixture (500 taxa, 5 independent trees)',
+    workflow: 'Synthetic tree series',
+    scale: '500 taxa / 5 trees',
+    bestFor: 'Quick high-taxon visualization check',
+    fileName: 'msprime_500taxa_5trees_seed50005.nwk',
+    filePath:
+      import.meta.env.BASE_URL +
+      'examples/scale_fixtures/msprime_performance/msprime_500taxa_5trees_seed50005.nwk',
+    fileType: 'newick',
+    provenance: {
+      sourceType: 'Synthetic performance fixture',
+      sourceLabel: 'publication_data/scale_fixtures/msprime_performance',
+      treeSource: 'Generated with msprime as 5 deterministic independent single-tree replicates.',
+      settings: [
+        { label: 'Simulator', value: 'msprime' },
+        { label: 'Mode', value: 'Independent single-tree replicates' },
+        { label: 'Seed', value: '50005' },
+        { label: 'Rooting', value: 'Input rooting preserved' },
+      ],
+    },
+    parameters: {
+      windowSize: null,
+      stepSize: null,
+      midpointRooting: false,
+      useGtr: false,
+      useGamma: false,
+      usePseudo: false,
+    },
+    citation: 'Synthetic msprime performance fixture generated locally for Phylo-Movies.',
+    badge: 'Performance',
+  },
+  {
+    id: 'msprime-performance-1000-short',
+    name: 'msprime Performance 1000 Short',
+    description:
+      'Deterministic msprime tree-only performance fixture (1000 taxa, 5 independent trees)',
+    workflow: 'Synthetic tree series',
+    scale: '1000 taxa / 5 trees',
+    bestFor: 'Quick maximum-taxon visualization check',
+    fileName: 'msprime_1000taxa_5trees_seed100005.nwk',
+    filePath:
+      import.meta.env.BASE_URL +
+      'examples/scale_fixtures/msprime_performance/msprime_1000taxa_5trees_seed100005.nwk',
+    fileType: 'newick',
+    provenance: {
+      sourceType: 'Synthetic performance fixture',
+      sourceLabel: 'publication_data/scale_fixtures/msprime_performance',
+      treeSource: 'Generated with msprime as 5 deterministic independent single-tree replicates.',
+      settings: [
+        { label: 'Simulator', value: 'msprime' },
+        { label: 'Mode', value: 'Independent single-tree replicates' },
+        { label: 'Seed', value: '100005' },
+        { label: 'Rooting', value: 'Input rooting preserved' },
+      ],
+    },
+    parameters: {
+      windowSize: null,
+      stepSize: null,
+      midpointRooting: false,
+      useGtr: false,
+      useGamma: false,
+      usePseudo: false,
+    },
+    citation: 'Synthetic msprime performance fixture generated locally for Phylo-Movies.',
+    badge: 'Performance',
+  },
 ];
+
+const MS_PRIME_1000_LIMIT_DEMO = {
+  id: 'msprime-1000-two-tree-limit',
+  name: 'msprime 1000-Taxa Limit Demo',
+  description: 'Generated browser payload with 1000 taxa and two independent trees',
+  workflow: 'Generated tree movie',
+  scale: '1000 taxa / 2 trees',
+  bestFor: 'Maximum-taxon browser visualization check',
+  fileName: 'msprime_1000taxa_2trees_seed100005.nwk',
+  filePath:
+    import.meta.env.BASE_URL +
+    'examples/scale_fixtures/msprime_performance/msprime_1000taxa_5trees_seed100005.nwk',
+  precomputedPayloadPath:
+    PRECOMPUTED_EXAMPLE_BASE + 'msprime_1000taxa_2trees_seed100005.movie.json',
+  fileType: 'newick',
+  provenance: {
+    sourceType: 'Generated browser demo',
+    sourceLabel: 'publication_data/scale_fixtures/msprime_performance',
+    treeSource: 'First two trees from the deterministic 1000-taxon msprime fixture.',
+    settings: [
+      { label: 'Simulator', value: 'msprime' },
+      { label: 'Mode', value: '1000 taxa, two independent trees' },
+      { label: 'Rooting', value: 'Input rooting preserved' },
+    ],
+  },
+  parameters: {
+    windowSize: null,
+    stepSize: null,
+    midpointRooting: false,
+    useGtr: false,
+    useGamma: false,
+    usePseudo: false,
+  },
+  citation: 'Synthetic msprime performance fixture generated locally for Phylo-Movies.',
+  badge: 'Limit',
+};
+
+export const DEMO_EXAMPLE_DATASETS = [
+  EXAMPLE_DATASETS.find((example) => example.id === 'norovirus-334'),
+  EXAMPLE_DATASETS.find((example) => example.id === 'norovirus-334-stability'),
+  EXAMPLE_DATASETS.find((example) => example.id === 'paper-example'),
+  EXAMPLE_DATASETS.find((example) => example.id === 'bootstrap-24'),
+  EXAMPLE_DATASETS.find((example) => example.id === 'bootstrap-125'),
+  EXAMPLE_DATASETS.find((example) => example.id === 'quick-msa-demo'),
+  MS_PRIME_1000_LIMIT_DEMO,
+].filter(Boolean);
 
 /**
  * Get example dataset by ID
  */
 export function getExampleById(id) {
-  return EXAMPLE_DATASETS.find((ex) => ex.id === id);
+  return (
+    EXAMPLE_DATASETS.find((ex) => ex.id === id) || DEMO_EXAMPLE_DATASETS.find((ex) => ex.id === id)
+  );
 }

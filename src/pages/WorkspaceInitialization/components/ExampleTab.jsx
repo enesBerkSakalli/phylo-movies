@@ -5,6 +5,8 @@ import { Badge } from '../../../components/ui/badge';
 import { EXAMPLE_DATASETS } from '../exampleDatasets.js';
 
 export function ExampleTab({
+  examples = EXAMPLE_DATASETS,
+  demoOnly = false,
   loadingExample,
   loadingExampleId,
   submitting,
@@ -19,14 +21,17 @@ export function ExampleTab({
             <Database className="size-4" />
             Built-in examples
           </div>
-          <h3 className="mt-2 text-xl font-semibold tracking-tight">Choose a dataset to process</h3>
+          <h3 className="mt-2 text-xl font-semibold tracking-tight">
+            {demoOnly ? 'Choose a publication or generated dataset' : 'Choose a dataset to process'}
+          </h3>
           <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-            Publication and smoke-test datasets are read-only. Loading an example runs the same
-            backend processing path as a new project.
+            {demoOnly
+              ? 'Publication datasets and generated payloads are read-only. Rows with generated Phylo-Movies JSON open directly in the browser; publication source rows provide the bundled files and provenance.'
+              : 'Publication and smoke-test datasets are read-only. Loading an example runs the same backend processing path as a new project.'}
           </p>
         </div>
         <Badge variant="secondary" className="w-fit">
-          {EXAMPLE_DATASETS.length} datasets
+          {examples.length} datasets
         </Badge>
       </div>
 
@@ -39,10 +44,11 @@ export function ExampleTab({
           <span>Demonstrates</span>
           <span className="text-right">Actions</span>
         </div>
-        {EXAMPLE_DATASETS.map((example) => {
+        {examples.map((example) => {
           const isLoading = loadingExample && loadingExampleId === example.id;
-          const isDisabled = loadingExample || submitting || !backendReady;
+          const isDisabled = loadingExample || submitting || (!demoOnly && !backendReady);
           const includesAlignment = example.fileType === 'msa' || !!example.msaFilePath;
+          const generatedArtifacts = example.generatedArtifactFiles ?? [];
 
           return (
             <div
@@ -73,6 +79,42 @@ export function ExampleTab({
                         {formatExampleSettings(example.provenance.settings)}
                       </p>
                     </div>
+                  )}
+                  {(example.sourceTruthFile ||
+                    example.regenerationGuide ||
+                    generatedArtifacts.length > 0) && (
+                    <div className="mt-2 space-y-1 text-2xs leading-relaxed text-muted-foreground">
+                      {example.sourceTruthFile && (
+                        <p>
+                          <span className="font-semibold text-foreground/70">Source truth:</span>{' '}
+                          <ExampleArtifactLink artifact={example.sourceTruthFile} />
+                        </p>
+                      )}
+                      {example.regenerationGuide && (
+                        <p>
+                          <span className="font-semibold text-foreground/70">Regenerate:</span>{' '}
+                          <ExampleArtifactLink artifact={example.regenerationGuide} />
+                        </p>
+                      )}
+                      {generatedArtifacts.length > 0 && (
+                        <div className="flex min-w-0 flex-wrap gap-x-3 gap-y-1">
+                          <span className="font-semibold text-foreground/70">
+                            Generated artifacts:
+                          </span>
+                          {generatedArtifacts.map((metadataFile) => (
+                            <ExampleArtifactLink
+                              key={metadataFile.filePath}
+                              artifact={metadataFile}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {example.runtimeWarning && (
+                    <p className="mt-2 text-2xs font-medium leading-relaxed text-amber-700 dark:text-amber-300">
+                      {example.runtimeWarning}
+                    </p>
                   )}
                 </div>
               </div>
@@ -114,7 +156,11 @@ export function ExampleTab({
                   size="sm"
                   onClick={() => handleLoadExample(example.id)}
                   disabled={isDisabled}
-                  title={!backendReady ? 'Start BranchArchitect before loading examples' : undefined}
+                  title={
+                    !demoOnly && !backendReady
+                      ? 'Start BranchArchitect before loading examples'
+                      : undefined
+                  }
                   className="w-[4.5rem]"
                 >
                   {isLoading ? (
@@ -122,7 +168,7 @@ export function ExampleTab({
                   ) : (
                     <Play data-icon="inline-start" />
                   )}
-                  Load
+                  {demoOnly ? 'Open' : 'Load'}
                 </Button>
                 <Button
                   variant="outline"
@@ -167,4 +213,16 @@ export function ExampleTab({
 function formatExampleSettings(settings = []) {
   if (!Array.isArray(settings) || settings.length === 0) return 'Not specified';
   return settings.map(({ label, value }) => `${label}: ${value}`).join('; ');
+}
+
+function ExampleArtifactLink({ artifact }) {
+  return (
+    <a
+      href={artifact.filePath}
+      download={artifact.fileName}
+      className="text-primary underline-offset-2 hover:underline"
+    >
+      {artifact.label}
+    </a>
+  );
 }

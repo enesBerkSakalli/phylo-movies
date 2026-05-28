@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import phyloTreeIcon from '/icons/phylo-tree-icon.svg';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
@@ -144,6 +145,9 @@ export function GitHubPagesInfoPage() {
                 <a href={PREPRINT_URL} target="_blank" rel="noopener noreferrer">
                   Read Publication
                 </a>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link to="/demo">Open Browser Demo</Link>
               </Button>
               <Button variant="outline" asChild>
                 <a href={RELEASES_URL} target="_blank" rel="noopener noreferrer">
@@ -311,6 +315,26 @@ export function GitHubPagesInfoPage() {
                 </a>
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg border-muted">
+          <CardHeader>
+            <CardTitle>Browser Demo</CardTitle>
+            <CardDescription>
+              The static GitHub Pages build includes generated publication examples that open the
+              visualization workspace without a backend.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-muted-foreground">
+            <p>
+              The demo uses normalized Phylo-Movies JSON payloads generated from the bundled
+              norovirus, bootstrap, paper-figure, quick MSA, and scale-limit examples. Uploaded
+              datasets still require the BranchArchitect backend.
+            </p>
+            <Button asChild>
+              <Link to="/demo">Open Generated Examples</Link>
+            </Button>
           </CardContent>
         </Card>
 
