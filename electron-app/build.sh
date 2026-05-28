@@ -36,7 +36,7 @@ echo "[3/4] Building React frontend..."
 cd "$PROJECT_ROOT"
 
 echo "Installing frontend dependencies..."
-npm install
+npm ci
 
 echo "Building Vite project (ELECTRON_BUILD=true)..."
 ELECTRON_BUILD=true npm run build

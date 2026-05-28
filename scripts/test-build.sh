@@ -63,7 +63,7 @@ success "Environment OK"
 step "2/7" "Installing dependencies..."
 
 cd "$PROJECT_ROOT"
-npm ci --silent 2>/dev/null || npm install --silent
+npm ci --silent
 success "Frontend dependencies installed"
 
 cd "$BACKEND_DIR"

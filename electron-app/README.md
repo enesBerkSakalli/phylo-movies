@@ -25,6 +25,29 @@ example files under `frontend-dist/examples/` are copied from
 
 ## Development Setup
 
+### New machine setup (recommended)
+
+Set up the project end-to-end from scratch with one flow:
+
+```bash
+git clone --recurse-submodules https://github.com/enesBerkSakalli/phylo-movies.git
+cd phylo-movies
+npm ci
+./start.sh
+```
+
+Required local tools:
+
+- Node.js 22.12.0+ with npm 10+
+- Python 3.11+
+- Poetry
+- Git
+
+`./start.sh` will verify the environment and launch both:
+
+- BranchArchitect Flask backend on `:5002`
+- Vite frontend on `:5173`
+
 ### Quick Start (Recommended)
 
 The unified startup script handles everything automatically:
