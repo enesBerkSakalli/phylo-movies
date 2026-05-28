@@ -2,7 +2,7 @@
  * Window calculation utilities for MSA (Multiple Sequence Alignment) position windows
  *
  * IMPORTANT: This calculation MUST match the backend windowing logic in:
- * electron-app/BranchArchitect/msa_to_trees/split_alignment/windowing.py
+ * engine/BranchArchitect/msa_to_trees/msa_to_trees/pipeline.py
  *
  * The backend uses:
  *   - 0-indexed positions
