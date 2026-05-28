@@ -274,6 +274,30 @@ describe('validatePhyloMovieData', () => {
     expect(phyloData.validate(makePayload()).pairs[0].pair_id).toBe('pair_0_1');
   });
 
+  it('accepts dataset provenance for tree source and settings display', () => {
+    const result = validatePhyloMovieData(
+      makePayload({
+        dataset_provenance: {
+          source_type: 'Publication bootstrap example',
+          source_label: 'publication_data/bootstrap_rogue_taxa/current_results/dataset_24',
+          tree_source: '200 IQ-TREE bootstrap-replicate trees ordered by composition distance',
+          alignment_source: 'source-24_taxa24_sites14190',
+          settings: [
+            { label: 'Tree inference', value: 'IQ-TREE 2 default search mode' },
+            { label: 'Support labels', value: 'Split-frequency support across 200 trees' },
+          ],
+          citation: 'Publication example',
+        },
+      })
+    );
+
+    expect(result.dataset_provenance?.source_type).toBe('Publication bootstrap example');
+    expect(result.dataset_provenance?.settings[0]).toEqual({
+      label: 'Tree inference',
+      value: 'IQ-TREE 2 default search mode',
+    });
+  });
+
   it('rejects legacy top-level temporal fields', () => {
     for (const key of [
       'tree_metadata',

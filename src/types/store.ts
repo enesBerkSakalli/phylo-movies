@@ -135,6 +135,7 @@ export interface AppStoreState {
   timelineFrames: TimelineFrame[];
   leafNamesByIndex: string[];
   fileName: string | null;
+  datasetProvenance: PhyloMovieData['dataset_provenance'] | null;
   datasetVersion: number;
   pairMetrics: PhyloMovieData['pair_metrics'] | null;
   pairs: TimelinePair[];

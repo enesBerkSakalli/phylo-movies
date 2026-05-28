@@ -25,6 +25,7 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       timelineFrames: [],
       leafNamesByIndex: [],
       fileName: null,
+      datasetProvenance: null,
       datasetVersion: (get().datasetVersion ?? 0) + 1,
       pairMetrics: EMPTY_PAIR_METRICS,
       pairs: [],
@@ -63,6 +64,7 @@ export const createDatasetLifecycleSlice = (set, get) => ({
     });
 
     const fileName = movieData.file_name;
+    const datasetProvenance = movieData.dataset_provenance ?? null;
     const datasetVersion = (get().datasetVersion ?? 0) + 1;
 
     const existingManager = get().movieTimelineManager;
@@ -78,6 +80,7 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       timelineFrames: frames,
       leafNamesByIndex,
       fileName,
+      datasetProvenance,
       datasetVersion,
       pairMetrics,
       pairs,

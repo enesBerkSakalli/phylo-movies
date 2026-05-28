@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Film, ArrowLeft, Activity } from 'lucide-react';
+import { Film, ArrowLeft, Activity, ChevronDown, FileText } from 'lucide-react';
 import { MsaSidebarSection } from './MsaSidebarSection.jsx';
 import { TreeStructureGroup } from '../appearance/layout/TreeStructureGroup.jsx';
 import {
@@ -24,12 +24,16 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
 } from '../ui/sidebar';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { TOOLS_SIDEBAR_GROUP_LABELS } from './ToolsSidebar.contract.js';
 import { SPR_ANALYTICS_COPY } from '../TreeStatsPanel/AnalyticsDashboard.contract.ts';
 
 export function ToolsSidebar({
   fileName,
+  datasetProvenance,
   error,
   sprAnalyticsOpen,
   isSprAnalyticsActive,
@@ -76,6 +80,7 @@ export function ToolsSidebar({
                   <span>Change Dataset</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <DatasetProvenanceItem fileName={fileName} provenance={datasetProvenance} />
               <MsaSidebarSection />
             </SidebarMenu>
           </SidebarGroup>
@@ -146,3 +151,59 @@ export function ToolsSidebar({
 }
 
 export default ToolsSidebar;
+
+function DatasetProvenanceItem({ fileName, provenance }) {
+  const settings = Array.isArray(provenance?.settings) ? provenance.settings : [];
+
+  return (
+    <Collapsible asChild className="group/collapsible">
+      <SidebarMenuItem>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton tooltip="Dataset provenance">
+            <FileText className="text-primary" />
+            <span className="min-w-0 flex-1 truncate">Provenance</span>
+            <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SidebarMenuSub>
+            <SidebarMenuSubItem>
+              <div className="space-y-2 px-2 py-2 text-2xs leading-relaxed text-muted-foreground">
+                <ProvenanceField label="Dataset" value={fileName} />
+                <ProvenanceField label="Source" value={provenance?.source_label} />
+                <ProvenanceField label="Tree source" value={provenance?.tree_source} />
+                {provenance?.alignment_source && (
+                  <ProvenanceField label="Alignment" value={provenance.alignment_source} />
+                )}
+                {settings.length > 0 && (
+                  <div className="space-y-1">
+                    <div className="font-semibold uppercase tracking-wider text-foreground/70">
+                      Settings
+                    </div>
+                    {settings.map((setting, index) => (
+                      <ProvenanceField
+                        key={`${setting.label}-${index}`}
+                        label={setting.label}
+                        value={setting.value}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </SidebarMenuSubItem>
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </SidebarMenuItem>
+    </Collapsible>
+  );
+}
+
+function ProvenanceField({ label, value }) {
+  if (!value) return null;
+  return (
+    <div>
+      <span className="font-semibold text-foreground/70">{label}:</span>{' '}
+      <span className="break-words">{value}</span>
+    </div>
+  );
+}

@@ -146,6 +146,20 @@ export interface MsaData {
   step_size: number;
 }
 
+export interface DatasetProvenanceSetting {
+  label: string;
+  value: string;
+}
+
+export interface DatasetProvenance {
+  source_type: string;
+  source_label: string;
+  tree_source: string;
+  alignment_source?: string;
+  settings: DatasetProvenanceSetting[];
+  citation?: string;
+}
+
 export type SubtreeHighlightTracking = Array<number[][] | null>;
 
 export interface PhyloMovieData {
@@ -158,4 +172,5 @@ export interface PhyloMovieData {
   pair_metrics: PairMetrics;
   msa: MsaData;
   file_name: string;
+  dataset_provenance: DatasetProvenance | null;
 }

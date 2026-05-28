@@ -204,6 +204,7 @@ export function useWorkspaceInitializationForm() {
       const formData = {
         msaFile: example.fileType === 'msa' ? file : pairedMsaFile,
         treesFile: example.fileType === 'newick' || example.fileType === 'tree-msa' ? file : null,
+        datasetProvenance: buildExampleDatasetProvenance(example),
         ...example.parameters,
       };
 
@@ -265,6 +266,20 @@ export function useWorkspaceInitializationForm() {
     reset,
     // derived
     base,
+  };
+}
+
+function buildExampleDatasetProvenance(example) {
+  const provenance = example.provenance || {};
+  return {
+    source_type: provenance.sourceType || example.workflow || 'Built-in example',
+    source_label: provenance.sourceLabel || example.fileName,
+    tree_source: provenance.treeSource || example.description || example.fileName,
+    ...(provenance.alignmentSource ? { alignment_source: provenance.alignmentSource } : {}),
+    settings: Array.isArray(provenance.settings)
+      ? provenance.settings.map(({ label, value }) => ({ label, value }))
+      : [],
+    ...(example.citation ? { citation: example.citation } : {}),
   };
 }
 
