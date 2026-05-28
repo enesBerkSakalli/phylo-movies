@@ -15,6 +15,8 @@ export function CSVTabContent({
   colorManager,
   colorVersion,
   onFile,
+  metadataSources,
+  onMetadataSource,
   onColumnChange,
   resetCSV,
   applyScheme,
@@ -24,6 +26,8 @@ export function CSVTabContent({
     <div className="flex flex-col gap-4">
       <CSVUpload
         onFile={onFile}
+        metadataSources={metadataSources}
+        onMetadataSource={onMetadataSource}
         csvFileName={csvFileName}
         onReset={resetCSV}
         errorMessage={csvError}

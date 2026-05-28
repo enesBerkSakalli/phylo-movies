@@ -1,6 +1,6 @@
 import { useCallback, useState, useEffect } from 'react';
 import { parseGroupCSV } from '../../../treeColoring/utils/CSVParser.js';
-import { loadCSVColumn } from '../utils/csvHelpers.js';
+import { chooseInitialCSVColumn, loadCSVColumn } from '../utils/csvHelpers.js';
 
 export function useCSVState(taxaNames, initialState = {}) {
   const safeState = initialState || {};
@@ -27,36 +27,65 @@ export function useCSVState(taxaNames, initialState = {}) {
     }
   }, []);
 
+  const loadTableText = useCallback(
+    (text, fileName, preferredColumn = null) => {
+      const parsed = parseGroupCSV(text);
+      if (!parsed.success) {
+        setCsvError(parsed.error);
+        return false;
+      }
+
+      const initialColumn = chooseInitialCSVColumn(parsed.data, preferredColumn);
+      const { map, groups, validation } = loadCSVColumn(parsed.data, initialColumn, taxaNames);
+
+      if (!validation.isValid) {
+        setCsvError('No matching taxa found in the metadata table.');
+        return false;
+      }
+
+      setCsvError(null);
+      setCsvData(parsed.data);
+      setCsvFileName(fileName);
+      setCsvColumn(initialColumn);
+      setCsvTaxaMap(map);
+      setCsvGroups(groups);
+      setCsvValidation(validation);
+      return true;
+    },
+    [taxaNames]
+  );
+
   const onFile = useCallback(
     async (file) => {
       try {
         const text = await file.text();
-        const parsed = parseGroupCSV(text);
-        if (!parsed.success) {
-          setCsvError(parsed.error);
-          return;
-        }
-
-        const firstCol = parsed.data.groupingColumns[0].name;
-        const { map, groups, validation } = loadCSVColumn(parsed.data, firstCol, taxaNames);
-
-        if (!validation.isValid) {
-          setCsvError('No matching taxa found in the CSV file.');
-          return;
-        }
-
-        setCsvError(null);
-        setCsvData(parsed.data);
-        setCsvFileName(file.name);
-        setCsvColumn(firstCol);
-        setCsvTaxaMap(map);
-        setCsvGroups(groups);
-        setCsvValidation(validation);
+        loadTableText(text, file.name);
       } catch (e) {
-        setCsvError(`Failed to read CSV file: ${e.message}`);
+        setCsvError(`Failed to read metadata table: ${e.message}`);
       }
     },
-    [taxaNames]
+    [loadTableText]
+  );
+
+  const onMetadataSource = useCallback(
+    async (source) => {
+      if (!source?.filePath) return;
+      try {
+        const response = await fetch(source.filePath);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const text = await response.text();
+        loadTableText(
+          text,
+          source.fileName || source.label || 'metadata table',
+          source.preferredColumn
+        );
+      } catch (e) {
+        setCsvError(`Failed to load bundled metadata table: ${e.message}`);
+      }
+    },
+    [loadTableText]
   );
 
   const onColumnChange = useCallback(
@@ -91,6 +120,7 @@ export function useCSVState(taxaNames, initialState = {}) {
     csvValidation,
     csvError,
     onFile,
+    onMetadataSource,
     onColumnChange,
     resetCSV,
   };

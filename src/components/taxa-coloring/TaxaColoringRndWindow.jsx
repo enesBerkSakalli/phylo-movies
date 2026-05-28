@@ -5,6 +5,8 @@ import { Palette, X } from 'lucide-react';
 import { AppTooltip } from '../ui/app-tooltip';
 import { cn } from '../../lib/utils';
 import {
+  selectDatasetProvenance,
+  selectFileName,
   selectLeafNamesByIndex,
   selectSetTaxaColoringOpen,
   selectSetTaxaColoringWindow,
@@ -33,6 +35,14 @@ const TAXA_COLORING_WINDOW_BOUNDS = {
   minHeight: 520,
   margin: 16,
 };
+const NOROVIRUS_SELECTED_METADATA_SOURCE = {
+  label: 'Norovirus metadata',
+  fileName: 'subsampled_350_metadata.csv',
+  filePath:
+    import.meta.env.BASE_URL +
+    'examples/recombination_norovirus/source_preparation/augur_subsampling/metadata/subsampled_350_metadata.csv',
+  preferredColumn: 'VP1_type',
+};
 
 function fitTaxaColoringWindowRect(rect) {
   const viewport = getBrowserViewportSize();
@@ -51,6 +61,8 @@ export function TaxaColoringRndWindow({ isActive = false, onFocus } = {}) {
   const fittedWindow = fitTaxaColoringWindowRect(windowState);
 
   const taxaNames = useAppStore(selectLeafNamesByIndex);
+  const fileName = useAppStore(selectFileName);
+  const datasetProvenance = useAppStore(selectDatasetProvenance);
   const taxaGrouping = useAppStore(selectTaxaGrouping);
   const setTaxaGrouping = useAppStore(selectSetTaxaGrouping);
 
@@ -85,6 +97,16 @@ export function TaxaColoringRndWindow({ isActive = false, onFocus } = {}) {
     });
     return map;
   }, [taxaNames, taxaGrouping]);
+
+  const metadataSources = useMemo(() => {
+    const sourceLabel = datasetProvenance?.sourceLabel || '';
+    const isNorovirusDataset =
+      sourceLabel.includes('recombination_norovirus') ||
+      String(fileName || '').toLowerCase().includes('norovirus') ||
+      taxaNames.some((taxon) => /^[A-Z]{1,3}\d+_/.test(taxon));
+
+    return isNorovirusDataset ? [NOROVIRUS_SELECTED_METADATA_SOURCE] : [];
+  }, [datasetProvenance, fileName, taxaNames]);
 
   const handleApply = useCallback(
     (colorData) => {
@@ -194,6 +216,7 @@ export function TaxaColoringRndWindow({ isActive = false, onFocus } = {}) {
             originalColorMap={baselineColorMap}
             onApply={handleApply}
             initialState={initialState}
+            metadataSources={metadataSources}
           />
         </div>
       </div>

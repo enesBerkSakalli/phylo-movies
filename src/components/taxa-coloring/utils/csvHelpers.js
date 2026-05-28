@@ -17,7 +17,6 @@ export function loadCSVColumn(csvData, colName, taxaNames) {
     rawMap = rawMap && typeof rawMap === 'object' ? new Map(Object.entries(rawMap)) : new Map();
   }
 
-  const groups = csvData.columnGroups?.[colName] || [];
   const validation = validateCSVTaxa(rawMap, taxaNames);
 
   // Transform raw map (CSV names) into canonical map (Tree names)
@@ -29,10 +28,30 @@ export function loadCSVColumn(csvData, colName, taxaNames) {
       }
     }
   }
+  const groupMembers = new Map();
+  for (const [treeName, groupName] of canonicalMap.entries()) {
+    if (!groupMembers.has(groupName)) {
+      groupMembers.set(groupName, []);
+    }
+    groupMembers.get(groupName).push(treeName);
+  }
+  const groups = Array.from(groupMembers.entries()).map(([name, members]) => ({
+    name,
+    count: members.length,
+    members,
+  }));
 
   return {
     map: canonicalMap,
     groups,
     validation,
   };
+}
+
+export function chooseInitialCSVColumn(csvData, preferredColumn = null) {
+  const columns = csvData?.groupingColumns ?? [];
+  if (preferredColumn && columns.some((column) => column.name === preferredColumn)) {
+    return preferredColumn;
+  }
+  return columns[0]?.name ?? null;
 }
