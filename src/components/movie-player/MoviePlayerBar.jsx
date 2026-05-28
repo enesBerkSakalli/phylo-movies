@@ -10,6 +10,7 @@ import {
   selectAnimationSpeed,
   selectBackward,
   selectBarOptionValue,
+  selectCurrentAnimationStage,
   selectForward,
   selectHoveredSegmentData,
   selectHoveredSegmentIndex,
@@ -24,7 +25,7 @@ import {
 } from '../../state/phyloStore/store.js';
 import { useSidebar } from '../ui/sidebar';
 import { Button } from '../ui/button';
-import { Menu, ChevronUp, ChevronDown } from 'lucide-react';
+import { Activity, Menu, ChevronUp, ChevronDown } from 'lucide-react';
 import { AppTooltip } from '../ui/app-tooltip';
 import { MOVIE_PLAYER_ARIA_LABELS, TIMELINE_LEGEND_ITEMS } from './MoviePlayerBar.contract.js';
 
@@ -39,6 +40,7 @@ export function MoviePlayerBar() {
   const setAnimationSpeed = useAppStore(selectSetAnimationSpeed);
   const animationSpeed = useAppStore(selectAnimationSpeed);
   const barOptionValue = useAppStore(selectBarOptionValue);
+  const currentAnimationStage = useAppStore(selectCurrentAnimationStage);
   const setBarOption = useAppStore(selectSetBarOption);
   const [toolbarExpanded, setToolbarExpanded] = useState(true);
 
@@ -152,8 +154,9 @@ export function MoviePlayerBar() {
               </AppTooltip>
 
               {hasTimeline && (
-                <div className="min-w-0 overflow-hidden">
+                <div className="flex min-w-0 items-center gap-2 overflow-hidden">
                   <TimelineStatusStrip />
+                  <MotionStatusSlot stage={currentAnimationStage} />
                 </div>
               )}
             </div>
@@ -269,6 +272,51 @@ function getTimelineTooltipPosition(position) {
   }
 
   return { x, y };
+}
+
+function MotionStatusSlot({ stage }) {
+  const label = formatAnimationStage(stage);
+  const tooltip = stage
+    ? `Current topology-change phase: ${label}`
+    : 'No topology-change motion is active.';
+
+  return (
+    <div className="flex shrink-0 items-center gap-2" data-motion-status="stable">
+      <Activity className="size-3.5 shrink-0 text-primary" aria-hidden />
+      <div className="flex shrink-0 items-center gap-2">
+        <div className="shrink-0 text-xs font-bold leading-tight tracking-tight uppercase">
+          Motion
+        </div>
+        <AppTooltip
+          content={tooltip}
+          contentClassName="border-border/60 bg-popover text-2xs font-mono text-popover-foreground"
+        >
+          <span className="inline-flex w-[7rem] shrink-0 items-center justify-center rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-primary cursor-help">
+            <span className="truncate text-center text-[10px] text-foreground leading-tight font-semibold">
+              {label}
+            </span>
+          </span>
+        </AppTooltip>
+      </div>
+    </div>
+  );
+}
+
+function formatAnimationStage(stage) {
+  switch (stage) {
+    case 'COLLAPSE':
+      return 'Collapse';
+    case 'EXPAND':
+      return 'Expand';
+    case 'REORDER':
+      return 'Reorder';
+    case null:
+    case undefined:
+    case '':
+      return 'Idle';
+    default:
+      return String(stage);
+  }
 }
 
 function TimelineLayerControls({ hasTransitionSegments, showViewportControls }) {

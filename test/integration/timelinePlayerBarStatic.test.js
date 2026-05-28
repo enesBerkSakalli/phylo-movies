@@ -87,8 +87,12 @@ describe('movie timeline player bar semantics', () => {
     expect(managerSource).toContain('getTimelineStatusSnapshot');
     expect(managerSource).toContain('buildTimelineStatusSnapshot');
     expect(statusStripSource).toContain('selectMovieTimelineManager');
-    expect(statusStripSource).toContain('selectCurrentAnimationStage');
-    expect(statusStripSource).toContain('AnimationStageStatus');
+    expect(playerBarSource).toContain('selectCurrentAnimationStage');
+    expect(playerBarSource).toContain('MotionStatusSlot');
+    expect(playerBarSource).toContain('data-motion-status="stable"');
+    expect(playerBarSource).toContain('No topology-change motion is active.');
+    expect(statusStripSource).not.toContain('selectCurrentAnimationStage');
+    expect(statusStripSource).not.toContain('AnimationStageStatus');
     expect(statusStripSource).toContain('getTimelineStatusSnapshot');
     expect(statusStripSource).toContain('buildTimelineStatusSnapshot');
     expect(statusStripSource).toContain('Movie timeline status');
@@ -106,6 +110,8 @@ describe('movie timeline player bar semantics', () => {
     expect(statusStripSource).toContain("Window size {msaWindowSize ?? '-'}");
     expect(statusStripSource).toContain("Step size {msaStepSize ?? '-'}");
     expect(statusStripSource).toContain('text-[10px] text-foreground leading-tight font-semibold');
+    expect(playerBarSource).toContain('text-xs font-bold leading-tight tracking-tight uppercase');
+    expect(playerBarSource).toContain('inline-flex w-[7rem] shrink-0');
     expect(statusStripSource).not.toContain('Tree Type');
     expect(statusStripSource).not.toContain('Badge');
     expect(playerBarSource.indexOf('<TimelineStatusStrip />')).toBeLessThan(

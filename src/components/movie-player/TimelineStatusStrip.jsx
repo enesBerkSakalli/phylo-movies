@@ -1,9 +1,8 @@
 import React, { useMemo } from 'react';
-import { Activity, ArrowRight, Columns, Film, GitBranch } from 'lucide-react';
+import { ArrowRight, Columns, Film, GitBranch } from 'lucide-react';
 import { AppTooltip } from '../ui/app-tooltip';
 import {
   selectActiveTreeListLength,
-  selectCurrentAnimationStage,
   selectFrameIndex,
   selectHasMsa,
   selectInputFrameIndices,
@@ -21,7 +20,6 @@ export function TimelineStatusStrip() {
   const timelineCursor = useAppStore(selectTimelineCursor);
   const inputFrameIndices = useAppStore(selectInputFrameIndices);
   const treeListLength = useAppStore(selectActiveTreeListLength);
-  const currentAnimationStage = useAppStore(selectCurrentAnimationStage);
   const movieTimelineManager = useAppStore(selectMovieTimelineManager);
   const hasMsa = useAppStore(selectHasMsa);
   const msaWindowSize = useAppStore(selectMsaWindowSize);
@@ -65,8 +63,6 @@ export function TimelineStatusStrip() {
       aria-label="Movie timeline status"
     >
       <CursorStatus status={status} />
-
-      <AnimationStageStatus stage={currentAnimationStage} />
 
       {hasMsa && (
         <>
@@ -146,40 +142,6 @@ function CursorPositionValue({ position }) {
   );
 }
 
-function AnimationStageStatus({ stage }) {
-  if (!stage) return null;
-
-  const label = formatAnimationStage(stage);
-
-  return (
-    <StatusItem icon={Activity} label="Motion">
-      <AppTooltip
-        content={`Current topology-change phase: ${label}`}
-        contentClassName="border-border/60 bg-popover text-2xs font-mono text-popover-foreground"
-      >
-        <span className="inline-flex w-[7rem] shrink-0 items-center justify-center rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-primary cursor-help">
-          <span className="truncate text-center text-[10px] text-foreground leading-tight font-semibold">
-            {label}
-          </span>
-        </span>
-      </AppTooltip>
-    </StatusItem>
-  );
-}
-
-function formatAnimationStage(stage) {
-  switch (stage) {
-    case 'COLLAPSE':
-      return 'Collapse';
-    case 'EXPAND':
-      return 'Expand';
-    case 'REORDER':
-      return 'Reorder';
-    default:
-      return String(stage);
-  }
-}
-
 function StatusItem({ icon: Icon, label, children }) {
   return (
     <div className="flex shrink-0 items-center gap-2">
@@ -219,12 +181,23 @@ function MsaWindowStatus({ msaWindow }) {
 }
 
 function MsaWindowConfigStatus({ msaWindowSize, msaStepSize }) {
+  const fullLabel = `Window size ${msaWindowSize ?? '-'} / Step size ${msaStepSize ?? '-'}`;
+  const compactLabel = `W ${msaWindowSize ?? '-'} / S ${msaStepSize ?? '-'}`;
+
   return (
-    <span className="hidden w-[14rem] shrink-0 items-center justify-center rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-primary 2xl:inline-flex">
-      <span className="truncate text-center text-[10px] text-foreground leading-tight font-semibold tabular-nums">
-        Window size {msaWindowSize ?? '-'} / Step size {msaStepSize ?? '-'}
+    <AppTooltip
+      content={fullLabel}
+      contentClassName="border-border/60 bg-popover text-2xs font-mono text-popover-foreground"
+    >
+      <span
+        className="hidden w-[7rem] shrink-0 items-center justify-center rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-primary xl:inline-flex"
+        aria-label={fullLabel}
+      >
+        <span className="truncate text-center text-[10px] text-foreground leading-tight font-semibold tabular-nums">
+          {compactLabel}
+        </span>
       </span>
-    </span>
+    </AppTooltip>
   );
 }
 
