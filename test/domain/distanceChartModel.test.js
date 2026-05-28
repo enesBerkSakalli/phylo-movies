@@ -95,6 +95,31 @@ describe('distanceChartModel', () => {
     });
   });
 
+  it('uses genome-window coordinates for distance points when MSA context exists', () => {
+    const { points } = buildSeriesPoints('rfd', pairMetrics, [], pairs, {
+      hasMsa: true,
+      msaStepSize: 50,
+      msaWindowSize: 100,
+      msaColumnCount: 1000,
+    });
+
+    expect(points.map((point) => point.x)).toEqual([376, 426]);
+    expect(points.map((point) => point.contextLabel)).toEqual([
+      'Tree 8 -> 9; genome windows 301-400 -> 351-450',
+      'Tree 9 -> 10; genome windows 351-450 -> 401-500',
+    ]);
+    expect(points[0].sourceWindow).toEqual({
+      startPosition: 301,
+      midPosition: 351,
+      endPosition: 400,
+    });
+    expect(points[0].targetWindow).toEqual({
+      startPosition: 351,
+      midPosition: 401,
+      endPosition: 450,
+    });
+  });
+
   it('keeps raw weighted RF values above one and auto-scales the axis', () => {
     const { points, yMax } = buildSeriesPoints('w-rfd', pairMetrics, [], pairs);
 
@@ -125,6 +150,30 @@ describe('distanceChartModel', () => {
       y: 1.5,
     });
     expect(yMax).toBe('auto');
+  });
+
+  it('uses genome-window midpoint coordinates for scale points when MSA context exists', () => {
+    const { points } = buildSeriesPoints(
+      'scale',
+      pairMetrics,
+      [
+        { index: 0, value: 0.75 },
+        { index: 10, value: 1.5 },
+      ],
+      pairs,
+      {
+        hasMsa: true,
+        msaStepSize: 50,
+        msaWindowSize: 100,
+        msaColumnCount: 1000,
+      }
+    );
+
+    expect(points.map((point) => point.x)).toEqual([1, 51]);
+    expect(points.map((point) => point.contextLabel)).toEqual([
+      'Input tree 1; genome window 1-50',
+      'Input tree 2; genome window 1-100',
+    ]);
   });
 
   it('keeps distance point values aligned to pair order when metric rows are unordered', () => {

@@ -1,8 +1,11 @@
 import {
   formatDistancePointLabel,
+  formatGenomeDistancePointLabel,
+  formatGenomeScalePointLabel,
   formatMetricValue,
   formatScalePointLabel,
 } from './distanceChartLanguage.js';
+import { calculateWindow } from '../../domain/msa/msaWindowCalculator.js';
 
 const safeNumber = (value, defaultValue = 0) => {
   const numberValue = Number(value);
@@ -15,52 +18,93 @@ const resolveDistancePair = (pair) => ({
   sourceFrameIndex: pair.source_frame_index,
 });
 
-const buildDistancePoints = (pairMetrics, pairs, metricKey) => {
+const hasGenomeWindowAxis = (options = {}) =>
+  Boolean(options.hasMsa) &&
+  Number.isFinite(options.msaStepSize) &&
+  Number.isFinite(options.msaWindowSize) &&
+  Number.isFinite(options.msaColumnCount) &&
+  options.msaStepSize > 0 &&
+  options.msaWindowSize > 0 &&
+  options.msaColumnCount > 0;
+
+const resolveMsaWindow = (inputTreeIndex, options) => {
+  if (!hasGenomeWindowAxis(options) || !Number.isInteger(inputTreeIndex)) return null;
+  return calculateWindow(
+    inputTreeIndex,
+    options.msaStepSize,
+    options.msaWindowSize,
+    options.msaColumnCount
+  );
+};
+
+const resolveDistanceX = (sourceWindow, targetWindow, fallbackX) => {
+  if (!sourceWindow || !targetWindow) return fallbackX;
+  return (sourceWindow.midPosition + targetWindow.midPosition) / 2;
+};
+
+const buildDistancePoints = (pairMetrics, pairs, metricKey, options = {}) => {
   const metricByPairId = new Map(pairMetrics.rows.map((row) => [row.pair_id, row]));
 
   return pairs.map((pair, index) => {
     const metricRow = metricByPairId.get(pair.pair_id) ?? {};
     const pairOrdinal = Number.isInteger(pair.pair_ordinal) ? pair.pair_ordinal : index;
     const resolvedPair = resolveDistancePair(pair);
+    const sourceWindow = resolveMsaWindow(resolvedPair.sourceInputTreeIndex, options);
+    const targetWindow = resolveMsaWindow(resolvedPair.targetInputTreeIndex, options);
+    const fallbackX = pairOrdinal + 1;
 
     return {
-      x: pairOrdinal + 1,
+      x: resolveDistanceX(sourceWindow, targetWindow, fallbackX),
       y: safeNumber(metricRow[metricKey]),
       sampleIndex: pairOrdinal,
       pairId: pair.pair_id,
+      sourceWindow,
+      targetWindow,
       ...resolvedPair,
-      contextLabel: formatDistancePointLabel(
-        resolvedPair.sourceInputTreeIndex,
-        resolvedPair.targetInputTreeIndex
-      ),
+      contextLabel: sourceWindow
+        ? formatGenomeDistancePointLabel({
+            ...resolvedPair,
+            sourceWindow,
+            targetWindow,
+          })
+        : formatDistancePointLabel(
+            resolvedPair.sourceInputTreeIndex,
+            resolvedPair.targetInputTreeIndex
+          ),
     };
   });
 };
 
-export const buildSeriesPoints = (barOptionValue, pairMetrics, scaleList, pairs) => {
+export const buildSeriesPoints = (barOptionValue, pairMetrics, scaleList, pairs, options = {}) => {
   if (barOptionValue === 'rfd') {
     return {
-      points: buildDistancePoints(pairMetrics, pairs, 'robinson_foulds'),
+      points: buildDistancePoints(pairMetrics, pairs, 'robinson_foulds', options),
       yMax: 1,
     };
   }
 
   if (barOptionValue === 'w-rfd') {
     return {
-      points: buildDistancePoints(pairMetrics, pairs, 'weighted_robinson_foulds'),
+      points: buildDistancePoints(pairMetrics, pairs, 'weighted_robinson_foulds', options),
       yMax: 'auto',
     };
   }
 
   if (barOptionValue === 'scale') {
     return {
-      points: scaleList.map((entry, index) => ({
-        x: index + 1,
-        y: safeNumber(entry.value),
-        sampleIndex: index,
-        frameIndex: entry.index,
-        contextLabel: formatScalePointLabel(index + 1),
-      })),
+      points: scaleList.map((entry, index) => {
+        const window = resolveMsaWindow(index, options);
+        return {
+          x: window?.midPosition ?? index + 1,
+          y: safeNumber(entry.value),
+          sampleIndex: index,
+          frameIndex: entry.index,
+          sourceWindow: window,
+          contextLabel: window
+            ? formatGenomeScalePointLabel(index + 1, window)
+            : formatScalePointLabel(index + 1),
+        };
+      }),
       yMax: 'auto',
     };
   }

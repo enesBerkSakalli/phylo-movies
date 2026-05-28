@@ -1,6 +1,7 @@
 import React from 'react';
 import { DistanceChart } from '../../DistanceChart/DistanceChart.jsx';
 import { DISTANCE_CHART_METRIC_OPTIONS } from '../../DistanceChart/distanceChartLanguage.js';
+import { selectHasMsa, useAppStore } from '../../../state/phyloStore/store.js';
 import {
   Select,
   SelectContent,
@@ -11,6 +12,8 @@ import {
 } from '../../ui/select';
 
 export function MovieChartSection({ barOptionValue, onBarOptionChange }) {
+  const hasMsa = useAppStore(selectHasMsa);
+
   return (
     <div
       className="w-full bg-muted/10 px-2 py-1"
@@ -19,7 +22,7 @@ export function MovieChartSection({ barOptionValue, onBarOptionChange }) {
     >
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
         <div className="min-w-0 truncate text-2xs font-medium uppercase tracking-wider text-muted-foreground">
-          Input-tree metrics
+          {hasMsa ? 'Genome-window metrics' : 'Input-tree metrics'}
         </div>
 
         <div className="shrink-0" role="group" aria-label="Chart controls">
