@@ -1,13 +1,17 @@
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { AppTooltip } from '../ui/app-tooltip';
-import { CircleDot, StopCircle } from 'lucide-react';
+import { CircleDot, Loader2, StopCircle } from 'lucide-react';
 import { CanvasRecorder } from '../../services/media/canvasRecorder';
 import { toast } from 'sonner';
 
 export function RecordingControls({ disabled = false }) {
   const recorderRef = useRef(null);
-  const [isRecording, setIsRecording] = useState(false);
+  const recordingStateRef = useRef('idle');
+  const [recordingState, setRecordingState] = useState('idle');
+  const isStarting = recordingState === 'starting';
+  const isRecording = recordingState === 'recording';
+  const isStopping = recordingState === 'stopping';
 
   const ensureRecorder = useCallback(() => {
     if (!recorderRef.current) {
@@ -20,26 +24,32 @@ export function RecordingControls({ disabled = false }) {
     return recorderRef.current;
   }, []);
 
+  useEffect(() => {
+    recordingStateRef.current = recordingState;
+  }, [recordingState]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (recorderRef.current && isRecording) {
+      if (recorderRef.current && recordingStateRef.current !== 'idle') {
         recorderRef.current.stop().catch((error) => {
           console.error('[RecordingControls] Cleanup failed while stopping recorder:', error);
         });
       }
     };
-  }, [isRecording]);
+  }, []);
 
   const handleStartRecording = useCallback(async () => {
+    if (recordingState !== 'idle') return;
     const recorder = ensureRecorder();
     try {
-      setIsRecording(true);
-      toast.info('Preparing to start recording…', { duration: 2000 });
+      setRecordingState('starting');
+      toast.info('Preparing to start recording...', { duration: 2000 });
       await recorder.start();
-      toast.success('Recording started. Capturing frames…', { duration: 3000 });
+      setRecordingState('recording');
+      toast.success('Recording started. Capturing frames...', { duration: 3000 });
     } catch (error) {
-      setIsRecording(false);
+      setRecordingState('idle');
       console.error('[RecordingControls] Failed to start canvas recording:', error);
       toast.error('Recording could not start.', {
         description:
@@ -47,12 +57,14 @@ export function RecordingControls({ disabled = false }) {
           'Check browser screen-recording permissions and make sure the tree canvas is visible.',
       });
     }
-  }, [ensureRecorder]);
+  }, [ensureRecorder, recordingState]);
 
   const handleStopRecording = useCallback(async () => {
+    if (recordingState !== 'recording') return;
     const recorder = ensureRecorder();
     try {
-      toast.info('Finishing recording…', { duration: 2000 });
+      setRecordingState('stopping');
+      toast.info('Finishing recording...', { duration: 2000 });
       await recorder.stop();
       toast.success('Recording saved successfully.');
     } catch (error) {
@@ -61,36 +73,46 @@ export function RecordingControls({ disabled = false }) {
         description: error?.message || 'The browser stopped the MediaRecorder unexpectedly.',
       });
     } finally {
-      setIsRecording(false);
+      setRecordingState('idle');
     }
-  }, [ensureRecorder]);
+  }, [ensureRecorder, recordingState]);
 
   return (
     <>
-      <AppTooltip content="Start screen recording">
+      <AppTooltip content={isStarting ? 'Starting recording...' : 'Start screen recording'}>
         <Button
           id="start-record"
           className="record-button-danger"
           variant="ghost"
           size="icon"
-          disabled={disabled || isRecording}
+          disabled={disabled || recordingState !== 'idle'}
           onClick={handleStartRecording}
-          aria-label="Start recording"
+          aria-label={isStarting ? 'Starting recording' : 'Start recording'}
+          aria-busy={isStarting}
         >
-          <CircleDot className="size-4" />
+          {isStarting ? (
+            <Loader2 className="size-4 animate-spin" aria-hidden />
+          ) : (
+            <CircleDot className="size-4" aria-hidden />
+          )}
         </Button>
       </AppTooltip>
 
-      <AppTooltip content="Stop screen recording">
+      <AppTooltip content={isStopping ? 'Saving recording...' : 'Stop screen recording'}>
         <Button
           id="stop-record"
           variant="ghost"
           size="icon"
           disabled={disabled || !isRecording}
           onClick={handleStopRecording}
-          aria-label="Stop recording"
+          aria-label={isStopping ? 'Saving recording' : 'Stop recording'}
+          aria-busy={isStopping}
         >
-          <StopCircle className="size-4" />
+          {isStopping ? (
+            <Loader2 className="size-4 animate-spin" aria-hidden />
+          ) : (
+            <StopCircle className="size-4" aria-hidden />
+          )}
         </Button>
       </AppTooltip>
     </>

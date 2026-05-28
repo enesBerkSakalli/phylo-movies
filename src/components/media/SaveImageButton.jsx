@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '../ui/button';
 import { AppTooltip } from '../ui/app-tooltip';
-import { Download } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
 import {
   selectFrameIndex,
   selectTreeControllers,
@@ -100,16 +100,21 @@ export function SaveImageButton({ disabled = false }) {
   };
 
   return (
-    <AppTooltip content="Save current tree visualization as PNG">
+    <AppTooltip content={isSaving ? 'Saving PNG...' : 'Save current tree visualization as PNG'}>
       <Button
         id="save-button"
         variant="ghost"
         size="icon"
         disabled={disabled || isSaving}
         onClick={handleSaveImage}
-        aria-label="Save PNG"
+        aria-label={isSaving ? 'Saving PNG' : 'Save PNG'}
+        aria-busy={isSaving}
       >
-        <Download className="size-4" />
+        {isSaving ? (
+          <Loader2 className="size-4 animate-spin" aria-hidden />
+        ) : (
+          <Download className="size-4" aria-hidden />
+        )}
       </Button>
     </AppTooltip>
   );
