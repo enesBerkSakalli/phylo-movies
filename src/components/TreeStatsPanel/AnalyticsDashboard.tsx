@@ -160,6 +160,7 @@ export const AnalyticsDashboard = ({
             size="icon-xs"
             onClick={onClose}
             aria-label="Close moving subtrees"
+            title="Close moving subtrees"
             className="spr-analytics-no-drag hover:bg-destructive/10 hover:text-destructive transition-colors"
           >
             <X aria-hidden />

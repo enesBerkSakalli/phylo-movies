@@ -392,6 +392,7 @@ export const SprMoveEventTable = ({
                 className="absolute right-1 top-1/2 size-6 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 onClick={() => setGlobalFilter('')}
                 aria-label={SPR_MOVE_EVENT_TABLE_COPY.clearSearchLabel}
+                title={SPR_MOVE_EVENT_TABLE_COPY.clearSearchLabel}
               >
                 <X aria-hidden />
               </Button>

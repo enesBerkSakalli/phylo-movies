@@ -94,6 +94,7 @@ export function TransitionInspectorPanel() {
           size="icon-xs"
           className="-mr-1 -mt-1 text-muted-foreground hover:text-foreground"
           aria-label="Close transition inspector"
+          title="Close transition inspector"
           onClick={() => setSelectedTimelineSegment(null)}
         >
           <X className="size-4" aria-hidden />

@@ -128,7 +128,7 @@ export function ColoringPanel({ onOpenTaxaColoring }) {
           className="w-full justify-start h-8 text-xs font-normal"
         >
           <Palette data-icon="inline-start" className="text-primary" />
-          <span>Taxa Colors</span>
+          <span>Edit Taxa Colors</span>
         </Button>
       </SidebarMenuSubItem>
       <Separator className="my-2 mx-2" />
