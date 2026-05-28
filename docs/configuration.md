@@ -17,7 +17,7 @@ Vite dev server defaults:
 - Host: `127.0.0.1`
 - Port: `5173`
 - Strict port: enabled
-- Proxies: `/treedata`, `/stream`, `/msa`, `/health`, and `/about` to `http://localhost:5002`
+- Proxies: `/treedata`, `/stream`, `/msa`, `/health`, and `/about` to `http://127.0.0.1:5002`
 - Example files: served from `publication_data/` under `/examples/`
 
 ## Backend
