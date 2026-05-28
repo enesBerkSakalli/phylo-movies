@@ -15,6 +15,7 @@ const SOCIAL_IMAGE_URL = `${SITE_ROOT}/${SOCIAL_IMAGE_REL_PATH}`;
 const REPOSITORY_URL = 'https://github.com/enesBerkSakalli/phylo-movies';
 const README_URL = `${REPOSITORY_URL}#readme`;
 const RELEASES_URL = `${REPOSITORY_URL}/releases`;
+const DEMO_URL = `${SITE_ROOT}/demo/`;
 const PUBLICATION_URL = 'https://www.biorxiv.org/content/10.64898/2026.04.01.715821v1';
 const PUBLICATION_PDF_URL = 'https://www.biorxiv.org/content/10.64898/2026.04.01.715821v1.full.pdf';
 const PUBLICATION_DOI = '10.64898/2026.04.01.715821';
@@ -38,6 +39,11 @@ const DESCRIPTION = IS_DOCS_ONLY
 const OG_DESCRIPTION = IS_DOCS_ONLY
   ? 'Landing page for the Phylo-Movies desktop app and web tool, with publication links, citation metadata, example use cases, datasets, and full-stack setup instructions.'
   : 'Visualize topological transitions between phylogenetic trees through smooth morphing animations, MSA-linked exploration, and lineage-aware analysis tools.';
+const DEMO_PAGE_TITLE = 'Phylo-Movies Browser Demo | Generated Phylogenetic Examples';
+const DEMO_DESCRIPTION =
+  'Open generated Phylo-Movies browser examples for norovirus recombination, IQ-TREE bootstrap rogue taxa, a paper figure tree pair, MSA-linked trees, and a 1000-taxon scale-limit demo.';
+const DEMO_OG_DESCRIPTION =
+  'Static browser demo for Phylo-Movies with generated publication examples, precomputed JSON payloads, norovirus sliding-window trees, bootstrap tree series, and a 1000-taxon limit example.';
 const KEYWORDS = IS_DOCS_ONLY
   ? 'phylogenetics, phylogenetic tree interpolation, phylogenetic tree visualization, tree morphing, sliding-window phylogenetics, desktop app, electron app, multiple sequence alignment, MSA, recombination detection, rogue taxa, Robinson-Foulds, computational biology, bioRxiv, scientific software'
   : 'phylogenetics, phylogenetic trees, tree visualization, tree morphing, bioinformatics, Robinson-Foulds, recombination, MSA, rogue taxa, computational biology';
@@ -61,6 +67,11 @@ const FAQ_ITEMS = [
       'Yes. Phylo-Movies is distributed both as a desktop application and as a browser-based tool. The landing page links directly to desktop releases for macOS, Windows, and Linux.',
   },
   {
+    question: 'Can I try Phylo-Movies in the browser?',
+    answer:
+      'Yes. The GitHub Pages site includes generated publication examples that open the visualization workspace without backend processing.',
+  },
+  {
     question: 'Which problems is Phylo-Movies useful for?',
     answer:
       'Typical use cases include recombination breakpoint exploration, rogue taxon detection across bootstrap trees, and qualitative inspection of local phylogenetic conflict.',
@@ -68,6 +79,65 @@ const FAQ_ITEMS = [
   {
     question: 'How should I cite Phylo-Movies?',
     answer: `Cite the bioRxiv preprint ${PUBLICATION_TITLE} using DOI ${PUBLICATION_DOI}.`,
+  },
+];
+
+const DEMO_EXAMPLES = [
+  {
+    name: 'Norovirus Polymerase-Capsid Recombination',
+    workflow: 'Sliding-window MSA',
+    scale: '334 taxa, 17 IQ-TREE window trees, 8,058 bp alignment',
+    description:
+      'Generated IQ-TREE GTR+G fast-search browser payload for norovirus recombination breakpoint exploration with 750 bp windows and a 500 bp step.',
+    keywords: ['norovirus', 'recombination', 'sliding-window phylogenetics', 'IQ-TREE'],
+  },
+  {
+    name: 'Norovirus Stability Scan',
+    workflow: 'Sliding-window MSA with SH-aLRT',
+    scale: '334 taxa, 17 IQ-TREE SH-aLRT window trees, 8,058 bp alignment',
+    description:
+      'Generated IQ-TREE GTR+G fast-search payload with SH-aLRT support scores for genome-window topology changes.',
+    keywords: ['norovirus', 'SH-aLRT', 'branch support', 'genome-window topology'],
+  },
+  {
+    name: 'Paper Figure Example',
+    workflow: 'Precomputed trees',
+    scale: '14 taxa, 2 trees',
+    description:
+      'Small publication figure example for inspecting Phylo-Movies tree transitions and timeline controls.',
+    keywords: ['phylogenetic tree interpolation', 'tree morphing', 'publication example'],
+  },
+  {
+    name: 'IQ-TREE Bootstrap Trees (24 taxa)',
+    workflow: 'Bootstrap tree series',
+    scale: '24 taxa, 200 composition-ranked bootstrap trees',
+    description:
+      'Generated static payload for rogue-taxon movement review across IQ-TREE bootstrap replicate trees.',
+    keywords: ['bootstrap trees', 'rogue taxa', 'IQ-TREE', 'SPR moves'],
+  },
+  {
+    name: 'IQ-TREE Bootstrap Trees (125 taxa)',
+    workflow: 'Bootstrap tree series',
+    scale: '125 taxa, 200 composition-ranked bootstrap trees',
+    description:
+      'Larger generated bootstrap tree-series payload for topology-change and rogue-taxon exploration.',
+    keywords: ['bootstrap trees', 'rogue taxa', 'large phylogenetic trees'],
+  },
+  {
+    name: 'Quick MSA Demo',
+    workflow: 'Trees plus MSA',
+    scale: '30 taxa, 10 trees',
+    description:
+      'Synthetic MSA-linked demo for checking alignment-window synchronization in the browser.',
+    keywords: ['multiple sequence alignment', 'MSA viewer', 'tree synchronization'],
+  },
+  {
+    name: 'msprime 1000-Taxa Limit Demo',
+    workflow: 'Generated tree movie',
+    scale: '1000 taxa, 2 trees',
+    description:
+      'Generated scale-limit payload for checking 1000-taxon browser visualization behavior.',
+    keywords: ['1000 taxa', 'scale limit', 'msprime', 'large tree visualization'],
   },
 ];
 
@@ -160,6 +230,46 @@ const STRUCTURED_DATA = [
     : []),
 ];
 
+const DEMO_STRUCTURED_DATA = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: DEMO_PAGE_TITLE,
+    url: DEMO_URL,
+    description: DEMO_DESCRIPTION,
+    isPartOf: {
+      '@type': 'WebSite',
+      name: 'Phylo-Movies',
+      url: SITE_ROOT,
+    },
+    about: [
+      'Phylogenetic tree visualization',
+      'Sliding-window phylogenetics',
+      'Norovirus recombination',
+      'Rogue taxa analysis',
+      'Bootstrap tree series',
+    ],
+    hasPart: DEMO_EXAMPLES.map((example) => ({
+      '@type': 'Dataset',
+      name: example.name,
+      description: example.description,
+      keywords: example.keywords,
+    })),
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'Phylo-Movies Browser Demo',
+    url: DEMO_URL,
+    description: DEMO_DESCRIPTION,
+    applicationCategory: 'ScientificApplication',
+    operatingSystem: 'Web',
+    isAccessibleForFree: true,
+    codeRepository: REPOSITORY_URL,
+    citation: PUBLICATION_DOI_URL,
+  },
+];
+
 function assertFileExists(filePath) {
   if (!fs.existsSync(filePath)) {
     throw new Error(`Required file not found: ${filePath}`);
@@ -198,15 +308,168 @@ function injectIntoHead(html, injection) {
   return html.replace('</head>', `${injection}\n  </head>`);
 }
 
-function applyIndexSeo(indexHtml) {
-  let html = replaceTitleTag(indexHtml, PAGE_TITLE);
-  html = replaceDescriptionMeta(html, DESCRIPTION);
-  const structuredDataJson = JSON.stringify(STRUCTURED_DATA, null, 2);
+function replaceRootHtml(html, staticHtml, marker) {
+  if (!IS_DOCS_ONLY || html.includes(marker)) return html;
+  const rootPattern = /<div\s+id=["']root["']><\/div>/i;
+  if (!rootPattern.test(html)) {
+    throw new Error('Unable to inject static HTML: <div id="root"></div> not found.');
+  }
+  return html.replace(rootPattern, `<div id="root">\n${staticHtml}\n    </div>`);
+}
+
+function injectStaticLandingHtml(html) {
+  return replaceRootHtml(html, renderStaticLandingHtml(), 'data-prerendered-landing="true"');
+}
+
+function injectStaticDemoHtml(html) {
+  return replaceRootHtml(html, renderStaticDemoHtml(), 'data-prerendered-demo="true"');
+}
+
+function renderStaticLandingHtml() {
+  return `      <main data-prerendered-landing="true" style="font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111827; background: #ffffff; min-height: 100vh;">
+        <section style="max-width: 960px; margin: 0 auto; padding: 48px 24px 32px; text-align: center;">
+          <img src="/phylo-movies/icons/phylo-tree-icon.svg" alt="" width="64" height="64" style="margin: 0 auto 16px; display: block;">
+          <h1 style="margin: 0 auto 16px; max-width: 780px; font-size: 36px; line-height: 1.12; font-weight: 760;">Phylo-Movies: Desktop App and Web Tool for Phylogenetic Tree Interpolation</h1>
+          <p style="margin: 0 auto; max-width: 780px; color: #4b5563; font-size: 18px; line-height: 1.65;">Phylo-Movies is available both as a desktop app and as a browser-based phylogenetic tree visualization and interpolation tool for sliding-window analyses, recombination detection, and rogue taxa exploration. This page provides publication details, citation metadata, downloads, generated browser examples, and setup paths.</p>
+          <nav aria-label="Primary links" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 24px;">
+            <a href="${PUBLICATION_URL}" style="${primaryLinkStyle()}">Read Publication</a>
+            <a href="${DEMO_URL}" style="${secondaryLinkStyle()}">Open Browser Demo</a>
+            <a href="${RELEASES_URL}" style="${secondaryLinkStyle()}">Download Desktop App</a>
+            <a href="${README_URL}" style="${secondaryLinkStyle()}">Full README</a>
+          </nav>
+        </section>
+
+        <section style="${sectionStyle()}">
+          <h2 style="${headingStyle()}">Choose How to Use Phylo-Movies</h2>
+          <div style="${gridStyle()}">
+            <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Desktop App</h3><p style="${bodyStyle()}">Best default path for end users who want a packaged local application without setting up Node.js or Python.</p><a href="${RELEASES_URL}">Download desktop releases</a></article>
+            <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Browser Demo</h3><p style="${bodyStyle()}">Open generated publication examples directly on GitHub Pages, without a backend.</p><a href="${DEMO_URL}">Open generated examples</a></article>
+            <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Full Stack Workflow</h3><p style="${bodyStyle()}">Required for interpolation, morphing animations, uploaded tree files, and MSA-driven processing via BranchArchitect.</p><a href="${README_URL}">View setup instructions</a></article>
+          </div>
+        </section>
+
+        <section style="${sectionStyle()}">
+          <h2 style="${headingStyle()}">Key Use Cases</h2>
+          <div style="${gridStyle()}">
+            <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Recombination Detection</h3><p style="${bodyStyle()}">Inspect where local tree topology shifts across genomic windows instead of relying only on scalar distance summaries.</p></article>
+            <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Rogue Taxa Analysis</h3><p style="${bodyStyle()}">Track taxa that change attachment across bootstrap trees and identify which subtrees move and where they attach.</p></article>
+            <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Sliding-Window Phylogenetics</h3><p style="${bodyStyle()}">Animate changes across ordered tree series generated from overlapping windows in a multiple sequence alignment.</p></article>
+          </div>
+        </section>
+
+        <section style="${sectionStyle()}">
+          <h2 style="${headingStyle()}">Publication and Citation</h2>
+          <p style="${bodyStyle()}"><strong>${PUBLICATION_TITLE}</strong> presents the Phylo-Movies workflow for recombination-focused sliding-window phylogenetics and rogue-taxon exploration across bootstrap tree sets.</p>
+          <p style="${bodyStyle()}">Authors: ${PUBLICATION_AUTHORS.join(', ')}.</p>
+          <p style="${bodyStyle()}">DOI: <a href="${PUBLICATION_DOI_URL}">${PUBLICATION_DOI}</a></p>
+          <pre style="white-space: pre-wrap; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb; padding: 16px; color: #111827; font-size: 13px; line-height: 1.55;">Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). Animating Phylogenetic Trees from Sliding-Window Analyses. bioRxiv. doi:10.64898/2026.04.01.715821</pre>
+        </section>
+
+        <section style="${sectionStyle()}">
+          <h2 style="${headingStyle()}">Run the Full Application</h2>
+          <p style="${bodyStyle()}">The complete local or deployed app combines the React frontend with the BranchArchitect backend for uploaded trees, interpolation, and MSA-based processing.</p>
+          <pre style="overflow-x: auto; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb; padding: 16px; color: #111827; font-size: 13px; line-height: 1.55;"><code>git clone --recurse-submodules https://github.com/enesBerkSakalli/phylo-movies.git
+cd phylo-movies
+docker compose up --build</code></pre>
+        </section>
+
+        <section style="${sectionStyle()}">
+          <h2 style="${headingStyle()}">Frequently Asked Questions</h2>
+          <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">What does Phylo-Movies do?</h3><p style="${bodyStyle()}">Phylo-Movies visualizes topological changes between phylogenetic trees by animating subtree movements across sliding-window analyses, bootstrap replicates, and related workflows.</p></article>
+          <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Can I try it in the browser?</h3><p style="${bodyStyle()}">Yes. The GitHub Pages site includes generated publication examples that open the visualization workspace without backend processing.</p></article>
+          <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">When do I need the backend?</h3><p style="${bodyStyle()}">You need the BranchArchitect backend for uploaded tree files, interpolation, morphing animations, and MSA-driven workflows.</p></article>
+          <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">How should I cite Phylo-Movies?</h3><p style="${bodyStyle()}">Cite the bioRxiv preprint ${PUBLICATION_TITLE} using DOI ${PUBLICATION_DOI}.</p></article>
+        </section>
+      </main>`;
+}
+
+function renderStaticDemoHtml() {
+  const exampleRows = DEMO_EXAMPLES.map(
+    (example) => `            <article style="${cardStyle()}">
+              <h3 style="${subheadingStyle()}">${example.name}</h3>
+              <p style="${bodyStyle()}"><strong>Workflow:</strong> ${example.workflow}</p>
+              <p style="${bodyStyle()}"><strong>Scale:</strong> ${example.scale}</p>
+              <p style="${bodyStyle()}">${example.description}</p>
+              <p style="${bodyStyle()}"><strong>Search terms:</strong> ${example.keywords.join(', ')}</p>
+            </article>`
+  ).join('\n');
+
+  return `      <main data-prerendered-demo="true" style="font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111827; background: #ffffff; min-height: 100vh;">
+        <section style="max-width: 960px; margin: 0 auto; padding: 48px 24px 32px; text-align: center;">
+          <img src="/phylo-movies/icons/phylo-tree-icon.svg" alt="" width="64" height="64" style="margin: 0 auto 16px; display: block;">
+          <h1 style="margin: 0 auto 16px; max-width: 780px; font-size: 36px; line-height: 1.12; font-weight: 760;">Phylo-Movies Browser Demo: Generated Phylogenetic Examples</h1>
+          <p style="margin: 0 auto; max-width: 800px; color: #4b5563; font-size: 18px; line-height: 1.65;">Open generated Phylo-Movies examples directly in the browser without backend processing. The demo includes norovirus sliding-window recombination datasets, IQ-TREE bootstrap rogue-taxon tree series, a paper figure example, a quick MSA-linked tree set, and a 1000-taxon scale-limit payload.</p>
+          <nav aria-label="Demo links" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 24px;">
+            <a href="${DEMO_URL}" style="${primaryLinkStyle()}">Open Generated Examples</a>
+            <a href="${PRIMARY_URL}" style="${secondaryLinkStyle()}">Phylo-Movies Landing Page</a>
+            <a href="${PUBLICATION_URL}" style="${secondaryLinkStyle()}">Read Publication</a>
+          </nav>
+        </section>
+
+        <section style="${sectionStyle()}">
+          <h2 style="${headingStyle()}">Generated Demo Datasets</h2>
+          <p style="${bodyStyle()}">Each row in the live demo opens a precomputed Phylo-Movies JSON payload. No upload form or BranchArchitect backend is required for these bundled examples.</p>
+          <div style="${gridStyle()}">
+${exampleRows}
+          </div>
+        </section>
+
+        <section style="${sectionStyle()}">
+          <h2 style="${headingStyle()}">What This Demo Helps Discover</h2>
+          <div style="${gridStyle()}">
+            <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Norovirus Recombination</h3><p style="${bodyStyle()}">Inspect topology changes across generated IQ-TREE trees inferred from the 334-taxon norovirus MSA.</p></article>
+            <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Rogue Taxa in Bootstrap Trees</h3><p style="${bodyStyle()}">Review subtree movement and topology changes across composition-ranked IQ-TREE bootstrap tree series.</p></article>
+            <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Large Tree Visualization</h3><p style="${bodyStyle()}">Open a generated 1000-taxon two-tree payload for browser scale-limit inspection.</p></article>
+          </div>
+        </section>
+
+        <section style="${sectionStyle()}">
+          <h2 style="${headingStyle()}">Citation</h2>
+          <p style="${bodyStyle()}">These generated examples support the Phylo-Movies publication workflow described in <strong>${PUBLICATION_TITLE}</strong>.</p>
+          <p style="${bodyStyle()}">DOI: <a href="${PUBLICATION_DOI_URL}">${PUBLICATION_DOI}</a></p>
+        </section>
+      </main>`;
+}
+
+function primaryLinkStyle() {
+  return 'display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; border-radius: 8px; background: #111827; color: #ffffff; text-decoration: none; font-weight: 650; font-size: 14px;';
+}
+
+function secondaryLinkStyle() {
+  return 'display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; border-radius: 8px; border: 1px solid #d1d5db; color: #111827; text-decoration: none; font-weight: 650; font-size: 14px;';
+}
+
+function sectionStyle() {
+  return 'max-width: 960px; margin: 0 auto; padding: 28px 24px;';
+}
+
+function headingStyle() {
+  return 'margin: 0 0 14px; color: #111827; font-size: 24px; line-height: 1.25; font-weight: 720;';
+}
+
+function subheadingStyle() {
+  return 'margin: 0 0 8px; color: #111827; font-size: 16px; line-height: 1.35; font-weight: 680;';
+}
+
+function bodyStyle() {
+  return 'margin: 0 0 12px; color: #4b5563; font-size: 15px; line-height: 1.65;';
+}
+
+function gridStyle() {
+  return 'display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;';
+}
+
+function cardStyle() {
+  return 'border: 1px solid #e5e7eb; border-radius: 8px; background: #ffffff; padding: 16px; margin: 0 0 12px;';
+}
+
+function buildSeoInjection({ pageTitle, ogDescription, pageUrl, structuredData }) {
+  const structuredDataJson = JSON.stringify(structuredData, null, 2);
   const citationAuthorTags = PUBLICATION_AUTHORS.map(
     (author) => `    <meta name="citation_author" content="${author}">`
   ).join('\n');
 
-  const injection = `
+  return `
     <meta name="keywords" content="${KEYWORDS}">
     <meta name="author" content="Phylo-Movies Contributors">
     <meta name="application-name" content="Phylo-Movies">
@@ -218,9 +481,9 @@ function applyIndexSeo(indexHtml) {
     <meta property="og:site_name" content="Phylo-Movies">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="en_US">
-    <meta property="og:title" content="${PAGE_TITLE}">
-    <meta property="og:description" content="${OG_DESCRIPTION}">
-    <meta property="og:url" content="${PRIMARY_URL}">
+    <meta property="og:title" content="${pageTitle}">
+    <meta property="og:description" content="${ogDescription}">
+    <meta property="og:url" content="${pageUrl}">
     <meta property="og:image" content="${SOCIAL_IMAGE_URL}">
     <meta property="og:image:secure_url" content="${SOCIAL_IMAGE_URL}">
     <meta property="og:image:type" content="image/png">
@@ -228,9 +491,9 @@ function applyIndexSeo(indexHtml) {
     <meta property="og:image:height" content="${OG_IMAGE_HEIGHT}">
     <meta property="og:image:alt" content="Phylo-Movies application interface">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="${PAGE_TITLE}">
-    <meta name="twitter:description" content="${OG_DESCRIPTION}">
-    <meta name="twitter:url" content="${PRIMARY_URL}">
+    <meta name="twitter:title" content="${pageTitle}">
+    <meta name="twitter:description" content="${ogDescription}">
+    <meta name="twitter:url" content="${pageUrl}">
     <meta name="twitter:image" content="${SOCIAL_IMAGE_URL}">
     <meta name="twitter:image:alt" content="Phylo-Movies application interface">
     <meta name="citation_title" content="${PUBLICATION_TITLE}">
@@ -241,15 +504,42 @@ function applyIndexSeo(indexHtml) {
     <meta name="citation_pdf_url" content="${PUBLICATION_PDF_URL}">
     <meta name="citation_doi" content="${PUBLICATION_DOI}">
     <meta property="article:published_time" content="${PUBLICATION_DATE}">
-    <link rel="canonical" href="${PRIMARY_URL}">
-    <link rel="alternate" hreflang="en" href="${PRIMARY_URL}">
-    <link rel="alternate" hreflang="x-default" href="${PRIMARY_URL}">
+    <link rel="canonical" href="${pageUrl}">
+    <link rel="alternate" hreflang="en" href="${pageUrl}">
+    <link rel="alternate" hreflang="x-default" href="${pageUrl}">
     <link rel="apple-touch-icon" sizes="180x180" href="/phylo-movies/icons/apple-touch-icon.png">
     <link rel="manifest" href="/phylo-movies/site.webmanifest">
     <link rel="bookmark" href="${README_URL}">
     <script type="application/ld+json">
 ${structuredDataJson}
     </script>`;
+}
+
+function applyIndexSeo(indexHtml) {
+  let html = replaceTitleTag(indexHtml, PAGE_TITLE);
+  html = replaceDescriptionMeta(html, DESCRIPTION);
+  html = injectStaticLandingHtml(html);
+  const injection = buildSeoInjection({
+    pageTitle: PAGE_TITLE,
+    ogDescription: OG_DESCRIPTION,
+    pageUrl: PRIMARY_URL,
+    structuredData: STRUCTURED_DATA,
+  });
+
+  html = injectIntoHead(html, injection);
+  return html;
+}
+
+function applyDemoSeo(indexHtml) {
+  let html = replaceTitleTag(indexHtml, DEMO_PAGE_TITLE);
+  html = replaceDescriptionMeta(html, DEMO_DESCRIPTION);
+  html = injectStaticDemoHtml(html);
+  const injection = buildSeoInjection({
+    pageTitle: DEMO_PAGE_TITLE,
+    ogDescription: DEMO_OG_DESCRIPTION,
+    pageUrl: DEMO_URL,
+    structuredData: DEMO_STRUCTURED_DATA,
+  });
 
   html = injectIntoHead(html, injection);
   return html;
@@ -274,7 +564,9 @@ Sitemap: ${SITE_ROOT}/sitemap.xml`;
 
 function writeSitemapXml() {
   const today = new Date().toISOString().slice(0, 10);
-  const urls = IS_DOCS_ONLY ? [`${SITE_ROOT}/`] : [`${SITE_ROOT}/`, `${SITE_ROOT}/visualization`];
+  const urls = IS_DOCS_ONLY
+    ? [`${SITE_ROOT}/`, DEMO_URL]
+    : [`${SITE_ROOT}/`, `${SITE_ROOT}/visualization`];
 
   const entries = urls
     .map(
@@ -323,9 +615,23 @@ function writeWebManifest() {
   writeTextFile(path.join(DIST_DIR, 'site.webmanifest'), JSON.stringify(manifest, null, 2));
 }
 
+function writeDemoIndexHtml(indexHtml) {
+  const demoDir = path.join(DIST_DIR, 'demo');
+  ensureDir(demoDir);
+  writeTextFile(path.join(demoDir, 'index.html'), applyDemoSeo(indexHtml));
+}
+
 function copySocialPreviewImage() {
-  const sourceImage = path.join(PROJECT_ROOT, 'docs', 'screenshot.png');
-  assertFileExists(sourceImage);
+  const sourceImageCandidates = [
+    path.join(PROJECT_ROOT, 'docs', 'screenshot.png'),
+    path.join(PROJECT_ROOT, 'assets', 'screenshot.png'),
+  ];
+  const sourceImage = sourceImageCandidates.find((candidate) => fs.existsSync(candidate));
+  if (!sourceImage) {
+    throw new Error(
+      `Required social preview image not found. Checked: ${sourceImageCandidates.join(', ')}`
+    );
+  }
   const outputDir = path.join(DIST_DIR, 'og');
   ensureDir(outputDir);
   const outputImage = path.join(outputDir, 'phylo-movies-preview.png');
@@ -344,6 +650,7 @@ function main() {
 
   fs.writeFileSync(INDEX_PATH, updatedIndexHtml, 'utf8');
   fs.writeFileSync(SPLASH_PATH, updatedSplashHtml, 'utf8');
+  writeDemoIndexHtml(indexHtml);
   writeRobotsTxt();
   writeSitemapXml();
   writeWebManifest();

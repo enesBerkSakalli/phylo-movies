@@ -132,6 +132,17 @@ For copy-only checks:
 npm run copy-examples
 ```
 
+To regenerate the static browser-demo payloads and check that committed JSON is
+current:
+
+```bash
+npm run fixtures:generate
+npm run fixtures:check
+```
+
+The norovirus demo fixtures infer IQ-TREE window trees from the committed
+334-taxon MSA before writing the generated tree series and browser JSON.
+
 ## Generate Local Large-Scale Fixtures
 
 Use the publication venv and msprime for larger local taxa-limit probes without

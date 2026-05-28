@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, CheckCircle2, CircleDashed } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, CircleDashed, Database } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
 import { Badge } from '../../components/ui/badge';
 import { Form } from '../../components/ui/form';
@@ -10,6 +10,8 @@ import { useWorkspaceInitializationForm } from './useWorkspaceInitializationForm
 import { NewProjectTab } from './components/NewProjectTab.jsx';
 import { ExampleTab } from './components/ExampleTab.jsx';
 import { ProcessingOverlay } from './components/ProcessingOverlay.jsx';
+import { RecentRunsPanel } from './components/RecentRunsPanel.jsx';
+import { DEMO_EXAMPLE_DATASETS } from './exampleDatasets.js';
 
 const ENGINE_STATUS = {
   ready: {
@@ -33,8 +35,8 @@ function getEngineStatus(state) {
   return ENGINE_STATUS[state] || ENGINE_STATUS.checking;
 }
 
-export function WorkspaceInitializationPage() {
-  const [activeTab, setActiveTab] = React.useState('upload');
+export function WorkspaceInitializationPage({ demoOnly = false }) {
+  const [activeTab, setActiveTab] = React.useState(demoOnly ? 'example' : 'upload');
   const {
     form,
     submitting,
@@ -45,13 +47,16 @@ export function WorkspaceInitializationPage() {
     alert,
     handleSubmit,
     handleLoadExample,
+    handleOpenPrecomputedExample,
+    cancelOperation,
     reset,
-  } = useWorkspaceInitializationForm();
+  } = useWorkspaceInitializationForm({ skipBackendCheck: demoOnly });
 
   const backendReady = backendStatus.state === 'ready';
   const disabled = submitting || loadingExample || !backendReady;
   const engineStatus = getEngineStatus(backendStatus.state);
-  const EngineIcon = engineStatus.icon;
+  const EngineIcon = demoOnly ? Database : engineStatus.icon;
+  const exampleDatasets = demoOnly ? DEMO_EXAMPLE_DATASETS : undefined;
 
   return (
     <TooltipProvider>
@@ -63,13 +68,13 @@ export function WorkspaceInitializationPage() {
                 <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Phylo-Movies</h1>
                 <Badge variant="secondary" className="gap-1">
                   <EngineIcon />
-                  Backend {engineStatus.label}
+                  {demoOnly ? 'Generated Examples' : `Backend ${engineStatus.label}`}
                 </Badge>
               </div>
             </div>
           </section>
 
-          {backendStatus.state !== 'ready' && (
+          {!demoOnly && backendStatus.state !== 'ready' && (
             <Alert className="mx-4 mt-4 sm:mx-6 lg:mx-8 xl:mx-10">
               <EngineIcon />
               <AlertTitle>BranchArchitect backend: {engineStatus.badge}</AlertTitle>
@@ -88,20 +93,9 @@ export function WorkspaceInitializationPage() {
             </Alert>
           )}
 
-          <Tabs
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="flex min-w-0 flex-1 flex-col gap-0"
-          >
-            <section className="border-b border-border/60 px-4 py-3 sm:px-6 lg:px-8 xl:px-10">
-              <div className="flex min-w-0 justify-start">
-                <TabsList className="grid w-full grid-cols-2 sm:w-[28rem]">
-                  <TabsTrigger value="upload">New Project</TabsTrigger>
-                  <TabsTrigger value="example">Example Library</TabsTrigger>
-                </TabsList>
-              </div>
-            </section>
+          {!demoOnly && <RecentRunsPanel />}
 
+          {demoOnly ? (
             <section className="min-w-0 flex-1 px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6 xl:px-10">
               {alert && (
                 <Alert variant="destructive" className="mb-5">
@@ -111,27 +105,67 @@ export function WorkspaceInitializationPage() {
                 </Alert>
               )}
 
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleSubmit)}>
-                  <TabsContent value="upload" className="m-0">
-                    <NewProjectTab disabled={disabled} reset={reset} />
-                  </TabsContent>
-                </form>
-              </Form>
-
-              <TabsContent value="example" className="m-0">
-                <ExampleTab
-                  loadingExample={loadingExample}
-                  loadingExampleId={loadingExampleId}
-                  submitting={submitting}
-                  backendReady={backendReady}
-                  handleLoadExample={handleLoadExample}
-                />
-              </TabsContent>
+              <ExampleTab
+                examples={exampleDatasets}
+                demoOnly
+                loadingExample={loadingExample}
+                loadingExampleId={loadingExampleId}
+                submitting={submitting}
+                backendReady
+                handleLoadExample={handleOpenPrecomputedExample}
+              />
             </section>
-          </Tabs>
+          ) : (
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="flex min-w-0 flex-1 flex-col gap-0"
+            >
+              <section className="border-b border-border/60 px-4 py-3 sm:px-6 lg:px-8 xl:px-10">
+                <div className="flex min-w-0 justify-start">
+                  <TabsList className="grid w-full grid-cols-2 sm:w-[28rem]">
+                    <TabsTrigger value="upload">New Project</TabsTrigger>
+                    <TabsTrigger value="example">Example Library</TabsTrigger>
+                  </TabsList>
+                </div>
+              </section>
 
-          {(submitting || loadingExample) && <ProcessingOverlay operationState={operationState} />}
+              <section className="min-w-0 flex-1 px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6 xl:px-10">
+                {alert && (
+                  <Alert variant="destructive" className="mb-5">
+                    <AlertTriangle />
+                    <AlertTitle>{alert.title || 'Action needed'}</AlertTitle>
+                    <AlertDescription>{alert.message}</AlertDescription>
+                  </Alert>
+                )}
+
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(handleSubmit)}>
+                    <TabsContent value="upload" className="m-0">
+                      <NewProjectTab disabled={disabled} reset={reset} />
+                    </TabsContent>
+                  </form>
+                </Form>
+
+                <TabsContent value="example" className="m-0">
+                  <ExampleTab
+                    loadingExample={loadingExample}
+                    loadingExampleId={loadingExampleId}
+                    submitting={submitting}
+                    backendReady={backendReady}
+                    handleLoadExample={handleLoadExample}
+                  />
+                </TabsContent>
+              </section>
+            </Tabs>
+          )}
+
+          {(submitting || loadingExample) && (
+            <ProcessingOverlay
+              operationState={operationState}
+              onCancel={demoOnly ? undefined : cancelOperation}
+            />
+          )}
         </main>
       </div>
     </TooltipProvider>

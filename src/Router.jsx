@@ -12,7 +12,14 @@ const RouterComponent = isElectron() ? HashRouter : BrowserRouter;
 // Resolve basename for GitHub Pages deployment (e.g. /phylo-movies/)
 const basename = isElectron() ? undefined : import.meta.env.BASE_URL?.replace(/\/$/, '') || '';
 const isDocsOnlyMode = import.meta.env.VITE_DOCS_ONLY === 'true';
-const landingElement = isDocsOnlyMode ? <GitHubPagesInfoPage /> : <WorkspaceInitializationPage />;
+const isDemoOnlyMode = import.meta.env.VITE_DEMO_ONLY === 'true';
+const landingElement = isDemoOnlyMode ? (
+  <WorkspaceInitializationPage demoOnly />
+) : isDocsOnlyMode ? (
+  <GitHubPagesInfoPage />
+) : (
+  <WorkspaceInitializationPage />
+);
 
 export function Router() {
   return (
@@ -20,10 +27,9 @@ export function Router() {
       <ErrorBoundary>
         <Routes>
           <Route path="/" element={landingElement} />
-          <Route
-            path="/visualization"
-            element={isDocsOnlyMode ? <Navigate to="/" replace /> : <App />}
-          />
+          <Route path="/demo" element={<WorkspaceInitializationPage demoOnly />} />
+          <Route path="/demo/open" element={<Navigate to="/demo" replace />} />
+          <Route path="/visualization" element={<App />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </ErrorBoundary>

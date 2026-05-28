@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { workspaceInitializationFormSchema } from './workspaceInitializationFormModel.js';
 import { getExampleById } from './exampleDatasets.js';
 import { resolveApiUrl } from '../../services/data/apiConfig.js';
+import { phyloData } from '../../services/data/dataService.js';
 import {
   processMovieData,
   finalizeMovieData,
@@ -21,7 +22,7 @@ const BACKEND_STATUS_POLL_MS = 5000;
  * Custom hook to manage the workspace initialization upload form.
  * Orchestrates react-hook-form state and movie processing logic.
  */
-export function useWorkspaceInitializationForm() {
+export function useWorkspaceInitializationForm({ skipBackendCheck = false } = {}) {
   const navigate = useNavigate();
   const operationRef = useRef({ id: 0, controller: null, mounted: true });
   const [submitting, setSubmitting] = useState(false);
@@ -29,7 +30,9 @@ export function useWorkspaceInitializationForm() {
   const [loadingExampleId, setLoadingExampleId] = useState(null);
   const [alert, setAlert] = useState(null);
   const [operationState, setOperationState] = useState({ percent: 0, message: '' });
-  const [backendStatus, setBackendStatus] = useState({ state: 'checking' });
+  const [backendStatus, setBackendStatus] = useState({
+    state: skipBackendCheck ? 'ready' : 'checking',
+  });
 
   const form = useForm({
     resolver: zodResolver(workspaceInitializationFormSchema),
@@ -66,6 +69,11 @@ export function useWorkspaceInitializationForm() {
   }, []);
 
   useEffect(() => {
+    if (skipBackendCheck) {
+      setBackendStatus({ state: 'ready', checkedAt: Date.now(), capabilities: [] });
+      return undefined;
+    }
+
     let cancelled = false;
     let controller = null;
     let timeoutId = null;
@@ -117,7 +125,7 @@ export function useWorkspaceInitializationForm() {
       if (timeoutId) clearTimeout(timeoutId);
       controller?.abort();
     };
-  }, []);
+  }, [skipBackendCheck]);
 
   const base = useMemo(() => {
     try {
@@ -238,9 +246,17 @@ export function useWorkspaceInitializationForm() {
       setOperationState({ percent: 10, message: 'Fetching example file...' });
       updateElectronProgress(10, 'Fetching example file...');
 
-      const file = await fetchExampleFile(example.filePath, example.fileName);
+      const file = await fetchExampleFile(
+        example.filePath,
+        example.fileName,
+        operation.controller.signal
+      );
       const pairedMsaFile = example.msaFilePath
-        ? await fetchExampleFile(example.msaFilePath, example.msaFileName)
+        ? await fetchExampleFile(
+            example.msaFilePath,
+            example.msaFileName,
+            operation.controller.signal
+          )
         : null;
 
       setOperationState({ percent: 20, message: 'Processing data...' });
@@ -253,6 +269,7 @@ export function useWorkspaceInitializationForm() {
       const formData = {
         msaFile: example.fileType === 'msa' ? file : pairedMsaFile,
         treesFile: example.fileType === 'newick' || example.fileType === 'tree-msa' ? file : null,
+        runLabel: example.name,
         datasetProvenance: buildExampleDatasetProvenance(example),
         ...example.parameters,
       };
@@ -293,9 +310,74 @@ export function useWorkspaceInitializationForm() {
     }
   }
 
+  async function handleOpenPrecomputedExample(exampleId) {
+    clearAlert();
+
+    const example = getExampleById(exampleId);
+    if (!example?.precomputedPayloadPath) {
+      showAlert(
+        `The example id "${exampleId}" does not have a generated browser payload.`,
+        'danger',
+        'Generated example not found'
+      );
+      return;
+    }
+
+    const operation = beginOperation(operationRef);
+    setLoadingExample(true);
+    setLoadingExampleId(exampleId);
+    setOperationState({ percent: 0, message: `Opening ${example.name}...` });
+
+    try {
+      setOperationState({ percent: 35, message: 'Fetching generated example...' });
+      const payload = await fetchPrecomputedExamplePayload(
+        example.precomputedPayloadPath,
+        example.name,
+        operation.controller.signal
+      );
+      if (!isCurrentOperation(operationRef, operation)) return;
+
+      setOperationState({ percent: 75, message: 'Preparing visualization...' });
+      payload.file_name = payload.file_name || example.fileName;
+      await phyloData.set(payload, { label: example.name });
+      if (!isCurrentOperation(operationRef, operation)) return;
+
+      navigate('/visualization');
+    } catch (err) {
+      if (!isCurrentOperation(operationRef, operation) || err?.name === 'AbortError') return;
+      console.error('[useWorkspaceInitializationForm] Failed to open generated example:', err);
+      showAlert(
+        formatGeneratedExampleAlertMessage(example, err),
+        'danger',
+        'Example could not be opened'
+      );
+    } finally {
+      if (isCurrentOperation(operationRef, operation)) {
+        setLoadingExample(false);
+        setLoadingExampleId(null);
+        finishOperation(operationRef, operation);
+      }
+    }
+  }
+
   function reset() {
     resetForm();
     clearAlert();
+  }
+
+  function cancelOperation() {
+    const controller = operationRef.current.controller;
+    if (!controller || (!submitting && !loadingExample)) return;
+
+    operationRef.current.id += 1;
+    operationRef.current.controller = null;
+    controller.abort();
+    hideElectronLoading();
+    setSubmitting(false);
+    setLoadingExample(false);
+    setLoadingExampleId(null);
+    setOperationState({ percent: 0, message: '' });
+    showAlert('Processing was cancelled before completion.', 'danger', 'Processing cancelled');
   }
 
   return {
@@ -312,6 +394,8 @@ export function useWorkspaceInitializationForm() {
     // actions
     handleSubmit: onSubmit,
     handleLoadExample,
+    handleOpenPrecomputedExample,
+    cancelOperation,
     reset,
     // derived
     base,
@@ -332,8 +416,8 @@ function buildExampleDatasetProvenance(example) {
   };
 }
 
-async function fetchExampleFile(filePath, fileName) {
-  const resp = await fetch(filePath);
+async function fetchExampleFile(filePath, fileName, signal) {
+  const resp = await fetch(filePath, { signal });
   if (!resp.ok) {
     throw new Error(
       `Could not download "${fileName}" from the bundled examples (${resp.status} ${resp.statusText}).`
@@ -344,6 +428,17 @@ async function fetchExampleFile(filePath, fileName) {
   return new File([blob], fileName, { type: 'application/octet-stream' });
 }
 
+async function fetchPrecomputedExamplePayload(payloadPath, exampleName, signal) {
+  const resp = await fetch(payloadPath, { signal, cache: 'no-store' });
+  if (!resp.ok) {
+    throw new Error(
+      `Could not download the generated payload for "${exampleName}" (${resp.status} ${resp.statusText}).`
+    );
+  }
+
+  return JSON.parse(await resp.text());
+}
+
 function formatProcessingAlertMessage(error) {
   const message = error?.message || String(error);
   return `${message} If the backend is offline, start it with ./start.sh and retry.`;
@@ -352,6 +447,11 @@ function formatProcessingAlertMessage(error) {
 function formatExampleAlertMessage(example, error) {
   const message = error?.message || String(error);
   return `Could not load "${example.name}". ${message}`;
+}
+
+function formatGeneratedExampleAlertMessage(example, error) {
+  const message = error?.message || String(error);
+  return `Could not open "${example.name}". ${message}`;
 }
 
 function beginOperation(operationRef) {
