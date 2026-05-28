@@ -74,9 +74,8 @@ describe('workspace initialization input contract', () => {
   });
 
   it('uses specific validation copy for windowing and IQ-TREE support fields', async () => {
-    const { workspaceInitializationFormSchema } = await import(
-      '../../src/pages/WorkspaceInitialization/workspaceInitializationFormModel.js'
-    );
+    const { workspaceInitializationFormSchema } =
+      await import('../../src/pages/WorkspaceInitialization/workspaceInitializationFormModel.js');
 
     const result = workspaceInitializationFormSchema.safeParse({
       windowSize: 0,
@@ -85,7 +84,7 @@ describe('workspace initialization input contract', () => {
       treeInferenceEngine: 'iqtree',
       iqtreeFastSearch: true,
       iqtreeSupportMode: 'ufboot',
-      iqtreeUfbootReplicates: 99,
+      iqtreeUfbootReplicates: 999,
       iqtreeShAlrtReplicates: 1000,
       iqtreeBnni: false,
       useGtr: true,
@@ -98,18 +97,35 @@ describe('workspace initialization input contract', () => {
     const messages = result.error.issues.map((issue) => issue.message);
     expect(messages).toContain('Window size must be at least 1 alignment column.');
     expect(messages).toContain('Step size must be a whole number of alignment columns.');
-    expect(messages).toContain('UFBoot requires at least 100 replicates.');
+    expect(messages).toContain('UFBoot requires at least 1000 replicates.');
+  });
+
+  it('keeps SH-aLRT replicate validation separate from the UFBoot minimum', async () => {
+    const { workspaceInitializationFormSchema } =
+      await import('../../src/pages/WorkspaceInitialization/workspaceInitializationFormModel.js');
+
+    const result = workspaceInitializationFormSchema.safeParse({
+      windowSize: 750,
+      stepSize: 500,
+      midpointRooting: false,
+      treeInferenceEngine: 'iqtree',
+      iqtreeFastSearch: true,
+      iqtreeSupportMode: 'sh_alrt',
+      iqtreeUfbootReplicates: 1000,
+      iqtreeShAlrtReplicates: 100,
+      iqtreeBnni: false,
+      useGtr: true,
+      useGamma: true,
+      usePseudo: false,
+      noMl: true,
+    });
+
+    expect(result.success).toBe(true);
   });
 
   it('gates backend-dependent workspace actions on backend readiness', () => {
     const pageSource = readFileSync(
-      join(
-        repoRoot,
-        'src',
-        'pages',
-        'WorkspaceInitialization',
-        'WorkspaceInitializationPage.jsx'
-      ),
+      join(repoRoot, 'src', 'pages', 'WorkspaceInitialization', 'WorkspaceInitializationPage.jsx'),
       'utf8'
     );
     const hookSource = readFileSync(
@@ -123,14 +139,7 @@ describe('workspace initialization input contract', () => {
       'utf8'
     );
     const exampleTabSource = readFileSync(
-      join(
-        repoRoot,
-        'src',
-        'pages',
-        'WorkspaceInitialization',
-        'components',
-        'ExampleTab.jsx'
-      ),
+      join(repoRoot, 'src', 'pages', 'WorkspaceInitialization', 'components', 'ExampleTab.jsx'),
       'utf8'
     );
 
@@ -140,5 +149,69 @@ describe('workspace initialization input contract', () => {
     expect(exampleTabSource).toContain('loadingExample || submitting || !backendReady');
     expect(hookSource).toContain("resolveApiUrl('/health')");
     expect(hookSource).toContain("if (backendStatus.state !== 'ready')");
+  });
+
+  it('keeps saved processed runs accessible from the main workspace page', () => {
+    const pageSource = readFileSync(
+      join(repoRoot, 'src', 'pages', 'WorkspaceInitialization', 'WorkspaceInitializationPage.jsx'),
+      'utf8'
+    );
+    const dataServiceSource = readFileSync(
+      join(repoRoot, 'src', 'services', 'data', 'dataService.js'),
+      'utf8'
+    );
+    const recentRunsSource = readFileSync(
+      join(
+        repoRoot,
+        'src',
+        'pages',
+        'WorkspaceInitialization',
+        'components',
+        'RecentRunsPanel.jsx'
+      ),
+      'utf8'
+    );
+
+    expect(pageSource).toContain('<RecentRunsPanel />');
+    expect(dataServiceSource).toContain('PHYLO_RUN_INDEX');
+    expect(dataServiceSource).toContain('options.label');
+    expect(dataServiceSource).toContain('openRun(runId)');
+    expect(dataServiceSource).toContain('deleteRun(runId)');
+    expect(recentRunsSource).toContain('Recent runs');
+    expect(recentRunsSource).toContain("navigate('/visualization')");
+  });
+
+  it('keeps long-running processing cancellable from the loading overlay', () => {
+    const pageSource = readFileSync(
+      join(repoRoot, 'src', 'pages', 'WorkspaceInitialization', 'WorkspaceInitializationPage.jsx'),
+      'utf8'
+    );
+    const hookSource = readFileSync(
+      join(
+        repoRoot,
+        'src',
+        'pages',
+        'WorkspaceInitialization',
+        'useWorkspaceInitializationForm.js'
+      ),
+      'utf8'
+    );
+    const overlaySource = readFileSync(
+      join(
+        repoRoot,
+        'src',
+        'pages',
+        'WorkspaceInitialization',
+        'components',
+        'ProcessingOverlay.jsx'
+      ),
+      'utf8'
+    );
+
+    expect(pageSource).toContain('onCancel={cancelOperation}');
+    expect(hookSource).toContain('function cancelOperation()');
+    expect(hookSource).toContain('controller.abort()');
+    expect(overlaySource).toContain('Cancel processing');
+    expect(overlaySource).toContain('role="dialog"');
   });
 });

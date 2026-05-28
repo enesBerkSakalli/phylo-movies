@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '../../../components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { Progress } from '../../../components/ui/progress';
+import { Button } from '../../../components/ui/button';
 
 /**
  * ProcessingOverlay
@@ -9,12 +10,14 @@ import { Progress } from '../../../components/ui/progress';
  * Unified loading overlay used across both web and desktop versions.
  * Matches the visual branding of the Electron splash screen.
  */
-export function ProcessingOverlay({ operationState }) {
+export function ProcessingOverlay({ operationState, onCancel }) {
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-md animate-in fade-in duration-300"
-      role="status"
-      aria-live="polite"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="processing-overlay-title"
+      aria-describedby="processing-overlay-description"
     >
       <Card className="w-80 border-border/60 bg-card/95 text-card-foreground shadow-2xl">
         <CardContent className="flex flex-col gap-6 pt-4">
@@ -23,10 +26,17 @@ export function ProcessingOverlay({ operationState }) {
               <Loader2 className="size-8 animate-spin text-primary" />
             </div>
             <div className="flex flex-col gap-1">
-              <p className="font-semibold tracking-wide text-card-foreground">
+              <p
+                id="processing-overlay-title"
+                className="font-semibold tracking-wide text-card-foreground"
+                aria-live="polite"
+              >
                 {operationState.message || 'Processing...'}
               </p>
-              <p className="text-xs font-light text-muted-foreground">
+              <p
+                id="processing-overlay-description"
+                className="text-xs font-light text-muted-foreground"
+              >
                 Please wait while we process your data.
               </p>
             </div>
@@ -42,6 +52,11 @@ export function ProcessingOverlay({ operationState }) {
               </p>
             </div>
           </div>
+          {onCancel && (
+            <Button type="button" variant="outline" size="sm" onClick={onCancel}>
+              Cancel processing
+            </Button>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -9,7 +9,10 @@ import { validatePhyloMovieData } from '../../domain/backend/phyloMovieSchema.ts
 // Storage keys
 const STORAGE_KEYS = {
   PHYLO_DATA: 'phyloMovieData',
+  PHYLO_RUN_INDEX: 'phyloMovieRuns',
 };
+const RUN_DATA_PREFIX = 'phyloMovieRun:';
+const MAX_STORED_RUNS = 8;
 
 /**
  * Generic storage operations
@@ -65,6 +68,14 @@ export const phyloData = {
     }
 
     try {
+      if (isRunReference(data)) {
+        const runData = await storage.get(runDataKey(data.runId));
+        if (!runData) {
+          await this.remove();
+          return null;
+        }
+        return this.validate(runData);
+      }
       return this.validate(data);
     } catch (error) {
       await this.remove();
@@ -72,9 +83,20 @@ export const phyloData = {
     }
   },
 
-  async set(data) {
+  async set(data, options = {}) {
     const validatedBackendData = validatePhyloMovieData(data);
-    await storage.set(STORAGE_KEYS.PHYLO_DATA, validatedBackendData);
+    const run = createRunRecord(validatedBackendData, options);
+
+    try {
+      await storeRunPayload(run.id, validatedBackendData);
+      await addRunToIndex(run);
+      await storage.set(STORAGE_KEYS.PHYLO_DATA, { __phyloRunRef: true, runId: run.id });
+    } catch (error) {
+      await storage.remove(runDataKey(run.id));
+      await storage.set(STORAGE_KEYS.PHYLO_DATA, validatedBackendData);
+      console.warn('[DataService] Saved current run without adding it to run history:', error);
+    }
+
     return validatedBackendData;
   },
 
@@ -82,7 +104,131 @@ export const phyloData = {
     await storage.remove(STORAGE_KEYS.PHYLO_DATA);
   },
 
+  async listRuns() {
+    return normalizeRunIndex(await storage.get(STORAGE_KEYS.PHYLO_RUN_INDEX));
+  },
+
+  async openRun(runId) {
+    const runData = await storage.get(runDataKey(runId));
+    if (!runData) {
+      await removeRunFromIndex(runId);
+      throw new Error('Saved run data is no longer available.');
+    }
+
+    const validatedBackendData = validatePhyloMovieData(runData);
+    await storage.set(STORAGE_KEYS.PHYLO_DATA, { __phyloRunRef: true, runId });
+    return validatedBackendData;
+  },
+
+  async deleteRun(runId) {
+    await storage.remove(runDataKey(runId));
+    await removeRunFromIndex(runId);
+
+    const activeData = await storage.get(STORAGE_KEYS.PHYLO_DATA);
+    if (isRunReference(activeData) && activeData.runId === runId) {
+      await storage.remove(STORAGE_KEYS.PHYLO_DATA);
+    }
+  },
+
   validate(data) {
     return validatePhyloMovieData(data);
   },
 };
+
+function isRunReference(value) {
+  return value && value.__phyloRunRef === true && typeof value.runId === 'string';
+}
+
+function runDataKey(runId) {
+  return `${RUN_DATA_PREFIX}${runId}`;
+}
+
+async function storeRunPayload(runId, data) {
+  try {
+    await storage.set(runDataKey(runId), data);
+  } catch (error) {
+    const runs = normalizeRunIndex(await storage.get(STORAGE_KEYS.PHYLO_RUN_INDEX));
+    for (const staleRun of runs.slice().reverse()) {
+      await storage.remove(runDataKey(staleRun.id));
+      await removeRunFromIndex(staleRun.id);
+      try {
+        await storage.set(runDataKey(runId), data);
+        return;
+      } catch {}
+    }
+    throw error;
+  }
+}
+
+async function addRunToIndex(run) {
+  const existingRuns = normalizeRunIndex(await storage.get(STORAGE_KEYS.PHYLO_RUN_INDEX));
+  const nextRuns = [
+    run,
+    ...existingRuns.filter((candidate) => candidate.id !== run.id),
+  ].slice(0, MAX_STORED_RUNS);
+  const removedRuns = existingRuns.filter(
+    (candidate) => !nextRuns.some((nextRun) => nextRun.id === candidate.id)
+  );
+
+  await storage.set(STORAGE_KEYS.PHYLO_RUN_INDEX, nextRuns);
+  await Promise.all(removedRuns.map((removedRun) => storage.remove(runDataKey(removedRun.id))));
+}
+
+async function removeRunFromIndex(runId) {
+  const existingRuns = normalizeRunIndex(await storage.get(STORAGE_KEYS.PHYLO_RUN_INDEX));
+  await storage.set(
+    STORAGE_KEYS.PHYLO_RUN_INDEX,
+    existingRuns.filter((run) => run.id !== runId)
+  );
+}
+
+function normalizeRunIndex(value) {
+  if (!Array.isArray(value)) return [];
+  return value.filter(
+    (run) =>
+      run &&
+      typeof run.id === 'string' &&
+      typeof run.label === 'string' &&
+      typeof run.createdAt === 'string'
+  );
+}
+
+function createRunRecord(data, options = {}) {
+  const provenance = data?.dataset_provenance || {};
+  const label = options.label || provenance.source_label || data?.file_name || 'Processed run';
+  const settings = Array.isArray(provenance.settings) ? provenance.settings : [];
+  const windowing = settings.find((setting) => setting?.label === 'Windowing')?.value ?? null;
+  const support =
+    settings.find((setting) =>
+      ['Branch support', 'Stability scores', 'Support labels'].includes(setting?.label)
+    )?.value ?? null;
+
+  return {
+    id: createRunId(),
+    label,
+    sourceType: provenance.source_type || 'Processed dataset',
+    createdAt: new Date().toISOString(),
+    fileName: data?.file_name || null,
+    treeCount: countInputTrees(data),
+    windowing,
+    support,
+  };
+}
+
+function countInputTrees(data) {
+  if (Array.isArray(data?.frames)) {
+    const inputFrameCount = data.frames.filter(
+      (frame) => frame?.frame_type === 'input_tree' || frame?.is_observed_input === true
+    ).length;
+    if (inputFrameCount > 0) return inputFrameCount;
+  }
+  if (Array.isArray(data?.pairs)) return data.pairs.length + 1;
+  return Array.isArray(data?.interpolated_trees) ? data.interpolated_trees.length : null;
+}
+
+function createRunId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
