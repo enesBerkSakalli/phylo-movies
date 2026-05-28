@@ -1,5 +1,9 @@
 import { formatSubtreeLabel } from '../../../domain/spr/sprAnalytics';
 import type { SprMoveEventRow } from './types';
+import {
+  buildSprMoveWindowRange,
+  type SprMoveWindowRangeOptions,
+} from './sprMoveWindowRange';
 
 const formatIndices = (indices?: number[] | null): string => {
   if (!Array.isArray(indices) || indices.length === 0) return '';
@@ -43,8 +47,11 @@ const formatMaybeNumber = (value: number | null | undefined): string =>
 
 export function buildSprMoveEventSearchText(
   event: SprMoveEventRow,
-  leafNamesByIndex: string[]
+  leafNamesByIndex: string[],
+  windowRangeOptions: SprMoveWindowRangeOptions = {}
 ): string {
+  const windowRange = buildSprMoveWindowRange(event, windowRangeOptions);
+
   return [
     event.eventId,
     event.pairLabel,
@@ -59,6 +66,7 @@ export function buildSprMoveEventSearchText(
     formatCompactSubtreeSearchLabel(event.destinationAttachment, leafNamesByIndex),
     event.branchValueClass ?? '',
     event.contextBranchValueClass ?? '',
+    windowRange?.searchText ?? '',
     formatMaybeNumber(event.sourceAttachmentSupport?.primary),
     formatMaybeNumber(event.destinationAttachmentSupport?.primary),
     event.sourceMovedSubtreeBranchValue?.displayValue ?? '',

@@ -20,8 +20,12 @@ import {
   selectFileName,
   selectActiveTreeList,
   selectBranchAnnotationLabelKey,
+  selectHasMsa,
   selectLeafNamesByIndex,
   selectMarkedNodes,
+  selectMsaColumnCount,
+  selectMsaStepSize,
+  selectMsaWindowSize,
   selectPairMetrics,
   selectPairs,
   selectTemporalEvents,
@@ -184,8 +188,21 @@ const AnalyticsDashboardBody = () => {
   const temporalEvents = useAppStore(selectTemporalEvents);
   const interpolatedTrees = useAppStore(selectActiveTreeList);
   const frames = useAppStore(selectTimelineFrames);
+  const hasMsa = useAppStore(selectHasMsa);
+  const msaStepSize = useAppStore(selectMsaStepSize);
+  const msaWindowSize = useAppStore(selectMsaWindowSize);
+  const msaColumnCount = useAppStore(selectMsaColumnCount);
   const selectedMovedSubtreeIndices = useAppStore(selectMarkedNodes);
   const branchAnnotationValueKey = useAppStore(selectBranchAnnotationLabelKey);
+  const windowRangeOptions = useMemo(
+    () => ({
+      hasMsa,
+      msaStepSize,
+      msaWindowSize,
+      msaColumnCount,
+    }),
+    [hasMsa, msaColumnCount, msaStepSize, msaWindowSize]
+  );
 
   const branchSupportIndex = useMemo(
     () =>
@@ -233,7 +250,11 @@ const AnalyticsDashboardBody = () => {
   };
 
   const handleExportEventCsv = () => {
-    const eventCsvContent = createSprMoveEventCsv(sprMoveEvents, leafNamesByIndex);
+    const eventCsvContent = createSprMoveEventCsv(
+      sprMoveEvents,
+      leafNamesByIndex,
+      windowRangeOptions
+    );
     if (!eventCsvContent) return;
     downloadCsvFile(eventCsvContent, createSprMoveEventExportName(fileName));
   };
@@ -308,6 +329,7 @@ const AnalyticsDashboardBody = () => {
                 selectedMovedSubtreeIndices={selectedMovedSubtreeIndices}
                 branchValueThreshold={branchValueThreshold}
                 onBranchValueThresholdChange={setBranchValueThreshold}
+                windowRangeOptions={windowRangeOptions}
               />
             </div>
           </AnalyticsSectionCard>

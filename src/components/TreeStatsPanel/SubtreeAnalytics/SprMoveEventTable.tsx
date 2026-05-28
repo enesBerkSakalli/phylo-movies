@@ -16,6 +16,10 @@ import { Search, X } from 'lucide-react';
 import type { SprMoveEventRow } from './types';
 import { buildSprMoveEventSearchText } from './sprMoveEventSearch';
 import { SPR_MOVE_EVENT_TABLE_COPY } from './SprMoveEventTable.contract';
+import {
+  buildSprMoveWindowRange,
+  type SprMoveWindowRangeOptions,
+} from './sprMoveWindowRange';
 import { cn } from '../../../lib/utils';
 
 interface SprMoveEventTableProps {
@@ -24,6 +28,7 @@ interface SprMoveEventTableProps {
   selectedMovedSubtreeIndices?: number[];
   branchValueThreshold: number;
   onBranchValueThresholdChange: (threshold: number) => void;
+  windowRangeOptions?: SprMoveWindowRangeOptions;
 }
 
 const TABLE_HEADER_CELL_CLASS = 'px-3 py-2 font-bold uppercase tracking-wider text-2xs';
@@ -31,6 +36,7 @@ const ROW_CELL_CLASS = 'px-3 py-2';
 const MOVEMENT_EVENT_COLUMN_COUNT = 8;
 const VIRTUAL_ROW_HEIGHT = 80;
 const VIRTUAL_ROW_OVERSCAN = 8;
+const EMPTY_WINDOW_RANGE_OPTIONS = Object.freeze({});
 const BRANCH_VALUE_FILTER_ALL = 'all';
 const BRANCH_VALUE_THRESHOLD_MIN = 0;
 const BRANCH_VALUE_THRESHOLD_MAX = 100;
@@ -238,6 +244,7 @@ export const SprMoveEventTable = ({
   selectedMovedSubtreeIndices = [],
   branchValueThreshold,
   onBranchValueThresholdChange,
+  windowRangeOptions = EMPTY_WINDOW_RANGE_OPTIONS,
 }: SprMoveEventTableProps) => {
   const [globalFilter, setGlobalFilter] = React.useState('');
   const [subtreeBranchValueFilter, setSubtreeBranchValueFilter] =
@@ -260,9 +267,9 @@ export const SprMoveEventTable = ({
       events.map((event, eventOrdinal) => ({
         event,
         eventOrdinal,
-        searchText: `${buildSprMoveEventSearchText(event, leafNamesByIndex)} ${eventOrdinal + 1} #${eventOrdinal + 1}`,
+        searchText: `${buildSprMoveEventSearchText(event, leafNamesByIndex, windowRangeOptions)} ${eventOrdinal + 1} #${eventOrdinal + 1}`,
       })),
-    [events, leafNamesByIndex]
+    [events, leafNamesByIndex, windowRangeOptions]
   );
   const filteredEventRows = React.useMemo(() => {
     let rows = searchableEvents;
@@ -492,7 +499,7 @@ export const SprMoveEventTable = ({
         >
           <thead className="sticky top-0 z-20 border-b border-border bg-card text-muted-foreground font-bold shadow-sm">
             <tr>
-              <th scope="col" className={cn(TABLE_HEADER_CELL_CLASS, 'w-16 text-left')}>
+              <th scope="col" className={cn(TABLE_HEADER_CELL_CLASS, 'w-28 text-left')}>
                 {SPR_MOVE_EVENT_TABLE_COPY.columns.movement}
               </th>
               <th scope="col" className={cn(TABLE_HEADER_CELL_CLASS, 'w-36 text-left')}>
@@ -537,6 +544,7 @@ export const SprMoveEventTable = ({
                 leafNamesByIndex={leafNamesByIndex}
                 isSelected={selectedMovedSubtreeSignature === event.signature}
                 branchValueThreshold={normalizedBranchValueThreshold}
+                windowRangeOptions={windowRangeOptions}
               />
             ))}
             {virtualRange.bottomPadding > 0 ? (
@@ -572,6 +580,7 @@ interface MovementEventRowProps {
   leafNamesByIndex: string[];
   isSelected: boolean;
   branchValueThreshold: number;
+  windowRangeOptions: SprMoveWindowRangeOptions;
 }
 
 function MovementEventRow({
@@ -581,8 +590,10 @@ function MovementEventRow({
   leafNamesByIndex,
   isSelected,
   branchValueThreshold,
+  windowRangeOptions,
 }: MovementEventRowProps) {
   const movementLabel = formatMovementLabel(eventOrdinal);
+  const windowRange = buildSprMoveWindowRange(event, windowRangeOptions);
   const subtreeLabel = formatCompactAttachment(event.splitIndices, leafNamesByIndex, 2);
   const fullSubtreeLabel = formatAttachment(event.splitIndices, leafNamesByIndex);
   const contextSignature = getSignature(event.contextSplitIndices);
@@ -604,9 +615,15 @@ function MovementEventRow({
     >
       <td
         className={cn(ROW_CELL_CLASS, 'font-mono tabular-nums text-muted-foreground')}
-        title={event.eventId}
+        title={[event.eventId, windowRange?.title].filter(Boolean).join('\n')}
       >
         <div className="font-semibold text-foreground">{movementLabel}</div>
+        {windowRange ? (
+          <div className="mt-1 space-y-0.5 font-sans text-2xs leading-tight text-muted-foreground/70">
+            <div className="truncate">{windowRange.treeLabel}</div>
+            <div className="truncate">{windowRange.displayLabel}</div>
+          </div>
+        ) : null}
       </td>
       <td className={ROW_CELL_CLASS} title={fullSubtreeLabel}>
         <div className="truncate font-medium">{subtreeLabel}</div>
