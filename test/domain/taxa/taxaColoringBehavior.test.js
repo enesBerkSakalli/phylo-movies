@@ -5,9 +5,13 @@ import { createRoot } from 'react-dom/client';
 import { act, Simulate } from 'react-dom/test-utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ColorSwatchInput } from '../../../src/components/taxa-coloring/shared/ColorSwatchInput.jsx';
-import { loadCSVColumn } from '../../../src/components/taxa-coloring/utils/csvHelpers.js';
+import {
+  chooseInitialCSVColumn,
+  loadCSVColumn,
+} from '../../../src/components/taxa-coloring/utils/csvHelpers.js';
 import { useAppStore } from '../../../src/state/phyloStore/store.js';
 import { TooltipProvider } from '../../../src/components/ui/tooltip.tsx';
+import { parseGroupCSV } from '../../../src/treeColoring/utils/CSVParser.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 globalThis.ResizeObserver = class ResizeObserver {
@@ -78,6 +82,43 @@ describe('taxa coloring CSV restore behavior', () => {
       ])
     );
     expect(groups).toHaveLength(2);
+  });
+
+  it('loads Augur-style TSV metadata keyed by accession prefixes', () => {
+    const parsed = parseGroupCSV(
+      [
+        'accession\taccession_version\tcountry\tVP1_type\tRdRp_type',
+        'PV588655\tPV588655.1\tUSA\tGII.17\tGII.P17',
+        'PV746275\tPV746275.1\tRussia\tGII.4\tGII.P16',
+      ].join('\n')
+    );
+
+    expect(parsed.success).toBe(true);
+
+    const taxaNames = ['PV588655_P17_GII-17', 'PV746275_P16_GII-4'];
+    const { map, groups, validation } = loadCSVColumn(parsed.data, 'VP1_type', taxaNames);
+
+    expect(validation.isValid).toBe(true);
+    expect(validation.matched).toEqual(taxaNames);
+    expect(map).toEqual(
+      new Map([
+        ['PV588655_P17_GII-17', 'GII.17'],
+        ['PV746275_P16_GII-4', 'GII.4'],
+      ])
+    );
+    expect(groups).toEqual([
+      { name: 'GII.17', count: 1, members: ['PV588655_P17_GII-17'] },
+      { name: 'GII.4', count: 1, members: ['PV746275_P16_GII-4'] },
+    ]);
+  });
+
+  it('uses a preferred metadata column when bundled metadata declares one', () => {
+    const csvData = {
+      groupingColumns: [{ name: 'accession' }, { name: 'VP1_type' }, { name: 'country' }],
+    };
+
+    expect(chooseInitialCSVColumn(csvData, 'VP1_type')).toBe('VP1_type');
+    expect(chooseInitialCSVColumn(csvData, 'missing_column')).toBe('accession');
   });
 });
 
