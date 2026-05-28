@@ -105,10 +105,12 @@ describe('movie timeline player bar semantics', () => {
     expect(statusStripSource).toContain('<StatusItem icon={Film} label="Cursor">');
     expect(statusStripSource).toContain('inline-flex w-[12rem] max-w-[30vw] shrink-0');
     expect(statusStripSource).toContain('inline-flex w-[6.5rem] shrink-0');
-    expect(statusStripSource).toContain('hidden w-[14rem] shrink-0');
-    expect(statusStripSource).toContain('2xl:inline-flex');
-    expect(statusStripSource).toContain("Window size {msaWindowSize ?? '-'}");
-    expect(statusStripSource).toContain("Step size {msaStepSize ?? '-'}");
+    expect(statusStripSource).toContain('hidden w-[7rem] shrink-0');
+    expect(statusStripSource).toContain('xl:inline-flex');
+    expect(statusStripSource).toContain(
+      "Window size ${msaWindowSize ?? '-'} / Step size ${msaStepSize ?? '-'}"
+    );
+    expect(statusStripSource).toContain("W ${msaWindowSize ?? '-'} / S ${msaStepSize ?? '-'}");
     expect(statusStripSource).toContain('text-[10px] text-foreground leading-tight font-semibold');
     expect(playerBarSource).toContain('text-xs font-bold leading-tight tracking-tight uppercase');
     expect(playerBarSource).toContain('inline-flex w-[7rem] shrink-0');
