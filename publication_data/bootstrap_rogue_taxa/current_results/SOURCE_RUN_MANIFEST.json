@@ -45,7 +45,7 @@
       },
       "schema_version": "1.0",
       "seed": 42,
-      "source_alignment": "/Users/berksakalli/Projects/phylo-movies/publication_data/bootstrap_rogue_taxa/source_alignments/aberer_roguenarok_dataset_24_taxa24_sites14190.phy",
+      "source_alignment": "publication_data/bootstrap_rogue_taxa/source_alignments/aberer_roguenarok_dataset_24_taxa24_sites14190.phy",
       "source_alignment_relative_to_source_root": "aberer_roguenarok_dataset_24_taxa24_sites14190.phy",
       "source_alignment_sha256": "53041f44bd12a63ca75c5cb98e79b03261f3414eba156656b7908f69e7b8f462",
       "source_file_basename": "aberer_roguenarok_dataset_24_taxa24_sites14190.phy",
@@ -105,7 +105,7 @@
       },
       "schema_version": "1.0",
       "seed": 42,
-      "source_alignment": "/Users/berksakalli/Projects/phylo-movies/publication_data/bootstrap_rogue_taxa/source_alignments/aberer_roguenarok_dataset_125_taxa125_sites29149.phy",
+      "source_alignment": "publication_data/bootstrap_rogue_taxa/source_alignments/aberer_roguenarok_dataset_125_taxa125_sites29149.phy",
       "source_alignment_relative_to_source_root": "aberer_roguenarok_dataset_125_taxa125_sites29149.phy",
       "source_alignment_sha256": "404de7c92c5955cdd1f10fde5b539cb2a9e31051961ad8fb565805ba8d82edca",
       "source_file_basename": "aberer_roguenarok_dataset_125_taxa125_sites29149.phy",
@@ -131,13 +131,13 @@
   "run_id": "run_20260521T135932+0200_iqtree-default_bs200_seed42_ds24-125_annotations-subtree-bs200",
   "schema_version": "1.0",
   "seed": 42,
-  "source_root": "/Users/berksakalli/Projects/phylo-movies/publication_data/bootstrap_rogue_taxa/source_alignments",
+  "source_root": "publication_data/bootstrap_rogue_taxa/source_alignments",
   "threads": 1,
   "timestamp_local": "20260521T135932+0200",
   "tool_versions": {
     "fasttree": null,
     "iqtree": {
-      "executable": "/Users/berksakalli/miniconda3/envs/phylomovies-publication/bin/iqtree2",
+      "executable": "iqtree2",
       "output": [
         "IQ-TREE multicore version 2.4.0 for MacOS ARM 64-bit built Feb 12 2025",
         "Developed by Bui Quang Minh, Nguyen Lam Tung, Olga Chernomor, Heiko Schmidt,",
@@ -146,7 +146,7 @@
       "returncode": 0
     },
     "raxml_hpc": {
-      "executable": "/Users/berksakalli/miniconda3/envs/phylomovies-publication/bin/raxmlHPC",
+      "executable": "raxmlHPC",
       "output": [
         "This is RAxML version 8.2.12 released by Alexandros Stamatakis on May 2018.",
         "",

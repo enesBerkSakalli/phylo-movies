@@ -25,7 +25,7 @@ conda env create -f publication_data/environment.yml
 Resolved interpreter:
 
 ```text
-/Users/berksakalli/miniconda3/envs/phylomovies-publication/bin/python
+conda env: phylomovies-publication
 ```
 
 Verified Python packages:
@@ -41,11 +41,11 @@ recan==0.5
 Verified command-line tools:
 
 ```text
-RAxML executable: /Users/berksakalli/miniconda3/envs/phylomovies-publication/bin/raxmlHPC
+RAxML executable: raxmlHPC
 RAxML reported version: 8.2.12
-IQ-TREE executable: /Users/berksakalli/miniconda3/envs/phylomovies-publication/bin/iqtree2
+IQ-TREE executable: iqtree2
 IQ-TREE reported version: 2.4.0
-FastTree executable: /Users/berksakalli/miniconda3/envs/phylomovies-publication/bin/FastTree
+FastTree executable: FastTree
 FastTree package version: 2.2.0
 ```
 

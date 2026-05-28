@@ -1,7 +1,7 @@
 {
   "created_at": "2026-05-19T15:02:52.205481+02:00",
-  "script": "/Users/berksakalli/Projects/phylo-movies/publication_data/recombination_norovirus/scripts/recan_recombination_analysis/run_recan_sliding_window.py",
-  "input_fasta": "/Users/berksakalli/Projects/phylo-movies/publication_data/recombination_norovirus/source_alignments/recan_working_subset_48taxa_8058bp.fasta",
+  "script": "publication_data/recombination_norovirus/scripts/recan_recombination_analysis/run_recan_sliding_window.py",
+  "input_fasta": "publication_data/recombination_norovirus/source_alignments/recan_working_subset_48taxa_8058bp.fasta",
   "input_fasta_sha256": "328d4a7da01ae675def0a1fdec60aa0293fc6f4a86529b5db186e48ce582d699",
   "input_sequence_count": 48,
   "alignment_length": 8058,
