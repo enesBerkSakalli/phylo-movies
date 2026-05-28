@@ -28,8 +28,8 @@ export const createSprMovedSubtreeRecurrenceCsv = (
     'Rank',
     'Moved Subtree',
     'Taxa Count',
-    'Movement Count',
-    '% of Movements',
+    'SPR Move Count',
+    '% of SPR Moves',
     'Tree Pair Count',
     'Total Path Hops',
     'Avg Path Hops',
@@ -74,22 +74,22 @@ export const createSprMoveEventCsv = (
   leafNamesByIndex: string[]
 ): string => {
   const headers = [
-    'Movement ID',
+    'SPR Move ID',
     'Tree Pair',
     'Pair ID',
-    'Movement Index',
+    'SPR Move Index',
     'Moved Subtree',
     'Context Subtree',
     'Taxa Count',
-    'Pivot Edge',
-    'From Attachment',
-    'To Attachment',
-    'From Attachment Support',
-    'To Attachment Support',
-    'From Moved Subtree Value',
-    'To Moved Subtree Value',
-    'From Placement Context Value',
-    'To Placement Context Value',
+    'Pivot edge',
+    'Source Attachment',
+    'Target Attachment',
+    'Source Attachment Support',
+    'Target Attachment Support',
+    'Source Moved Subtree Value',
+    'Target Moved Subtree Value',
+    'Source Placement Context Value',
+    'Target Placement Context Value',
     'Branch Value Label',
     'Moved Subtree Value Class',
     'Placement Context Value Class',
@@ -162,7 +162,7 @@ export const createSprMoveEventExportName = (fileName: string, date = new Date()
       .replace(/-+/g, '-')
       .replace(/^-+|-+$/g, '') || 'dataset';
 
-  return `${baseName}-spr-movements-${dateStamp}.csv`;
+  return `${baseName}-spr-moves-${dateStamp}.csv`;
 };
 
 export const downloadCsvFile = (content: string, downloadName: string): void => {

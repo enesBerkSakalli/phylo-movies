@@ -45,13 +45,13 @@ export const MovedSubtreeRecurrenceTable = ({
             Moved Subtree
           </th>
           <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">
-            Movements
+            SPR Moves
           </th>
           <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">
             Tree Pairs
           </th>
           <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">
-            % of movements
+            % of SPR moves
           </th>
           <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">
             Path Hops
@@ -72,7 +72,7 @@ export const MovedSubtreeRecurrenceTable = ({
               role="button"
               tabIndex={0}
               aria-pressed={isActive}
-              aria-label={`${subtreeLabel}, ${item.count} movements, ${item.percentage.toFixed(1)}%`}
+              aria-label={`${subtreeLabel}, ${item.count} SPR moves, ${item.percentage.toFixed(1)}%`}
               onClick={() => handleSubtreeClick(item.splitIndices)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {

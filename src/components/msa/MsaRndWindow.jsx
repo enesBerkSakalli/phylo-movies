@@ -73,7 +73,7 @@ function MSAWindowContent() {
             variant="ghost"
             size="icon-xs"
             onClick={closeMsaViewer}
-            aria-label="Close MSA viewer"
+            aria-label="Close alignment viewer"
             className="hover:bg-destructive/10 hover:text-destructive transition-colors"
           >
             <X aria-hidden />

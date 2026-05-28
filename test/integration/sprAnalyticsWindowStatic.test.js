@@ -70,14 +70,14 @@ describe('SPR analytics window shell', () => {
     expect(tableSource).not.toContain('columns.pair');
     expect(tableSource).toContain('buildSprMoveEventSearchText(event, leafNamesByIndex)');
     expect(tableSource).toContain('queryTerms.every((term) => searchText.includes(term))');
-    expect(SPR_MOVE_EVENT_TABLE_COPY.searchLabel).toBe('Search movements');
-    expect(SPR_MOVE_EVENT_TABLE_COPY.noSearchResults).toBe('No movements match these filters.');
+    expect(SPR_MOVE_EVENT_TABLE_COPY.searchLabel).toBe('Search SPR moves');
+    expect(SPR_MOVE_EVENT_TABLE_COPY.noSearchResults).toBe('No SPR moves match these filters.');
     expect(SPR_MOVE_EVENT_TABLE_COPY.branchValueThresholdLabel).toBe('Value threshold');
     expect(SPR_MOVE_EVENT_TABLE_COPY.subtreeValueFilterLabel).toBe(
-      'Filter movements by moved-subtree branch value category'
+      'Filter SPR moves by moved-subtree branch value category'
     );
     expect(SPR_MOVE_EVENT_TABLE_COPY.contextValueFilterLabel).toBe(
-      'Filter movements by placement-context branch value category'
+      'Filter SPR moves by placement-context branch value category'
     );
     expect(SPR_MOVE_EVENT_TABLE_COPY.branchValueFilters.bothHigh).toBe(
       '{target} both >= {threshold}'

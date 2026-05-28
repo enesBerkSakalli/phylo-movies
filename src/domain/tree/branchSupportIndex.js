@@ -81,13 +81,25 @@ function pathLabel(path = []) {
   return path.map(titleCase).filter(Boolean).join(' / ');
 }
 
+function canonicalAnnotationLeafLabel(field, fallbackLabel) {
+  const method = field?.analysis?.method;
+  if (
+    method === 'bootstrap_replicate_split_frequency' ||
+    method === 'bootstrap_replicate_subtree_frequency'
+  ) {
+    return 'Bootstrap split-frequency support';
+  }
+  return fallbackLabel;
+}
+
 function optionLabelForField(field, key) {
   const path = Array.isArray(field?.path) && field.path.length > 0 ? field.path : key.split('.');
   const parentPath = path.slice(0, -1);
-  const leafLabel =
+  const fallbackLeafLabel =
     typeof field?.label === 'string' && field.label.length > 0
       ? field.label
       : titleCase(path[path.length - 1] ?? key);
+  const leafLabel = canonicalAnnotationLeafLabel(field, fallbackLeafLabel);
   const prefix = pathLabel(parentPath);
   return prefix ? `${prefix} / ${leafLabel}` : leafLabel;
 }
