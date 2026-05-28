@@ -41,12 +41,12 @@ Create or update the shared environment:
 conda env create -f publication_data/environment.yml
 ```
 
-On Apple Silicon/macOS, the conda `augur` package is not available through the
-same solver path as the native command-line tools. Use the project-local
-publication venv plus the conda-installed native helper binaries:
+On Apple Silicon/macOS, the conda `augur` package can be unavailable through the
+same solver path as the native command-line tools. In that case, use a
+project-local publication venv plus the conda-installed native helper binaries:
 
 ```bash
-/Users/berksakalli/miniconda3/envs/phylomovies-publication/bin/python -m venv .venv-publication
+conda run -n phylomovies-publication python -m venv .venv-publication
 .venv-publication/bin/python -m pip install --upgrade pip setuptools wheel
 .venv-publication/bin/python -m pip install \
   nextstrain-augur==24.4.0 recan==0.5 nextstrain-cli==10.3.0 \

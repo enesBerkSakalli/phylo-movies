@@ -16,6 +16,10 @@ COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
 
 # Copy source and build
+COPY scripts/ scripts/
+COPY assets/ assets/
+COPY electron-app/build/ electron-app/build/
+COPY publication_data/ publication_data/
 COPY src/ src/
 COPY vite.config.mts tsconfig.json jsconfig.json components.json ./
 RUN npm run build

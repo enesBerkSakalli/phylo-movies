@@ -33,8 +33,8 @@ electron-app/node_modules
 .github
 docs
 plans
-publication_data
 *.md
 !README.md
+!publication_data/**/*.md
 CITATION.cff
 LICENSE
