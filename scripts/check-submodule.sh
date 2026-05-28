@@ -6,7 +6,7 @@
 # missing.  This mirrors the industry-standard pattern used by projects like
 # highlight.io and grpc.io: the preinstall hook calls
 #   git submodule update --init --recursive
-# so that a plain `git clone` + `npm install` "just works".
+# so that a plain `git clone` + `npm ci` "just works".
 #
 # In environments without a .git directory (Docker COPY, tarballs, CI
 # artefacts) the script is a no-op.
@@ -60,7 +60,7 @@ if [ -f "$MARKER_FILE" ]; then
       if [ $? -ne 0 ]; then
         echo "[backend] ⚠  poetry install failed — backend may not work."
         echo "[backend]    You can retry manually:  cd $SUBMODULE_DIR && poetry install"
-        # Non-fatal: don't block npm install for a Python issue
+        # Non-fatal: don't block the npm install lifecycle for a Python issue
       else
         echo "[backend] Python dependencies installed successfully ✓"
       fi

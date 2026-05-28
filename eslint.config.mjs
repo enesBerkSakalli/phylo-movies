@@ -76,6 +76,12 @@ export default tseslint.config(
     },
   },
   {
+    files: ['src/components/ui/**/*.{jsx,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
+  {
     files: ['test/**/*.{js,jsx,ts,tsx}'],
     languageOptions: {
       globals: {

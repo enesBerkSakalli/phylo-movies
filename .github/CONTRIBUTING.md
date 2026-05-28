@@ -27,8 +27,10 @@ By participating in this project, you are expected to uphold a standard of condu
    - Python: Follow PEP 8.
    - JavaScript/React: Follow the existing ESLint configuration.
 3. **Run Tests**:
-   - Backend: `poetry run pytest`
+   - Backend: `cd engine/BranchArchitect && poetry run pytest`
    - Frontend: `npm test`
+   - Movie construction smoke: `npm run test:construction`
+   - Full local tester path: `npm ci && ./start.sh`, then load an example in the browser.
 4. **Documentation**: Update `README.md` or docstrings if you change behavior.
 5. **Commit**: Use descriptive commit messages.
 6. **Push** to your branch and open a Pull Request.
@@ -50,7 +52,7 @@ poetry install
 Located in the root.
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 

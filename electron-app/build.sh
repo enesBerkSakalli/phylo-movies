@@ -49,6 +49,8 @@ cp -r "$PROJECT_ROOT/dist" "$FRONTEND_DIST"
 # Example datasets are copied into dist/ by the root build from publication_data/.
 # frontend-dist is a generated packaging artifact; publication_data/ remains the
 # only source of truth.
+echo "Checking generated frontend for local absolute paths..."
+node "$PROJECT_ROOT/scripts/check-electron-frontend-dist.mjs"
 
 echo "Frontend prepared successfully."
 
