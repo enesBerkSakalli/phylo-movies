@@ -11,6 +11,8 @@ not be edited as source data.
   scripts, promoted results, and provenance files.
 - `PUBLICATION_ARCHIVE.md` defines the public archive boundary and release
   verification checks.
+- `SCALE_LIMITS.md` records the committed taxa scale tiers and the local
+  msprime stress-fixture workflow.
 - `REGENERATE.md` is the top-level regeneration and verification entry point.
 - `publication_data.env` defines shared workflow constants consumed by shell
   entry points and Python scripts.
@@ -26,6 +28,8 @@ not be edited as source data.
   alignment files for the recombination example.
 - `recombination_norovirus/current_results/` contains the
   promoted ReCAN validation result set.
+- `scale_fixtures/msprime_performance/` contains deterministic synthetic
+  msprime tree-only fixtures for app visualization performance checks.
 
 ## Current Top-Level Groups
 
@@ -33,6 +37,7 @@ not be edited as source data.
 | --- | --- |
 | `bootstrap_rogue_taxa/` | Source alignments, regeneration scripts, and promoted IQ-TREE bootstrap outputs for the Aberer/RogueNaRok-derived rogue-taxon example. |
 | `recombination_norovirus/` | Source alignments, source-preparation files, ReCAN scripts, and promoted ReCAN outputs for the norovirus recombination example. |
+| `scale_fixtures/msprime_performance/` | Deterministic synthetic msprime tree-only fixtures for visualization performance checks at 250, 500, and 1000 taxa. |
 | `quick_msa_demo/` | Synthetic lightweight MSA demo. |
 | `figure_example/` | Small figure/demo tree input. |
 
@@ -41,3 +46,12 @@ not be edited as source data.
 Retained external source material must have citation, source path or source
 description, checksum, and transformation status. Generated outputs must point
 back to their source inputs and reproducible command surface.
+
+## Hygiene Check
+
+Run the manifest, checksum, taxa-count, site-count, and promoted-tree checks
+with:
+
+```bash
+npm run publication:data:check
+```

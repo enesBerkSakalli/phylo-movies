@@ -1,0 +1,11 @@
+key	value
+generator	msprime
+mode	independent_single_tree_replicates
+taxa	1000
+trees	10
+sequence_length	1
+recombination_rate	0
+population_size	10000
+seed	100010
+independent_trees	True
+tree_file	msprime_1000taxa_10trees_seed100010.nwk

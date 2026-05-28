@@ -4,8 +4,10 @@ node_modules
 
 env
 .venv/
+.venv-publication/
 .pytest_cache/
 *.pyc
+__pycache__/
 
 # Copilot prompt files (local-only)
 .github/prompts/
@@ -92,6 +94,7 @@ publication_data/norovirus/recan_recombination_analysis/*.png
 publication_data/norovirus/recan_recombination_analysis/legacy_stale_outputs/*
 !publication_data/norovirus/recan_recombination_analysis/legacy_stale_outputs/README.md
 publication_data/bootstrap_rogue_taxa/runs/
+publication_data/scale_fixtures/generated/
 publication_data/norovirus/augur_subsampling/paper_text_draft.tex
 .github/copilot-instructions.md
 scripts/rewrite-git-authors.sh

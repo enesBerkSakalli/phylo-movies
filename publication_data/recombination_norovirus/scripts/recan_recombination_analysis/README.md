@@ -28,11 +28,11 @@ The query is selected by FASTA ID, not by row index.
 
 ## Re-run Command
 
-Use the shared publication conda environment:
+Use the project-local publication environment:
 
 ```bash
-conda env create -f publication_data/environment.yml
-conda run -n phylomovies-publication ./publication_data/recombination_norovirus/scripts/recan_recombination_analysis/run_recombination_analysis.sh
+PATH="$PWD/.venv-publication/bin:$PATH" \
+  ./publication_data/recombination_norovirus/scripts/recan_recombination_analysis/run_recombination_analysis.sh
 ```
 
 The shell entry point resolves Python in this order:
@@ -48,7 +48,8 @@ working subset, and writes a timestamped generated run.
 To reuse the existing source-layer subset:
 
 ```bash
-SKIP_SUBSET=1 conda run -n phylomovies-publication ./publication_data/recombination_norovirus/scripts/recan_recombination_analysis/run_recombination_analysis.sh
+SKIP_SUBSET=1 PATH="$PWD/.venv-publication/bin:$PATH" \
+  ./publication_data/recombination_norovirus/scripts/recan_recombination_analysis/run_recombination_analysis.sh
 ```
 
 ## Parameters
@@ -90,5 +91,6 @@ written to `sequence_order.tsv`.
 ## Dependencies
 
 ```bash
-conda run -n phylomovies-publication python -m pip install -r publication_data/recombination_norovirus/scripts/recan_recombination_analysis/requirements.txt
+.venv-publication/bin/python -m pip install \
+  -r publication_data/recombination_norovirus/scripts/recan_recombination_analysis/requirements.txt
 ```

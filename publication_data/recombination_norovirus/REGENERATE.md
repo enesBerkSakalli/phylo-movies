@@ -41,16 +41,47 @@ Create or update the shared environment:
 conda env create -f publication_data/environment.yml
 ```
 
+On Apple Silicon/macOS, the conda `augur` package is not available through the
+same solver path as the native command-line tools. Use the project-local
+publication venv plus the conda-installed native helper binaries:
+
+```bash
+/Users/berksakalli/miniconda3/envs/phylomovies-publication/bin/python -m venv .venv-publication
+.venv-publication/bin/python -m pip install --upgrade pip setuptools wheel
+.venv-publication/bin/python -m pip install \
+  nextstrain-augur==24.4.0 recan==0.5 nextstrain-cli==10.3.0 \
+  jsonschema==3.2.0 snakemake==7.32.4 pulp==2.7.0 boto3==1.42.90 \
+  msprime==1.3.4 biopython==1.85 pandas==1.5.3 matplotlib==3.10.9
+conda install -n phylomovies-publication -c conda-forge -c bioconda \
+  ncbi-datasets-cli csvtk tsv-utils nextclade mafft trimal
+npm install --prefix .venv-publication/auspice-node auspice@2.71.0
+ln -sf ../auspice-node/node_modules/.bin/auspice .venv-publication/bin/auspice
+```
+
+Recreate the source snapshot through the pinned Nextstrain/Augur workflow:
+
+```bash
+PATH="$PWD/.venv-publication/bin:$PATH" \
+  ./publication_data/recombination_norovirus/source_preparation/augur_subsampling/scripts/recreate_nextstrain_augur_snapshot.sh
+```
+
+This checks out Nextstrain norovirus commit
+`bce398d15a14c82a2a8c3574da289205e2c5844f`, runs `nextstrain build` for the
+ingest workflow, locks the generated result to
+`source_preparation/augur_subsampling/01_raw/full_genome_accession_versions.txt`,
+then runs `augur filter`, MAFFT, and trimAl.
+
 Run the reproducible ReCAN workflow:
 
 ```bash
-conda run -n phylomovies-publication \
+PATH="$PWD/.venv-publication/bin:$PATH" \
   ./publication_data/recombination_norovirus/scripts/recan_recombination_analysis/run_recombination_analysis.sh
 ```
 
-The shell entry point resolves Python from the active conda environment,
-sources `publication_data/publication_data.env`, rebuilds the working subset
-from the canonical source alignment, and writes a timestamped run.
+The shell entry point resolves Python from `.venv-publication/bin` when that
+directory is on `PATH`, sources `publication_data/publication_data.env`,
+rebuilds the working subset from the canonical source alignment, and writes a
+timestamped run.
 
 ## Outputs
 

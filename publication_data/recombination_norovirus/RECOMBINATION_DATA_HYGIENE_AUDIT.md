@@ -1,6 +1,6 @@
 # Norovirus Recombination Data Hygiene Audit
 
-Audit date: 2026-05-19
+Audit date: 2026-05-28
 
 Scope: norovirus recombination publication data after redundancy cleanup.
 
@@ -44,7 +44,8 @@ publication_data/recombination_norovirus/current_results/
 - Latest verified ReCAN command:
 
 ```bash
-conda run -n phylomovies-publication ./publication_data/recombination_norovirus/scripts/recan_recombination_analysis/run_recombination_analysis.sh
+PATH="$PWD/.venv-publication/bin:$PATH" \
+  ./publication_data/recombination_norovirus/scripts/recan_recombination_analysis/run_recombination_analysis.sh
 ```
 
 - Latest promoted ReCAN run summary: query `MK753032_P16_GII-4`, query index
@@ -61,7 +62,9 @@ Closed cleanup items:
 - root-level duplicate FASTA copies under `source_preparation/augur_subsampling/` removed;
 - ReCAN subset output defaults now point to the source alignment layer.
 
-Remaining provenance gap:
+Closed provenance item:
 
-- pin the exact upstream Nextstrain revision if it can be recovered; otherwise
-  cite the retained local source snapshot checksum explicitly.
+- upstream Nextstrain norovirus workflow pinned to commit
+  `bce398d15a14c82a2a8c3574da289205e2c5844f`;
+- moving GenBank/Nextstrain results locked by
+  `source_preparation/augur_subsampling/01_raw/full_genome_accession_versions.txt`.
