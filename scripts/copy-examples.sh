@@ -15,7 +15,7 @@ SOURCE="$PROJECT_ROOT/publication_data"
 
 echo "Copying example datasets to $DEST..."
 
-# Norovirus MSA example (350 sequences)
+# Norovirus MSA example (334 retained sequences from a 350-sequence Augur target)
 mkdir -p "$DEST/examples/recombination_norovirus/source_preparation/augur_subsampling/03_trimmed"
 cp "$SOURCE/recombination_norovirus/source_preparation/augur_subsampling/03_trimmed/subsampled_350_gappyout_final.fasta" \
    "$DEST/examples/recombination_norovirus/source_preparation/augur_subsampling/03_trimmed/"
@@ -38,4 +38,10 @@ rm -rf "$DEST/examples/bootstrap_rogue_taxa/current_results"
 cp -R "$SOURCE/bootstrap_rogue_taxa/current_results" \
    "$DEST/examples/bootstrap_rogue_taxa/"
 
-echo "Done. Copied 5 example datasets."
+# Deterministic msprime performance fixtures
+mkdir -p "$DEST/examples/scale_fixtures"
+rm -rf "$DEST/examples/scale_fixtures/msprime_performance"
+cp -R "$SOURCE/scale_fixtures/msprime_performance" \
+   "$DEST/examples/scale_fixtures/"
+
+echo "Done. Copied 9 example datasets."
