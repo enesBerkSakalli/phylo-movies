@@ -1,5 +1,4 @@
 import { expect } from 'chai';
-import sinon from 'sinon';
 import { TidyTreeLayout } from '../../src/treeVisualisation/layout/TidyTreeLayout.js';
 import { createLayoutResult } from '../../src/treeVisualisation/layout/LayoutResultAdapter.js';
 import { DeckGLTreeLayerDataFactory } from '../../src/treeVisualisation/deckgl/DeckGLTreeLayerDataFactory.js';

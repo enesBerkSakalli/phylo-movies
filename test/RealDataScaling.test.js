@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, beforeEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import createRadialTreeLayout from '../src/treeVisualisation/layout/RadialTreeLayout.js';
@@ -99,6 +99,7 @@ describe('Real Data Scaling Analysis', () => {
     });
     const avgLen = totalLength / (links.length || 1);
     console.log(`  Avg Visual Link Length: ${avgLen.toFixed(4)}px`);
+    console.log(`  Non-zero links: ${nonZeroCount}`);
 
     // Check for overlap (primitive check)
     const nodeRadius = 3; // Standard Deck.gl node radius

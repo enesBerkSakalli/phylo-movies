@@ -2,7 +2,7 @@
  * Tests for Taxa Coloring utilities
  * Tests GroupingUtils.js and related state management
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   generateGroups,
   getGroupForTaxon,

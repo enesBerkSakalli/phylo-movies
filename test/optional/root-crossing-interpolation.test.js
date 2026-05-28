@@ -11,7 +11,6 @@ import { PolarPathInterpolator } from '../../src/treeVisualisation/deckgl/interp
 describe('Root Crossing Detection', () => {
   describe('crossesAngle()', () => {
     const PI = Math.PI;
-    const TAU = 2 * PI;
 
     it('should detect crossing 0° when going from small positive to large positive angle', () => {
       // 10° to 350° via shortest path (clockwise through 0°)
@@ -82,7 +81,6 @@ describe('Root Crossing Detection', () => {
 
   describe('longArcDelta()', () => {
     const PI = Math.PI;
-    const TAU = 2 * PI;
 
     it('should return opposite direction for positive short delta', () => {
       const shortDelta = PI / 4; // 45° counter-clockwise

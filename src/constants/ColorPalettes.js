@@ -46,12 +46,10 @@ function fixContrast(hexStr) {
   let color;
   try {
     color = new Color(hexStr);
-  } catch (e) {
+  } catch (_error) {
     console.warn('Invalid color:', hexStr);
     return '#000000';
   }
-
-  const original = color.clone();
 
   // Check contrast
   if (Math.abs(WHITE.contrast(color, 'APCA')) >= TARGET_LC) {

@@ -90,7 +90,6 @@ describe('InterpolationCache', () => {
     const tree1 = { id: 1 };
     const tree2 = { id: 2 };
     const layout1 = { layoutTree: tree1, width: 800, height: 600 };
-    const layout2 = { layoutTree: tree2, width: 800, height: 600 };
 
     dependencies.calculateLayout.returns(layout1);
     dependencies.convertTreeToLayerData.returns('layerData');

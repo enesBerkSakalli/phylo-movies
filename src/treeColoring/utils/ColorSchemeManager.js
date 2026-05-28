@@ -80,7 +80,7 @@ export class ColorSchemeManager {
   // =====================
   // Palette ordering utils
   // =====================
-  _orderPaletteForMaxDistance(palette, k, backgroundHex = '#ffffff') {
+  _orderPaletteForMaxDistance(palette, k) {
     // Filter duplicates based on string representation
     const uniquePalette = [];
     const seen = new Set();
@@ -247,9 +247,6 @@ export class ColorSchemeManager {
         ];
       }
 
-      // Decrease L to increase contrast against white
-      l -= 0.05;
-      if (l < 0.2) l = 0.2; // Don't go too black
       attempts++;
     }
 
