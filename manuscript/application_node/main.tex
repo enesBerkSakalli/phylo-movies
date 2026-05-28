@@ -1,0 +1,68 @@
+\documentclass[nocrop]{mbe}
+
+% Font configuration to prevent warnings
+\RequirePackage{fix-cm}
+% Use Computer Modern fonts (default) instead of Latin Modern for better MBE compatibility
+\RequirePackage[OT1]{fontenc}
+
+% Declare missing font shapes to suppress warnings
+\DeclareFontShape{OT1}{cmr}{m}{m}{<->ssub*cmr/m/n}{}
+\DeclareFontShape{OT1}{cmr}{bx}{m}{<->ssub*cmr/bx/n}{}
+\DeclareFontShape{OT1}{cmss}{b}{m}{<->ssub*cmss/bx/n}{}
+\DeclareFontShape{OT1}{cmr}{m}{rmdefault}{<->ssub*cmr/m/n}{}
+\DeclareFontShape{OT1}{cmr}{b}{sc}{<->ssub*cmr/bx/sc}{}
+\DeclareFontShape{OT1}{cmr}{bx}{sc}{<->ssub*cmr/bx/n}{}
+
+% Journal metadata required by mbe.cls
+\jshort{mbe}
+\jvolume{00}
+\jissue{00}
+\pubyear{2026}
+\artid{000}
+\firstpage{1}
+
+% Only load packages that do not conflict with MBE.cls
+% Note: MBE class already loads many packages, so be selective
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{xcolor}
+% Override mbe.cls broken \graphicspath
+\graphicspath{{figures/}}
+
+\setlength{\marginparwidth}{0.8in}
+\newcommand{\revmark}[1]{\textsuperscript{\textcolor{red}{[#1]}}\marginpar{\raggedright\tiny\textcolor{red}{#1}}}
+\newcommand{\rev}[2]{\revmark{#1}\textcolor{red}{#2}}
+
+\title{Phylo-Movies: Animating Phylogenetic Trees from Sliding-Window Analyses}
+
+% Fix author notation - use superscript formatting compatible with MBE
+\author{Enes Berk Sakalli\(^{1,2,*}\), Simon E. Haendeler\(^{1}\), Arndt von Haeseler\(^{2}\), Heiko A. Schmidt\(^{3}\)}
+
+\address{
+\(^{1}\)Vienna BioCenter PhD Program, Doctoral School of the University of Vienna and Medical University of Vienna, Vienna A-1030, Austria\\
+\(^{2}\)Ludwig Boltzmann Institute for Network Medicine, University of Vienna, Vienna, Austria\\
+\(^{3}\)Department for Structural and Computational Biology, Max Perutz Labs, University of Vienna, Vienna, Austria}
+\history{NN}
+
+\coresp{E-mails: enes@lbi-netmed.at; enes.sakalli@univie.ac.at}
+
+\datade{NN}
+
+\editor{NN}
+
+\abstract{
+Sliding-window phylogenetic analyses of multiple sequence alignments (MSAs) generate sequences of phylogenetic trees that can reveal recombination and other sources of phylogenetic conflict, yet comparing trees across genomic windows remains challenging. Phylo-Movies is a browser-based tool---also available as a standalone desktop application---that decomposes topological differences between consecutive phylogenetic trees into interpretable subtree migrations and animates these transformations. We demonstrate its utility in two contexts: identifying recombination breakpoints in norovirus genomes, where lineages shift from polymerase-based to capsid-based clustering at the ORF1/ORF2 junction, and \textcolor{red}{exploring candidate rogue taxa that change position across bootstrap replicates}. \textcolor{red}{Phylo-Movies complements quantitative summaries such as Robinson--Foulds distances, support values, and rogue-taxon scores by showing which lineages move, where they move from, and which new groupings they form.} \textcolor{red}{The animations also provide an intuitive educational tool for workshops and teaching.} Phylo-Movies is freely available at \url{https://github.com/enesberksakalli/phylo-movies}, with a norovirus demonstration video at \url{https://vimeo.com/1162400544}, the first rogue taxon example \url{https://vimeo.com/1162561152}, and the second example \url{https://vimeo.com/1162563101}.}
+
+\keyword{phylogenetics; animation; recombination; rogue taxa; tree visualisation; evolutionary biology; sequence of phylogenetic trees; topological change}
+\begin{document}
+\maketitle
+
+\input{introduction}
+\section*{Competing Interests}
+The authors declare no conflict of interest.
+\section*{Funding}
+This work was supported by institutional funds from the University of Vienna.
+No external funding was received for this study.
+\bibliographystyle{natbib}
+\bibliography{bib/library}
+\end{document}
