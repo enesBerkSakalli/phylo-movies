@@ -170,6 +170,10 @@ def promote_dataset(source_run, dest_root, run_manifest, dataset_manifest):
             }
         )
 
+    source_alignment_relative = dataset_manifest.get(
+        "source_alignment_relative_to_source_root", source_basename
+    )
+
     promoted_manifest = {
         "schema_version": "1.0",
         "publication_status": "current_promoted_result",
@@ -178,10 +182,8 @@ def promote_dataset(source_run, dest_root, run_manifest, dataset_manifest):
         "source_run_id": run_manifest["run_id"],
         "source_run_directory": None,
         "source_run_retention": "generated staging removed after promotion",
-        "source_alignment": dataset_manifest["source_alignment"],
-        "source_alignment_relative_to_source_root": dataset_manifest.get(
-            "source_alignment_relative_to_source_root", dataset_id
-        ),
+        "source_alignment": source_alignment_relative,
+        "source_alignment_relative_to_source_root": source_alignment_relative,
         "source_alignment_sha256": dataset_manifest["source_alignment_sha256"],
         "source_file_basename": source_basename,
         "n_taxa": n_taxa,
@@ -228,7 +230,7 @@ def write_docs(dest_root, source_run, run_manifest, validations, status):
         "schema_version": "1.0",
         "verified_at": verified_at,
         "status": status,
-        "current_results_directory": str(dest_root),
+        "current_results_directory": "publication_data/bootstrap_rogue_taxa/current_results",
         "source_run_directory": None,
         "source_run_retention": "generated staging removed after promotion",
         "source_run_id": run_manifest["run_id"],
@@ -421,10 +423,9 @@ Source alignment provenance:
 
 - dataset manifests keep both the source alignment SHA256 and the path relative
   to `ROGUE_TAXA_SOURCE_ROOT`;
-- absolute `source_alignment` paths in `SOURCE_RUN_*` snapshots are local
-  execution provenance, not portable repo paths;
-- the portable source contract is the relative source label plus SHA256 in each
-  promoted `DATASET_MANIFEST.json`.
+- promoted manifests use portable source-alignment paths plus SHA256 checksums;
+- source-run snapshots may include staging labels from the original run, but
+  generated publication manifests must stay repository-relative.
 
 IQ-TREE per-replicate inference artifacts are not publication-facing results in
 this folder. They are documented through `SOURCE_RUN_LOG.txt` and

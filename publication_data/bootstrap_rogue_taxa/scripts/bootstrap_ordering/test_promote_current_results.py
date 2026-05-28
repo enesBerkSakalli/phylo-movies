@@ -87,3 +87,7 @@ def test_promote_uses_stable_publication_paths(tmp_path):
         current_manifest["datasets"][0]["ranked_trees_file"]
         == "dataset_24_source-24_taxa24_sites14190/ranked/all_trees_24_source-24_taxa24_sites14190.nwk"
     )
+
+    dataset_manifest = json.loads((stable_dataset_dir / "DATASET_MANIFEST.json").read_text())
+    assert dataset_manifest["source_alignment"] == source_basename
+    assert dataset_manifest["source_alignment_relative_to_source_root"] == source_basename
