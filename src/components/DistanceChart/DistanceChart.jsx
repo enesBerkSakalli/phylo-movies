@@ -210,6 +210,11 @@ function DistanceChartTooltip({ active, payload, metric }) {
       <div className="font-mono font-medium tabular-nums text-foreground">
         {formatMetricValue(item.value)}
       </div>
+      {metric.description ? (
+        <div className="max-w-[16rem] text-2xs leading-snug text-muted-foreground/80">
+          {metric.description}
+        </div>
+      ) : null}
     </div>
   );
 }

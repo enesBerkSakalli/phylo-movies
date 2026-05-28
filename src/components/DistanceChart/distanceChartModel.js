@@ -16,16 +16,23 @@ const resolveDistancePair = (pair) => ({
 });
 
 const buildDistancePoints = (pairMetrics, pairs, metricKey) => {
-  const pairById = new Map(pairs.map((pair) => [pair.pair_id, pair]));
-  return pairMetrics.rows.map((metricRow, index) => {
-    const pair = resolveDistancePair(pairById.get(metricRow.pair_id));
+  const metricByPairId = new Map(pairMetrics.rows.map((row) => [row.pair_id, row]));
+
+  return pairs.map((pair, index) => {
+    const metricRow = metricByPairId.get(pair.pair_id) ?? {};
+    const pairOrdinal = Number.isInteger(pair.pair_ordinal) ? pair.pair_ordinal : index;
+    const resolvedPair = resolveDistancePair(pair);
+
     return {
-      x: index + 1,
+      x: pairOrdinal + 1,
       y: safeNumber(metricRow[metricKey]),
-      sampleIndex: metricRow.pair_ordinal,
-      pairId: metricRow.pair_id,
-      ...pair,
-      contextLabel: formatDistancePointLabel(pair.sourceInputTreeIndex, pair.targetInputTreeIndex),
+      sampleIndex: pairOrdinal,
+      pairId: pair.pair_id,
+      ...resolvedPair,
+      contextLabel: formatDistancePointLabel(
+        resolvedPair.sourceInputTreeIndex,
+        resolvedPair.targetInputTreeIndex
+      ),
     };
   });
 };
@@ -90,10 +97,24 @@ export const resolveActivePointIndex = (
   }
 
   const lastDistanceIndex = Math.max(0, points.length - 1);
-  const cursorInputTreeIndex =
-    timelineCursor?.sourceInputTreeIndex ?? timelineCursor?.inputTreeIndex;
-  const inputTreeIndex = findActiveInputTreeIndex(inputTreeIndices, cursorInputTreeIndex);
-  return Math.min(lastDistanceIndex, inputTreeIndex);
+  const cursorInputTreeIndex = Number.isInteger(timelineCursor?.sourceInputTreeIndex)
+    ? timelineCursor.sourceInputTreeIndex
+    : Number.isInteger(timelineCursor?.inputTreeIndex)
+      ? timelineCursor.inputTreeIndex
+      : null;
+
+  if (cursorInputTreeIndex === null) return 0;
+
+  let activeIndex = 0;
+  for (let i = 0; i < points.length; i++) {
+    if (points[i].sourceInputTreeIndex <= cursorInputTreeIndex) {
+      activeIndex = i;
+    } else {
+      break;
+    }
+  }
+
+  return Math.min(lastDistanceIndex, activeIndex);
 };
 
 export const resolveCursorX = (points, activePointIndex) => points[activePointIndex]?.x ?? 1;

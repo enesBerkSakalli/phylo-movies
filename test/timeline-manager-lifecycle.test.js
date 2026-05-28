@@ -130,7 +130,7 @@ describe('MovieTimelineManager lifecycle', () => {
       msaColumnCount: 1000,
     });
 
-    expect(status.position.display).to.equal('Input tree 2/10');
+    expect(status.position.display).to.equal('Tree 2/10');
     expect(status.segment.text).to.equal('Input tree');
     expect(status.msaWindow).to.deep.equal({
       startPosition: 1,

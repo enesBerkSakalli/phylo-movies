@@ -47,12 +47,7 @@ export function buildInterpolationText(
 ) {
   const coordinateValue = getCoordinateValue(sequenceIndex, totalSequenceLength, timelineCursor);
   return {
-    display: buildReadablePositionText(
-      sequenceIndex,
-      totalSequenceLength,
-      inputTreeIndices,
-      timelineCursor
-    ),
+    ...buildReadablePosition(sequenceIndex, totalSequenceLength, inputTreeIndices, timelineCursor),
     fullPrecision: coordinateValue.toString(),
   };
 }
@@ -66,7 +61,7 @@ function getCoordinateValue(sequenceIndex, totalSequenceLength, timelineCursor) 
   return clamp01(derivedValue);
 }
 
-function buildReadablePositionText(
+function buildReadablePosition(
   sequenceIndex,
   totalSequenceLength,
   inputTreeIndices,
@@ -76,11 +71,19 @@ function buildReadablePositionText(
   const safeSequenceIndex = Number.isFinite(sequenceIndex) ? sequenceIndex : 0;
 
   if (!inputFrames.length) {
-    return `Frame ${safeSequenceIndex + 1} of ${Math.max(1, totalSequenceLength)}`;
+    return {
+      kind: 'frame',
+      display: `Frame ${safeSequenceIndex + 1} of ${Math.max(1, totalSequenceLength)}`,
+    };
   }
 
   if (timelineCursor?.isObservedInput && Number.isInteger(timelineCursor.inputTreeIndex)) {
-    return `Input tree ${timelineCursor.inputTreeIndex + 1}/${inputFrames.length}`;
+    return {
+      kind: 'input',
+      display: `Tree ${timelineCursor.inputTreeIndex + 1}/${inputFrames.length}`,
+      inputTreeIndex: timelineCursor.inputTreeIndex,
+      inputTreeCount: inputFrames.length,
+    };
   }
 
   const previousInputTreeOrdinal = Number.isInteger(timelineCursor?.sourceInputTreeIndex)
@@ -95,10 +98,20 @@ function buildReadablePositionText(
     const to = inputFrames[nextInputTreeOrdinal];
     const frameCount = Math.max(1, to - from - 1);
     const frameNumber = Math.max(1, Math.min(frameCount, safeSequenceIndex - from));
-    return `source input tree ${previousInputTreeOrdinal + 1} -> target input tree ${nextInputTreeOrdinal + 1}, frame ${frameNumber}/${frameCount}`;
+    return {
+      kind: 'transition',
+      display: `Tree ${previousInputTreeOrdinal + 1} -> ${nextInputTreeOrdinal + 1}, frame ${frameNumber}/${frameCount}`,
+      sourceInputTreeIndex: previousInputTreeOrdinal,
+      targetInputTreeIndex: nextInputTreeOrdinal,
+      frameNumber,
+      frameCount,
+    };
   }
 
-  return `Frame ${safeSequenceIndex + 1} of ${Math.max(1, totalSequenceLength)}`;
+  return {
+    kind: 'frame',
+    display: `Frame ${safeSequenceIndex + 1} of ${Math.max(1, totalSequenceLength)}`,
+  };
 }
 
 export function buildSegmentText(timelineCursor) {
@@ -107,7 +120,7 @@ export function buildSegmentText(timelineCursor) {
     Number.isInteger(timelineCursor?.sourceInputTreeIndex) &&
     Number.isInteger(timelineCursor?.targetInputTreeIndex)
   ) {
-    return `source input tree ${timelineCursor.sourceInputTreeIndex + 1} -> target input tree ${timelineCursor.targetInputTreeIndex + 1}`;
+    return `Tree ${timelineCursor.sourceInputTreeIndex + 1} -> ${timelineCursor.targetInputTreeIndex + 1}`;
   }
   return 'Generated frame';
 }
@@ -119,7 +132,7 @@ export function buildSegmentTooltipText(segmentText) {
   if (segmentText === 'Generated frame') {
     return 'A generated tree frame in the sequence.';
   }
-  return 'Generated frames between a source input tree and target input tree.';
+  return 'Generated frames between neighboring input trees.';
 }
 
 export function buildMsaWindow(hasMsa, msaWindowIndex, msaStepSize, msaWindowSize, msaColumnCount) {

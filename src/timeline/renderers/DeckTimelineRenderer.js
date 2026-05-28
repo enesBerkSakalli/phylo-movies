@@ -264,7 +264,7 @@ export class DeckTimelineRenderer {
       Number.isInteger(segment.sourceInputTreeIndex) &&
       Number.isInteger(segment.targetInputTreeIndex)
     ) {
-      return `from source input tree ${segment.sourceInputTreeIndex + 1} to target input tree ${segment.targetInputTreeIndex + 1}`;
+      return `input tree ${segment.sourceInputTreeIndex + 1} to ${segment.targetInputTreeIndex + 1}`;
     }
     return `transition ${segment.pairId}`;
   }

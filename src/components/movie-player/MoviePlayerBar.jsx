@@ -151,7 +151,11 @@ export function MoviePlayerBar() {
                 </Button>
               </AppTooltip>
 
-              {hasTimeline && <TimelineStatusStrip />}
+              {hasTimeline && (
+                <div className="min-w-0 overflow-hidden">
+                  <TimelineStatusStrip />
+                </div>
+              )}
             </div>
 
             <div className="justify-self-center rounded-md border border-border/70 bg-background/80 px-1 py-0.5 shadow-sm">
@@ -271,7 +275,11 @@ function TimelineLayerControls({ hasTransitionSegments, showViewportControls }) 
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 bg-muted/10 px-2 py-1">
       <TimelineLegend hasTransitionSegments={hasTransitionSegments} />
-      {showViewportControls && <TimelineScrollControls />}
+      {showViewportControls && (
+        <div className="shrink-0">
+          <TimelineScrollControls />
+        </div>
+      )}
     </div>
   );
 }
@@ -279,7 +287,7 @@ function TimelineLayerControls({ hasTransitionSegments, showViewportControls }) 
 function TimelineLegend({ hasTransitionSegments }) {
   return (
     <div
-      className="flex flex-wrap items-center gap-x-3 gap-y-1 text-2xs font-medium text-muted-foreground"
+      className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1 overflow-hidden text-2xs font-medium text-muted-foreground"
       role="group"
       aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineLegend}
     >
