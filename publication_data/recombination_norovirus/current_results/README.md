@@ -39,6 +39,34 @@ publication-data inspection.
 | `recan_recombination_plot.png` | Main grouped ReCAN validation plot. |
 | `norovirus_recombination_by_capsid.png` | Capsid-group highlighted validation plot. |
 
+## Phylo-Movies Window Table
+
+The publication-grade Norovirus Stability Scan uses the 334-taxon trimmed
+alignment with IQ-TREE fast search, SH-aLRT support, `windowSize=1000`, and
+`stepSize=500`. The exact live-analysis windows are stored in:
+
+```text
+window_tables/norovirus_334_window1000_step500_windows.tsv
+```
+
+The table records the zero-based window index, BranchArchitect window name, and
+one-based inclusive alignment coordinates.
+
+BranchArchitect's parameterized windowing is center-based, not start-based. For
+`windowSize=1000` and `stepSize=500`, centers are placed at alignment positions
+1, 501, 1001, ... and each window extends 500 bp to either side of its center.
+At the alignment boundaries, windows are clipped rather than shifted inward:
+
+- first window: center 1, range 1-500, length 500
+- internal windows: full 1000 bp
+- last window: center 8001, range 7501-8058, length 558
+
+This is intentional for live analysis because center positions stay on the exact
+requested step grid and window names match the BranchArchitect-generated window
+centers. The tradeoff is that edge trees are inferred from fewer sites. For
+publication figures, use this explicit table when reporting or regenerating
+windows so the boundary behavior is transparent.
+
 ## Checksums
 
 ```text
@@ -49,4 +77,5 @@ da6140a1619dbdd832cffa3e5759ffbf4cd35fac8b00b39fa3765ad6df01f649  recan_similari
 7757e511378c42a1a8e3967e19bd645796fe712fc7de35f1de50a9177eba44c7  recan_grouped_similarity.csv
 19e486a2756eed5b6e878d1497fc7b8b96dc68efc172449f633d2e82ff0aa345  recan_recombination_plot.png
 760c3f401f20547196b2ff435593e8a46038403644f0e42b93af561542fcee00  norovirus_recombination_by_capsid.png
+89a51af0d29cc343fad39362f3d362dcbd45cd454f9836dc591cc2b5a5de86ff  window_tables/norovirus_334_window1000_step500_windows.tsv
 ```

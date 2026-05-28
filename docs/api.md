@@ -75,7 +75,7 @@ At least one of `treeFile` or `msaFile` is required.
 | `treeInferenceEngine`    | string           | no                             | `iqtree`        | Must be `iqtree` or `fasttree`.                   |
 | `iqtreeFastSearch`       | checkbox string  | no                             | on              | `on` enables IQ-TREE fast search.                 |
 | `iqtreeSupportMode`      | string           | no                             | `none`          | `none`, `ufboot`, `sh_alrt`, or `sh_alrt_ufboot`. |
-| `iqtreeUfbootReplicates` | integer          | no                             | `1000`          | 100 to 100000.                                    |
+| `iqtreeUfbootReplicates` | integer          | no                             | `1000`          | 1000 to 100000.                                   |
 | `iqtreeShAlrtReplicates` | integer          | no                             | `1000`          | 100 to 100000.                                    |
 | `iqtreeBnni`             | checkbox string  | no                             | off             | `on` enables BNNI.                                |
 | `useGtr`                 | checkbox string  | no                             | on              | `on` enables GTR.                                 |

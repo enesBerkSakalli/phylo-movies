@@ -34,7 +34,7 @@ not be edited as source data.
 | --- | --- |
 | `bootstrap_rogue_taxa/` | Source alignments, regeneration scripts, and promoted IQ-TREE bootstrap outputs for the Aberer/RogueNaRok-derived rogue-taxon example. |
 | `recombination_norovirus/` | Source alignments, source-preparation files, ReCAN scripts, and promoted ReCAN outputs for the norovirus recombination example. |
-| `scale_fixtures/msprime_performance/` | Deterministic synthetic msprime tree-only fixtures for visualization performance checks at 250, 500, and 1000 taxa. |
+| `scale_fixtures/msprime_performance/` | Deterministic synthetic msprime tree-only fixtures for visualization performance checks at 250, 500, and 1000 taxa, including short 5-tree variants at 500 and 1000 taxa. |
 | `quick_msa_demo/` | Synthetic lightweight MSA demo. |
 | `figure_example/` | Small figure/demo tree input. |
 

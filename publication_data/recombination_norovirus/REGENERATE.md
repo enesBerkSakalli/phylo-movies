@@ -99,3 +99,12 @@ current_results/
 
 Each run writes `run_manifest.json`, source checksum, query ID, alignment
 order, group order, raw similarity values, grouped values, and plots.
+
+The Phylo-Movies stability example is run live from the canonical 334-taxon
+alignment with `windowSize=1000`, `stepSize=500`, IQ-TREE fast search, and
+SH-aLRT support (`1000` replicates). Its exact publication window coordinates
+are pinned in:
+
+```text
+current_results/window_tables/norovirus_334_window1000_step500_windows.tsv
+```

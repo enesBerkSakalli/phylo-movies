@@ -7,7 +7,9 @@ with msprime for Phylo-Movies visualization performance checks.
 | --- | ---: | ---: | ---: | --- |
 | `msprime_250taxa_50trees_seed25050.nwk` | 250 | 50 | 25050 | Baseline large-tree visualization. |
 | `msprime_500taxa_25trees_seed50025.nwk` | 500 | 25 | 50025 | Large-tree visualization limits. |
+| `msprime_500taxa_5trees_seed50005.nwk` | 500 | 5 | 50005 | Quick high-taxon visualization check. |
 | `msprime_1000taxa_10trees_seed100010.nwk` | 1000 | 10 | 100010 | Stress-testing maximum visible taxa. |
+| `msprime_1000taxa_5trees_seed100005.nwk` | 1000 | 5 | 100005 | Quick maximum-taxon visualization check. |
 
 These fixtures are synthetic visualization inputs, not biological case studies.
 They use independent single-tree msprime replicates to keep committed examples
@@ -19,7 +21,9 @@ Regenerate the committed fixtures with:
 ```bash
 .venv-publication/bin/python scripts/generate-msprime-scale-dataset.py --independent-trees --taxa 250 --trees 50 --seed 25050 --output-dir publication_data/scale_fixtures/msprime_performance
 .venv-publication/bin/python scripts/generate-msprime-scale-dataset.py --independent-trees --taxa 500 --trees 25 --seed 50025 --output-dir publication_data/scale_fixtures/msprime_performance
+.venv-publication/bin/python scripts/generate-msprime-scale-dataset.py --independent-trees --taxa 500 --trees 5 --seed 50005 --output-dir publication_data/scale_fixtures/msprime_performance
 .venv-publication/bin/python scripts/generate-msprime-scale-dataset.py --independent-trees --taxa 1000 --trees 10 --seed 100010 --output-dir publication_data/scale_fixtures/msprime_performance
+.venv-publication/bin/python scripts/generate-msprime-scale-dataset.py --independent-trees --taxa 1000 --trees 5 --seed 100005 --output-dir publication_data/scale_fixtures/msprime_performance
 ```
 
 Each `.metadata.tsv` file records the simulator, mode, effective simulation

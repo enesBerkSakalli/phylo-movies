@@ -31,7 +31,7 @@ The root package has:
 npm run build:gh
 ```
 
-This sets `VITE_DOCS_ONLY=true`, builds with base `/phylo-movies/`, applies SEO metadata, and copies examples. In docs-only mode the app serves the information page at `/` and redirects `/visualization` back to `/`.
+This sets `VITE_DOCS_ONLY=true`, builds with base `/phylo-movies/`, applies SEO metadata, injects crawlable landing-page HTML into `dist/index.html`, and copies examples. In docs-only mode the app serves the information page at `/` and exposes `/demo`, which loads `examples/precomputed/paper_example.movie.json` into browser storage before opening `/visualization`. Uploaded datasets still require the full BranchArchitect backend.
 
 ## Docker Full Stack
 

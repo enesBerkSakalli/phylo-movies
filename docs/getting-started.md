@@ -85,4 +85,4 @@ npm run dev
 
 ## Current Limitation
 
-The GitHub Pages build is documentation-only. It intentionally redirects `/visualization` to `/` and does not run the backend.
+The GitHub Pages build is documentation-first and does not run the backend. It includes a precomputed `/demo` payload for browser-only inspection, but uploaded datasets still require the local, Docker, or Electron backend workflow.
