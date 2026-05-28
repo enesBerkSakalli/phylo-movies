@@ -52,7 +52,7 @@ describe('clean Vite runtime wrapper', () => {
   });
 
   it('explains that npm run dev is frontend-only when the backend is unavailable', () => {
-    const warning = formatBackendUnavailableWarning('http://127.0.0.1:5002/about');
+    const warning = formatBackendUnavailableWarning('http://127.0.0.1:5002/health');
 
     expect(warning).toContain('npm run dev starts the Vite frontend only');
     expect(warning).toContain('./start.sh');

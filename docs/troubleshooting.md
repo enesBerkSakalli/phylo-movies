@@ -9,7 +9,7 @@ Likely cause: the frontend is running but Flask is not reachable.
 How to check:
 
 ```bash
-curl http://127.0.0.1:5002/about
+curl http://127.0.0.1:5002/health
 ```
 
 Fix:
@@ -76,16 +76,16 @@ Related file: `scripts/check-submodule.sh`.
 
 ## Symptom: Example Download Works but Load Fails
 
-Likely cause: frontend can read `/examples/...`, but backend processing failed.
+Likely cause: frontend can read `/examples/...`, but the upload to the BranchArchitect backend failed.
 
 How to check:
 
 ```bash
-curl http://127.0.0.1:5002/about
+curl http://127.0.0.1:5002/health
 tail -n 80 engine/BranchArchitect/logs/backend.log
 ```
 
-Fix: use **Paper Figure Example** first to separate backend startup problems from large MSA inference problems. If only MSA examples fail, check IQ-TREE/FastTree configuration.
+Fix: use **Paper Figure Example** first to separate backend startup problems from large MSA inference problems. If the UI says the frontend could not reach the backend with a 502, 503, or 504 status, start or restart the backend and confirm `/health` responds with `"ready": true`. If the UI says the backend rejected the dataset upload, check the backend response shown after the HTTP status. If only MSA examples fail, check IQ-TREE/FastTree configuration.
 
 Related files: `src/pages/WorkspaceInitialization/exampleDatasets.js`, `engine/BranchArchitect/webapp/routes/routes.py`.
 
@@ -135,7 +135,7 @@ tail -n 120 engine/BranchArchitect/logs/backend.log
 tail -n 120 engine/BranchArchitect/engine.log
 ```
 
-Fix: restart with `./start.sh` and retry a small example. The frontend treats 15 minutes without stream updates as a processing failure.
+Fix: restart with `./start.sh` and retry a small example. The frontend treats 15 minutes without stream updates as a processing failure. If the UI reports a “tree processing stream contract error,” the backend emitted progress events out of order or with malformed metadata/chunk indexes; keep the browser console and backend log together when reporting it.
 
 Related file: `src/pages/WorkspaceInitialization/services/movieProcessing.js`.
 

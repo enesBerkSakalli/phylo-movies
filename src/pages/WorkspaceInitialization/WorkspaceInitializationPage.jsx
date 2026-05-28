@@ -48,7 +48,8 @@ export function WorkspaceInitializationPage() {
     reset,
   } = useWorkspaceInitializationForm();
 
-  const disabled = submitting || loadingExample;
+  const backendReady = backendStatus.state === 'ready';
+  const disabled = submitting || loadingExample || !backendReady;
   const engineStatus = getEngineStatus(backendStatus.state);
   const EngineIcon = engineStatus.icon;
 
@@ -75,6 +76,7 @@ export function WorkspaceInitializationPage() {
               <AlertDescription>
                 Loading examples, processing uploaded trees, interpolation, and MSA-derived tree
                 inference require the BranchArchitect backend.
+                {backendStatus.state === 'checking' && <> Waiting for readiness from /health.</>}
                 {backendStatus.state === 'unavailable' && (
                   <>
                     {' '}
@@ -104,7 +106,7 @@ export function WorkspaceInitializationPage() {
               {alert && (
                 <Alert variant="destructive" className="mb-5">
                   <AlertTriangle />
-                  <AlertTitle>Error</AlertTitle>
+                  <AlertTitle>{alert.title || 'Action needed'}</AlertTitle>
                   <AlertDescription>{alert.message}</AlertDescription>
                 </Alert>
               )}
@@ -122,6 +124,7 @@ export function WorkspaceInitializationPage() {
                   loadingExample={loadingExample}
                   loadingExampleId={loadingExampleId}
                   submitting={submitting}
+                  backendReady={backendReady}
                   handleLoadExample={handleLoadExample}
                 />
               </TabsContent>

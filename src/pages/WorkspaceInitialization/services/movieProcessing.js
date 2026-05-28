@@ -3,6 +3,7 @@ import { phyloData } from '../../../services/data/dataService.js';
 
 const UPLOAD_START_TIMEOUT_MS = 2 * 60 * 1000;
 const STREAM_IDLE_TIMEOUT_MS = 15 * 60 * 1000;
+const STREAM_CONTRACT_PREFIX = 'Tree processing stream contract error';
 
 /**
  * Electron loading helpers
@@ -64,7 +65,7 @@ export async function processMovieData(formData, onProgress, options = {}) {
     }
     if (error?.name === 'AbortError') {
       throw new Error(
-        'The server did not start tree processing in time. Please check that the local processing server is running.',
+        'The backend accepted the upload but did not start processing within 2 minutes. Check that BranchArchitect is still running, then try again.',
         { cause: error }
       );
     }
@@ -77,21 +78,23 @@ export async function processMovieData(formData, onProgress, options = {}) {
   throwIfAborted(signal);
 
   if (!resp.ok) {
-    let errorMsg = 'Upload failed!';
+    let backendMessage = '';
     try {
       const jd = await resp.json();
-      if (jd && jd.error) errorMsg = jd.error;
+      if (jd && jd.error) backendMessage = jd.error;
     } catch {
       try {
-        errorMsg = await resp.text();
+        backendMessage = await resp.text();
       } catch {}
     }
-    throw new Error(errorMsg);
+    throw new Error(formatUploadFailureMessage(resp.status, resp.statusText, backendMessage));
   }
 
   const { channel_id } = await resp.json();
   if (!channel_id) {
-    throw new Error('No channel_id returned from server');
+    throw new Error(
+      `${STREAM_CONTRACT_PREFIX}: the backend did not return a progress channel. Restart the BranchArchitect backend and try again.`
+    );
   }
 
   throwIfAborted(signal);
@@ -136,7 +139,7 @@ export async function processMovieData(formData, onProgress, options = {}) {
       idleTimeoutId = setTimeout(() => {
         rejectOnce(
           new Error(
-            'Tree processing stopped sending progress. Please check the local processing server and try again.'
+            'Tree processing stopped sending progress for 15 minutes. Check the BranchArchitect backend log, then retry the dataset.'
           )
         );
       }, STREAM_IDLE_TIMEOUT_MS);
@@ -173,7 +176,10 @@ export async function processMovieData(formData, onProgress, options = {}) {
         const scaledPercent = 10 + percent * 0.8;
         reportProgress(scaledPercent, message);
       } catch (err) {
-        console.warn('[SSE] Failed to parse progress:', err);
+        console.warn('[SSE] Ignoring malformed progress event from backend:', {
+          error: err,
+          dataPreview: previewEventData(event.data),
+        });
       }
     });
 
@@ -195,7 +201,11 @@ export async function processMovieData(formData, onProgress, options = {}) {
       try {
         const result = JSON.parse(event.data);
         if (!result.metadata || typeof result.metadata !== 'object') {
-          rejectOnce(new Error('Invalid metadata event from tree processing stream'));
+          rejectOnce(
+            new Error(
+              `${STREAM_CONTRACT_PREFIX}: metadata event is missing the movie metadata object.`
+            )
+          );
           return;
         }
         streamMetadata = result.metadata;
@@ -203,7 +213,11 @@ export async function processMovieData(formData, onProgress, options = {}) {
         expectedTreeTotal = null;
         reportProgress(highWaterMark, 'Streaming trees...');
       } catch (err) {
-        rejectOnce(new Error('Failed to parse metadata event: ' + err.message));
+        rejectOnce(
+          new Error(
+            `${STREAM_CONTRACT_PREFIX}: metadata event is not valid JSON (${err.message}).`
+          )
+        );
       }
     });
 
@@ -211,12 +225,16 @@ export async function processMovieData(formData, onProgress, options = {}) {
       refreshIdleTimeout();
       try {
         if (!streamMetadata) {
-          rejectOnce(new Error('Received tree chunk before metadata event'));
+          rejectOnce(
+            new Error(`${STREAM_CONTRACT_PREFIX}: received a tree chunk before metadata.`)
+          );
           return;
         }
         const chunk = JSON.parse(event.data);
         if (!Array.isArray(chunk.trees)) {
-          rejectOnce(new Error('Invalid tree chunk from tree processing stream'));
+          rejectOnce(
+            new Error(`${STREAM_CONTRACT_PREFIX}: tree chunk is missing a trees array.`)
+          );
           return;
         }
         const startIndex = chunk.start_index;
@@ -231,17 +249,29 @@ export async function processMovieData(formData, onProgress, options = {}) {
           endIndex > total ||
           total <= 0
         ) {
-          rejectOnce(new Error('Invalid tree chunk indexes from tree processing stream'));
+          rejectOnce(
+            new Error(
+              `${STREAM_CONTRACT_PREFIX}: tree chunk indexes are invalid (start=${startIndex}, end=${endIndex}, total=${total}).`
+            )
+          );
           return;
         }
         if (expectedTreeTotal === null) {
           expectedTreeTotal = total;
         } else if (total !== expectedTreeTotal) {
-          rejectOnce(new Error('Tree chunk total changed during tree processing stream'));
+          rejectOnce(
+            new Error(
+              `${STREAM_CONTRACT_PREFIX}: tree chunk total changed from ${expectedTreeTotal} to ${total}.`
+            )
+          );
           return;
         }
         if (startIndex !== streamedTrees.length || endIndex !== startIndex + chunk.trees.length) {
-          rejectOnce(new Error('Tree chunk indexes do not match received tree count'));
+          rejectOnce(
+            new Error(
+              `${STREAM_CONTRACT_PREFIX}: expected next chunk to start at ${streamedTrees.length}, received ${startIndex}.`
+            )
+          );
           return;
         }
         streamedTrees.push(...chunk.trees);
@@ -251,7 +281,11 @@ export async function processMovieData(formData, onProgress, options = {}) {
         const message = `Received ${endIndex} / ${total} trees...`;
         reportProgress(percent, message);
       } catch (err) {
-        rejectOnce(new Error('Failed to parse tree chunk event: ' + err.message));
+        rejectOnce(
+          new Error(
+            `${STREAM_CONTRACT_PREFIX}: tree chunk event is not valid JSON (${err.message}).`
+          )
+        );
       }
     });
 
@@ -266,13 +300,15 @@ export async function processMovieData(formData, onProgress, options = {}) {
         }
 
         if (!streamMetadata) {
-          rejectOnce(new Error('Complete event received before metadata event'));
+          rejectOnce(
+            new Error(`${STREAM_CONTRACT_PREFIX}: completion arrived before metadata.`)
+          );
           return;
         }
         if (expectedTreeTotal !== null && expectedTreeTotal !== streamedTrees.length) {
           rejectOnce(
             new Error(
-              `Tree stream ended after ${streamedTrees.length} trees, expected ${expectedTreeTotal}`
+              `${STREAM_CONTRACT_PREFIX}: stream ended after ${streamedTrees.length} trees, expected ${expectedTreeTotal}.`
             )
           );
           return;
@@ -285,8 +321,15 @@ export async function processMovieData(formData, onProgress, options = {}) {
         resolveOnce(result);
         return;
       } catch (err) {
-        console.error('[SSE] Failed to parse complete event:', event.data?.substring(0, 200));
-        rejectOnce(new Error('Failed to parse completion data: ' + err.message));
+        console.error('[SSE] Failed to parse complete event:', {
+          error: err,
+          dataPreview: previewEventData(event.data),
+        });
+        rejectOnce(
+          new Error(
+            `${STREAM_CONTRACT_PREFIX}: completion event is not valid JSON (${err.message}).`
+          )
+        );
       }
     });
 
@@ -295,14 +338,33 @@ export async function processMovieData(formData, onProgress, options = {}) {
 
       try {
         const error = JSON.parse(event.data);
-        rejectOnce(new Error(error.error || 'Processing failed'));
+        rejectOnce(new Error(error.error || 'Tree processing failed on the backend.'));
       } catch {
         if (eventSource.readyState === EventSource.CLOSED) {
-          rejectOnce(new Error('SSE connection closed unexpectedly'));
+          rejectOnce(
+            new Error(
+              'Lost connection to the tree processing stream before completion. Check that the BranchArchitect backend is still running, then retry.'
+            )
+          );
         }
       }
     };
   });
+}
+
+function formatUploadFailureMessage(status, statusText, backendMessage) {
+  const statusLabel = `${status}${statusText ? ` ${statusText}` : ''}`;
+  const detail = String(backendMessage || '').trim();
+  const suffix = detail ? ` Backend response: ${detail}` : '';
+  if ([502, 503, 504].includes(status)) {
+    return `The frontend could not reach the BranchArchitect backend (${statusLabel}). Start or restart the backend with ./start.sh, confirm http://127.0.0.1:5002/health reports ready, then try again.${suffix}`;
+  }
+  return `The backend rejected the dataset upload (${statusLabel}). Check the selected files and tree-inference settings, then try again.${suffix}`;
+}
+
+function previewEventData(data) {
+  if (typeof data !== 'string') return data;
+  return data.length > 240 ? `${data.slice(0, 240)}...` : data;
 }
 
 function createAbortError() {

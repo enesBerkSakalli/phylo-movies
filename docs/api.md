@@ -9,7 +9,8 @@ The BranchArchitect backend is a Flask app in `engine/BranchArchitect/webapp/`. 
 | Method | Path                            | Purpose                                                                                   |
 | ------ | ------------------------------- | ----------------------------------------------------------------------------------------- |
 | `GET`  | `/`                             | Small backend landing page for direct browser visits.                                     |
-| `GET`  | `/about`                        | Health/about JSON endpoint.                                                               |
+| `GET`  | `/health`                       | Readiness endpoint used before enabling backend-dependent frontend actions.                |
+| `GET`  | `/about`                        | Informational JSON endpoint.                                                              |
 | `POST` | `/treedata/stream`              | Starts tree or MSA processing and returns a progress channel id.                          |
 | `GET`  | `/stream/progress/<channel_id>` | Server-sent events stream for processing progress, metadata, tree chunks, and completion. |
 | `GET`  | `/favicon.ico`                  | Backend favicon route.                                                                    |
@@ -17,14 +18,28 @@ The BranchArchitect backend is a Flask app in `engine/BranchArchitect/webapp/`. 
 ## Health Check
 
 ```bash
-curl http://127.0.0.1:5002/about
+curl http://127.0.0.1:5002/health
 ```
 
 Current response shape:
 
 ```json
 {
-  "about": "Phylo-Movies API backend. See the React frontend for the UI."
+  "service": "brancharchitect",
+  "status": "ready",
+  "ready": true,
+  "version": "0.64.0",
+  "capabilities": [
+    "tree-stream-upload",
+    "sse-progress-stream",
+    "msa-tree-inference",
+    "tree-interpolation"
+  ],
+  "routes": {
+    "health": "/health",
+    "tree_stream": "/treedata/stream",
+    "progress_stream": "/stream/progress/<channel_id>"
+  }
 }
 ```
 

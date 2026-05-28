@@ -18,7 +18,7 @@ export async function getApiBaseUrl() {
       }
     } catch (err) {
       console.warn(
-        'Failed to get backend URL from Electron IPC, falling back to relative paths.',
+        '[apiConfig] Electron backend URL lookup failed; using relative API paths.',
         err
       );
     }

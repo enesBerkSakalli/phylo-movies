@@ -13,7 +13,7 @@ const viteCliPath = resolve(projectRoot, 'node_modules/vite/bin/vite.js');
 
 const CONSOLE_NINJA_HOOK_PATTERN = /\/\* build-hook-start \*\/[\s\S]*?\/\* build-hook-end \*\/\s*/g;
 const CONSOLE_NINJA_ENV_PATTERN = /(console[-_]?ninja|wallaby)/i;
-const DEFAULT_BACKEND_HEALTH_URL = 'http://127.0.0.1:5002/about';
+const DEFAULT_BACKEND_HEALTH_URL = 'http://127.0.0.1:5002/health';
 const DEFAULT_BACKEND_HEALTH_TIMEOUT_MS = 750;
 
 export function stripConsoleNinjaHooks(source) {

@@ -54,6 +54,10 @@ async function renderHookHarness() {
     root.render(React.createElement(Harness));
   });
 
+  await vi.waitFor(() => {
+    expect(hookValue?.backendStatus.state).toBe('ready');
+  });
+
   return { root, hookValue };
 }
 
@@ -62,10 +66,18 @@ describe('workspace initialization cancellation ownership', () => {
     processMovieDataMock.mockReset();
     finalizeMovieDataMock.mockReset();
     navigateMock.mockReset();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({ ready: true, status: 'ready', capabilities: [] }),
+      }))
+    );
   });
 
   afterEach(() => {
     document.body.innerHTML = '';
+    vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
 

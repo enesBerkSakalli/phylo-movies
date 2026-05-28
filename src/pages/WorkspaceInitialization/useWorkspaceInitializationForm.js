@@ -15,6 +15,7 @@ import {
 } from './services/movieProcessing.js';
 
 const BACKEND_STATUS_TIMEOUT_MS = 1500;
+const BACKEND_STATUS_POLL_MS = 5000;
 
 /**
  * Custom hook to manage the workspace initialization upload form.
@@ -66,33 +67,55 @@ export function useWorkspaceInitializationForm() {
 
   useEffect(() => {
     let cancelled = false;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), BACKEND_STATUS_TIMEOUT_MS);
+    let controller = null;
+    let timeoutId = null;
+    let pollId = null;
 
     async function checkBackendStatus() {
+      controller?.abort();
+      if (timeoutId) clearTimeout(timeoutId);
+      controller = new AbortController();
+      timeoutId = setTimeout(() => controller.abort(), BACKEND_STATUS_TIMEOUT_MS);
+
       try {
-        const aboutUrl = await resolveApiUrl('/about');
-        const response = await fetch(aboutUrl, {
+        const healthUrl = await resolveApiUrl('/health');
+        const response = await fetch(healthUrl, {
           signal: controller.signal,
           cache: 'no-store',
         });
         if (!response.ok) {
           throw new Error(`Backend health check failed with ${response.status}`);
         }
-        if (!cancelled) setBackendStatus({ state: 'ready' });
+        const payload = await response.json();
+        if (!payload?.ready || payload.status !== 'ready') {
+          throw new Error(`Backend is not ready (${payload?.status || 'unknown'})`);
+        }
+        if (!cancelled) {
+          setBackendStatus({
+            state: 'ready',
+            checkedAt: Date.now(),
+            capabilities: Array.isArray(payload.capabilities) ? payload.capabilities : [],
+            version: payload.version || null,
+          });
+        }
       } catch {
-        if (!cancelled) setBackendStatus({ state: 'unavailable' });
+        if (!cancelled) setBackendStatus({ state: 'unavailable', checkedAt: Date.now() });
       } finally {
-        clearTimeout(timeoutId);
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
       }
     }
 
     checkBackendStatus();
+    pollId = setInterval(checkBackendStatus, BACKEND_STATUS_POLL_MS);
 
     return () => {
       cancelled = true;
-      clearTimeout(timeoutId);
-      controller.abort();
+      if (pollId) clearInterval(pollId);
+      if (timeoutId) clearTimeout(timeoutId);
+      controller?.abort();
     };
   }, []);
 
@@ -105,8 +128,8 @@ export function useWorkspaceInitializationForm() {
     return '/';
   }, []);
 
-  function showAlert(message, type = 'danger') {
-    setAlert({ type, message });
+  function showAlert(message, type = 'danger', title = 'Action needed') {
+    setAlert({ type, title, message });
   }
 
   function clearAlert() {
@@ -120,8 +143,21 @@ export function useWorkspaceInitializationForm() {
     clearAlert();
     if (submitting) return;
 
+    if (backendStatus.state !== 'ready') {
+      showAlert(
+        'Backend processing is not ready yet. Wait for Backend Connected, or start BranchArchitect with ./start.sh.',
+        'danger',
+        'Backend not ready'
+      );
+      return;
+    }
+
     if (!formData.treesFile && !formData.msaFile) {
-      showAlert('Please select at least a tree file or an MSA file.');
+      showAlert(
+        'Select a Newick tree file, an MSA file, or both before starting processing.',
+        'danger',
+        'No input file selected'
+      );
       return;
     }
 
@@ -155,7 +191,7 @@ export function useWorkspaceInitializationForm() {
     } catch (err) {
       if (!isCurrentOperation(operationRef, operation) || err?.name === 'AbortError') return;
       console.error('[useWorkspaceInitializationForm] Submission error:', err);
-      showAlert(err.message || String(err));
+      showAlert(formatProcessingAlertMessage(err), 'danger', 'Dataset processing failed');
     } finally {
       if (isCurrentOperation(operationRef, operation)) {
         hideElectronLoading();
@@ -173,9 +209,22 @@ export function useWorkspaceInitializationForm() {
   async function handleLoadExample(exampleId) {
     clearAlert();
 
+    if (backendStatus.state !== 'ready') {
+      showAlert(
+        'Examples require the BranchArchitect backend. Wait for Backend Connected, or start it with ./start.sh.',
+        'danger',
+        'Backend not ready'
+      );
+      return;
+    }
+
     const example = getExampleById(exampleId);
     if (!example) {
-      showAlert(`Example "${exampleId}" not found.`);
+      showAlert(
+        `The example id "${exampleId}" is not registered in the example library.`,
+        'danger',
+        'Example not found'
+      );
       return;
     }
 
@@ -233,7 +282,7 @@ export function useWorkspaceInitializationForm() {
     } catch (err) {
       if (!isCurrentOperation(operationRef, operation) || err?.name === 'AbortError') return;
       console.error('[useWorkspaceInitializationForm] Failed to load example:', err);
-      showAlert(`Failed to load example: ${err.message || err}`);
+      showAlert(formatExampleAlertMessage(example, err), 'danger', 'Example could not be loaded');
     } finally {
       if (isCurrentOperation(operationRef, operation)) {
         hideElectronLoading();
@@ -286,11 +335,23 @@ function buildExampleDatasetProvenance(example) {
 async function fetchExampleFile(filePath, fileName) {
   const resp = await fetch(filePath);
   if (!resp.ok) {
-    throw new Error(`Failed to fetch ${fileName}: ${resp.status} ${resp.statusText}`);
+    throw new Error(
+      `Could not download "${fileName}" from the bundled examples (${resp.status} ${resp.statusText}).`
+    );
   }
 
   const blob = await resp.blob();
   return new File([blob], fileName, { type: 'application/octet-stream' });
+}
+
+function formatProcessingAlertMessage(error) {
+  const message = error?.message || String(error);
+  return `${message} If the backend is offline, start it with ./start.sh and retry.`;
+}
+
+function formatExampleAlertMessage(example, error) {
+  const message = error?.message || String(error);
+  return `Could not load "${example.name}". ${message}`;
 }
 
 function beginOperation(operationRef) {

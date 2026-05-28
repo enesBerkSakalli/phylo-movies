@@ -155,7 +155,7 @@ if [ "$MODE" == "--full" ] || [ "$MODE" == "--electron" ]; then
     # Wait for server to be ready
     echo "  Waiting for backend to start..."
     for i in {1..30}; do
-        if curl -s http://localhost:5002/about >/dev/null 2>&1; then
+        if curl -s http://localhost:5002/health >/dev/null 2>&1; then
             break
         fi
         sleep 1

@@ -181,7 +181,7 @@ describe('processMovieData cancellation', () => {
     eventSource.emit('complete', JSON.stringify({ data: null }));
 
     await expect(processing).rejects.toThrow(
-      'Invalid tree chunk indexes from tree processing stream'
+      'Tree processing stream contract error: tree chunk indexes are invalid'
     );
     expect(eventSource.close).toHaveBeenCalledTimes(1);
   });
@@ -216,7 +216,9 @@ describe('processMovieData cancellation', () => {
     );
     eventSource.emit('complete', JSON.stringify({ data: null }));
 
-    await expect(processing).rejects.toThrow('Tree stream ended after 1 trees, expected 2');
+    await expect(processing).rejects.toThrow(
+      'Tree processing stream contract error: stream ended after 1 trees, expected 2.'
+    );
     expect(eventSource.close).toHaveBeenCalledTimes(1);
   });
 
@@ -238,7 +240,48 @@ describe('processMovieData cancellation', () => {
       })
     );
 
-    await expect(processing).rejects.toThrow('Complete event received before metadata event');
+    await expect(processing).rejects.toThrow(
+      'Tree processing stream contract error: completion arrived before metadata.'
+    );
     expect(eventSource.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('wraps backend upload rejections with status and retry guidance', async () => {
+    globalThis.fetch = vi.fn(async () => ({
+      ok: false,
+      status: 400,
+      statusText: 'Bad Request',
+      json: async () => ({ error: 'Tree file is empty' }),
+    }));
+
+    const { processMovieData } =
+      await import('../../src/pages/WorkspaceInitialization/services/movieProcessing.js');
+
+    await expect(
+      processMovieData({ treesFile: new File([''], 'empty.nwk') }, vi.fn())
+    ).rejects.toThrow(
+      'The backend rejected the dataset upload (400 Bad Request). Check the selected files and tree-inference settings, then try again. Backend response: Tree file is empty'
+    );
+  });
+
+  it('explains proxy failures as backend reachability failures', async () => {
+    globalThis.fetch = vi.fn(async () => ({
+      ok: false,
+      status: 502,
+      statusText: 'Bad Gateway',
+      json: async () => {
+        throw new Error('not json');
+      },
+      text: async () => 'Proxy error: ECONNREFUSED 127.0.0.1:5002',
+    }));
+
+    const { processMovieData } =
+      await import('../../src/pages/WorkspaceInitialization/services/movieProcessing.js');
+
+    await expect(
+      processMovieData({ treesFile: new File(['(a);'], 'tree.nwk') }, vi.fn())
+    ).rejects.toThrow(
+      'The frontend could not reach the BranchArchitect backend (502 Bad Gateway). Start or restart the backend with ./start.sh, confirm http://127.0.0.1:5002/health reports ready, then try again. Backend response: Proxy error: ECONNREFUSED 127.0.0.1:5002'
+    );
   });
 });

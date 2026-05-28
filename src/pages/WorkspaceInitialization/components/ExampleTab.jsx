@@ -4,7 +4,13 @@ import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
 import { EXAMPLE_DATASETS } from '../exampleDatasets.js';
 
-export function ExampleTab({ loadingExample, loadingExampleId, submitting, handleLoadExample }) {
+export function ExampleTab({
+  loadingExample,
+  loadingExampleId,
+  submitting,
+  backendReady,
+  handleLoadExample,
+}) {
   return (
     <div className="flex min-w-0 flex-col gap-5">
       <div className="flex flex-col justify-between gap-3 md:flex-row md:items-end">
@@ -35,7 +41,7 @@ export function ExampleTab({ loadingExample, loadingExampleId, submitting, handl
         </div>
         {EXAMPLE_DATASETS.map((example) => {
           const isLoading = loadingExample && loadingExampleId === example.id;
-          const isDisabled = loadingExample || submitting;
+          const isDisabled = loadingExample || submitting || !backendReady;
           const includesAlignment = example.fileType === 'msa' || !!example.msaFilePath;
 
           return (
@@ -108,6 +114,7 @@ export function ExampleTab({ loadingExample, loadingExampleId, submitting, handl
                   size="sm"
                   onClick={() => handleLoadExample(example.id)}
                   disabled={isDisabled}
+                  title={!backendReady ? 'Start BranchArchitect before loading examples' : undefined}
                   className="w-[4.5rem]"
                 >
                   {isLoading ? (
