@@ -1,7 +1,7 @@
 // CSVParser.js - CSV parsing utilities for taxa group import
 
 /**
- * Parse CSV content into taxa-group mappings with support for multiple grouping columns
+ * Parse CSV/TSV content into taxa-group mappings with support for multiple grouping columns
  * Expected format:
  * taxon,group1,group2,group3
  * Species_001,GroupA,TypeX,Family1
@@ -29,20 +29,29 @@ export function parseGroupCSV(csvContent) {
       };
     }
 
+    const delimiter = detectDelimiter(lines[0]);
+
     // Parse header
-    const headerRaw = parseCSVLine(lines[0]);
+    const headerRaw = parseDelimitedLine(lines[0], delimiter);
     const header = headerRaw.map((h) => h.trim());
     const headerLower = header.map((h) => h.toLowerCase());
 
     // Find taxon column
     const taxonIndex = headerLower.findIndex(
-      (h) => h === 'taxon' || h === 'taxa' || h === 'name' || h === 'species' || h === 'id'
+      (h) =>
+        h === 'taxon' ||
+        h === 'taxa' ||
+        h === 'name' ||
+        h === 'species' ||
+        h === 'id' ||
+        h === 'accession' ||
+        h === 'accession_version'
     );
 
     if (taxonIndex === -1) {
       return {
         success: false,
-        error: 'CSV must have a taxon/taxa/name/species/id column',
+        error: 'CSV/TSV must have a taxon/taxa/name/species/id/accession column',
       };
     }
 
@@ -80,7 +89,7 @@ export function parseGroupCSV(csvContent) {
       if (!line) continue;
 
       // Handle quoted values
-      const values = parseCSVLine(line);
+      const values = parseDelimitedLine(line, delimiter);
 
       if (values.length <= taxonIndex) {
         errors.push(`Line ${i + 1}: Missing taxon value`);
@@ -151,11 +160,23 @@ export function parseGroupCSV(csvContent) {
 }
 
 /**
- * Parse a single CSV line handling quoted values
+ * Detect the table delimiter from the header row.
+ * @param {string} headerLine - Header line
+ * @returns {string} Delimiter
+ */
+function detectDelimiter(headerLine) {
+  const tabCount = (headerLine.match(/\t/g) || []).length;
+  const commaCount = (headerLine.match(/,/g) || []).length;
+  return tabCount > commaCount ? '\t' : ',';
+}
+
+/**
+ * Parse a single delimited line handling quoted values
  * @param {string} line - CSV line
+ * @param {string} delimiter - Field delimiter
  * @returns {Array} Array of values
  */
-function parseCSVLine(line) {
+function parseDelimitedLine(line, delimiter) {
   const values = [];
   let current = '';
   let inQuotes = false;
@@ -173,7 +194,7 @@ function parseCSVLine(line) {
         // Toggle quote mode
         inQuotes = !inQuotes;
       }
-    } else if (char === ',' && !inQuotes) {
+    } else if (char === delimiter && !inQuotes) {
       // End of field
       values.push(current);
       current = '';
@@ -195,14 +216,27 @@ function parseCSVLine(line) {
  * @returns {Object} Validation result with canonical mapping
  */
 export function validateCSVTaxa(csvTaxaGroups, availableTaxa) {
-  // Create lowercase lookup map: lowercase -> original_canonical_name
+  // Create alias lookup map: normalized tree labels and accession prefixes map
+  // to the canonical tree label. This lets Augur metadata keyed by accession
+  // match tree taxa such as "PV588655_P17_GII-17".
   const availableLowerMap = new Map();
-  availableTaxa.forEach((name) => {
-    const lower = name.toLowerCase();
-    // Only store first occurrence if there are duplicates (unlikely in tree)
-    if (!availableLowerMap.has(lower)) {
-      availableLowerMap.set(lower, name);
+  const ambiguousAliases = new Set();
+  const addAlias = (alias, canonicalName) => {
+    const normalizedAlias = normalizeTaxonAlias(alias);
+    if (!normalizedAlias) return;
+    const previous = availableLowerMap.get(normalizedAlias);
+    if (previous && previous !== canonicalName) {
+      ambiguousAliases.add(normalizedAlias);
+      availableLowerMap.delete(normalizedAlias);
+      return;
     }
+    if (!ambiguousAliases.has(normalizedAlias)) {
+      availableLowerMap.set(normalizedAlias, canonicalName);
+    }
+  };
+
+  availableTaxa.forEach((name) => {
+    getTaxonAliases(name).forEach((alias) => addAlias(alias, name));
   });
 
   const matched = [];
@@ -210,7 +244,7 @@ export function validateCSVTaxa(csvTaxaGroups, availableTaxa) {
   const canonicalMapping = new Map(); // CSV name -> Tree official name
 
   for (const [csvTaxon] of csvTaxaGroups) {
-    const csvTaxonLower = csvTaxon.toLowerCase();
+    const csvTaxonLower = normalizeTaxonAlias(csvTaxon);
 
     if (availableLowerMap.has(csvTaxonLower)) {
       const treeOfficialName = availableLowerMap.get(csvTaxonLower);
@@ -228,4 +262,19 @@ export function validateCSVTaxa(csvTaxaGroups, availableTaxa) {
     canonicalMapping,
     matchPercentage: Math.round((matched.length / csvTaxaGroups.size) * 100),
   };
+}
+
+function getTaxonAliases(name) {
+  const aliases = new Set([name]);
+  const pipePrefix = String(name).split('|')[0];
+  aliases.add(pipePrefix);
+  aliases.add(pipePrefix.split('_')[0]);
+  aliases.add(pipePrefix.split('.')[0]);
+  return Array.from(aliases);
+}
+
+function normalizeTaxonAlias(value) {
+  const trimmed = String(value ?? '').trim();
+  if (!trimmed) return '';
+  return trimmed.replace(/\.\d+$/, '').toLowerCase();
 }

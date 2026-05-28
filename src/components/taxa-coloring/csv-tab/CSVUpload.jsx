@@ -5,9 +5,17 @@ import { Button } from '../../ui/button';
 import { Card, CardContent } from '../../ui/card';
 import { Label } from '../../ui/label';
 
-const MAX_CSV_SIZE = 5 * 1024 * 1024;
+const MAX_TABLE_SIZE = 5 * 1024 * 1024;
+const ACCEPTED_TABLE_EXTENSIONS = ['.csv', '.tsv'];
 
-export function CSVUpload({ onFile, csvFileName, onReset, errorMessage }) {
+export function CSVUpload({
+  onFile,
+  metadataSources = [],
+  onMetadataSource,
+  csvFileName,
+  onReset,
+  errorMessage,
+}) {
   const inputRef = useRef(null);
   const [dragOver, setDragOver] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
@@ -20,13 +28,17 @@ export function CSVUpload({ onFile, csvFileName, onReset, errorMessage }) {
   const acceptFile = (file) => {
     if (!file) return;
 
-    if (!file.name.toLowerCase().endsWith('.csv')) {
+    const lowerName = file.name.toLowerCase();
+    const hasAcceptedExtension = ACCEPTED_TABLE_EXTENSIONS.some((extension) =>
+      lowerName.endsWith(extension)
+    );
+    if (!hasAcceptedExtension) {
       setHasError(true);
-      setStatusMessage('Only .csv files are accepted.');
+      setStatusMessage('Only .csv and .tsv files are accepted.');
       return;
     }
 
-    if (file.size > MAX_CSV_SIZE) {
+    if (file.size > MAX_TABLE_SIZE) {
       setHasError(true);
       setStatusMessage('File is too large. Maximum size is 5 MB.');
       return;
@@ -86,7 +98,7 @@ export function CSVUpload({ onFile, csvFileName, onReset, errorMessage }) {
           <div className="flex flex-col gap-1">
             <p className="text-[11px] font-bold leading-none">Format Requirements</p>
             <p className="text-2xs leading-tight text-muted-foreground">
-              One column must contain exactly the same taxa names as in your tree. Other columns
+              One column should contain tree taxa, accessions, or accession versions. Other columns
               define colors/groups.
             </p>
           </div>
@@ -98,8 +110,8 @@ export function CSVUpload({ onFile, csvFileName, onReset, errorMessage }) {
           <div className="flex flex-col gap-1">
             <p className="text-[11px] font-bold leading-none">Mapping</p>
             <p className="text-2xs leading-tight text-muted-foreground">
-              Values like "High", "Low" or "Group A" will be automatically detected as distinct
-              coloring subtrees.
+              Augur metadata fields such as country, VP1 type, RdRp type, or year can be selected as
+              coloring groups.
             </p>
           </div>
         </div>
@@ -134,6 +146,8 @@ export function CSVUpload({ onFile, csvFileName, onReset, errorMessage }) {
               <p className="mx-auto max-w-[280px] text-[11px] leading-tight text-muted-foreground">
                 Drag and drop your{' '}
                 <code className="rounded bg-muted px-1 font-mono font-bold text-primary">.csv</code>{' '}
+                or{' '}
+                <code className="rounded bg-muted px-1 font-mono font-bold text-primary">.tsv</code>{' '}
                 file here, or use the browse button.
               </p>
               <p className="text-2xs text-muted-foreground/80">
@@ -142,9 +156,9 @@ export function CSVUpload({ onFile, csvFileName, onReset, errorMessage }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             <Label htmlFor={inputId} className="sr-only">
-              Select taxa mapping CSV file
+              Select taxa metadata table
             </Label>
             <Button
               variant="default"
@@ -152,15 +166,30 @@ export function CSVUpload({ onFile, csvFileName, onReset, errorMessage }) {
               className="h-8 px-5 font-bold"
               onClick={() => inputRef.current?.click()}
             >
-              Browse CSV
+              Browse Table
             </Button>
+            {metadataSources.map((source) => (
+              <Button
+                key={source.filePath}
+                variant="outline"
+                size="sm"
+                className="h-8 px-4 font-bold"
+                onClick={() => {
+                  setHasError(false);
+                  setStatusMessage(`Loading metadata table: ${source.fileName}.`);
+                  onMetadataSource?.(source);
+                }}
+              >
+                {source.label}
+              </Button>
+            ))}
           </div>
 
           <input
             ref={inputRef}
             id={inputId}
             type="file"
-            accept=".csv"
+            accept=".csv,.tsv,text/csv,text/tab-separated-values"
             className="sr-only"
             aria-describedby={`${helpId} ${statusId}`}
             onChange={(e) => acceptFile(e.target.files?.[0])}
@@ -177,7 +206,7 @@ export function CSVUpload({ onFile, csvFileName, onReset, errorMessage }) {
       </p>
 
       <p className="text-center text-2xs italic text-muted-foreground/60">
-        Max file size: 5MB • Privacy: All processing happens locally in your browser.
+        Max file size: 5MB • CSV and TSV supported • Privacy: processing happens locally.
       </p>
     </div>
   );

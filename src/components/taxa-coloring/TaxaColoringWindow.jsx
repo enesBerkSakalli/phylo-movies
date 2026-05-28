@@ -15,6 +15,7 @@ export function TaxaColoringWindow({
   originalColorMap = {},
   onApply,
   initialState = {},
+  metadataSources = [],
 }) {
   const {
     mode,
@@ -37,6 +38,7 @@ export function TaxaColoringWindow({
     colorVersion,
     applyScheme,
     onFile,
+    onMetadataSource,
     onColumnChange,
     resetCSV,
     resetAll,
@@ -141,6 +143,8 @@ export function TaxaColoringWindow({
           colorManager={colorManager}
           colorVersion={colorVersion}
           onFile={onFile}
+          metadataSources={metadataSources}
+          onMetadataSource={onMetadataSource}
           onColumnChange={onColumnChange}
           resetCSV={resetCSV}
           applyScheme={applyScheme}

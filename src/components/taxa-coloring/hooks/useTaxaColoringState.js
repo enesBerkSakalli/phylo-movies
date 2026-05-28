@@ -61,6 +61,7 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
     csvValidation,
     csvError,
     onFile,
+    onMetadataSource,
     onColumnChange,
     resetCSV,
   } = useCSVState(taxaNames, initialState);
@@ -297,6 +298,7 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
     colorVersion: version, // Expose version to force re-renders in child components
     applyScheme,
     onFile,
+    onMetadataSource,
     onColumnChange,
     resetCSV,
     resetAll,
