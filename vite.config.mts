@@ -9,7 +9,10 @@ import { stat } from 'node:fs/promises';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicationDataRoot = path.resolve(__dirname, 'publication_data');
 
-export function resolvePublicationDataPath(requestUrl: string | undefined, baseDir = publicationDataRoot): string | null {
+export function resolvePublicationDataPath(
+  requestUrl: string | undefined,
+  baseDir = publicationDataRoot
+): string | null {
   if (!requestUrl?.startsWith('/examples/')) return null;
 
   let pathname: string;
@@ -41,7 +44,7 @@ function stripImportMapsOnBuild() {
     apply: 'build' as const,
     transformIndexHtml(html: string) {
       return html.replace(/<script\s+type=["']importmap["'][\s\S]*?<\/script>\s*/gi, '');
-    }
+    },
   };
 }
 
@@ -79,7 +82,7 @@ function servePublicationData() {
           res.end('Not found');
         }
       });
-    }
+    },
   };
 }
 
@@ -92,68 +95,63 @@ export default defineConfig(async (): Promise<UserConfig> => {
     root: 'src',
     publicDir: 'public',
     base: isElectronBuild ? './' : '/',
-    plugins: [
-      react(),
-      stripImportMapsOnBuild(),
-      tailwindcss(),
-      servePublicationData()
-    ],
+    plugins: [react(), stripImportMapsOnBuild(), tailwindcss(), servePublicationData()],
     define: {
-      'import.meta.env.VITE_APP_VERSION': JSON.stringify(packageJson.version)
+      'import.meta.env.VITE_APP_VERSION': JSON.stringify(packageJson.version),
     },
     envPrefix: ['VITE_'],
     resolve: {
       alias: [
         {
           find: /^wgsl_reflect$/,
-          replacement: path.resolve(__dirname, 'node_modules/wgsl_reflect/wgsl_reflect.module.js')
-        }
-      ]
+          replacement: path.resolve(__dirname, 'node_modules/wgsl_reflect/wgsl_reflect.module.js'),
+        },
+      ],
     },
     css: {
       modules: {
         localsConvention: 'camelCase',
-        generateScopedName: '[name]__[local]___[hash:base64:5]'
-      }
+        generateScopedName: '[name]__[local]___[hash:base64:5]',
+      },
     },
     server: {
       host: '127.0.0.1', // Explicit IPv4 binding
       port: 5173,
       strictPort: true,
-      hmr: { host: '127.0.0.1' }, // Force HMR WebSocket to same IPv4 (avoids localhost→::1 mismatch)
+      hmr: { host: '127.0.0.1' }, // Force HMR WebSocket to same IPv4.
       watch: {
         ignored: [
           '**/electron-app/**',
           '**/node_modules/**',
           path.join(__dirname, 'data/**'),
           path.join(__dirname, 'test/data/**'),
-          '**/*.ova'
-        ]
+          '**/*.ova',
+        ],
       },
       proxy: {
-        "/treedata": "http://localhost:5002",
-        "/stream": "http://localhost:5002",
-        "^/msa(?:/|$)": "http://localhost:5002",
-        "/health": "http://localhost:5002",
-        "/about": "http://localhost:5002"
+        '/treedata': 'http://127.0.0.1:5002',
+        '/stream': 'http://127.0.0.1:5002',
+        '^/msa(?:/|$)': 'http://127.0.0.1:5002',
+        '/health': 'http://127.0.0.1:5002',
+        '/about': 'http://127.0.0.1:5002',
       },
       // Allow serving files from publication_data
       fs: {
-        allow: ['..']
-      }
+        allow: ['..'],
+      },
     },
     optimizeDeps: {
-      include: ["d3-hierarchy", "d3-scale-chromatic"]
+      include: ['d3-hierarchy', 'd3-scale-chromatic'],
     },
     build: {
-      outDir: "../dist",
+      outDir: '../dist',
       emptyOutDir: true,
       rollupOptions: {
         input: {
           main: path.resolve(__dirname, 'src/index.html'),
-          splash: path.resolve(__dirname, 'src/pages/Splash/splash.html')
-        }
-      }
-    }
+          splash: path.resolve(__dirname, 'src/pages/Splash/splash.html'),
+        },
+      },
+    },
   };
 });
