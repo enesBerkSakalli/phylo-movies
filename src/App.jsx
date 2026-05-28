@@ -11,8 +11,10 @@ import { NodeContextMenu } from './components/NodeContextMenu.jsx';
 import { TransitionInspectorPanel } from './components/TransitionInspectorPanel.jsx';
 import { Toaster } from './components/ui/sonner';
 import { TooltipProvider } from './components/ui/tooltip';
+import { Button } from './components/ui/button';
 import { HUD } from './components/HUD/HUD.jsx';
 import { SidebarProvider, SidebarInset } from './components/ui/sidebar';
+import { Loader2 } from 'lucide-react';
 
 import {
   selectFileName,
@@ -33,6 +35,7 @@ export function App() {
   const setTaxaColoringOpen = useAppStore(selectSetTaxaColoringOpen);
   const [sprAnalyticsOpen, setSprAnalyticsOpen] = React.useState(false);
   const [activeFloatingWindow, setActiveFloatingWindow] = React.useState(null);
+  const [bootstrapState, setBootstrapState] = React.useState('loading');
 
   // Initialize Tree Controller and Rendering Logic
   useTreeController();
@@ -78,9 +81,11 @@ export function App() {
 
         // Initialize store directly
         initializeStore(parsedData);
+        setBootstrapState('ready');
       } catch (err) {
         console.error('[App bootstrap] Failed to initialize data:', err);
         setError(err.message || 'Failed to load data');
+        setBootstrapState('error');
       }
     })();
 
@@ -89,6 +94,16 @@ export function App() {
       resetStore();
     };
   }, [initializeStore, resetStore, navigate]);
+
+  if (bootstrapState !== 'ready') {
+    return (
+      <VisualizationBootstrapState
+        state={bootstrapState}
+        error={error}
+        onReturnHome={() => navigate('/')}
+      />
+    );
+  }
 
   return (
     <TooltipProvider>
@@ -133,3 +148,39 @@ export function App() {
 }
 
 export default App;
+
+function VisualizationBootstrapState({ state, error, onReturnHome }) {
+  const isError = state === 'error';
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-background px-4">
+      <div
+        className="flex w-full max-w-md flex-col items-center gap-4 rounded-lg border bg-card p-6 text-center shadow-lg"
+        role={isError ? 'alert' : 'status'}
+        aria-live="polite"
+        aria-busy={!isError}
+      >
+        {!isError && (
+          <div className="rounded-md bg-primary/10 p-3">
+            <Loader2 className="size-7 animate-spin text-primary" aria-hidden />
+          </div>
+        )}
+        <div className="space-y-1">
+          <h1 className="text-lg font-semibold tracking-tight">
+            {isError ? 'Could not load saved visualization' : 'Loading saved visualization'}
+          </h1>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            {isError
+              ? error || 'The saved movie data could not be read from browser storage.'
+              : 'Reading processed tree data and preparing the movie view.'}
+          </p>
+        </div>
+        {isError && (
+          <Button type="button" variant="outline" onClick={onReturnHome}>
+            Return to project setup
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}

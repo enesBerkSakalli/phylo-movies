@@ -403,7 +403,7 @@ export async function finalizeMovieData(data, formData, onProgress) {
   updateElectronProgress(92, 'Saving data locally...');
 
   try {
-    await phyloData.set(data);
+    await phyloData.set(data, { label: formData.runLabel });
   } catch (storageError) {
     // Handle IndexedDB quota/memory errors with user-friendly message
     if (storageError.name === 'DataCloneError' || storageError.message?.includes('out of memory')) {

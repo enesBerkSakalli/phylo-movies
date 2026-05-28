@@ -58,7 +58,7 @@ async function renderHookHarness() {
     expect(hookValue?.backendStatus.state).toBe('ready');
   });
 
-  return { root, hookValue };
+  return { root, hookValue, getHookValue: () => hookValue };
 }
 
 describe('workspace initialization cancellation ownership', () => {
@@ -107,6 +107,46 @@ describe('workspace initialization cancellation ownership', () => {
     });
 
     expect(options.signal.aborted).toBe(true);
+
+    pendingProcessing.resolve({ interpolated_trees: [] });
+    await submitPromise;
+
+    expect(finalizeMovieDataMock).not.toHaveBeenCalled();
+    expect(navigateMock).not.toHaveBeenCalled();
+  });
+
+  it('aborts an in-flight submission from the processing overlay cancel action', async () => {
+    const pendingProcessing = deferred();
+    processMovieDataMock.mockReturnValue(pendingProcessing.promise);
+    finalizeMovieDataMock.mockResolvedValue(undefined);
+
+    const { getHookValue } = await renderHookHarness();
+    let submitPromise;
+
+    await act(async () => {
+      submitPromise = getHookValue().handleSubmit({
+        treesFile: new File(['(a);'], 'tree.nwk'),
+        msaFile: null,
+        windowSize: 10,
+        stepSize: 1,
+      });
+      await Promise.resolve();
+    });
+
+    const options = processMovieDataMock.mock.calls[0]?.[2];
+    expect(options?.signal).toBeInstanceOf(AbortSignal);
+    expect(getHookValue().submitting).toBe(true);
+
+    await act(async () => {
+      getHookValue().cancelOperation();
+    });
+
+    expect(options.signal.aborted).toBe(true);
+    expect(getHookValue().submitting).toBe(false);
+    expect(getHookValue().alert).toMatchObject({
+      title: 'Processing cancelled',
+      message: 'Processing was cancelled before completion.',
+    });
 
     pendingProcessing.resolve({ interpolated_trees: [] });
     await submitPromise;

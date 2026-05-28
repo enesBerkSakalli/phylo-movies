@@ -4,6 +4,9 @@ export const WINDOW_MIN = 1;
 export const WINDOW_MAX = 100000;
 export const STEP_MIN = 1;
 export const STEP_MAX = 100000;
+export const IQTREE_UFBOOT_REPLICATE_COUNT_MIN = 1000;
+export const IQTREE_SH_ALRT_REPLICATE_COUNT_MIN = 100;
+export const IQTREE_REPLICATE_COUNT_MAX = 100000;
 
 export const workspaceInitializationFormSchema = z.object({
   treesFile: z.any().optional(),
@@ -26,14 +29,14 @@ export const workspaceInitializationFormSchema = z.object({
   iqtreeUfbootReplicates: z.coerce
     .number()
     .int('UFBoot replicates must be a whole number.')
-    .min(100, 'UFBoot requires at least 100 replicates.')
-    .max(100000, 'UFBoot replicate count must be 100,000 or less.')
+    .min(IQTREE_UFBOOT_REPLICATE_COUNT_MIN, 'UFBoot requires at least 1000 replicates.')
+    .max(IQTREE_REPLICATE_COUNT_MAX, 'UFBoot replicate count must be 100,000 or less.')
     .default(1000),
   iqtreeShAlrtReplicates: z.coerce
     .number()
     .int('SH-aLRT replicates must be a whole number.')
-    .min(100, 'SH-aLRT requires at least 100 replicates.')
-    .max(100000, 'SH-aLRT replicate count must be 100,000 or less.')
+    .min(IQTREE_SH_ALRT_REPLICATE_COUNT_MIN, 'SH-aLRT requires at least 100 replicates.')
+    .max(IQTREE_REPLICATE_COUNT_MAX, 'SH-aLRT replicate count must be 100,000 or less.')
     .default(1000),
   iqtreeBnni: z.boolean().default(false),
   useGtr: z.boolean().default(true), // GTR (General Time Reversible) model

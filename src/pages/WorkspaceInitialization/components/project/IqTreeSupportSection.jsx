@@ -22,6 +22,11 @@ import {
 } from '../../../../components/ui/select';
 import { cn } from '../../../../lib/utils';
 import { TreeInferenceOptionGroup } from './TreeInferenceOptionGroup.jsx';
+import {
+  IQTREE_REPLICATE_COUNT_MAX,
+  IQTREE_SH_ALRT_REPLICATE_COUNT_MIN,
+  IQTREE_UFBOOT_REPLICATE_COUNT_MIN,
+} from '../../workspaceInitializationFormModel.js';
 
 export function IqTreeSupportSection({
   hasMsa,
@@ -83,6 +88,7 @@ export function IqTreeSupportSection({
                 control={control}
                 name="iqtreeUfbootReplicates"
                 label="UFBoot replicates"
+                min={IQTREE_UFBOOT_REPLICATE_COUNT_MIN}
                 disabled={disabled || !hasMsa}
               />
             )}
@@ -91,6 +97,7 @@ export function IqTreeSupportSection({
                 control={control}
                 name="iqtreeShAlrtReplicates"
                 label="SH-aLRT replicates"
+                min={IQTREE_SH_ALRT_REPLICATE_COUNT_MIN}
                 disabled={disabled || !hasMsa}
               />
             )}
@@ -130,7 +137,7 @@ export function IqTreeSupportSection({
   );
 }
 
-function ReplicateInput({ control, name, label, disabled }) {
+function ReplicateInput({ control, name, label, min, disabled }) {
   return (
     <FormField
       control={control}
@@ -143,8 +150,8 @@ function ReplicateInput({ control, name, label, disabled }) {
           <FormControl>
             <Input
               type="number"
-              min={100}
-              max={100000}
+              min={min}
+              max={IQTREE_REPLICATE_COUNT_MAX}
               step={100}
               inputMode="numeric"
               disabled={disabled}
