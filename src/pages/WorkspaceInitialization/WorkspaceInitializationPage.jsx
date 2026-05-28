@@ -18,7 +18,7 @@ const ENGINE_STATUS = {
     icon: CheckCircle2,
   },
   unavailable: {
-    label: 'Unavailable',
+    label: 'Offline',
     badge: 'Offline',
     icon: AlertTriangle,
   },
@@ -62,7 +62,7 @@ export function WorkspaceInitializationPage() {
                 <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Phylo-Movies</h1>
                 <Badge variant="secondary" className="gap-1">
                   <EngineIcon />
-                  Engine {engineStatus.label}
+                  Backend {engineStatus.label}
                 </Badge>
               </div>
             </div>
@@ -73,12 +73,13 @@ export function WorkspaceInitializationPage() {
               <EngineIcon />
               <AlertTitle>BranchArchitect backend: {engineStatus.badge}</AlertTitle>
               <AlertDescription>
-                Dataset loading, tree processing, interpolation, and MSA workflows require the
-                desktop engine or local full-stack backend.
+                Loading examples, processing uploaded trees, interpolation, and MSA-derived tree
+                inference require the BranchArchitect backend.
                 {backendStatus.state === 'unavailable' && (
                   <>
                     {' '}
-                    Start the desktop backend or run <code>./start.sh</code>.
+                    Start it with <code>./start.sh</code> or{' '}
+                    <code>cd engine/BranchArchitect &amp;&amp; ./start_movie_server.sh</code>.
                   </>
                 )}
               </AlertDescription>
