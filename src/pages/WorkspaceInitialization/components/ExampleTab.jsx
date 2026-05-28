@@ -221,6 +221,8 @@ function ExampleArtifactLink({ artifact }) {
       href={artifact.filePath}
       download={artifact.fileName}
       className="text-primary underline-offset-2 hover:underline"
+      aria-label={`Download ${artifact.label}: ${artifact.fileName}`}
+      title={`Download ${artifact.fileName}`}
     >
       {artifact.label}
     </a>

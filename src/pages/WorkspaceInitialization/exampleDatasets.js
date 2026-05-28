@@ -43,12 +43,12 @@ const NOROVIRUS_STABILITY_TREE_SERIES = {
 };
 const NOROVIRUS_GENERATED_METADATA_FILES = [
   {
-    label: 'Full metadata table',
+    label: 'Full Augur metadata table',
     fileName: 'full_genome_metadata.tsv',
     filePath: NOROVIRUS_SOURCE_BASE + 'metadata/full_genome_metadata.tsv',
   },
   {
-    label: 'Selected metadata table',
+    label: 'Taxa coloring metadata table',
     fileName: 'subsampled_350_metadata.csv',
     filePath: NOROVIRUS_SOURCE_BASE + 'metadata/subsampled_350_metadata.csv',
   },

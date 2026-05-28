@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { WorkspaceInitializationPage } from './pages/WorkspaceInitialization/WorkspaceInitializationPage.jsx';
 import { GitHubPagesInfoPage } from './pages/GitHubPages/GitHubPagesInfoPage.jsx';
+import { UsageExamplesPage } from './pages/UsageExamples/UsageExamplesPage.jsx';
 import App from './App.jsx';
 import { ErrorBoundary } from './ErrorBoundary.jsx';
 import { isElectron } from './services/data/apiConfig.js';
@@ -27,6 +28,7 @@ export function Router() {
       <ErrorBoundary>
         <Routes>
           <Route path="/" element={landingElement} />
+          <Route path="/usage" element={<UsageExamplesPage />} />
           <Route path="/demo" element={<WorkspaceInitializationPage demoOnly />} />
           <Route path="/demo/open" element={<Navigate to="/demo" replace />} />
           <Route path="/visualization" element={<App />} />

@@ -303,6 +303,12 @@ describe('example dataset configuration', () => {
         label: 'Regeneration workflow',
         fileName: 'REGENERATE.md',
       });
+      expect(example.generatedArtifactFiles).toContainEqual(
+        expect.objectContaining({
+          label: 'Taxa coloring metadata table',
+          fileName: 'subsampled_350_metadata.csv',
+        })
+      );
       expect(example.generatedArtifactFiles.map((file) => file.fileName)).toEqual([
         'full_genome_metadata.tsv',
         'subsampled_350_metadata.csv',
