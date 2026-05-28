@@ -24,7 +24,9 @@ export function RecordingControls({ disabled = false }) {
   useEffect(() => {
     return () => {
       if (recorderRef.current && isRecording) {
-        recorderRef.current.stop().catch(console.error);
+        recorderRef.current.stop().catch((error) => {
+          console.error('[RecordingControls] Cleanup failed while stopping recorder:', error);
+        });
       }
     };
   }, [isRecording]);
@@ -38,8 +40,12 @@ export function RecordingControls({ disabled = false }) {
       toast.success('Recording started. Capturing frames…', { duration: 3000 });
     } catch (error) {
       setIsRecording(false);
-      console.error('[MoviePlayerBar] Failed to start recording:', error);
-      toast.error('Failed to start recording. Please check permissions.');
+      console.error('[RecordingControls] Failed to start canvas recording:', error);
+      toast.error('Recording could not start.', {
+        description:
+          error?.message ||
+          'Check browser screen-recording permissions and make sure the tree canvas is visible.',
+      });
     }
   }, [ensureRecorder]);
 
@@ -50,8 +56,10 @@ export function RecordingControls({ disabled = false }) {
       await recorder.stop();
       toast.success('Recording saved successfully.');
     } catch (error) {
-      console.error('[MoviePlayerBar] Failed to stop recording:', error);
-      toast.error('Failed to stop recording.');
+      console.error('[RecordingControls] Failed to finish canvas recording:', error);
+      toast.error('Recording could not be saved.', {
+        description: error?.message || 'The browser stopped the MediaRecorder unexpectedly.',
+      });
     } finally {
       setIsRecording(false);
     }

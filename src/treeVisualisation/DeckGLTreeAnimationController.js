@@ -68,7 +68,10 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
       if (status === 'SUCCESS') {
         this.interpolationCache.setPrecomputedData(treeIndex, result);
       } else {
-        console.warn(`[Worker] Layout failed for tree ${jobId}:`, error);
+        console.warn('[LayoutWorker] Precomputed layout failed; animation will render on demand.', {
+          treeIndex,
+          error,
+        });
         this._layoutPrefetchTokens.delete(treeIndex);
       }
     };
@@ -150,7 +153,9 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
       this._markReady();
     });
 
-    this.deckContext.onError((error) => console.error('[DeckGL Controller] Deck.gl error:', error));
+    this.deckContext.onError((error) =>
+      console.error('[DeckGLTreeAnimationController] deck.gl render error:', error)
+    );
 
     // Use arrow functions to be safe about 'this' and member existence
     this.deckContext.onNodeClick((info, event) => {
@@ -235,7 +240,9 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
       if (existingNode === containerElement) {
         return;
       }
-      console.warn('[DeckGLTreeAnimationController] Remounting to new container');
+      console.warn(
+        '[DeckGLTreeAnimationController] Remounting tree renderer into a new container; previous deck.gl context will be destroyed.'
+      );
       this.unmount();
     }
 
@@ -563,9 +570,12 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
       );
 
     if (!dataFrom || !dataTo) {
-      console.warn(
-        '[DeckGLTreeAnimationController] Layout calculation failed in _buildInterpolatedData, returning empty substitute'
-      );
+      console.warn('[DeckGLTreeAnimationController] Missing interpolation layout input.', {
+        fromTreeIndex,
+        toTreeIndex,
+        hasSourceLayout: !!dataFrom,
+        hasTargetLayout: !!dataTo,
+      });
       return { nodes: [], links: [], labels: [], extensions: [] };
     }
 
@@ -578,7 +588,11 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
   _buildInterpolatedDataFromInputs(dataFrom, dataTo, t, options = {}) {
     if (!dataFrom || !dataTo) {
       console.warn(
-        '[DeckGLTreeAnimationController] Layout calculation failed in _buildInterpolatedDataFromInputs, returning empty substitute'
+        '[DeckGLTreeAnimationController] Cannot interpolate frame because source or target layer data is missing.',
+        {
+          hasSourceLayerData: !!dataFrom,
+          hasTargetLayerData: !!dataTo,
+        }
       );
       return { nodes: [], links: [], labels: [], extensions: [] };
     }
@@ -609,7 +623,12 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
       );
 
     if (!dataFrom || !dataTo) {
-      console.warn('[DeckGLTreeAnimationController] Layout calculation failed, skipping frame');
+      console.warn('[DeckGLTreeAnimationController] Skipping frame with missing layout cache data.', {
+        fromTreeIndex,
+        toTreeIndex,
+        hasSourceLayout: !!dataFrom,
+        hasTargetLayout: !!dataTo,
+      });
       return { dataFrom: null, dataTo: null, transitionChangeModel: null };
     }
 

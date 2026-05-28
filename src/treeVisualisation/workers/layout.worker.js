@@ -119,7 +119,10 @@ if (typeof self !== 'undefined') {
         result,
       });
     } catch (error) {
-      console.error('Worker Calculation Error:', error);
+      console.error('[LayoutWorker] Failed to calculate tree layout:', {
+        jobId,
+        error,
+      });
       self.postMessage({
         jobId,
         requestToken,

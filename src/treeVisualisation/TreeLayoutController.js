@@ -163,7 +163,10 @@ export class TreeLayoutController {
       treeList
     );
     if (!transformedTreeData) {
-      console.warn('calculateLayout: No tree data available');
+      console.warn('[TreeLayoutController] Cannot calculate layout because tree data is missing.', {
+        treeIndex,
+        treeCount: Array.isArray(treeList) ? treeList.length : 0,
+      });
       return null;
     }
 

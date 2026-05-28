@@ -67,9 +67,10 @@ export class ComparisonModeRenderer {
 
     // Guard against null/undefined tree data
     if (!leftTreeData || !rightTreeData) {
-      console.warn('ComparisonModeRenderer.renderStatic: Missing tree data', {
+      console.warn('[ComparisonModeRenderer] Cannot render static comparison: tree data missing.', {
         leftIndex: clampedLeftIndex,
         rightIndex: clampedRightIndex,
+        treeCount: Array.isArray(treeList) ? treeList.length : 0,
         hasLeftTree: !!leftTreeData,
         hasRightTree: !!rightTreeData,
       });
@@ -86,7 +87,12 @@ export class ComparisonModeRenderer {
 
     // Safety check for layout
     if (!leftLayout || !rightLayout) {
-      console.warn('[ComparisonModeRenderer] Layout calculation failed, skipping renderStatic');
+      console.warn('[ComparisonModeRenderer] Cannot render static comparison: layout failed.', {
+        leftIndex: clampedLeftIndex,
+        rightIndex: clampedRightIndex,
+        hasLeftLayout: !!leftLayout,
+        hasRightLayout: !!rightLayout,
+      });
       return;
     }
 
@@ -179,7 +185,7 @@ export class ComparisonModeRenderer {
 
     // Guard against null/undefined data
     if (!interpolatedData || !rightTreeData) {
-      console.warn('ComparisonModeRenderer.renderAnimated: Missing data', {
+      console.warn('[ComparisonModeRenderer] Cannot render animated comparison: data missing.', {
         hasInterpolatedData: !!interpolatedData,
         hasRightTreeData: !!rightTreeData,
         rightIndex,
@@ -200,9 +206,9 @@ export class ComparisonModeRenderer {
     });
 
     if (!rightBase) {
-      console.warn(
-        '[ComparisonModeRenderer] Right layout calculation failed, skipping renderAnimated'
-      );
+      console.warn('[ComparisonModeRenderer] Cannot render animated comparison: right tree layout failed.', {
+        rightIndex,
+      });
       return;
     }
     if (isRenderCancelled(options)) return;

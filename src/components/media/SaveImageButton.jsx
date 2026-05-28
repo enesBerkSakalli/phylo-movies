@@ -7,6 +7,7 @@ import {
   selectTreeControllers,
   useAppStore,
 } from '../../state/phyloStore/store.js';
+import { toast } from 'sonner';
 
 // ==========================================================================
 // STORE SELECTORS
@@ -21,7 +22,10 @@ export function SaveImageButton({ disabled = false }) {
     try {
       // If no controller exists, we can't save
       if (!treeControllers.length) {
-        console.error('No tree controller available for saving PNG.');
+        console.error('[SaveImageButton] No tree controller is available for PNG export.');
+        toast.error('PNG export is not ready yet.', {
+          description: 'Wait until the tree finishes rendering, then try again.',
+        });
         return;
       }
 
@@ -30,9 +34,12 @@ export function SaveImageButton({ disabled = false }) {
       const canvas = treeController.deckContext?.canvas;
 
       if (!canvas) {
-        console.error(
-          'Deck.gl canvas not found for saving PNG. DeckGLContext has not exposed a canvas.'
-        );
+        console.error('[SaveImageButton] Deck.gl canvas is missing from the active controller.', {
+          hasDeckContext: !!treeController.deckContext,
+        });
+        toast.error('PNG export could not find the visualization canvas.', {
+          description: 'Reload the dataset if the tree view is blank, then try again.',
+        });
         return;
       }
 
@@ -45,6 +52,9 @@ export function SaveImageButton({ disabled = false }) {
       proxyCanvas.width = canvas.width;
       proxyCanvas.height = canvas.height;
       const ctx = proxyCanvas.getContext('2d');
+      if (!ctx) {
+        throw new Error('Browser could not create a 2D canvas for PNG export.');
+      }
 
       // Draw solid white background (handles alpha compositing correctly)
       ctx.fillStyle = '#FFFFFF';
@@ -54,25 +64,36 @@ export function SaveImageButton({ disabled = false }) {
       ctx.drawImage(canvas, 0, 0);
 
       // Export from the proxy canvas for accurate colors
-      proxyCanvas.toBlob((blob) => {
-        if (!blob) {
-          console.error('Failed to create image blob');
-          return;
-        }
+      const blob = await new Promise((resolve) => {
+        proxyCanvas.toBlob(resolve, 'image/png');
+      });
 
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+      if (!blob) {
+        console.error('[SaveImageButton] Browser returned an empty PNG blob.');
+        toast.error('PNG export failed.', {
+          description: 'The browser could not encode the current WebGL canvas.',
+        });
+        return;
+      }
 
-        // Clean up the object URL to free memory
-        URL.revokeObjectURL(url);
-      }, 'image/png');
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up the object URL to free memory
+      URL.revokeObjectURL(url);
+      toast.success('PNG saved.', {
+        description: fileName,
+      });
     } catch (error) {
-      console.error('Error saving image:', error);
+      console.error('[SaveImageButton] PNG export failed:', error);
+      toast.error('PNG export failed.', {
+        description: error?.message || 'Check the browser console for technical details.',
+      });
     } finally {
       setIsSaving(false);
     }
