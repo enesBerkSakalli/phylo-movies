@@ -34,7 +34,7 @@ const PAGE_TITLE = IS_DOCS_ONLY
   ? 'Phylo-Movies | Desktop App, Phylogenetic Tree Interpolation, and Publication'
   : 'Phylo-Movies | Interactive Phylogenetic Tree Visualization';
 const DESCRIPTION = IS_DOCS_ONLY
-  ? 'Phylo-Movies is a desktop app and browser-based phylogenetic tree interpolation and visualization tool for sliding-window analyses, recombination detection, and rogue taxa exploration. This site provides publication details, citation metadata, desktop downloads, and setup guidance.'
+  ? 'Phylo-Movies is a desktop app and browser-based phylogenetic tree interpolation and visualization tool for sliding-window analyses, recombination detection, and rogue taxa exploration. This static site provides publication details, generated demos, desktop downloads, and setup guidance.'
   : 'Interactive phylogenetic tree visualization and tree-morphing tool for sliding-window MSA analysis, recombination detection, and rogue taxa exploration.';
 const OG_DESCRIPTION = IS_DOCS_ONLY
   ? 'Landing page for the Phylo-Movies desktop app and web tool, with publication links, citation metadata, example use cases, datasets, and full-stack setup instructions.'
@@ -70,6 +70,11 @@ const FAQ_ITEMS = [
     question: 'Can I try Phylo-Movies in the browser?',
     answer:
       'Yes. The GitHub Pages site includes generated publication examples that open the visualization workspace without backend processing.',
+  },
+  {
+    question: 'Why did a GitHub Pages action say Failed to fetch?',
+    answer:
+      'That message means a backend-dependent action was started on the static site. Use the generated browser demo on GitHub Pages, or run the desktop app, Docker, or source checkout for uploads and local example processing.',
   },
   {
     question: 'Which problems is Phylo-Movies useful for?',
@@ -330,7 +335,7 @@ function renderStaticLandingHtml() {
         <section style="max-width: 960px; margin: 0 auto; padding: 48px 24px 32px; text-align: center;">
           <img src="/phylo-movies/icons/phylo-tree-icon.svg" alt="" width="64" height="64" style="margin: 0 auto 16px; display: block;">
           <h1 style="margin: 0 auto 16px; max-width: 780px; font-size: 36px; line-height: 1.12; font-weight: 760;">Phylo-Movies: Desktop App and Web Tool for Phylogenetic Tree Interpolation</h1>
-          <p style="margin: 0 auto; max-width: 780px; color: #4b5563; font-size: 18px; line-height: 1.65;">Phylo-Movies is available both as a desktop app and as a browser-based phylogenetic tree visualization and interpolation tool for sliding-window analyses, recombination detection, and rogue taxa exploration. This page provides publication details, citation metadata, downloads, generated browser examples, and setup paths.</p>
+          <p style="margin: 0 auto; max-width: 780px; color: #4b5563; font-size: 18px; line-height: 1.65;">Phylo-Movies is available both as a desktop app and as a browser-based phylogenetic tree visualization and interpolation tool for sliding-window analyses, recombination detection, and rogue taxa exploration. This static page provides publication details, citation metadata, downloads, generated browser examples, and setup paths. Uploads and local example processing require the desktop app, Docker, or a source checkout.</p>
           <nav aria-label="Primary links" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 24px;">
             <a href="${PUBLICATION_URL}" style="${primaryLinkStyle()}">Read Publication</a>
             <a href="${DEMO_URL}" style="${secondaryLinkStyle()}">Open Browser Demo</a>
@@ -343,7 +348,7 @@ function renderStaticLandingHtml() {
           <h2 style="${headingStyle()}">Choose How to Use Phylo-Movies</h2>
           <div style="${gridStyle()}">
             <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Desktop App</h3><p style="${bodyStyle()}">Best default path for end users who want a packaged local application without setting up Node.js or Python.</p><a href="${RELEASES_URL}">Download desktop releases</a></article>
-            <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Browser Demo</h3><p style="${bodyStyle()}">Open generated publication examples directly on GitHub Pages, without a backend.</p><a href="${DEMO_URL}">Open generated examples</a></article>
+            <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Browser Demo</h3><p style="${bodyStyle()}">Open generated publication examples directly on GitHub Pages, without backend processing.</p><a href="${DEMO_URL}">Open generated examples</a></article>
             <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Full Stack Workflow</h3><p style="${bodyStyle()}">Required for interpolation, morphing animations, uploaded tree files, and MSA-driven processing via BranchArchitect.</p><a href="${README_URL}">View setup instructions</a></article>
           </div>
         </section>
@@ -377,7 +382,8 @@ docker compose up --build</code></pre>
           <h2 style="${headingStyle()}">Frequently Asked Questions</h2>
           <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">What does Phylo-Movies do?</h3><p style="${bodyStyle()}">Phylo-Movies visualizes topological changes between phylogenetic trees by animating subtree movements across sliding-window analyses, bootstrap replicates, and related workflows.</p></article>
           <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Can I try it in the browser?</h3><p style="${bodyStyle()}">Yes. The GitHub Pages site includes generated publication examples that open the visualization workspace without backend processing.</p></article>
-          <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">When do I need the backend?</h3><p style="${bodyStyle()}">You need the BranchArchitect backend for uploaded tree files, interpolation, morphing animations, and MSA-driven workflows.</p></article>
+          <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">When do I need the backend?</h3><p style="${bodyStyle()}">You need the BranchArchitect backend for uploaded tree files, local example processing, interpolation, morphing animations, and MSA-driven workflows.</p></article>
+          <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Why did a GitHub Pages action say Failed to fetch?</h3><p style="${bodyStyle()}">That usually means a backend-dependent action was started on the static site. Use the generated demo here, or run the desktop app, Docker, or source checkout for uploads.</p></article>
           <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">How should I cite Phylo-Movies?</h3><p style="${bodyStyle()}">Cite the bioRxiv preprint ${PUBLICATION_TITLE} using DOI ${PUBLICATION_DOI}.</p></article>
         </section>
       </main>`;
@@ -476,6 +482,7 @@ function buildSeoInjection({ pageTitle, ogDescription, pageUrl, structuredData }
     <meta name="generator" content="Vite">
     <meta name="robots" content="index, follow, max-image-preview:large">
     <meta name="googlebot" content="index, follow, max-image-preview:large">
+    <meta name="google-site-verification" content="kdEmgK5GYFcbtDTl8PpHXP06uNDeJMREL6pkaetwkHk">
     <meta name="theme-color" content="#111827">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta property="og:site_name" content="Phylo-Movies">

@@ -74,6 +74,49 @@ poetry install
 
 Related file: `scripts/check-submodule.sh`.
 
+## Symptom: macOS Says the App Is Damaged
+
+Likely cause: the downloaded desktop app is unsigned and macOS Gatekeeper quarantined it.
+
+How to check:
+
+```bash
+xattr -l "/Applications/Phylo-Movies.app"
+```
+
+Fix: if the app came from the project GitHub Releases page and you trust that artifact, move it to `/Applications` and clear quarantine:
+
+```bash
+xattr -dr com.apple.quarantine "/Applications/Phylo-Movies.app"
+```
+
+Then open the app again. If you do not want to change quarantine metadata, use the source checkout with `./start.sh` or the Docker workflow.
+
+Related files: `electron-app/README.md`, `docs/getting-started.md`.
+
+## Symptom: GitHub Pages Shows `Failed to Fetch`
+
+Likely cause: a backend-dependent action was attempted on the static GitHub Pages site.
+
+How to check:
+
+- The URL starts with `https://enesberksakalli.github.io/phylo-movies/`.
+- The action involves **New Project**, **Example Library** processing, file upload, interpolation, or MSA tree inference.
+
+Fix: use `/demo` on GitHub Pages for generated browser-only examples. For uploaded datasets or examples that need backend processing, run one of the full-stack workflows:
+
+```bash
+./start.sh
+```
+
+or:
+
+```bash
+docker compose up --build
+```
+
+Related files: `README.md`, `docs/getting-started.md`, `docs/deployment.md`.
+
 ## Symptom: Example Download Works but Load Fails
 
 Likely cause: frontend can read `/examples/...`, but the upload to the BranchArchitect backend failed.

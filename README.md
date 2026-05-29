@@ -10,6 +10,15 @@ Phylo-Movies is a React and Flask web tool for inspecting ordered phylogenetic t
 
 The project information page at [enesberksakalli.github.io/phylo-movies](https://enesberksakalli.github.io/phylo-movies/) includes documentation and a precomputed browser demo. Dataset loading, interpolation, and MSA-driven workflows require the full-stack app from source, Docker, or the Electron desktop build.
 
+## Choose the Right Entry Point
+
+| Entry point | Use it for | Backend-dependent actions |
+| --- | --- | --- |
+| GitHub Pages site | Reading documentation, downloading releases/data, and opening generated demo movies at `/demo`. | New uploads, local example processing, interpolation, and MSA workflows do not run on the static site. |
+| Source checkout | Development and full local processing from the browser. | Run `./start.sh`, keep the terminal open, and use the printed `http://127.0.0.1:5173/` URL. |
+| Docker | Full-stack local execution without manually setting up the backend. | Run `docker compose up --build` and open `http://localhost:8080/`. |
+| Desktop release | Packaged local app for end users. | macOS release artifacts may be unsigned; see [Troubleshooting](docs/troubleshooting.md#symptom-macos-says-the-app-is-damaged). |
+
 ## Quick Start
 
 Requirements:
@@ -19,6 +28,12 @@ Requirements:
 - Poetry
 - Git
 
+On macOS, Poetry can be installed without `sudo` through Homebrew:
+
+```bash
+brew install poetry
+```
+
 ```bash
 git clone --recurse-submodules https://github.com/enesBerkSakalli/phylo-movies.git
 cd phylo-movies
@@ -26,7 +41,7 @@ npm ci
 ./start.sh
 ```
 
-Open <http://127.0.0.1:5173/>. The startup script runs the BranchArchitect Flask backend on <http://127.0.0.1:5002/> and the Vite frontend on <http://127.0.0.1:5173/>.
+Open <http://127.0.0.1:5173/>. The startup script runs the BranchArchitect Flask backend on <http://127.0.0.1:5002/> and the Vite frontend on <http://127.0.0.1:5173/>. Keep the terminal running while using the browser app; stopping the script stops the local backend.
 
 ## First Successful Run
 

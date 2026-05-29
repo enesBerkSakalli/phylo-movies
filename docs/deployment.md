@@ -21,7 +21,7 @@ npm run preview
 
 Open `http://localhost:4173/`.
 
-Current limitation: a static frontend alone cannot process datasets unless it can reach a compatible BranchArchitect backend. The GitHub Pages build is documentation-only.
+Current limitation: a static frontend alone cannot process datasets unless it can reach a compatible BranchArchitect backend. The GitHub Pages build is documentation-only except for generated `/demo` payloads.
 
 ## GitHub Pages Documentation Build
 
@@ -31,7 +31,9 @@ The root package has:
 npm run build:gh
 ```
 
-This sets `VITE_DOCS_ONLY=true`, builds with base `/phylo-movies/`, applies SEO metadata, injects crawlable landing-page HTML into `dist/index.html`, and copies examples. In docs-only mode the app serves the information page at `/` and exposes `/demo`, which loads `examples/precomputed/paper_example.movie.json` into browser storage before opening `/visualization`. Uploaded datasets still require the full BranchArchitect backend.
+This sets `VITE_DOCS_ONLY=true`, builds with base `/phylo-movies/`, applies SEO metadata, injects crawlable landing-page HTML into `dist/index.html`, and copies examples. In docs-only mode the app serves the information page at `/` and exposes `/demo`, which loads generated movie JSON into browser storage before opening `/visualization`.
+
+The GitHub Pages site does not run Flask, IQ-TREE, FastTree, SPR interpolation, uploads, or MSA processing. If a visitor sees `Failed to fetch` after using a backend-dependent path on the public site, run the source checkout, Docker full stack, or desktop app instead.
 
 ## Docker Full Stack
 
