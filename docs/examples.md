@@ -4,6 +4,15 @@
 
 Built-in examples are declared in `src/pages/WorkspaceInitialization/exampleDatasets.js` and read from `publication_data/`. During development, Vite serves those files as `/examples/...`. During production builds, `scripts/copy-examples.sh` copies the example files into the build output.
 
+## Where Examples Work
+
+| Environment | What works |
+| --- | --- |
+| Local source checkout with `./start.sh` | **Example Library** loads bundled examples through the BranchArchitect backend. |
+| Docker full stack | **Example Library** loads bundled examples through the containerized backend. |
+| Desktop app | Bundled examples and uploads run through the packaged local backend. |
+| GitHub Pages | `/demo` opens generated movie payloads without backend processing. Downloaded examples can be saved, but uploads and **Example Library** processing require a local backend. |
+
 ## Example Library
 
 | UI name                            | Source path under `publication_data/`                                                                                                   | Workflow              | Scale                |

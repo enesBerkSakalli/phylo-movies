@@ -4,6 +4,15 @@
 
 This guide describes the UI surfaces that exist in the current React app.
 
+## Quick Orientation
+
+- Start on the setup screen. Use **Example Library** for bundled data or **New Project** for your own tree/MSA files.
+- Confirm the top status says **Engine Connected** before loading examples or processing uploads.
+- After processing, the visualization workspace opens with the tree canvas in the center, analysis/style tools in the left sidebar, and the movie timeline at the bottom.
+- Use the bottom transport buttons to move between input trees and generated frames. Select or hover timeline segments to inspect topology changes.
+- Use the left sidebar for dataset, layout, style, analysis, and focus controls. MSA and taxa-color tools open as floating windows when those data are available.
+- Use the top-right canvas buttons to fit, zoom, reset, export a PNG, or record a WebM movie.
+
 ## Setup Screen
 
 ### Top Bar

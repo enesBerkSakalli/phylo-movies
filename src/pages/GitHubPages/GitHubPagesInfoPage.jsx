@@ -45,9 +45,9 @@ const ACCESS_OPTIONS = [
     href: RELEASES_URL,
   },
   {
-    title: 'Browser Interface',
+    title: 'Local Browser Interface',
     description:
-      'Use the web frontend as part of a local or deployed full-stack setup backed by BranchArchitect.',
+      'Use the web frontend from a source or Docker full-stack setup backed by BranchArchitect.',
     ctaLabel: 'Open README',
     href: README_URL,
   },
@@ -101,6 +101,11 @@ const FAQ_ITEMS = [
       'Yes. Phylo-Movies requires the BranchArchitect backend for uploaded tree files, interpolation, morphing animations, and MSA-driven workflows. The GitHub Pages site is documentation-only, not a standalone processing frontend.',
   },
   {
+    question: 'Why did a GitHub Pages action say Failed to fetch?',
+    answer:
+      'That message means a backend-dependent action was started on the static site. Use Open Browser Demo for generated examples, or run the desktop app, Docker, or source checkout for uploads and local example processing.',
+  },
+  {
     question: 'Is Phylo-Movies also a desktop app?',
     answer:
       'Yes. Phylo-Movies is available as a desktop app in addition to the browser-based interface, and the desktop releases are linked directly from this landing page.',
@@ -138,7 +143,9 @@ export function GitHubPagesInfoPage() {
               Phylo-Movies is available both as a desktop app and as a browser-based phylogenetic
               tree visualization and interpolation tool for sliding-window analyses, recombination
               detection, and rogue taxa exploration. This page is the public landing page for the
-              software, publication, citation details, downloads, and setup paths.
+              software, publication, citation details, downloads, and setup paths. Use the browser
+              demo for static generated examples; uploads and local example processing require the
+              desktop app, Docker, or a source checkout.
             </p>
             <div className="flex flex-wrap justify-center gap-3 pt-2">
               <Button asChild>
@@ -333,7 +340,8 @@ export function GitHubPagesInfoPage() {
             <p>
               The demo uses normalized Phylo-Movies JSON payloads generated from the bundled
               norovirus, bootstrap, paper-figure, quick MSA, and scale-limit examples. Uploaded
-              datasets still require the BranchArchitect backend.
+              datasets and backend-processed example loading still require the BranchArchitect
+              backend.
             </p>
             <Button asChild>
               <Link to="/demo">Open Generated Examples</Link>
