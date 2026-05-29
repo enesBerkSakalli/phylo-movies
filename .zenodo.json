@@ -1,0 +1,58 @@
+{
+  "title": "Phylo-Movies: Interactive Phylogenetic Tree Interpolation and Visualization",
+  "version": "0.92.0",
+  "upload_type": "software",
+  "access_right": "open",
+  "license": "mit",
+  "description": "Phylo-Movies is software for visualizing topological changes between ordered phylogenetic trees. It provides a browser-based and desktop interface for tree interpolation, sliding-window phylogenetic analyses, recombination examples, rogue-taxa examples, metadata coloring, and movie export.",
+  "creators": [
+    {
+      "name": "Sakalli, Enes Berk",
+      "affiliation": "Ludwig Boltzmann Institute for Network Medicine, University of Vienna"
+    },
+    {
+      "name": "Haendeler, Simon E.",
+      "affiliation": "Digital R&D IST, Sanofi"
+    },
+    {
+      "name": "von Haeseler, Arndt",
+      "affiliation": "Ludwig Boltzmann Institute for Network Medicine, University of Vienna"
+    },
+    {
+      "name": "Schmidt, Heiko A.",
+      "affiliation": "Max Perutz Labs, University of Vienna"
+    }
+  ],
+  "keywords": [
+    "phylogenetics",
+    "bioinformatics",
+    "tree visualization",
+    "phylogenetic trees",
+    "recombination",
+    "sliding-window analysis",
+    "multiple sequence alignment",
+    "SPR moves",
+    "tree animation",
+    "WebGL"
+  ],
+  "related_identifiers": [
+    {
+      "scheme": "doi",
+      "identifier": "10.64898/2026.04.01.715821",
+      "relation": "isDocumentedBy",
+      "resource_type": "publication-article"
+    },
+    {
+      "scheme": "url",
+      "identifier": "https://enesberksakalli.github.io/phylo-movies/",
+      "relation": "isDocumentedBy",
+      "resource_type": "other"
+    },
+    {
+      "scheme": "url",
+      "identifier": "https://github.com/enesBerkSakalli/phylo-movies",
+      "relation": "isSupplementedBy",
+      "resource_type": "software"
+    }
+  ]
+}

@@ -11,6 +11,12 @@ The archive root is:
 publication_data/
 ```
 
+Related public entry points:
+
+- Software landing page and browser demos: <https://enesberksakalli.github.io/phylo-movies/>
+- Source repository: <https://github.com/enesBerkSakalli/phylo-movies>
+- Publication DOI: <https://doi.org/10.64898/2026.04.01.715821>
+
 A release archive should be made from committed repository files, not from
 generated build folders or untracked local run directories.
 

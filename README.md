@@ -4,6 +4,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![bioRxiv](https://img.shields.io/badge/bioRxiv-10.64898%2F2026.04.01.715821-B31B1B.svg)](https://doi.org/10.64898/2026.04.01.715821)
 
+[Website](https://enesberksakalli.github.io/phylo-movies/) ·
+[Browser demo](https://enesberksakalli.github.io/phylo-movies/demo/) ·
+[Source code](https://github.com/enesBerkSakalli/phylo-movies) ·
+[Publication](https://doi.org/10.64898/2026.04.01.715821)
+
 Phylo-Movies is a React and Flask web tool for inspecting ordered phylogenetic tree series. It uses the BranchArchitect backend to compute subtree-prune-and-regraft transition frames between input trees, then renders the resulting movie in a WebGL tree viewer with timeline, comparison, MSA, coloring, analytics, image, and recording tools. It is intended for computational biologists, phylogenetics method developers, and instructors who need to see which taxa or subtrees move between neighboring trees.
 
 ![Phylo-Movies screenshot](assets/screenshot.png)
