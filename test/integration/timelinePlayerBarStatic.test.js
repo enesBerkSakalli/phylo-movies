@@ -84,6 +84,8 @@ describe('movie timeline player bar semantics', () => {
 
     expect(existsSync(statusStripPath)).toBe(true);
     expect(playerBarSource).toContain('TimelineStatusStrip');
+    expect(playerBarSource).toContain('selectOpenMsaViewer');
+    expect(playerBarSource).toContain('Open alignment viewer');
     expect(managerSource).toContain('getTimelineStatusSnapshot');
     expect(managerSource).toContain('buildTimelineStatusSnapshot');
     expect(statusStripSource).toContain('selectMovieTimelineManager');
@@ -116,6 +118,12 @@ describe('movie timeline player bar semantics', () => {
     expect(playerBarSource).toContain('inline-flex w-[7rem] shrink-0');
     expect(statusStripSource).not.toContain('Tree Type');
     expect(statusStripSource).not.toContain('Badge');
+    expect(playerBarSource.indexOf('<TimelineStatusStrip />')).toBeLessThan(
+      playerBarSource.indexOf('<MsaPlayerBarAction')
+    );
+    expect(playerBarSource.indexOf('<MsaPlayerBarAction')).toBeLessThan(
+      playerBarSource.indexOf('<MotionStatusSlot')
+    );
     expect(playerBarSource.indexOf('<TimelineStatusStrip />')).toBeLessThan(
       playerBarSource.indexOf('MOVIE_PLAYER_ARIA_LABELS.playbackSettings')
     );

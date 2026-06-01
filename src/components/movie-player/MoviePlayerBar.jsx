@@ -15,8 +15,10 @@ import {
   selectHoveredSegmentData,
   selectHoveredSegmentIndex,
   selectHoveredSegmentPosition,
+  selectHasMsa,
   selectLeafNamesByIndex,
   selectMovieTimelineManager,
+  selectOpenMsaViewer,
   selectSetAnimationSpeed,
   selectSetBarOption,
   selectSetHoveredSegment,
@@ -25,7 +27,7 @@ import {
 } from '../../state/phyloStore/store.js';
 import { useSidebar } from '../ui/sidebar';
 import { Button } from '../ui/button';
-import { Activity, Menu, ChevronUp, ChevronDown } from 'lucide-react';
+import { Activity, Menu, ChevronUp, ChevronDown, Dna } from 'lucide-react';
 import { AppTooltip } from '../ui/app-tooltip';
 import { MOVIE_PLAYER_ARIA_LABELS, TIMELINE_LEGEND_ITEMS } from './MoviePlayerBar.contract.js';
 
@@ -41,6 +43,8 @@ export function MoviePlayerBar() {
   const animationSpeed = useAppStore(selectAnimationSpeed);
   const barOptionValue = useAppStore(selectBarOptionValue);
   const currentAnimationStage = useAppStore(selectCurrentAnimationStage);
+  const hasMsa = useAppStore(selectHasMsa);
+  const openMsaViewer = useAppStore(selectOpenMsaViewer);
   const setBarOption = useAppStore(selectSetBarOption);
   const [toolbarExpanded, setToolbarExpanded] = useState(true);
 
@@ -119,6 +123,10 @@ export function MoviePlayerBar() {
       toggleSidebar();
     } catch {}
   }, [toggleSidebar]);
+  const handleOpenMsaViewer = useCallback(() => {
+    if (!hasMsa) return;
+    openMsaViewer();
+  }, [hasMsa, openMsaViewer]);
 
   return (
     <>
@@ -156,6 +164,7 @@ export function MoviePlayerBar() {
               {hasTimeline && (
                 <div className="flex min-w-0 items-center gap-2 overflow-hidden">
                   <TimelineStatusStrip />
+                  <MsaPlayerBarAction hasMsa={hasMsa} onOpen={handleOpenMsaViewer} />
                   <MotionStatusSlot stage={currentAnimationStage} />
                 </div>
               )}
@@ -272,6 +281,25 @@ function getTimelineTooltipPosition(position) {
   }
 
   return { x, y };
+}
+
+function MsaPlayerBarAction({ hasMsa, onOpen }) {
+  if (!hasMsa) return null;
+
+  return (
+    <AppTooltip content="Open alignment viewer">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        aria-label="Open alignment viewer"
+        onClick={onOpen}
+        className="shrink-0 hover:bg-accent"
+      >
+        <Dna className="size-4" />
+      </Button>
+    </AppTooltip>
+  );
 }
 
 function MotionStatusSlot({ stage }) {

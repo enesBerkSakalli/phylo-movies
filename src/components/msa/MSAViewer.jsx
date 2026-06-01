@@ -13,8 +13,11 @@ import { MSADeckGLViewer } from '../../msaViewer/MSADeckGLViewer';
 import { useMSA } from './useMSA.js';
 import { MSAScrollbars } from './MSAScrollbars';
 import {
+  buildMsaWindowOverlapStatus,
   buildMsaWindowStatus,
   buildMsaTreeStatus,
+  formatMsaWindowOverlapLabel,
+  formatMsaWindowOverlapTooltip,
   formatMsaWindowStatusLabel,
   formatMsaWindowStatusTooltip,
   formatMsaTreeStatusLabel,
@@ -40,6 +43,12 @@ export function MSAViewer() {
   const msaWindowSize = useAppStore(selectMsaWindowSize);
   const msaColumnCount = useAppStore(selectMsaColumnCount);
   const windowStatus = buildMsaWindowStatus(
+    timelineCursor,
+    msaStepSize,
+    msaWindowSize,
+    msaColumnCount
+  );
+  const overlapStatus = buildMsaWindowOverlapStatus(
     timelineCursor,
     msaStepSize,
     msaWindowSize,
@@ -245,7 +254,7 @@ export function MSAViewer() {
   return (
     <div className="msa-rnd-body relative flex-1 min-h-0 bg-background" ref={containerRef}>
       {visibleRange && Number.isFinite(visibleRange.r0) && Number.isFinite(visibleRange.c0) && (
-        <div className="absolute left-3 top-3 z-10 rounded-md border border-border/60 bg-background/85 px-3 py-2 text-[11px] text-foreground shadow-md backdrop-blur-sm tabular-nums">
+        <div className="absolute left-3 top-3 z-10 space-y-1 rounded-md border border-border/60 bg-background/85 px-3 py-2 text-[11px] text-foreground shadow-md backdrop-blur-sm tabular-nums">
           <div className="flex items-center gap-2">
             <span>
               Rows: {visibleRange.r0 + 1}-{visibleRange.r1 + 1}
@@ -267,11 +276,80 @@ export function MSAViewer() {
               </>
             )}
           </div>
+          {overlapStatus && <MSAWindowOverlapStatus status={overlapStatus} />}
         </div>
       )}
       <MSAScrollbars layoutMetrics={layoutMetrics} />
     </div>
   );
+}
+
+function MSAWindowOverlapStatus({ status }) {
+  const tooltip = formatMsaWindowOverlapTooltip(status);
+  const label = formatMsaWindowOverlapLabel(status);
+
+  return (
+    <AppTooltip content={tooltip} contentClassName="text-2xs">
+      <div
+        className="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground"
+        aria-label={tooltip}
+      >
+        <MSAWindowOverlapTrack status={status} />
+        <span className="font-medium text-foreground">{label}</span>
+        <span>
+          source {status.source.startPosition}-{status.source.endPosition}
+        </span>
+        <span>
+          target {status.target.startPosition}-{status.target.endPosition}
+        </span>
+      </div>
+    </AppTooltip>
+  );
+}
+
+function MSAWindowOverlapTrack({ status }) {
+  return (
+    <div className="relative h-7 w-52 shrink-0" aria-hidden>
+      <div className="absolute left-0 right-0 top-1 h-2 rounded-sm bg-muted/70" />
+      <div className="absolute left-0 right-0 bottom-1 h-2 rounded-sm bg-muted/70" />
+      {status.leavingRanges.map((range) => (
+        <div
+          key={`leaving-${range.startPosition}-${range.endPosition}`}
+          className="absolute top-1 h-2 rounded-sm bg-amber-500/35"
+          style={getOverlapTrackStyle(range, status)}
+        />
+      ))}
+      {status.enteringRanges.map((range) => (
+        <div
+          key={`entering-${range.startPosition}-${range.endPosition}`}
+          className="absolute bottom-1 h-2 rounded-sm bg-emerald-500/35"
+          style={getOverlapTrackStyle(range, status)}
+        />
+      ))}
+      <div
+        className="absolute top-1 h-2 rounded-sm border border-sky-500/70 bg-sky-500/20"
+        style={getOverlapTrackStyle(status.source, status)}
+      />
+      <div
+        className="absolute bottom-1 h-2 rounded-sm border border-emerald-500/70 bg-emerald-500/20"
+        style={getOverlapTrackStyle(status.target, status)}
+      />
+      {status.overlap && (
+        <div
+          className="absolute inset-y-0 rounded-sm border-x border-primary/70 bg-primary/15"
+          style={getOverlapTrackStyle(status.overlap, status)}
+        />
+      )}
+    </div>
+  );
+}
+
+function getOverlapTrackStyle(range, status) {
+  const totalColumns = Math.max(1, status.totalEndPosition - status.totalStartPosition + 1);
+  return {
+    left: `${((range.startPosition - status.totalStartPosition) / totalColumns) * 100}%`,
+    width: `${((range.endPosition - range.startPosition + 1) / totalColumns) * 100}%`,
+  };
 }
 
 function MSAWindowStatus({ status }) {
