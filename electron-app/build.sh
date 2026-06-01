@@ -38,6 +38,12 @@ cd "$PROJECT_ROOT"
 echo "Installing frontend dependencies..."
 npm ci
 
+echo "Installing backend fixture dependencies..."
+(cd "$PROJECT_ROOT/engine/BranchArchitect" && poetry install)
+
+echo "Regenerating generated browser demo payloads..."
+npm run fixtures:generate:ci
+
 echo "Building Vite project (ELECTRON_BUILD=true)..."
 ELECTRON_BUILD=true npm run build
 

@@ -33,6 +33,12 @@ npm run build:gh
 
 This sets `VITE_DOCS_ONLY=true`, builds with base `/phylo-movies/`, applies SEO metadata, injects crawlable landing-page HTML into `dist/index.html`, and copies examples. In docs-only mode the app serves the information page at `/` and exposes `/demo`, which loads generated movie JSON into browser storage before opening `/visualization`.
 
+The static demo does not use a second payload contract. It ships the same direct movie payload shape as backend runs, with compact tuple tree nodes and lazy frontend hydration. Future chunked sidecar payloads would require a broader backend and static-example contract change; that is intentionally outside the reviewer-ready build.
+
+On pushes to `main`, GitHub Actions runs `npm run fixtures:generate:ci` before frontend tests, the normal frontend build, and the GitHub Pages build. That CI mode regenerates the bundled `.movie.json` demo payloads from the checked-in source trees under `publication_data/` and then packages the regenerated files into `dist/examples/`. It intentionally reuses the checked-in inferred `.nwk` files instead of rerunning IQ-TREE on every push.
+
+Docker and Electron packaging also regenerate these payloads before their frontend build step, so release artifacts do not depend on committed precomputed JSON files.
+
 The GitHub Pages site does not run Flask, IQ-TREE, FastTree, SPR interpolation, uploads, or MSA processing. If a visitor sees `Failed to fetch` after using a backend-dependent path on the public site, run the source checkout, Docker full stack, or desktop app instead.
 
 ## Docker Full Stack

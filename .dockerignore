@@ -16,6 +16,7 @@ engine/BranchArchitect/.venv
 engine/BranchArchitect/dist
 engine/BranchArchitect/build
 engine/BranchArchitect/logs
+publication_data/precomputed/*.movie.json
 
 # ── Electron (not needed in Docker) ─────────────────────────────
 electron-app/frontend-dist
