@@ -11,7 +11,8 @@ This guide describes the UI surfaces that exist in the current React app.
 - After processing, the visualization workspace opens with the tree canvas in the center, analysis/style tools in the left sidebar, and the movie timeline at the bottom.
 - Use the bottom transport buttons to move between input trees and generated frames. Select or hover timeline segments to inspect topology changes.
 - Use the left sidebar for dataset, layout, style, analysis, and focus controls. MSA and taxa-color tools open as floating windows when those data are available.
-- Use the top-right canvas buttons to fit, zoom, reset, export a PNG, or record a WebM movie.
+- Use the top-right canvas buttons, mouse wheel, or two-finger trackpad gesture to fit, zoom, reset, export a PNG, or record a WebM movie.
+- Use the floating comparison panel to choose a neighboring input tree for comparison. It can be hidden with the close button and restored with the eye button.
 
 ## Setup Screen
 
@@ -69,7 +70,7 @@ The left sidebar has five groups, verified from `src/components/sidebar/ToolsSid
 
 ### Main Canvas
 
-The main canvas renders the active tree or comparison view using deck.gl. Mouse and trackpad interactions are handled by the tree controller.
+The main canvas renders the active tree or comparison view using deck.gl. Mouse-wheel and two-finger trackpad gestures zoom the tree, while drag gestures pan the current view.
 
 Top-right canvas controls:
 
@@ -79,6 +80,12 @@ Top-right canvas controls:
 - Zoom in
 - Recording controls
 - Image export
+
+The tree-size, label-size, branch-width, and label-spacing controls are in **Style -> Geometry & Labels**. These controls are useful when tip labels occupy more space than the tree, especially in circular layouts.
+
+### Comparison Panel
+
+The floating comparison panel starts in the lower-left corner of the canvas. Use it to move the comparison target to the previous or next input tree. The drag handle moves the panel, the close button hides it, and the eye button restores it. Tooltips describe each panel control.
 
 ### Bottom Movie Player
 
@@ -92,6 +99,8 @@ The bottom bar contains:
 - Timeline legend and scroll controls
 - Timeline visualization
 - Chart section
+
+Hover the timeline status strip to show the current segment, cursor position, and normalized sequence coordinate. When MSA data are available, the same strip also reports the active alignment window and the configured window/step size.
 
 Transport buttons:
 
@@ -120,21 +129,21 @@ Selecting a timeline segment opens the **Transition Inspector**. It reports:
 
 ### Floating Windows
 
-| Window             | How it opens                              | What it does                                                   |
-| ------------------ | ----------------------------------------- | -------------------------------------------------------------- |
-| Sequence Alignment | MSA controls/sidebar when MSA data exists | Shows sequences, columns, and synchronized MSA window context. |
-| Taxa Colors        | Style controls                            | Assigns colors to taxa, name patterns, or CSV groups.          |
-| SPR Analytics      | Analysis sidebar                          | Shows movement analytics and event tables.                     |
+| Window             | How it opens                              | What it does                                                                                                                                                                |
+| ------------------ | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sequence Alignment | MSA controls/sidebar when MSA data exists | Shows sequences, columns, and synchronized MSA window context. With **Follow Current Window** enabled, stepping between input trees updates the displayed alignment window. |
+| Taxa Colors        | Style controls                            | Assigns colors to taxa, name patterns, or CSV groups.                                                                                                                       |
+| SPR Analytics      | Analysis sidebar                          | Shows movement analytics and event tables.                                                                                                                                  |
 
 ## What You See / What It Means
 
-| What you see                       | What it means                                                     | What to do next                                                           |
-| ---------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| Engine Offline                     | Frontend cannot reach the backend.                                | Run `./start.sh` or start `engine/BranchArchitect/start_movie_server.sh`. |
+| What you see                       | What it means                                                           | What to do next                                                                                     |
+| ---------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Engine Offline                     | Frontend cannot reach the backend.                                      | Run `./start.sh` or start `engine/BranchArchitect/start_movie_server.sh`.                           |
 | Dataset processing failed          | Backend rejected the upload, stalled, or sent a malformed stream event. | Read the alert details, retry a small example, and check `engine/BranchArchitect/logs/backend.log`. |
-| PNG export is not ready yet        | Tree rendering has not exposed a deck.gl canvas.                  | Wait for the tree to finish rendering or reload the dataset if the canvas is blank. |
-| Processing overlay                 | Upload accepted and backend processing is in progress.            | Wait for progress or inspect backend logs if it stalls.                   |
-| Timeline input tree markers        | Observed input trees from the uploaded or inferred series.        | Jump with previous/next input tree controls.                              |
-| Generated frame controls enabled   | At least two frames exist in the active sequence.                 | Step or play the movie.                                                   |
-| MSA window unavailable             | No MSA data is loaded or mapped for the current dataset.          | Use an MSA example or upload an MSA.                                      |
-| Some inspector metrics unavailable | The processed payload lacks that metric for the selected segment. | Check source data and backend output contract.                            |
+| PNG export is not ready yet        | Tree rendering has not exposed a deck.gl canvas.                        | Wait for the tree to finish rendering or reload the dataset if the canvas is blank.                 |
+| Processing overlay                 | Upload accepted and backend processing is in progress.                  | Wait for progress or inspect backend logs if it stalls.                                             |
+| Timeline input tree markers        | Observed input trees from the uploaded or inferred series.              | Jump with previous/next input tree controls.                                                        |
+| Generated frame controls enabled   | At least two frames exist in the active sequence.                       | Step or play the movie.                                                                             |
+| MSA window unavailable             | No MSA data is loaded or mapped for the current dataset.                | Use an MSA example or upload an MSA.                                                                |
+| Some inspector metrics unavailable | The processed payload lacks that metric for the selected segment.       | Check source data and backend output contract.                                                      |

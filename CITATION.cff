@@ -17,6 +17,7 @@ authors:
 title: "Phylo-Movies: Interactive Phylogenetic Tree Interpolation and Visualization"
 version: 0.92.0
 date-released: 2026-05-27
+doi: "10.5281/zenodo.20488924"
 url: "https://enesberksakalli.github.io/phylo-movies/"
 repository-code: "https://github.com/enesBerkSakalli/phylo-movies"
 license: MIT
