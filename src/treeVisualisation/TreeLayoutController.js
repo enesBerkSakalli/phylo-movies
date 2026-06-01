@@ -151,6 +151,10 @@ export class TreeLayoutController {
     const { branchTransformation, layoutAngleDegrees, layoutRotationDegrees } = state;
     const treeList = selectActiveTreeList(state);
 
+    if (!treeData && Number.isInteger(treeIndex)) {
+      treeData = state.ensureTreeHydrated?.(treeIndex) ?? treeList?.[treeIndex] ?? null;
+    }
+
     // initializeUniformScaling is cache-guarded and also catches dataset reference changes.
     this.initializeUniformScaling(branchTransformation);
 

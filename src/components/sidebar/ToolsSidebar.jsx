@@ -30,6 +30,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { TOOLS_SIDEBAR_GROUP_LABELS } from './ToolsSidebar.contract.js';
 import { SPR_ANALYTICS_COPY } from '../TreeStatsPanel/AnalyticsDashboard.contract.ts';
+import { selectTreeHydrationStats, useAppStore } from '../../state/phyloStore/store.js';
 
 export function ToolsSidebar({
   fileName,
@@ -154,6 +155,8 @@ export default ToolsSidebar;
 
 function DatasetProvenanceItem({ fileName, provenance }) {
   const settings = Array.isArray(provenance?.settings) ? provenance.settings : [];
+  const hydrationStats = useAppStore(selectTreeHydrationStats);
+  const hydratedPercent = Math.round(hydrationStats.hydratedPercent * 100);
 
   return (
     <Collapsible asChild className="group/collapsible">
@@ -187,6 +190,21 @@ function DatasetProvenanceItem({ fileName, provenance }) {
                         value={setting.value}
                       />
                     ))}
+                  </div>
+                )}
+                {hydrationStats.totalTrees > 0 && (
+                  <div className="space-y-1">
+                    <div className="font-semibold uppercase tracking-wider text-foreground/70">
+                      Runtime
+                    </div>
+                    <ProvenanceField
+                      label="Hydrated trees"
+                      value={`${hydrationStats.hydratedTrees}/${hydrationStats.totalTrees} (${hydratedPercent}%)`}
+                    />
+                    <ProvenanceField
+                      label="Compact payload"
+                      value={`${hydrationStats.compactPayloadTrees}/${hydrationStats.totalTrees} trees`}
+                    />
                   </div>
                 )}
               </div>

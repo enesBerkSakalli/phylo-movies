@@ -19,6 +19,21 @@ const tree0 = {
 };
 const tree1 = tree0;
 const tree2 = tree0;
+const compactTree = [
+  0,
+  0,
+  0,
+  null,
+  [
+    [0, 1, 1, null, []],
+    [0, 2, 2, null, []],
+  ],
+];
+
+const compactTreeDefinitions = {
+  tree_name_definitions: ['', 'taxon-a', 'taxon-b'],
+  split_definitions: [[0, 1], [0], [1]],
+};
 
 function makeBackendMovieData() {
   return {
@@ -156,6 +171,17 @@ function makeMovieData() {
   return phyloData.validate(makeBackendMovieData());
 }
 
+function makeCompactMovieData() {
+  return phyloData.validate(
+    {
+      ...makeBackendMovieData(),
+      ...compactTreeDefinitions,
+      interpolated_trees: [compactTree, compactTree, compactTree],
+    },
+    { hydrateTrees: false }
+  );
+}
+
 describe('phylo store dataset normalization', () => {
   beforeEach(() => {
     vi.stubGlobal('requestAnimationFrame', (callback) => setTimeout(callback, 0));
@@ -186,7 +212,9 @@ describe('phylo store dataset normalization', () => {
     useAppStore.getState().initialize(movieData);
 
     const state = useAppStore.getState();
-    expect(state.treeList).toBe(movieData.interpolated_trees);
+    expect(state.treePayloadList).toBe(movieData.interpolated_trees);
+    expect(state.treeList).toHaveLength(movieData.interpolated_trees.length);
+    expect(state.treeList[0]).toEqual(movieData.interpolated_trees[0]);
     expect(state.timelineFrames).toBe(movieData.frames);
     expect(state.leafNamesByIndex).toEqual(['taxon-a', 'taxon-b']);
     expect(movieData).not.toHaveProperty(['sorted', 'leaves'].join('_'));
@@ -218,6 +246,109 @@ describe('phylo store dataset normalization', () => {
     expect(Object.prototype.hasOwnProperty.call(state, 'splitChangeTimeline')).toBe(false);
     expect(Object.prototype.hasOwnProperty.call(state, 'treeDistances')).toBe(false);
     expect(Object.prototype.hasOwnProperty.call(state, 'pivotEdgeTracking')).toBe(false);
+  });
+
+  it('keeps compact trees out of the runtime cache until a frame is requested', () => {
+    const movieData = makeCompactMovieData();
+
+    useAppStore.getState().initialize(movieData);
+
+    const state = useAppStore.getState();
+    expect(state.treeList).toHaveLength(3);
+    expect(state.treeList[0]).toEqual(tree0);
+    expect(state.treeList[1]).toBeUndefined();
+    expect(state.treePayloadList[1]).toBe(compactTree);
+    expect(state.leafNamesByIndex).toEqual(['taxon-a', 'taxon-b']);
+    expect(phyloStoreModule.selectTreeHydrationStats(state)).toMatchObject({
+      totalTrees: 3,
+      hydratedTrees: 2,
+      compactPayloadTrees: 3,
+      hydratedPercent: 2 / 3,
+    });
+    expect(phyloStoreModule.selectTreeHydrationStats(state)).toBe(
+      phyloStoreModule.selectTreeHydrationStats(state)
+    );
+
+    const hydratedTree = state.ensureTreeHydrated(1);
+
+    expect(hydratedTree).toEqual(tree0);
+    expect(useAppStore.getState().treeList[1]).toEqual(tree0);
+    expect(phyloStoreModule.selectTreeHydrationStats(useAppStore.getState())).toMatchObject({
+      totalTrees: 3,
+      hydratedTrees: 3,
+      compactPayloadTrees: 3,
+      hydratedPercent: 1,
+    });
+  });
+
+  it('prefetches the current tree hydration window without hydrating the whole dataset', () => {
+    const interpolatedFrames = Array.from({ length: 5 }, (_value, index) => ({
+      frame_index: index + 1,
+      frame_type: 'interpolation_frame',
+      state_semantics: 'algorithmic_intermediate',
+      is_observed_input: false,
+      input_tree_index: null,
+      pair_id: 'pair_0_1',
+      pair_ordinal: 0,
+      local_step_index: index,
+      source_frame_index: 0,
+      target_frame_index: 6,
+    }));
+    const movieData = phyloData.validate(
+      {
+        ...makeBackendMovieData(),
+        ...compactTreeDefinitions,
+        interpolated_trees: Array.from({ length: 7 }, () => compactTree),
+        frames: [
+          {
+            ...makeBackendMovieData().frames[0],
+          },
+          ...interpolatedFrames,
+          {
+            frame_index: 6,
+            frame_type: 'input_tree',
+            state_semantics: 'processed_input_tree',
+            is_observed_input: true,
+            input_tree_index: 1,
+            pair_id: null,
+            pair_ordinal: null,
+            local_step_index: null,
+            source_frame_index: null,
+            target_frame_index: null,
+          },
+        ],
+        pairs: [
+          {
+            ...makeBackendMovieData().pairs[0],
+            target_frame_index: 6,
+            generated_frame_range: [1, 5],
+          },
+        ],
+        temporal_events: [],
+        subtree_highlight_tracking: Array.from({ length: 7 }, () => null),
+        pair_metrics: {
+          ...makeBackendMovieData().pair_metrics,
+          rows: [
+            {
+              ...makeBackendMovieData().pair_metrics.rows[0],
+            },
+          ],
+        },
+      },
+      { hydrateTrees: false }
+    );
+
+    useAppStore.getState().initialize(movieData);
+    useAppStore.getState().prefetchTreeHydrationWindow(3, 1);
+
+    const state = useAppStore.getState();
+    expect(state.treeList[0]).toEqual(tree0);
+    expect(state.treeList[1]).toBeUndefined();
+    expect(state.treeList[2]).toEqual(tree0);
+    expect(state.treeList[3]).toEqual(tree0);
+    expect(state.treeList[4]).toEqual(tree0);
+    expect(state.treeList[5]).toBeUndefined();
+    expect(state.treeList[6]).toEqual(tree0);
   });
 
   it('derives scale metadata without storing scale duplicates', () => {

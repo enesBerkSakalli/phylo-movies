@@ -84,7 +84,7 @@ export const phyloData = {
   },
 
   async set(data, options = {}) {
-    const validatedBackendData = validatePhyloMovieData(data);
+    const validatedBackendData = validatePhyloMovieData(data, { hydrateTrees: false });
     const run = createRunRecord(validatedBackendData, options);
 
     try {
@@ -115,7 +115,7 @@ export const phyloData = {
       throw new Error('Saved run data is no longer available.');
     }
 
-    const validatedBackendData = validatePhyloMovieData(runData);
+    const validatedBackendData = validatePhyloMovieData(runData, { hydrateTrees: false });
     await storage.set(STORAGE_KEYS.PHYLO_DATA, { __phyloRunRef: true, runId });
     return validatedBackendData;
   },
@@ -130,8 +130,8 @@ export const phyloData = {
     }
   },
 
-  validate(data) {
-    return validatePhyloMovieData(data);
+  validate(data, options = { hydrateTrees: false }) {
+    return validatePhyloMovieData(data, options);
   },
 };
 

@@ -81,6 +81,7 @@ export class StaticRenderer {
       ? Math.min(Math.max(treeIndex, 0), treeList.length - 1)
       : frameIndex;
 
+    state.ensureTreeHydrated?.(targetIndex);
     const targetTreeData =
       targetIndex === frameIndex ? selectCurrentTree(state) : treeList[targetIndex];
 

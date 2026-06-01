@@ -82,7 +82,9 @@ export class InterpolationRenderer {
     const transitionFrame = createRenderFrame(fromTreeData, toTreeData, timeFactor, options);
 
     if (comparisonMode && typeof rightTreeIndex === 'number') {
-      const rightTree = selectActiveTreeList(useAppStore.getState())[rightTreeIndex];
+      const state = useAppStore.getState();
+      state.ensureTreeHydrated?.(rightTreeIndex);
+      const rightTree = selectActiveTreeList(state)[rightTreeIndex];
 
       if (rightTree) {
         // Build raw interpolation inputs for comparison renderer
@@ -146,6 +148,7 @@ export class InterpolationRenderer {
     }
 
     // Get tree data
+    state.ensureTreesHydrated?.([fromIndex, toIndex]);
     const fromTree = treeList[fromIndex];
     const toTree = treeList[toIndex];
     const transitionFrame = TransitionFrame.from({
@@ -191,8 +194,22 @@ export class InterpolationRenderer {
     }
 
     const state = useAppStore.getState();
-    const transitionFrame =
+    let transitionFrame =
       state.movieTimelineManager?.getTransitionFrameForTimelineProgress?.(progress);
+
+    if (
+      transitionFrame &&
+      (!transitionFrame.sourceTree || !transitionFrame.targetTree) &&
+      Number.isInteger(transitionFrame.sourceTreeIndex) &&
+      Number.isInteger(transitionFrame.targetTreeIndex)
+    ) {
+      state.ensureTreesHydrated?.([
+        transitionFrame.sourceTreeIndex,
+        transitionFrame.targetTreeIndex,
+      ]);
+      transitionFrame =
+        state.movieTimelineManager?.getTransitionFrameForTimelineProgress?.(progress);
+    }
 
     if (!transitionFrame?.sourceTree || !transitionFrame?.targetTree) {
       return;
