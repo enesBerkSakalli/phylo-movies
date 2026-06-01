@@ -27,7 +27,7 @@ export class TimelineDataset {
       occurrences,
       occurrencesByFrameIndex,
       pairs: movieData.pairs,
-      treeList: movieData.interpolated_trees,
+      treeList: options.treeList ?? movieData.interpolated_trees,
     });
   }
 

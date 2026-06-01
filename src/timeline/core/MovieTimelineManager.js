@@ -39,6 +39,7 @@ export class MovieTimelineManager {
     this.timelineDataset = TimelineDataset.fromMovieData(movieData, {
       segments: this.segments,
       timelineData: this.timelineData,
+      treeList,
     });
     this.timelineConductor = TimelineConductor.fixed(this.timelineDataset);
     this.timelineClock = new TimelineClock({
@@ -321,7 +322,18 @@ export class MovieTimelineManager {
   }
 
   getTransitionFrameForTimelineProgress(progress) {
-    return this.timelineClock?.getTransitionFrameForProgress(progress) ?? null;
+    let transitionFrame = this.timelineClock?.getTransitionFrameForProgress(progress) ?? null;
+    if (
+      transitionFrame &&
+      (!transitionFrame.sourceTree || !transitionFrame.targetTree) &&
+      Number.isInteger(transitionFrame.sourceTreeIndex) &&
+      Number.isInteger(transitionFrame.targetTreeIndex)
+    ) {
+      const { ensureTreesHydrated } = useAppStore.getState();
+      ensureTreesHydrated?.([transitionFrame.sourceTreeIndex, transitionFrame.targetTreeIndex]);
+      transitionFrame = this.timelineClock?.getTransitionFrameForProgress(progress) ?? null;
+    }
+    return transitionFrame;
   }
 
   getTimelineProgressForLinearTreeProgress(progress, treeCount) {

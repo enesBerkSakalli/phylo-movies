@@ -13,8 +13,13 @@ import {
   validatePairMetrics,
   validateSubtreeHighlightTracking,
   validateTemporalEvents,
+  validateAnnotationDefinitions,
+  validateSplitDefinitions,
+  validateTreeNameDefinitions,
   validateTreeList,
+  validateTreePayloadList,
 } from './treePayloadValidators';
+import { hydrateMovieTreeAtIndex as hydrateMovieTreePayloadAtIndex } from './treeHydration.js';
 
 export type {
   DatasetProvenance,
@@ -33,10 +38,32 @@ export type {
   TreeNode,
 } from './phyloMovieTypes';
 
-export function validatePhyloMovieData(data: unknown): PhyloMovieData {
+type ValidationOptions = {
+  hydrateTrees?: boolean;
+};
+
+export type PhyloMovieTransportData = Omit<PhyloMovieData, 'interpolated_trees'> & {
+  interpolated_trees: unknown[];
+  annotation_definitions: ReturnType<typeof validateAnnotationDefinitions>;
+  tree_name_definitions: string[];
+  split_definitions: number[][];
+};
+
+export function validatePhyloMovieData(data: unknown): PhyloMovieData;
+export function validatePhyloMovieData(
+  data: unknown,
+  options: { hydrateTrees: false }
+): PhyloMovieTransportData;
+export function validatePhyloMovieData(
+  data: unknown,
+  options: ValidationOptions = {}
+): PhyloMovieData | PhyloMovieTransportData {
   assertRecord(data, 'phyloMovieData');
   assertExactRecordKeys(data, 'phyloMovieData', [
     'interpolated_trees',
+    'annotation_definitions',
+    'tree_name_definitions',
+    'split_definitions',
     'frames',
     'pairs',
     'temporal_events',
@@ -47,13 +74,24 @@ export function validatePhyloMovieData(data: unknown): PhyloMovieData {
     'dataset_provenance',
   ]);
 
-  const interpolatedTrees = validateTreeList(data.interpolated_trees);
-  const frames = validateFrames(data.frames, interpolatedTrees.length);
-  const pairs = validatePairs(data.pairs, interpolatedTrees.length);
-  const temporalEvents = validateTemporalEvents(data.temporal_events, interpolatedTrees.length);
+  const annotationDefinitions = validateAnnotationDefinitions(data.annotation_definitions);
+  const treeNameDefinitions = validateTreeNameDefinitions(data.tree_name_definitions);
+  const splitDefinitions = validateSplitDefinitions(data.split_definitions);
+  const treeDictionaries = {
+    treeNameDefinitions,
+    splitDefinitions,
+  };
+  const hydrateTrees = options.hydrateTrees !== false;
+  const interpolatedTrees = hydrateTrees
+    ? validateTreeList(data.interpolated_trees, annotationDefinitions, treeDictionaries)
+    : validateTreePayloadList(data.interpolated_trees, annotationDefinitions, treeDictionaries);
+  const treeCount = interpolatedTrees.length;
+  const frames = validateFrames(data.frames, treeCount);
+  const pairs = validatePairs(data.pairs, treeCount);
+  const temporalEvents = validateTemporalEvents(data.temporal_events, treeCount);
   const subtreeHighlightTracking = validateSubtreeHighlightTracking(
     data.subtree_highlight_tracking,
-    interpolatedTrees.length
+    treeCount
   );
   const pairMetrics = validatePairMetrics(data.pair_metrics);
   const msa = validateMsa(data.msa);
@@ -65,7 +103,7 @@ export function validatePhyloMovieData(data: unknown): PhyloMovieData {
   }
   const datasetProvenance = validateDatasetProvenance(data.dataset_provenance);
 
-  return {
+  const validatedData = {
     interpolated_trees: interpolatedTrees,
     frames,
     pairs,
@@ -76,6 +114,27 @@ export function validatePhyloMovieData(data: unknown): PhyloMovieData {
     file_name: data.file_name,
     dataset_provenance: datasetProvenance,
   };
+
+  if (!hydrateTrees) {
+    return {
+      ...validatedData,
+      annotation_definitions: annotationDefinitions,
+      tree_name_definitions: treeNameDefinitions,
+      split_definitions: splitDefinitions,
+    } as PhyloMovieTransportData;
+  }
+
+  return validatedData as PhyloMovieData;
+}
+
+export function hydrateMovieTreeAtIndex(
+  movieData: PhyloMovieData | PhyloMovieTransportData,
+  treeIndex: number
+) {
+  return hydrateMovieTreePayloadAtIndex(
+    movieData,
+    treeIndex
+  ) as PhyloMovieData['interpolated_trees'][number];
 }
 
 function optionalString(value: unknown, fieldName: string): string | undefined {

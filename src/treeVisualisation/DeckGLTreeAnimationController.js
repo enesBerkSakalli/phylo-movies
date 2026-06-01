@@ -401,6 +401,7 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
   _prefetchFrame(treeIndex) {
     const state = useAppStore.getState();
     const treeList = selectActiveTreeList(state);
+    state.ensureTreeHydrated?.(treeIndex);
 
     // Bounds check
     if (!treeList || !treeList[treeIndex]) return;

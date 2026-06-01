@@ -73,6 +73,8 @@ export function useTreeController() {
           const controller = controllerRef.current || state.treeControllers[0];
           if (!controller || state.treeList.length === 0) return;
 
+          state.setRenderInProgress(true);
+          state.prefetchTreeHydrationWindow?.(state.frameIndex, 1);
           if (!controller.ready) {
             try {
               await controller.readyPromise;
@@ -81,7 +83,6 @@ export function useTreeController() {
             }
           }
 
-          state.setRenderInProgress(true);
           try {
             if (state.comparisonMode) {
               await renderComparisonMode(controller, state, state.frameIndex, state.timelineCursor);

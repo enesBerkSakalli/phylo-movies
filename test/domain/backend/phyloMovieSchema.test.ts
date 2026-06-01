@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { validatePhyloMovieData } from '../../../src/domain/backend/phyloMovieSchema';
+import {
+  hydrateMovieTreeAtIndex,
+  validatePhyloMovieData,
+} from '../../../src/domain/backend/phyloMovieSchema';
 import { phyloData } from '../../../src/services/data/dataService.js';
 
 const tree = {
@@ -11,6 +14,23 @@ const tree = {
     { name: 'B', length: 1, split_indices: [1], children: [] },
     { name: 'C', length: 1, split_indices: [2], children: [] },
   ],
+};
+
+const compactTree = [
+  0,
+  0,
+  0,
+  null,
+  [
+    [1, 1, 1, null, []],
+    [1, 2, 2, null, []],
+    [1, 3, 3, null, []],
+  ],
+];
+
+const compactTreeDefinitions = {
+  tree_name_definitions: ['root', 'A', 'B', 'C'],
+  split_definitions: [[0, 1, 2], [0], [1], [2]],
 };
 
 function clone<T>(value: T): T {
@@ -215,6 +235,22 @@ describe('validatePhyloMovieData', () => {
     });
   });
 
+  it('can preserve compact tuple trees and hydrate one tree on demand', () => {
+    const result = validatePhyloMovieData(
+      makePayload({
+        ...compactTreeDefinitions,
+        interpolated_trees: [compactTree, compactTree, compactTree],
+      }),
+      { hydrateTrees: false }
+    );
+
+    expect(result.interpolated_trees[0]).toBe(compactTree);
+    expect(Array.isArray(result.interpolated_trees[0])).toBe(true);
+
+    const hydratedTree = hydrateMovieTreeAtIndex(result, 0);
+    expect(hydratedTree).toEqual(tree);
+  });
+
   it('accepts structured branch annotation fields on tree nodes', () => {
     const annotatedTree = {
       ...tree,
@@ -268,6 +304,117 @@ describe('validatePhyloMovieData', () => {
         analysis: { method: 'iqtree' },
       }
     );
+  });
+
+  it('hydrates compact branch annotation values from top-level definitions', () => {
+    const compactTree = {
+      ...tree,
+      annotation_values: [
+        [0, '88.5/99'],
+        [1, 88.5],
+      ],
+      children: tree.children,
+    };
+
+    const result = validatePhyloMovieData(
+      makePayload({
+        annotation_definitions: [
+          {
+            key: 'label.raw_internal',
+            path: ['label', 'raw_internal'],
+            label: 'Raw Internal Label',
+            value_type: 'string',
+            role: 'source_annotation',
+          },
+          {
+            key: 'support.iqtree.sh_alrt',
+            path: ['support', 'iqtree', 'sh_alrt'],
+            label: 'SH-aLRT',
+            value_type: 'number',
+            role: 'branch_support',
+            unit: 'percent',
+            analysis: { type: 'tree_inference', method: 'iqtree', mode: 'sh_alrt' },
+          },
+        ],
+        interpolated_trees: [compactTree, compactTree, compactTree],
+      })
+    );
+
+    expect(result.interpolated_trees[0].annotations?.fields['label.raw_internal']).toMatchObject({
+      value: '88.5/99',
+      role: 'source_annotation',
+    });
+    expect(
+      result.interpolated_trees[0].annotations?.fields['support.iqtree.sh_alrt']
+    ).toMatchObject({
+      value: 88.5,
+      role: 'branch_support',
+      analysis: { method: 'iqtree', mode: 'sh_alrt' },
+    });
+  });
+
+  it('hydrates compact tree names and splits from top-level dictionaries', () => {
+    const compactTree = {
+      name_ref: 0,
+      length: 0,
+      split_ref: 0,
+      children: [
+        { name_ref: 1, length: 1, split_ref: 1, children: [] },
+        { name_ref: 2, length: 1, split_ref: 2, children: [] },
+        { name_ref: 3, length: 1, split_ref: 3, children: [] },
+      ],
+    };
+
+    const result = validatePhyloMovieData(
+      makePayload({
+        tree_name_definitions: ['root', 'A', 'B', 'C'],
+        split_definitions: [[0, 1, 2], [0], [1], [2]],
+        interpolated_trees: [compactTree, compactTree, compactTree],
+      })
+    );
+
+    expect(result.interpolated_trees[0]).toMatchObject({
+      name: 'root',
+      split_indices: [0, 1, 2],
+      children: [
+        { name: 'A', split_indices: [0] },
+        { name: 'B', split_indices: [1] },
+        { name: 'C', split_indices: [2] },
+      ],
+    });
+  });
+
+  it('hydrates tuple tree nodes into the existing object node shape', () => {
+    const tupleTree = [
+      0,
+      0,
+      0,
+      null,
+      [
+        [1, 1, 1, null, []],
+        [1, 2, 2, null, []],
+        [1, 3, 3, null, []],
+      ],
+    ];
+
+    const result = validatePhyloMovieData(
+      makePayload({
+        tree_name_definitions: ['root', 'A', 'B', 'C'],
+        split_definitions: [[0, 1, 2], [0], [1], [2]],
+        interpolated_trees: [tupleTree, tupleTree, tupleTree],
+      })
+    );
+
+    expect(result.interpolated_trees[0]).toMatchObject({
+      name: 'root',
+      length: 0,
+      split_indices: [0, 1, 2],
+      children: [
+        { name: 'A', length: 1, split_indices: [0], children: [] },
+        { name: 'B', length: 1, split_indices: [1], children: [] },
+        { name: 'C', length: 1, split_indices: [2], children: [] },
+      ],
+    });
   });
 
   it('validates the same contract through the data service', () => {

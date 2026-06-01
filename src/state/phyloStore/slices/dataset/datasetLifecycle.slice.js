@@ -1,4 +1,5 @@
 import { MovieTimelineManager } from '../../../../timeline/core/MovieTimelineManager.js';
+import { hydrateMovieTreeAtIndex } from '../../../../domain/backend/treeHydration.js';
 
 const EMPTY_PAIR_METRICS = Object.freeze({
   rows: Object.freeze([]),
@@ -22,6 +23,9 @@ export const createDatasetLifecycleSlice = (set, get) => ({
 
     set({
       treeList: [],
+      treePayloadList: [],
+      treeHydrationSource: null,
+      treeHydrationVersion: 0,
       timelineFrames: [],
       leafNamesByIndex: [],
       fileName: null,
@@ -52,7 +56,8 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       pair_metrics: pairMetrics,
       subtree_highlight_tracking: subtreeHighlightTracking,
     } = movieData;
-    const leafNamesByIndex = deriveLeafNamesByIndex(interpolatedTrees[0]);
+    const treeList = createHydratedTreeCache(movieData, frames);
+    const leafNamesByIndex = deriveLeafNamesByIndex(treeList[0]);
 
     const { sequences: msaSequences, window_size: windowSize, step_size: stepSize } = movieData.msa;
 
@@ -70,13 +75,16 @@ export const createDatasetLifecycleSlice = (set, get) => ({
     const existingManager = get().movieTimelineManager;
     existingManager?.destroy();
 
-    const movieTimelineManager = new MovieTimelineManager(movieData, interpolatedTrees);
+    const movieTimelineManager = new MovieTimelineManager(movieData, treeList);
     const timelineCursor = movieTimelineManager.getCursorForFrame(0);
 
     set({
       movieTimelineManager,
       timelineCursor,
-      treeList: interpolatedTrees,
+      treeList,
+      treePayloadList: interpolatedTrees,
+      treeHydrationSource: movieData,
+      treeHydrationVersion: 0,
       timelineFrames: frames,
       leafNamesByIndex,
       fileName,
@@ -98,6 +106,26 @@ export const createDatasetLifecycleSlice = (set, get) => ({
     initializeColors();
   },
 });
+
+function createHydratedTreeCache(movieData, frames) {
+  const treePayloadList = movieData.interpolated_trees;
+  const treeList = new Array(treePayloadList.length);
+  const indicesToHydrate = new Set([0]);
+
+  frames.forEach((frame) => {
+    if (frame?.frame_type === 'input_tree' || frame?.is_observed_input === true) {
+      indicesToHydrate.add(frame.frame_index);
+    }
+  });
+
+  indicesToHydrate.forEach((treeIndex) => {
+    if (treeIndex >= 0 && treeIndex < treePayloadList.length) {
+      treeList[treeIndex] = hydrateMovieTreeAtIndex(movieData, treeIndex);
+    }
+  });
+
+  return treeList;
+}
 
 function deriveLeafNamesByIndex(tree) {
   const namesByIndex = [];

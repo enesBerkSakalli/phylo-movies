@@ -46,6 +46,7 @@ export class ComparisonModeRenderer {
    * @param {number} rightIndex - Right tree index
    */
   async renderStatic(leftIndex, rightIndex) {
+    const state = useAppStore.getState();
     const {
       treeList,
       leftTreeOffsetX = 0,
@@ -53,7 +54,7 @@ export class ComparisonModeRenderer {
       viewsConnected,
       linkGeometryMode = 'radial-elbow',
       labelsVisible,
-    } = useAppStore.getState();
+    } = state;
 
     const clampIndex = (idx) => {
       if (!Array.isArray(treeList)) return 0;
@@ -63,6 +64,7 @@ export class ComparisonModeRenderer {
     const clampedLeftIndex = clampIndex(leftIndex);
     const clampedRightIndex = clampIndex(rightIndex);
 
+    state.ensureTreesHydrated?.([clampedLeftIndex, clampedRightIndex]);
     const leftTreeData = treeList?.[clampedLeftIndex];
     const rightTreeData = treeList?.[clampedRightIndex];
 

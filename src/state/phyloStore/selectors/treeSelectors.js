@@ -67,6 +67,7 @@ export { selectPairById } from './selectPairById.js';
 export { selectPairMetrics } from './selectPairMetrics.js';
 export { selectPairs } from './selectPairs.js';
 export { selectTemporalEvents } from './selectTemporalEvents.js';
+export { selectTreeHydrationStats } from './selectTreeHydrationStats.js';
 export { selectPivotEdgeColor } from './selectPivotEdgeColor.js';
 export { selectPivotEdgeDashingEnabled } from './selectPivotEdgeDashingEnabled.js';
 export { selectPivotEdgeForFrame } from './selectPivotEdgeForFrame.js';

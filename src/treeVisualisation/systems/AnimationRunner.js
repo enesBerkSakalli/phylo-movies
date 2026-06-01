@@ -165,6 +165,7 @@ export class AnimationRunner {
     const { progress, isFinished, fromIndex, toIndex, localT } = playback;
 
     // 2. Data Access
+    state.ensureTreesHydrated?.([fromIndex, toIndex]);
     const trees = getActiveTreeSequence(state);
     const fromTree = trees[fromIndex];
     const toTree = trees[toIndex];
@@ -417,6 +418,7 @@ function getComparisonTarget(state, fromIndex, toIndex) {
     inputFrameIndices.find((i) => i > fromIndex) ??
     inputFrameIndices[inputFrameIndices.length - 1] ??
     toIndex;
+  state.ensureTreeHydrated?.(rightIdx);
   const rightTree = treeList[rightIdx];
 
   return rightTree ? { rightTree, rightTreeIndex: rightIdx } : null;

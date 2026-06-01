@@ -125,6 +125,7 @@ describe('useTreeController static render scheduling', () => {
       clearMsaRegion: vi.fn(),
       clearMsaPreviousRegion: vi.fn(),
       updateColorManagerForCurrentIndex: vi.fn(),
+      prefetchTreeHydrationWindow: vi.fn(),
     };
 
     vi.stubGlobal(
@@ -175,12 +176,50 @@ describe('useTreeController static render scheduling', () => {
     });
   });
 
+  it('marks rendering in progress while waiting for the tree controller to become ready', async () => {
+    const controllerReady = deferred();
+    const { root } = await renderHookHarness();
+    controllerInstance.ready = false;
+    controllerInstance.readyPromise = controllerReady.promise;
+
+    await flushNextRaf();
+
+    expect(storeState.setRenderInProgress).toHaveBeenCalledWith(true);
+    expect(controllerInstance.renderTimelineProgress).not.toHaveBeenCalled();
+
+    await act(async () => {
+      controllerReady.resolve();
+      await controllerReady.promise;
+      await Promise.resolve();
+    });
+
+    expect(controllerInstance.renderTimelineProgress).toHaveBeenCalledWith(0.1);
+    expect(storeState.setRenderInProgress).toHaveBeenLastCalledWith(false);
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
   it('leaves frame-index color sync to the store subscriber', async () => {
     const { root } = await renderHookHarness();
 
     updateStore({ frameIndex: 1 });
 
     expect(storeState.updateColorManagerForCurrentIndex).not.toHaveBeenCalled();
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it('prefetches the current tree hydration window before rendering', async () => {
+    const { root } = await renderHookHarness();
+
+    await flushNextRaf();
+
+    expect(storeState.prefetchTreeHydrationWindow).toHaveBeenCalledWith(0, 1);
+    expect(controllerInstance.renderTimelineProgress).toHaveBeenCalledWith(0.1);
 
     await act(async () => {
       root.unmount();
