@@ -121,7 +121,7 @@ export const EXAMPLE_DATASETS = [
     filePath: NOROVIRUS_SOURCE_BASE + '03_trimmed/subsampled_350_gappyout_final.fasta',
     fileType: 'msa',
     precomputedPayloadPath:
-      PRECOMPUTED_EXAMPLE_BASE + 'norovirus_334_iqtree_fast_window750_step500.input.movie.json',
+      PRECOMPUTED_EXAMPLE_BASE + 'norovirus_334_iqtree_fast_window750_step500.movie.json',
     sourceTruthFile: NOROVIRUS_SOURCE_TRUTH,
     regenerationGuide: NOROVIRUS_REGENERATION_GUIDE,
     generatedArtifactFiles: [...NOROVIRUS_GENERATED_METADATA_FILES, NOROVIRUS_FAST_TREE_SERIES],
@@ -163,7 +163,7 @@ export const EXAMPLE_DATASETS = [
     fileType: 'msa',
     precomputedPayloadPath:
       PRECOMPUTED_EXAMPLE_BASE +
-      'norovirus_334_iqtree_fast_sh_alrt_window1000_step500.input.movie.json',
+      'norovirus_334_iqtree_fast_sh_alrt_window1000_step500.movie.json',
     sourceTruthFile: NOROVIRUS_SOURCE_TRUTH,
     regenerationGuide: NOROVIRUS_REGENERATION_GUIDE,
     generatedArtifactFiles: [
@@ -289,7 +289,7 @@ export const EXAMPLE_DATASETS = [
       BOOTSTRAP_SOURCE_BASE +
       `current_results/${BOOTSTRAP_24_DATASET}/ranked/all_trees_24_source-24_taxa24_sites14190.nwk`,
     precomputedPayloadPath:
-      PRECOMPUTED_EXAMPLE_BASE + 'all_trees_24_source-24_taxa24_sites14190.input.movie.json',
+      PRECOMPUTED_EXAMPLE_BASE + 'all_trees_24_source-24_taxa24_sites14190.movie.json',
     fileType: 'newick',
     sourceTruthFile: makeBootstrapSourceTruthFile({ taxa: 24, sites: 14190 }),
     regenerationGuide: BOOTSTRAP_REGENERATION_GUIDE,
@@ -334,7 +334,7 @@ export const EXAMPLE_DATASETS = [
       BOOTSTRAP_SOURCE_BASE +
       `current_results/${BOOTSTRAP_125_DATASET}/ranked/all_trees_125_source-125_taxa125_sites29149.nwk`,
     precomputedPayloadPath:
-      PRECOMPUTED_EXAMPLE_BASE + 'all_trees_125_source-125_taxa125_sites29149.input.movie.json',
+      PRECOMPUTED_EXAMPLE_BASE + 'all_trees_125_source-125_taxa125_sites29149.movie.json',
     fileType: 'newick',
     sourceTruthFile: makeBootstrapSourceTruthFile({ taxa: 125, sites: 29149 }),
     regenerationGuide: BOOTSTRAP_REGENERATION_GUIDE,

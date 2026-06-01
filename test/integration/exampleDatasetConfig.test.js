@@ -15,6 +15,13 @@ function expectExampleArtifactExists(artifact) {
   expect(fs.existsSync(publicationPathForExampleArtifact(artifact))).toBe(true);
 }
 
+function countFramesByType(payload) {
+  return payload.frames.reduce((counts, frame) => {
+    counts[frame.frame_type] = (counts[frame.frame_type] || 0) + 1;
+    return counts;
+  }, {});
+}
+
 describe('example dataset configuration', () => {
   it('copies publication example assets into production builds', () => {
     const packageJson = JSON.parse(
@@ -108,11 +115,11 @@ describe('example dataset configuration', () => {
 
   it('keeps browser demo payload files generated and schema-valid', () => {
     const expectedPayloadFiles = [
-      'all_trees_125_source-125_taxa125_sites29149.input.movie.json',
-      'all_trees_24_source-24_taxa24_sites14190.input.movie.json',
+      'all_trees_125_source-125_taxa125_sites29149.movie.json',
+      'all_trees_24_source-24_taxa24_sites14190.movie.json',
       'msprime_1000taxa_2trees_seed100005.movie.json',
-      'norovirus_334_iqtree_fast_sh_alrt_window1000_step500.input.movie.json',
-      'norovirus_334_iqtree_fast_window750_step500.input.movie.json',
+      'norovirus_334_iqtree_fast_sh_alrt_window1000_step500.movie.json',
+      'norovirus_334_iqtree_fast_window750_step500.movie.json',
       'paper_example.movie.json',
       'quick_msa_demo_30taxa_10trees.movie.json',
     ];
@@ -132,7 +139,7 @@ describe('example dataset configuration', () => {
       );
       const payloadPath = path.join(process.cwd(), precomputedRelativePath);
       const payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
-      const validated = validatePhyloMovieData(payload);
+      const validated = validatePhyloMovieData(payload, { hydrateTrees: false });
 
       expect(validated.file_name).toBeTruthy();
       expect(validated.interpolated_trees.length).toBe(validated.frames.length);
@@ -151,12 +158,22 @@ describe('example dataset configuration', () => {
       })
     );
 
-    expect(payloadsById.get('norovirus-334').interpolated_trees).toHaveLength(17);
+    expect(countFramesByType(payloadsById.get('norovirus-334')).interpolation_frame).toBeGreaterThan(
+      0
+    );
     expect(payloadsById.get('norovirus-334').msa.window_size).toBe(750);
-    expect(payloadsById.get('norovirus-334-stability').interpolated_trees).toHaveLength(17);
+    expect(
+      countFramesByType(payloadsById.get('norovirus-334-stability')).interpolation_frame
+    ).toBeGreaterThan(0);
     expect(payloadsById.get('norovirus-334-stability').msa.window_size).toBe(1000);
     expect(payloadsById.get('norovirus-334-stability').msa.step_size).toBe(500);
-  });
+    expect(countFramesByType(payloadsById.get('bootstrap-24')).interpolation_frame).toBeGreaterThan(
+      0
+    );
+    expect(
+      countFramesByType(payloadsById.get('bootstrap-125')).interpolation_frame
+    ).toBeGreaterThan(0);
+  }, 30000);
 
   it('keeps publication source artifacts copied into production builds', () => {
     const copyScript = fs.readFileSync(
@@ -229,7 +246,7 @@ describe('example dataset configuration', () => {
       value: '1000 sites, 500-site step',
     });
     expect(stabilityNorovirusExample.precomputedPayloadPath).toContain(
-      'norovirus_334_iqtree_fast_sh_alrt_window1000_step500.input.movie.json'
+      'norovirus_334_iqtree_fast_sh_alrt_window1000_step500.movie.json'
     );
     expect(stabilityNorovirusExample.parameters).toMatchObject({
       treeInferenceEngine: 'iqtree',

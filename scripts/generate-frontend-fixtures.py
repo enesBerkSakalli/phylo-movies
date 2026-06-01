@@ -33,6 +33,7 @@ from msa_to_trees.pipeline import IQTreeConfig, run_pipeline  # noqa: E402
 from webapp.services.trees.frontend_builder import (  # noqa: E402
     assemble_frontend_metadata,
     build_movie_data_from_result,
+    compact_tree_payload,
 )
 from webapp.services.msa import process_msa_data  # noqa: E402
 
@@ -55,8 +56,14 @@ class FixtureSpec:
 FIXTURES: tuple[FixtureSpec, ...] = (
     FixtureSpec(
         name="demo-quick-msa",
-        source=ROOT / "publication_data" / "quick_msa_demo" / "quick_msa_demo_30taxa_10trees.nwk",
-        output=ROOT / "publication_data" / "precomputed" / "quick_msa_demo_30taxa_10trees.movie.json",
+        source=ROOT
+        / "publication_data"
+        / "quick_msa_demo"
+        / "quick_msa_demo_30taxa_10trees.nwk",
+        output=ROOT
+        / "publication_data"
+        / "precomputed"
+        / "quick_msa_demo_30taxa_10trees.movie.json",
         filename="quick_msa_demo_30taxa_10trees.nwk",
         window_size=200,
         step_size=100,
@@ -82,7 +89,7 @@ FIXTURES: tuple[FixtureSpec, ...] = (
         output=ROOT
         / "publication_data"
         / "precomputed"
-        / "norovirus_334_iqtree_fast_window750_step500.input.movie.json",
+        / "norovirus_334_iqtree_fast_window750_step500.movie.json",
         filename="norovirus_334_iqtree_fast_window750_step500.nwk",
         window_size=750,
         step_size=500,
@@ -93,7 +100,6 @@ FIXTURES: tuple[FixtureSpec, ...] = (
         / "augur_subsampling"
         / "03_trimmed"
         / "subsampled_350_gappyout_final.fasta",
-        input_only=True,
         inference_source=ROOT
         / "publication_data"
         / "recombination_norovirus"
@@ -114,7 +120,7 @@ FIXTURES: tuple[FixtureSpec, ...] = (
         output=ROOT
         / "publication_data"
         / "precomputed"
-        / "norovirus_334_iqtree_fast_sh_alrt_window1000_step500.input.movie.json",
+        / "norovirus_334_iqtree_fast_sh_alrt_window1000_step500.movie.json",
         filename="norovirus_334_iqtree_fast_sh_alrt_window1000_step500.nwk",
         window_size=1000,
         step_size=500,
@@ -125,7 +131,6 @@ FIXTURES: tuple[FixtureSpec, ...] = (
         / "augur_subsampling"
         / "03_trimmed"
         / "subsampled_350_gappyout_final.fasta",
-        input_only=True,
         inference_source=ROOT
         / "publication_data"
         / "recombination_norovirus"
@@ -153,9 +158,8 @@ FIXTURES: tuple[FixtureSpec, ...] = (
         output=ROOT
         / "publication_data"
         / "precomputed"
-        / "all_trees_24_source-24_taxa24_sites14190.input.movie.json",
+        / "all_trees_24_source-24_taxa24_sites14190.movie.json",
         filename="all_trees_24_source-24_taxa24_sites14190.nwk",
-        input_only=True,
     ),
     FixtureSpec(
         name="demo-bootstrap-125",
@@ -169,9 +173,8 @@ FIXTURES: tuple[FixtureSpec, ...] = (
         output=ROOT
         / "publication_data"
         / "precomputed"
-        / "all_trees_125_source-125_taxa125_sites29149.input.movie.json",
+        / "all_trees_125_source-125_taxa125_sites29149.movie.json",
         filename="all_trees_125_source-125_taxa125_sites29149.nwk",
-        input_only=True,
     ),
     FixtureSpec(
         name="demo-msprime-1000-limit",
@@ -211,6 +214,14 @@ def main() -> int:
         choices=[fixture.name for fixture in FIXTURES],
         help="limit to one fixture; can be passed more than once",
     )
+    parser.add_argument(
+        "--reuse-inferred",
+        action="store_true",
+        help=(
+            "when writing fixtures, reuse checked-in inferred tree sources instead "
+            "of rerunning tree inference"
+        ),
+    )
     args = parser.parse_args()
 
     selected = list(_select_fixtures(args.fixture))
@@ -225,7 +236,9 @@ def main() -> int:
 
     if args.write:
         for fixture in selected:
-            _prepare_fixture_source(fixture, regenerate_inferred=True)
+            _prepare_fixture_source(
+                fixture, regenerate_inferred=not args.reuse_inferred
+            )
             fixture.output.parent.mkdir(parents=True, exist_ok=True)
             fixture.output.write_text(_render_fixture(fixture), encoding="utf-8")
             print(f"wrote {fixture.output.relative_to(ROOT)}")
@@ -267,9 +280,7 @@ def _render_fixture(fixture: FixtureSpec) -> str:
     return json.dumps(payload, separators=(",", ":")) + "\n"
 
 
-def _prepare_fixture_source(
-    fixture: FixtureSpec, *, regenerate_inferred: bool
-) -> None:
+def _prepare_fixture_source(fixture: FixtureSpec, *, regenerate_inferred: bool) -> None:
     if fixture.inference_source is None:
         return
     if not regenerate_inferred and fixture.source.exists():
@@ -378,8 +389,18 @@ def _build_input_only_payload(fixture: FixtureSpec, trees: list[Node]) -> dict:
     else:
         msa_data = {"sequences": None, "window_size": 1, "step_size": 1}
 
+    (
+        serialized_trees,
+        annotation_definitions,
+        tree_name_definitions,
+        split_definitions,
+    ) = compact_tree_payload(serialize_tree_list_to_json(trees))
+
     return {
-        "interpolated_trees": serialize_tree_list_to_json(trees),
+        "interpolated_trees": serialized_trees,
+        "annotation_definitions": annotation_definitions,
+        "tree_name_definitions": tree_name_definitions,
+        "split_definitions": split_definitions,
         "frames": frames,
         "pairs": pairs,
         "temporal_events": [],
@@ -527,12 +548,15 @@ def _build_bootstrap_provenance(source_label: str, taxa: str) -> dict:
         "source_type": "Generated browser demo",
         "source_label": source_label,
         "tree_source": (
-            f"Input-only static payload generated from the {taxa}-taxon "
+            f"Interpolated static payload generated from the {taxa}-taxon "
             "composition-ranked bootstrap tree series."
         ),
         "settings": [
             {"label": "Tree source", "value": "Precomputed bootstrap tree series"},
-            {"label": "Browser payload", "value": "Input trees only, no interpolation frames"},
+            {
+                "label": "Browser payload",
+                "value": "Input trees plus generated interpolation frames",
+            },
             {"label": "Rooting", "value": "Input rooting preserved"},
         ],
         "citation": (
@@ -546,6 +570,9 @@ def _build_bootstrap_provenance(source_label: str, taxa: str) -> dict:
 def _assert_normalized_contract_fields(payload: dict, fixture_name: str) -> None:
     expected_keys = {
         "interpolated_trees",
+        "annotation_definitions",
+        "tree_name_definitions",
+        "split_definitions",
         "frames",
         "pairs",
         "temporal_events",
