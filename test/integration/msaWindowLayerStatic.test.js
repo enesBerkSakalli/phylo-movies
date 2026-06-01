@@ -88,6 +88,19 @@ describe('MSA window layering', () => {
     expect(source).toContain('inline-flex w-[7.5rem] shrink-0');
   });
 
+  it('shows source-target MSA window overlap as a compact mini-track', () => {
+    const source = fs.readFileSync(
+      path.join(process.cwd(), 'src/components/msa/MSAViewer.jsx'),
+      'utf8'
+    );
+
+    expect(source).toContain('buildMsaWindowOverlapStatus');
+    expect(source).toContain('MSAWindowOverlapStatus');
+    expect(source).toContain('MSAWindowOverlapTrack');
+    expect(source).toContain('leavingRanges');
+    expect(source).toContain('enteringRanges');
+  });
+
   it('uses a compact single-row MSA window header', () => {
     const source = fs.readFileSync(
       path.join(process.cwd(), 'src/components/msa/MsaRndWindow.jsx'),
