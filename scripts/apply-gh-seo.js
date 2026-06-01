@@ -20,6 +20,10 @@ const PUBLICATION_URL = 'https://www.biorxiv.org/content/10.64898/2026.04.01.715
 const PUBLICATION_PDF_URL = 'https://www.biorxiv.org/content/10.64898/2026.04.01.715821v1.full.pdf';
 const PUBLICATION_DOI = '10.64898/2026.04.01.715821';
 const PUBLICATION_DOI_URL = `https://doi.org/${PUBLICATION_DOI}`;
+const SOFTWARE_DOI = '10.5281/zenodo.20488924';
+const SOFTWARE_CONCEPT_DOI = '10.5281/zenodo.20488923';
+const SOFTWARE_DOI_URL = `https://doi.org/${SOFTWARE_DOI}`;
+const SOFTWARE_CONCEPT_DOI_URL = `https://doi.org/${SOFTWARE_CONCEPT_DOI}`;
 const PUBLICATION_TITLE = 'Animating Phylogenetic Trees from Sliding-Window Analyses';
 const PUBLICATION_DATE = '2026-04-01';
 const PUBLICATION_JOURNAL = 'bioRxiv';
@@ -83,7 +87,7 @@ const FAQ_ITEMS = [
   },
   {
     question: 'How should I cite Phylo-Movies?',
-    answer: `Cite the bioRxiv preprint ${PUBLICATION_TITLE} using DOI ${PUBLICATION_DOI}.`,
+    answer: `Cite the bioRxiv preprint ${PUBLICATION_TITLE} using DOI ${PUBLICATION_DOI}, and cite the archived software release using DOI ${SOFTWARE_DOI}.`,
   },
 ];
 
@@ -175,8 +179,17 @@ const STRUCTURED_DATA = [
     runtimePlatform: ['Web Browser', 'Electron', 'Docker'],
     applicationCategory: 'ScientificApplication',
     downloadUrl: RELEASES_URL,
-    citation: PUBLICATION_DOI_URL,
-    sameAs: [REPOSITORY_URL, README_URL, RELEASES_URL, PUBLICATION_URL, PUBLICATION_DOI_URL],
+    citation: SOFTWARE_DOI_URL,
+    identifier: SOFTWARE_DOI,
+    sameAs: [
+      REPOSITORY_URL,
+      README_URL,
+      RELEASES_URL,
+      PUBLICATION_URL,
+      PUBLICATION_DOI_URL,
+      SOFTWARE_DOI_URL,
+      SOFTWARE_CONCEPT_DOI_URL,
+    ],
     subjectOf: PUBLICATION_URL,
     keywords: KEYWORDS.split(',').map((keyword) => keyword.trim()),
   },
@@ -188,11 +201,13 @@ const STRUCTURED_DATA = [
     description: DESCRIPTION,
     applicationCategory: 'ScientificApplication',
     operatingSystem: 'macOS, Windows, Linux, Web',
-    softwareVersion: '0.64.0',
+    softwareVersion: '0.92.0',
     downloadUrl: RELEASES_URL,
     codeRepository: REPOSITORY_URL,
     screenshot: SOCIAL_IMAGE_URL,
-    citation: PUBLICATION_DOI_URL,
+    citation: SOFTWARE_DOI_URL,
+    identifier: SOFTWARE_DOI,
+    sameAs: [REPOSITORY_URL, RELEASES_URL, SOFTWARE_DOI_URL, SOFTWARE_CONCEPT_DOI_URL],
     keywords: KEYWORDS.split(',').map((keyword) => keyword.trim()),
   },
   {
@@ -366,8 +381,10 @@ function renderStaticLandingHtml() {
           <h2 style="${headingStyle()}">Publication and Citation</h2>
           <p style="${bodyStyle()}"><strong>${PUBLICATION_TITLE}</strong> presents the Phylo-Movies workflow for recombination-focused sliding-window phylogenetics and rogue-taxon exploration across bootstrap tree sets.</p>
           <p style="${bodyStyle()}">Authors: ${PUBLICATION_AUTHORS.join(', ')}.</p>
-          <p style="${bodyStyle()}">DOI: <a href="${PUBLICATION_DOI_URL}">${PUBLICATION_DOI}</a></p>
+          <p style="${bodyStyle()}">Publication DOI: <a href="${PUBLICATION_DOI_URL}">${PUBLICATION_DOI}</a></p>
+          <p style="${bodyStyle()}">Software DOI: <a href="${SOFTWARE_DOI_URL}">${SOFTWARE_DOI}</a> (concept DOI: <a href="${SOFTWARE_CONCEPT_DOI_URL}">${SOFTWARE_CONCEPT_DOI}</a>)</p>
           <pre style="white-space: pre-wrap; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb; padding: 16px; color: #111827; font-size: 13px; line-height: 1.55;">Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). Animating Phylogenetic Trees from Sliding-Window Analyses. bioRxiv. doi:10.64898/2026.04.01.715821</pre>
+          <pre style="white-space: pre-wrap; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb; padding: 16px; color: #111827; font-size: 13px; line-height: 1.55;">Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). Phylo-Movies: Interactive Phylogenetic Tree Interpolation and Visualization, version 0.92.0. Zenodo. doi:10.5281/zenodo.20488924</pre>
         </section>
 
         <section style="${sectionStyle()}">
@@ -384,7 +401,7 @@ docker compose up --build</code></pre>
           <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Can I try it in the browser?</h3><p style="${bodyStyle()}">Yes. The GitHub Pages site includes generated publication examples that open the visualization workspace without backend processing.</p></article>
           <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">When do I need the backend?</h3><p style="${bodyStyle()}">You need the BranchArchitect backend for uploaded tree files, local example processing, interpolation, morphing animations, and MSA-driven workflows.</p></article>
           <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Why did a GitHub Pages action say Failed to fetch?</h3><p style="${bodyStyle()}">That usually means a backend-dependent action was started on the static site. Use the generated demo here, or run the desktop app, Docker, or source checkout for uploads.</p></article>
-          <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">How should I cite Phylo-Movies?</h3><p style="${bodyStyle()}">Cite the bioRxiv preprint ${PUBLICATION_TITLE} using DOI ${PUBLICATION_DOI}.</p></article>
+          <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">How should I cite Phylo-Movies?</h3><p style="${bodyStyle()}">Cite the bioRxiv preprint ${PUBLICATION_TITLE} using DOI ${PUBLICATION_DOI}, and cite the archived software release using DOI ${SOFTWARE_DOI}.</p></article>
         </section>
       </main>`;
 }
@@ -432,7 +449,8 @@ ${exampleRows}
         <section style="${sectionStyle()}">
           <h2 style="${headingStyle()}">Citation</h2>
           <p style="${bodyStyle()}">These generated examples support the Phylo-Movies publication workflow described in <strong>${PUBLICATION_TITLE}</strong>.</p>
-          <p style="${bodyStyle()}">DOI: <a href="${PUBLICATION_DOI_URL}">${PUBLICATION_DOI}</a></p>
+          <p style="${bodyStyle()}">Publication DOI: <a href="${PUBLICATION_DOI_URL}">${PUBLICATION_DOI}</a></p>
+          <p style="${bodyStyle()}">Software DOI: <a href="${SOFTWARE_DOI_URL}">${SOFTWARE_DOI}</a></p>
         </section>
       </main>`;
 }

@@ -17,6 +17,8 @@ const RELEASES_URL = `${REPO_URL}/releases`;
 const PREPRINT_URL = 'https://www.biorxiv.org/content/10.64898/2026.04.01.715821v1';
 const PREPRINT_DOI_URL = 'https://doi.org/10.64898/2026.04.01.715821';
 const PREPRINT_PDF_URL = 'https://www.biorxiv.org/content/10.64898/2026.04.01.715821v1.full.pdf';
+const SOFTWARE_DOI_URL = 'https://doi.org/10.5281/zenodo.20488924';
+const SOFTWARE_CONCEPT_DOI_URL = 'https://doi.org/10.5281/zenodo.20488923';
 
 const USE_CASES = [
   {
@@ -113,7 +115,7 @@ const FAQ_ITEMS = [
   {
     question: 'How should I cite the project?',
     answer:
-      'Use the bioRxiv preprint Animating Phylogenetic Trees from Sliding-Window Analyses with DOI 10.64898/2026.04.01.715821.',
+      'Cite the bioRxiv preprint for the method and the Zenodo DOI 10.5281/zenodo.20488924 for the archived software release.',
   },
   {
     question: 'Which search intents should this page answer?',
@@ -251,7 +253,7 @@ export function GitHubPagesInfoPage() {
             </p>
             <p>Authors: E. B. Sakalli, S. E. Haendeler, A. von Haeseler, and H. A. Schmidt.</p>
             <p>
-              DOI:{' '}
+              Publication DOI:{' '}
               <a
                 href={PREPRINT_DOI_URL}
                 target="_blank"
@@ -261,10 +263,38 @@ export function GitHubPagesInfoPage() {
                 10.64898/2026.04.01.715821
               </a>
             </p>
+            <p>
+              Software DOI:{' '}
+              <a
+                href={SOFTWARE_DOI_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-4"
+              >
+                10.5281/zenodo.20488924
+              </a>{' '}
+              <span className="text-muted-foreground">
+                (concept DOI:{' '}
+                <a
+                  href={SOFTWARE_CONCEPT_DOI_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline underline-offset-4"
+                >
+                  10.5281/zenodo.20488923
+                </a>
+                )
+              </span>
+            </p>
             <div className="rounded-lg border bg-muted p-4 text-xs leading-relaxed text-foreground">
               Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026).{' '}
               <em>Animating Phylogenetic Trees from Sliding-Window Analyses</em>. bioRxiv.
               doi:10.64898/2026.04.01.715821
+            </div>
+            <div className="rounded-lg border bg-muted p-4 text-xs leading-relaxed text-foreground">
+              Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026).{' '}
+              <em>Phylo-Movies: Interactive Phylogenetic Tree Interpolation and Visualization</em>,
+              version 0.92.0. Zenodo. doi:10.5281/zenodo.20488924
             </div>
             <div className="flex flex-wrap gap-3 pt-2">
               <Button asChild>
@@ -275,6 +305,11 @@ export function GitHubPagesInfoPage() {
               <Button variant="outline" asChild>
                 <a href={PREPRINT_DOI_URL} target="_blank" rel="noopener noreferrer">
                   DOI Link
+                </a>
+              </Button>
+              <Button variant="outline" asChild>
+                <a href={SOFTWARE_DOI_URL} target="_blank" rel="noopener noreferrer">
+                  Zenodo Software DOI
                 </a>
               </Button>
               <Button variant="outline" asChild>
