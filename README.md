@@ -102,7 +102,7 @@ poetry run pytest test/ -v
 
 ## Citation
 
-If you use Phylo-Movies in research, cite:
+If you use Phylo-Movies please cite:
 
 Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). Animating Phylogenetic Trees from Sliding-Window Analyses. bioRxiv. <https://doi.org/10.64898/2026.04.01.715821>
 
