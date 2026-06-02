@@ -2,9 +2,11 @@
 
 This is the Electron wrapper for Phylo-Movies, creating a standalone desktop application.
 
+For macOS reviewers, the supported reproducible path is the source checkout with `./start.sh` or the Docker workflow from the repository root. macOS desktop artifacts built by this project are unsigned convenience builds; they are not notarized because notarization requires a paid Apple Developer ID, so Gatekeeper may block them until quarantine is cleared manually.
+
 ## Structure
 
-```
+```text
 electron-app/
 ├── main.js              # Electron main process
 ├── preload.js           # Secure IPC bridge
@@ -128,6 +130,8 @@ npm run dev
 ```
 
 ## Building for Distribution
+
+These commands create local desktop artifacts. macOS artifacts are unsigned convenience builds unless you configure your own Apple Developer ID signing and notarization outside this repository's default setup.
 
 ### 1. Install dependencies
 

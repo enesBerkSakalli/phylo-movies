@@ -1,6 +1,9 @@
 .DS_Store
 node_modules
 /dist
+manual/.docusaurus/
+manual/build/
+manual/node_modules/
 
 env
 .venv/
@@ -105,3 +108,12 @@ Paper_Submission_TODO.md
 # Private knowledge wiki repo; keep out of the public application repo.
 /knowledge/
 /wiki/
+
+# Local/private documentation drafts; do not publish through the manual or repo.
+/private_docs/
+/docs/private/
+/docs/internal/
+/manual/private/
+/manual/docs/private/
+/manual/docs/internal/
+/manual/docs/documentation-map.md

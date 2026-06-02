@@ -457,6 +457,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install manual dependencies
+        run: npm --prefix manual ci
+
       - name: Install backend fixture dependencies
         run: cd engine/BranchArchitect && poetry install
 

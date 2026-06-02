@@ -31,7 +31,7 @@ This is not backend streaming. The full compact movie payload is still downloade
 
 Input-tree-only datasets are a special case. The current uniform scaling path treats every observed input tree as a scale anchor, so those datasets may hydrate all input trees during initialization even though the stored payload remains compact. The reviewer-facing norovirus and bootstrap examples now ship real interpolated movie payloads; only the explicit 1000-taxon limit fixture remains input-tree-only.
 
-The corrected interpolated demo payloads are larger than the old input-only shortcuts. Current compact JSON sizes are roughly 118 MB for the norovirus 750/500 movie, 142 MB for the norovirus SH-aLRT movie, 3.2 MB for bootstrap 24, and 51 MB for bootstrap 125.
+The corrected interpolated demo payloads are larger than the old input-only shortcuts. Current compact JSON sizes are roughly 142 MB for the reviewer-facing norovirus SH-aLRT movie, 3.2 MB for bootstrap 24, and 51 MB for bootstrap 125.
 
 ## Next Larger Step
 

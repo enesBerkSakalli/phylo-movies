@@ -1,0 +1,20 @@
+{
+  "name": "phylo-movies-manual",
+  "version": "0.92.0",
+  "private": true,
+  "scripts": {
+    "build": "docusaurus build",
+    "clear": "docusaurus clear",
+    "start": "docusaurus start --host 127.0.0.1"
+  },
+  "dependencies": {
+    "@docusaurus/core": "^3.10.1",
+    "@docusaurus/preset-classic": "^3.10.1",
+    "@mdx-js/react": "^3.1.1",
+    "clsx": "^2.1.1",
+    "prism-react-renderer": "^2.4.1",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
+  },
+  "devDependencies": {}
+}

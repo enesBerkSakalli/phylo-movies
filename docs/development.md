@@ -62,6 +62,16 @@ npm run build
 npm run validate
 ```
 
+Documentation:
+
+```bash
+npm run manual:dev
+npm run manual:build
+npm run docs:lint
+```
+
+The public manual source lives in `manual/`. The technical source-checkout docs live in `docs/`.
+
 Backend:
 
 ```bash
@@ -91,4 +101,3 @@ Build scripts for packaged desktop artifacts are documented in [electron-app/REA
 ## Current Limitations
 
 - The repository currently has a dirty working tree in many areas; keep documentation-only changes separate from runtime changes.
-- Some docs-oriented scripts in `package.json` still refer to `knowledge/**/*.md`, while this repository currently uses `wiki/` and `docs/`. Those scripts were not changed here because no current docs lint baseline was verified.

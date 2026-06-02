@@ -50,7 +50,7 @@ export function ToolsSidebar({
 
   return (
     <>
-      <Sidebar collapsible="icon">
+      <Sidebar collapsible="icon" data-tour-id="workspace-sidebar">
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
