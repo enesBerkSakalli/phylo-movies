@@ -199,6 +199,53 @@ describe('TreeLayoutController radii', () => {
     warnSpy.mockRestore();
   });
 
+  it('does not reuse an empty transformed-cache slot after hydrating a transition tree', () => {
+    const inputTree = {
+      name: 'input-root',
+      length: 0,
+      children: [{ name: 'input-child', length: 1 }],
+    };
+    const hydratedTree = {
+      name: 'hydrated-root',
+      length: 0,
+      children: [{ name: 'hydrated-child', length: 4 }],
+    };
+    const treeList = [inputTree];
+    treeList.length = 2;
+    const ensureTreeHydrated = vi.fn((treeIndex) => {
+      if (treeIndex === 1) {
+        treeList[1] = hydratedTree;
+        return hydratedTree;
+      }
+      return treeList[treeIndex] ?? null;
+    });
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    useAppStore.setState({
+      treeList,
+      ensureTreeHydrated,
+      timelineFrames,
+      branchTransformation: 'sqrt',
+      layoutAngleDegrees: 360,
+      layoutRotationDegrees: 0,
+    });
+
+    const controller = new TreeLayoutController(null);
+    controller.initializeUniformScaling('sqrt');
+    const layout = controller.calculateLayout(undefined, { treeIndex: 1 });
+
+    expect(ensureTreeHydrated).toHaveBeenCalledWith(1);
+    expect(layout).not.toBeNull();
+    expect(layout.layoutTree.name).toBe('hydrated-root');
+    expect(layout.layoutTree.children[0].visualBranchLength).toBe(2);
+    expect(warnSpy).not.toHaveBeenCalledWith(
+      '[TreeLayoutController] Cannot calculate layout because tree data is missing.',
+      expect.anything()
+    );
+
+    warnSpy.mockRestore();
+  });
+
   it('uses normalized square-root branch lengths as display geometry without changing metrics', () => {
     const treeList = [
       {

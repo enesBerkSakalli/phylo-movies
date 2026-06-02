@@ -430,7 +430,7 @@ describe('validatePhyloMovieData', () => {
           tree_source: '200 IQ-TREE bootstrap-replicate trees ordered by composition distance',
           alignment_source: 'source-24_taxa24_sites14190',
           settings: [
-            { label: 'Tree inference', value: 'IQ-TREE 2 default search mode' },
+            { label: 'Tree inference', value: 'IQ-TREE 3 default search mode' },
             { label: 'Support labels', value: 'Split-frequency support across 200 trees' },
           ],
           citation: 'Publication example',
@@ -441,7 +441,7 @@ describe('validatePhyloMovieData', () => {
     expect(result.dataset_provenance?.source_type).toBe('Publication bootstrap example');
     expect(result.dataset_provenance?.settings[0]).toEqual({
       label: 'Tree inference',
-      value: 'IQ-TREE 2 default search mode',
+      value: 'IQ-TREE 3 default search mode',
     });
   });
 

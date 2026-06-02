@@ -3,6 +3,7 @@ const { expect } = require('chai');
 const { ScrubberAPI } = require('../src/timeline/core/ScrubberAPI.js');
 const { TimelineClock } = require('../src/timeline/core/TimelineClock.js');
 const { TimelineDataset } = require('../src/timeline/data/TimelineDataset.js');
+const { TransitionFrame } = require('../src/timeline/time/TransitionFrame.js');
 const { useAppStore } = require('../src/state/phyloStore/store.js');
 
 function createMovieData() {
@@ -90,7 +91,7 @@ function createTimelineManager(movieData) {
   });
 
   return {
-    getTransitionFrameForTimelineProgress: (progress) =>
+    resolveFrameAtTimelineProgress: (progress) =>
       timelineClock.getTransitionFrameForProgress(progress),
   };
 }
@@ -208,6 +209,60 @@ describe('ScrubberAPI', () => {
         updateColorManagerForIndex: originalUpdateForIndex,
       });
     }
+  });
+
+  it('hydrates missing transition-frame trees before rendering scrub frames', async () => {
+    const hydratedSource = { id: 'hydrated-source' };
+    const hydratedTarget = { id: 'hydrated-target' };
+    const renderCalls = [];
+    const hydratedIndices = [];
+
+    useAppStore.setState({
+      treeList: [null, null],
+      ensureTreesHydrated: (indices) => {
+        hydratedIndices.push(indices);
+        const state = useAppStore.getState();
+        state.treeList[0] = hydratedSource;
+        state.treeList[1] = hydratedTarget;
+        return [hydratedSource, hydratedTarget];
+      },
+    });
+
+    const transitionFrame = TransitionFrame.from({
+      sourceTree: null,
+      targetTree: null,
+      sourceTreeIndex: 0,
+      targetTreeIndex: 1,
+      transitionProgress: 0.5,
+    });
+    const timelineManager = {
+      resolveFrameAtTimelineProgress: () => {
+        const [sourceTree, targetTree] = useAppStore
+          .getState()
+          .ensureTreesHydrated([transitionFrame.sourceTreeIndex, transitionFrame.targetTreeIndex]);
+        return TransitionFrame.from({
+          sourceTree,
+          targetTree,
+          sourceTreeIndex: transitionFrame.sourceTreeIndex,
+          targetTreeIndex: transitionFrame.targetTreeIndex,
+          transitionProgress: transitionFrame.transitionProgress,
+        });
+      },
+    };
+    const treeController = {
+      renderComparisonAwareScrubFrame: async (...args) => {
+        renderCalls.push(args);
+      },
+    };
+
+    const api = new ScrubberAPI(treeController, timelineManager, useAppStore);
+    await api.startScrubbing(0);
+    await api.updatePosition(0.5);
+
+    expect(hydratedIndices).to.deep.equal([[0, 1]]);
+    expect(renderCalls).to.have.length(1);
+    expect(renderCalls[0][0]).to.equal(hydratedSource);
+    expect(renderCalls[0][1]).to.equal(hydratedTarget);
   });
 
   it('flushes the latest requested progress before ending a scrub', async () => {

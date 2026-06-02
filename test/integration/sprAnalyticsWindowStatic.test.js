@@ -79,7 +79,7 @@ describe('SPR analytics window shell', () => {
       'Filter SPR moves by moved-subtree branch value category'
     );
     expect(SPR_MOVE_EVENT_TABLE_COPY.contextValueFilterLabel).toBe(
-      'Filter SPR moves by placement-context branch value category'
+      'Filter SPR moves by parent-branch value category'
     );
     expect(SPR_MOVE_EVENT_TABLE_COPY.branchValueFilters.bothHigh).toBe(
       '{target} both >= {threshold}'

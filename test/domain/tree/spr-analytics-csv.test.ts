@@ -105,9 +105,9 @@ describe('createSprMoveEventCsv', () => {
     expect(header).toContain('Source Attachment');
     expect(header).toContain('Target Attachment');
     expect(header).toContain('Source Moved Subtree Value');
-    expect(header).toContain('Target Placement Context Value');
+    expect(header).toContain('Target Parent Branch Value');
     expect(header).toContain('Moved Subtree Value Class');
-    expect(header).toContain('Placement Context Value Class');
+    expect(header).toContain('Parent Branch Value Class');
     expect(header).not.toContain('Measured Path');
     expect(header).not.toContain('Event ID');
     expect(row).toContain('pair_0_1:0');

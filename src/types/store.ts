@@ -46,6 +46,11 @@ export interface MovieTimelineManagerRuntime {
   getSegmentCount?: () => number;
   getTimelineProgressForLinearTreeProgress?: (progress: number, treeCount: number) => number | null;
   getTransitionFrameForTimelineProgress?: (timelineProgress: number) => unknown;
+  resolveFrameAtIndex?: (
+    frameIndex: number,
+    options?: { occurrence?: number | null }
+  ) => unknown | null;
+  resolveFrameAtTimelineProgress?: (timelineProgress: number) => unknown | null;
   hasTransitionSegments?: () => boolean;
   mount?: (container: HTMLElement) => void;
   scrubController?: { isScrubbing?: boolean };

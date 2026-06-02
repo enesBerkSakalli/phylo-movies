@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { createLayoutCacheKey } from '../src/treeVisualisation/utils/layoutCacheKey.js';
+import {
+  createLayoutCacheKey,
+  createTransformCacheKey,
+  createUniformScalingCacheKey,
+} from '../src/treeVisualisation/utils/layoutCacheKey.js';
 
 describe('layout cache key', () => {
   const baseState = {
@@ -8,6 +12,7 @@ describe('layout cache key', () => {
     branchTransformation: 'none',
     layoutAngleDegrees: 360,
     layoutRotationDegrees: 0,
+    timelineFrames: [{ frame_index: 0, frame_type: 'input_tree', is_observed_input: true }],
     styleConfig: { labelOffsets: { DEFAULT: 20, EXTENSION: 5 } },
   };
 
@@ -56,6 +61,9 @@ describe('layout cache key', () => {
       })
     ).not.toBe(baseKey);
     expect(createLayoutCacheKey({ ...baseOptions, maxGlobalScale: 20 })).not.toBe(baseKey);
+    expect(
+      createLayoutCacheKey({ ...baseOptions, state: { ...baseState, treeHydrationVersion: 1 } })
+    ).not.toBe(baseKey);
   });
 
   it('keeps visual-only label size out of layout cache identity', () => {
@@ -79,6 +87,16 @@ describe('layout cache key', () => {
     expect(zeroScaleKey).toContain('maxGlobalScale=0');
     expect(missingScaleKey).toContain('maxGlobalScale=none');
     expect(zeroScaleKey).not.toBe(missingScaleKey);
+  });
+
+  it('makes transform cache identity hydration-aware without changing uniform scaling identity', () => {
+    const baseTransformKey = createTransformCacheKey({ state: baseState });
+    const hydratedState = { ...baseState, treeHydrationVersion: 1 };
+
+    expect(createTransformCacheKey({ state: hydratedState })).not.toBe(baseTransformKey);
+    expect(createUniformScalingCacheKey({ state: hydratedState })).toBe(
+      createUniformScalingCacheKey({ state: baseState })
+    );
   });
 
   it('keeps moving-subtree highlights out of render-affecting layout cache keys', () => {

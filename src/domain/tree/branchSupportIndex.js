@@ -162,6 +162,7 @@ function supportSummaryKey(field) {
 function selectPrimarySupportField(fields) {
   const preferredPaths = [
     'support.iqtree.ufboot',
+    'support.iqtree.sh_alrt',
     'support.bootstrap.value',
     'support.bootstrap_rogue.frequency',
   ];

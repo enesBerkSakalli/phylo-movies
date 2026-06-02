@@ -174,7 +174,7 @@ describe('playback navigation', () => {
         frameIndex: 12,
         movieTimelineManager: {
           timelineData: { totalDuration: 17000 },
-          getTransitionFrameForTimelineProgress: vi.fn(() => ({
+          resolveFrameAtTimelineProgress: vi.fn(() => ({
             sourceTreeIndex: 12,
             targetTreeIndex: 12,
             transitionProgress: 0,

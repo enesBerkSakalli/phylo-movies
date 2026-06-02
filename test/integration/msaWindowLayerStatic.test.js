@@ -88,7 +88,7 @@ describe('MSA window layering', () => {
     expect(source).toContain('inline-flex w-[7.5rem] shrink-0');
   });
 
-  it('shows source-target MSA window overlap as a compact mini-track', () => {
+  it('shows source-target MSA window overlap as separated source and target lanes', () => {
     const source = fs.readFileSync(
       path.join(process.cwd(), 'src/components/msa/MSAViewer.jsx'),
       'utf8'
@@ -99,6 +99,12 @@ describe('MSA window layering', () => {
     expect(source).toContain('MSAWindowOverlapTrack');
     expect(source).toContain('leavingRanges');
     expect(source).toContain('enteringRanges');
+    expect(source).toContain('Source W{status.sourceWindowIndex + 1}');
+    expect(source).toContain('Target W{status.targetWindowIndex + 1}');
+    expect(source).toContain('grid-cols-[4.75rem_minmax(14rem,1fr)]');
+    expect(source).toContain('label="leaving"');
+    expect(source).toContain('label="shared"');
+    expect(source).toContain('label="entering"');
   });
 
   it('uses a compact single-row MSA window header', () => {

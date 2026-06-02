@@ -16,10 +16,7 @@ import { Search, X } from 'lucide-react';
 import type { SprMoveEventRow } from './types';
 import { buildSprMoveEventSearchText } from './sprMoveEventSearch';
 import { SPR_MOVE_EVENT_TABLE_COPY } from './SprMoveEventTable.contract';
-import {
-  buildSprMoveWindowRange,
-  type SprMoveWindowRangeOptions,
-} from './sprMoveWindowRange';
+import { buildSprMoveWindowRange, type SprMoveWindowRangeOptions } from './sprMoveWindowRange';
 import { cn } from '../../../lib/utils';
 
 interface SprMoveEventTableProps {
@@ -54,6 +51,7 @@ const isBranchValueFilterValue = (value: string): value is BranchValueFilterValu
   BRANCH_VALUE_FILTER_VALUES.includes(value as BranchValueFilterValue);
 
 const formatMetric = (value: unknown): string => {
+  if (value === null || value === undefined || value === '') return '-';
   const number = Number(value);
   if (!Number.isFinite(number)) return '-';
   return number.toFixed(3);
@@ -212,7 +210,7 @@ const formatBranchValueTitle = (
 ): string => {
   return [
     `Moved subtree value: ${formatBranchValueTitlePart('source', sourceMovedSubtreeValue)} -> ${formatBranchValueTitlePart('target', destinationMovedSubtreeValue)}`,
-    `Placement context value: ${formatBranchValueTitlePart('source', sourceAncestorValue)} -> ${formatBranchValueTitlePart('target', destinationAncestorValue)}`,
+    `Parent branch value: ${formatBranchValueTitlePart('source', sourceAncestorValue)} -> ${formatBranchValueTitlePart('target', destinationAncestorValue)}`,
   ].join('; ');
 };
 
@@ -295,7 +293,7 @@ export const SprMoveEventTable = ({
     () =>
       getBranchValueFilterOptions(
         normalizedBranchValueThreshold,
-        'Placement context value',
+        'Parent branch value',
         SPR_MOVE_EVENT_TABLE_COPY.branchValueFilters.allContext
       ),
     [normalizedBranchValueThreshold]

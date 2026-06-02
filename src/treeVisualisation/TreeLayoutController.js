@@ -228,13 +228,20 @@ export class TreeLayoutController {
     const canUseIndexedCache =
       typeof treeIndex === 'number' && Array.isArray(treeList) && treeList[treeIndex] === treeData;
     if (cached && cached.transformedList && canUseIndexedCache) {
-      return cached.transformedList[treeIndex];
+      const transformedTree = cached.transformedList[treeIndex];
+      if (transformedTree || !treeData) {
+        return transformedTree;
+      }
     }
     if (treeData && branchTransformation === 'none') {
       return treeData;
     }
     if (treeData) {
-      return transformBranchLengths(treeData, branchTransformation);
+      const transformedTree = transformBranchLengths(treeData, branchTransformation);
+      if (cached?.transformedList && canUseIndexedCache) {
+        cached.transformedList[treeIndex] = transformedTree;
+      }
+      return transformedTree;
     }
     return null;
   }

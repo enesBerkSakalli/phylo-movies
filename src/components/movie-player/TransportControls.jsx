@@ -84,6 +84,7 @@ export function TransportControls({ onBackward, onForward }) {
       className="flex shrink-0 items-center gap-1"
       role="group"
       aria-label={TRANSPORT_CONTROL_GROUP_LABELS.root}
+      data-tour-id="workspace-transport-controls"
     >
       <div
         className="flex items-center gap-0.5"

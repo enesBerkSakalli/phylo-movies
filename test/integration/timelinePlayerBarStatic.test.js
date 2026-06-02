@@ -86,6 +86,12 @@ describe('movie timeline player bar semantics', () => {
     expect(playerBarSource).toContain('TimelineStatusStrip');
     expect(playerBarSource).toContain('selectOpenMsaViewer');
     expect(playerBarSource).toContain('Open alignment viewer');
+    expect(playerBarSource).toContain(
+      'grid-cols-[minmax(0,1fr)_auto] items-center gap-2'
+    );
+    expect(playerBarSource).toContain('lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]');
+    expect(playerBarSource).toContain('col-span-2 flex min-w-0 flex-wrap');
+    expect(playerBarSource).toContain('lg:col-span-1');
     expect(managerSource).toContain('getTimelineStatusSnapshot');
     expect(managerSource).toContain('buildTimelineStatusSnapshot');
     expect(statusStripSource).toContain('selectMovieTimelineManager');
@@ -118,14 +124,17 @@ describe('movie timeline player bar semantics', () => {
     expect(playerBarSource).toContain('inline-flex w-[7rem] shrink-0');
     expect(statusStripSource).not.toContain('Tree Type');
     expect(statusStripSource).not.toContain('Badge');
-    expect(playerBarSource.indexOf('<TimelineStatusStrip />')).toBeLessThan(
-      playerBarSource.indexOf('<MsaPlayerBarAction')
+    const timelineStatusPosition = playerBarSource.indexOf('<TimelineStatusStrip />');
+    const msaActionPosition = playerBarSource.indexOf('<MsaPlayerBarAction');
+    const playbackSettingsPosition = playerBarSource.indexOf(
+      'aria-label={MOVIE_PLAYER_ARIA_LABELS.playbackSettings}'
     );
-    expect(playerBarSource.indexOf('<MsaPlayerBarAction')).toBeLessThan(
-      playerBarSource.indexOf('<MotionStatusSlot')
+    const motionStatusPosition = playerBarSource.indexOf(
+      '<MotionStatusSlot stage={currentAnimationStage} />'
     );
-    expect(playerBarSource.indexOf('<TimelineStatusStrip />')).toBeLessThan(
-      playerBarSource.indexOf('MOVIE_PLAYER_ARIA_LABELS.playbackSettings')
-    );
+
+    expect(timelineStatusPosition).toBeLessThan(msaActionPosition);
+    expect(msaActionPosition).toBeLessThan(playbackSettingsPosition);
+    expect(playbackSettingsPosition).toBeLessThan(motionStatusPosition);
   });
 });

@@ -49,6 +49,7 @@ class FixtureSpec:
     msa_source: Path | None = None
     tree_limit: int | None = None
     input_only: bool = False
+    midpoint_rooting: bool = False
     inference_source: Path | None = None
     inference_config: IQTreeConfig | None = None
 
@@ -80,37 +81,6 @@ FIXTURES: tuple[FixtureSpec, ...] = (
     ),
     FixtureSpec(
         name="demo-norovirus-334",
-        source=ROOT
-        / "publication_data"
-        / "recombination_norovirus"
-        / "current_results"
-        / "phylo_movies"
-        / "norovirus_334_iqtree_fast_window750_step500.nwk",
-        output=ROOT
-        / "publication_data"
-        / "precomputed"
-        / "norovirus_334_iqtree_fast_window750_step500.movie.json",
-        filename="norovirus_334_iqtree_fast_window750_step500.nwk",
-        window_size=750,
-        step_size=500,
-        msa_source=ROOT
-        / "publication_data"
-        / "recombination_norovirus"
-        / "source_preparation"
-        / "augur_subsampling"
-        / "03_trimmed"
-        / "subsampled_350_gappyout_final.fasta",
-        inference_source=ROOT
-        / "publication_data"
-        / "recombination_norovirus"
-        / "source_preparation"
-        / "augur_subsampling"
-        / "03_trimmed"
-        / "subsampled_350_gappyout_final.fasta",
-        inference_config=IQTreeConfig(use_gtr=True, use_gamma=True, fast_search=True),
-    ),
-    FixtureSpec(
-        name="demo-norovirus-334-stability",
         source=ROOT
         / "publication_data"
         / "recombination_norovirus"
@@ -160,6 +130,7 @@ FIXTURES: tuple[FixtureSpec, ...] = (
         / "precomputed"
         / "all_trees_24_source-24_taxa24_sites14190.movie.json",
         filename="all_trees_24_source-24_taxa24_sites14190.nwk",
+        midpoint_rooting=True,
     ),
     FixtureSpec(
         name="demo-bootstrap-125",
@@ -175,6 +146,7 @@ FIXTURES: tuple[FixtureSpec, ...] = (
         / "precomputed"
         / "all_trees_125_source-125_taxa125_sites29149.movie.json",
         filename="all_trees_125_source-125_taxa125_sites29149.nwk",
+        midpoint_rooting=True,
     ),
     FixtureSpec(
         name="demo-msprime-1000-limit",
@@ -317,7 +289,7 @@ def _build_payload(fixture: FixtureSpec) -> dict:
         return _build_input_only_payload(fixture, trees)
 
     config = PipelineConfig(
-        enable_rooting=False,
+        enable_rooting=fixture.midpoint_rooting,
         use_anchor_ordering=True,
         anchor_weight_policy="destination",
         circular=True,
@@ -474,16 +446,6 @@ def _build_dataset_provenance(fixture: FixtureSpec) -> dict | None:
         return _build_norovirus_provenance(
             tree_source=(
                 "IQ-TREE GTR+G fast-search trees inferred from the 334-taxon "
-                "trimmed publication MSA across 750 bp windows."
-            ),
-            windowing="750 sites, 500-site step",
-            support=None,
-        )
-
-    if fixture.name == "demo-norovirus-334-stability":
-        return _build_norovirus_provenance(
-            tree_source=(
-                "IQ-TREE GTR+G fast-search trees inferred from the 334-taxon "
                 "trimmed publication MSA across 1000 bp windows with SH-aLRT support."
             ),
             windowing="1000 sites, 500-site step",
@@ -549,15 +511,17 @@ def _build_bootstrap_provenance(source_label: str, taxa: str) -> dict:
         "source_label": source_label,
         "tree_source": (
             f"Interpolated static payload generated from the {taxa}-taxon "
-            "composition-ranked bootstrap tree series."
+            "composition-ranked bootstrap tree series with IQ-TREE SH-aLRT labels."
         ),
         "settings": [
             {"label": "Tree source", "value": "Precomputed bootstrap tree series"},
+            {"label": "Support labels", "value": "SH-aLRT, 1,000 replicates"},
+            {"label": "Split context", "value": "Split-frequency support across 200 trees"},
             {
                 "label": "Browser payload",
                 "value": "Input trees plus generated interpolation frames",
             },
-            {"label": "Rooting", "value": "Input rooting preserved"},
+            {"label": "Rooting", "value": "Midpoint rooting"},
         ],
         "citation": (
             "Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, "

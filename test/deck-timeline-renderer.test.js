@@ -80,6 +80,16 @@ describe('DeckTimelineRenderer', () => {
     return selections;
   }
 
+  function mouseDownTimeline(renderer, x) {
+    renderer.deck.canvas.dispatchEvent(
+      new global.window.MouseEvent('mousedown', {
+        bubbles: true,
+        clientX: x,
+        clientY: 10,
+      })
+    );
+  }
+
   it('initializes and sets layers with a fresh timeline', () => {
     const { timelineData, segments } = makeTimelineFixture();
     const container = makeContainer();
@@ -178,6 +188,36 @@ describe('DeckTimelineRenderer', () => {
       'wheel',
       'mouseleave',
     ]);
+  });
+
+  it('starts scrubbing from a forgiving handle hit target', () => {
+    const { timelineData, segments } = makeTimelineFixture();
+    const container = makeContainer();
+    const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
+    const scrubStarts = [];
+
+    renderer.on('scrubstart', (payload) => scrubStarts.push(payload));
+
+    mouseDownTimeline(renderer, 12);
+
+    expect(scrubStarts).to.have.length(1);
+    expect(scrubStarts[0]).to.deep.equal({ id: 'scrubber', time: 0 });
+  });
+
+  it('keeps distant timeline clicks available for segment selection', () => {
+    const { timelineData, segments } = makeTimelineFixture();
+    const container = makeContainer();
+    const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
+    const scrubStarts = [];
+    const selections = collectSelections(renderer);
+
+    renderer.on('scrubstart', (payload) => scrubStarts.push(payload));
+    mouseDownTimeline(renderer, 120);
+    clickTimeline(renderer, 1500);
+
+    expect(scrubStarts).to.deep.equal([]);
+    expect(selections).to.have.length(1);
+    expect(selections[0].segment).to.equal(segments[1]);
   });
 
   it('exposes the deck canvas as a keyboard-focusable timeline control', () => {

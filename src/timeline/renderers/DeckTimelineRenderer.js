@@ -69,7 +69,7 @@ export class DeckTimelineRenderer {
     this._lastHoverId = null;
     this._getIsScrubbing = () => false;
     this._setHoveredSegment = () => {};
-    this._scrubThresholdPx = 10;
+    this._scrubThresholdPx = 24;
     this._wasScrubbingOnMouseDown = false;
     this._hoverTimeoutId = null;
 

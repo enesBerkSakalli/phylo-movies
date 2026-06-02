@@ -28,6 +28,12 @@ describe('ComparisonGeometryUtils', () => {
       const result = ensureOutside(pt, center, minRadius, depthOffset);
       expect(result[0]).toBeCloseTo(40);
     });
+
+    it('projects center points onto a deterministic exterior lane', () => {
+      const result = ensureOutside([0, 0, 0], [0, 0], 100, 25);
+
+      expect(result).toEqual([0, -125, 0]);
+    });
   });
 
   describe('chooseBundlePoint', () => {

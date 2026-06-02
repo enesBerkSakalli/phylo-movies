@@ -25,11 +25,6 @@ const NOROVIRUS_PHYLO_MOVIES_BASE =
   import.meta.env.BASE_URL + 'examples/recombination_norovirus/current_results/phylo_movies/';
 const NOROVIRUS_WINDOW_TABLE_BASE =
   import.meta.env.BASE_URL + 'examples/recombination_norovirus/current_results/window_tables/';
-const NOROVIRUS_FAST_TREE_SERIES = {
-  label: 'Generated IQ-TREE window trees',
-  fileName: 'norovirus_334_iqtree_fast_window750_step500.nwk',
-  filePath: NOROVIRUS_PHYLO_MOVIES_BASE + 'norovirus_334_iqtree_fast_window750_step500.nwk',
-};
 const NOROVIRUS_STABILITY_WINDOW_TABLE = {
   label: 'Exact publication window table',
   fileName: 'norovirus_334_window1000_step500_windows.tsv',
@@ -69,6 +64,11 @@ const BOOTSTRAP_ORDERING_SEMANTICS = {
   fileName: 'ORDERING_SEMANTICS.md',
   filePath: BOOTSTRAP_SOURCE_BASE + 'current_results/ORDERING_SEMANTICS.md',
 };
+const BOOTSTRAP_RECURRENCE_SUMMARY = {
+  label: 'SPR recurrence summary',
+  fileName: 'SPR_RECURRENCE_SUMMARY.json',
+  filePath: BOOTSTRAP_SOURCE_BASE + 'current_results/SPR_RECURRENCE_SUMMARY.json',
+};
 const BOOTSTRAP_24_DATASET = 'dataset_24_source-24_taxa24_sites14190';
 const BOOTSTRAP_125_DATASET = 'dataset_125_source-125_taxa125_sites29149';
 const makeBootstrapSourceTruthFile = ({ taxa, sites }) => ({
@@ -80,6 +80,7 @@ const makeBootstrapSourceTruthFile = ({ taxa, sites }) => ({
 });
 const makeBootstrapGeneratedArtifacts = ({ taxa, sites, dataset }) => {
   const rankedPath = `${BOOTSTRAP_SOURCE_BASE}current_results/${dataset}/ranked/`;
+  const analysisPath = `${BOOTSTRAP_SOURCE_BASE}current_results/${dataset}/analysis/`;
   const sourceId = `${taxa}_source-${taxa}_taxa${taxa}_sites${sites}`;
 
   return [
@@ -98,6 +99,12 @@ const makeBootstrapGeneratedArtifacts = ({ taxa, sites, dataset }) => {
       fileName: `split_support_${sourceId}.tsv`,
       filePath: `${rankedPath}split_support_${sourceId}.tsv`,
     },
+    {
+      label: 'Moved-subtree recurrence table',
+      fileName: `moved_subtree_recurrence_${sourceId}.csv`,
+      filePath: `${analysisPath}moved_subtree_recurrence_${sourceId}.csv`,
+    },
+    BOOTSTRAP_RECURRENCE_SUMMARY,
     BOOTSTRAP_ORDERING_SEMANTICS,
   ];
 };
@@ -112,53 +119,12 @@ export const EXAMPLE_DATASETS = [
     id: 'norovirus-334',
     name: 'Norovirus Polymerase-Capsid Recombination',
     description:
-      'Human norovirus polymerase-capsid recombination panel (334 retained sequences from a 350-sequence Augur target, 8,058 bp full-genome alignment)',
+      'Human norovirus polymerase-capsid recombination panel with SH-aLRT support (334 retained sequences from a 350-sequence Augur target, 8,058 bp full-genome alignment)',
     workflow: 'Sliding-window MSA',
     scale: '334 taxa / 8,058 bp',
-    bestFor: 'Recombination breakpoint exploration',
+    bestFor: 'Recombination breakpoint and support review',
     fileName: 'subsampled_350_gappyout_final.fasta',
     // Path maps to publication_data/ via Vite plugin (see vite.config.mts)
-    filePath: NOROVIRUS_SOURCE_BASE + '03_trimmed/subsampled_350_gappyout_final.fasta',
-    fileType: 'msa',
-    precomputedPayloadPath:
-      PRECOMPUTED_EXAMPLE_BASE + 'norovirus_334_iqtree_fast_window750_step500.movie.json',
-    sourceTruthFile: NOROVIRUS_SOURCE_TRUTH,
-    regenerationGuide: NOROVIRUS_REGENERATION_GUIDE,
-    generatedArtifactFiles: [...NOROVIRUS_GENERATED_METADATA_FILES, NOROVIRUS_FAST_TREE_SERIES],
-    provenance: {
-      sourceType: 'Publication example',
-      sourceLabel: 'publication_data/recombination_norovirus',
-      treeSource:
-        'Trees are inferred from sliding windows of the supplied norovirus MSA during processing.',
-      alignmentSource: 'subsampled_350_gappyout_final.fasta',
-      settings: [
-        { label: 'Tree inference', value: 'IQ-TREE, GTR+G, fast search' },
-        { label: 'Windowing', value: '750 sites, 500-site step' },
-        { label: 'Rooting', value: 'Midpoint rooting' },
-      ],
-    },
-    parameters: {
-      windowSize: 750,
-      stepSize: 500,
-      midpointRooting: true,
-      treeInferenceEngine: 'iqtree',
-      iqtreeFastSearch: true,
-      useGtr: true,
-      useGamma: true,
-      usePseudo: false,
-    },
-    citation: PUBLICATION_CITATION,
-    badge: 'Publication',
-  },
-  {
-    id: 'norovirus-334-stability',
-    name: 'Norovirus Stability Scan',
-    description:
-      'Same 334-sequence norovirus recombination panel, processed with IQ-TREE fast search and SH-aLRT support scores',
-    workflow: 'Sliding-window MSA',
-    scale: '334 taxa / 8,058 bp',
-    bestFor: 'Genome-window topology changes with on-the-fly stability scores',
-    fileName: 'subsampled_350_gappyout_final.fasta',
     filePath: NOROVIRUS_SOURCE_BASE + '03_trimmed/subsampled_350_gappyout_final.fasta',
     fileType: 'msa',
     precomputedPayloadPath:
@@ -199,9 +165,7 @@ export const EXAMPLE_DATASETS = [
       usePseudo: false,
     },
     citation: PUBLICATION_CITATION,
-    badge: 'Stability',
-    runtimeWarning:
-      'Runs IQ-TREE on every genome window. Uses larger windows and SH-aLRT support for live stability review.',
+    badge: 'Publication',
   },
   {
     id: 'quick-msa-demo',
@@ -280,10 +244,10 @@ export const EXAMPLE_DATASETS = [
     id: 'bootstrap-24',
     name: 'IQ-TREE Bootstrap Trees (24 taxa)',
     description:
-      'Composition-ranked rogue-taxon bootstrap tree sequence inferred with IQ-TREE default mode (200 trees, 24 taxa, source alignment 14,190 sites)',
+      'Composition-ranked rogue-taxon bootstrap tree sequence inferred with IQ-TREE default mode, SH-aLRT branch labels, split-frequency support context, and SPR recurrence tables (200 trees, 24 taxa, source alignment 14,190 sites)',
     workflow: 'Bootstrap tree series',
     scale: '24 taxa / 200 trees',
-    bestFor: 'Rogue-taxon SPR move review',
+    bestFor: 'Rogue-taxon SPR recurrence and support review',
     fileName: 'all_trees_24_source-24_taxa24_sites14190.nwk',
     filePath:
       BOOTSTRAP_SOURCE_BASE +
@@ -302,11 +266,12 @@ export const EXAMPLE_DATASETS = [
       sourceType: 'Publication bootstrap example',
       sourceLabel: 'publication_data/bootstrap_rogue_taxa',
       treeSource:
-        '200 composition-ranked bootstrap-replicate trees inferred with IQ-TREE 2 default search mode after RAxML replicate alignment generation.',
+        '200 composition-ranked bootstrap-replicate trees inferred with IQ-TREE 3 default search mode after RAxML replicate alignment generation.',
       settings: [
-        { label: 'Tree inference', value: 'IQ-TREE 2 default search mode' },
+        { label: 'Tree inference', value: 'IQ-TREE 3 default search mode' },
         { label: 'Bootstrap inputs', value: 'RAxML replicate alignments, 200 trees' },
-        { label: 'Support labels', value: 'Split-frequency support across the 200 trees' },
+        { label: 'Support labels', value: 'SH-aLRT, 1,000 replicates' },
+        { label: 'Split context', value: 'Split-frequency support across the 200 trees' },
         { label: 'Rooting', value: 'Midpoint rooting' },
       ],
     },
@@ -325,10 +290,10 @@ export const EXAMPLE_DATASETS = [
     id: 'bootstrap-125',
     name: 'IQ-TREE Bootstrap Trees (125 taxa)',
     description:
-      'Composition-ranked rogue-taxon bootstrap tree sequence inferred with IQ-TREE default mode (200 trees, 125 taxa, source alignment 29,149 sites)',
+      'Composition-ranked rogue-taxon bootstrap tree sequence inferred with IQ-TREE default mode, SH-aLRT branch labels, split-frequency support context, and SPR recurrence tables (200 trees, 125 taxa, source alignment 29,149 sites)',
     workflow: 'Bootstrap tree series',
     scale: '125 taxa / 200 trees',
-    bestFor: 'Larger topology-change example',
+    bestFor: 'Larger rogue-taxon recurrence and support review',
     fileName: 'all_trees_125_source-125_taxa125_sites29149.nwk',
     filePath:
       BOOTSTRAP_SOURCE_BASE +
@@ -347,11 +312,12 @@ export const EXAMPLE_DATASETS = [
       sourceType: 'Publication bootstrap example',
       sourceLabel: 'publication_data/bootstrap_rogue_taxa',
       treeSource:
-        '200 composition-ranked bootstrap-replicate trees inferred with IQ-TREE 2 default search mode after RAxML replicate alignment generation.',
+        '200 composition-ranked bootstrap-replicate trees inferred with IQ-TREE 3 default search mode after RAxML replicate alignment generation.',
       settings: [
-        { label: 'Tree inference', value: 'IQ-TREE 2 default search mode' },
+        { label: 'Tree inference', value: 'IQ-TREE 3 default search mode' },
         { label: 'Bootstrap inputs', value: 'RAxML replicate alignments, 200 trees' },
-        { label: 'Support labels', value: 'Split-frequency support across the 200 trees' },
+        { label: 'Support labels', value: 'SH-aLRT, 1,000 replicates' },
+        { label: 'Split context', value: 'Split-frequency support across the 200 trees' },
         { label: 'Rooting', value: 'Midpoint rooting' },
       ],
     },
@@ -581,7 +547,6 @@ const MS_PRIME_1000_LIMIT_DEMO = {
 
 export const DEMO_EXAMPLE_DATASETS = [
   EXAMPLE_DATASETS.find((example) => example.id === 'norovirus-334'),
-  EXAMPLE_DATASETS.find((example) => example.id === 'norovirus-334-stability'),
   EXAMPLE_DATASETS.find((example) => example.id === 'paper-example'),
   EXAMPLE_DATASETS.find((example) => example.id === 'bootstrap-24'),
   EXAMPLE_DATASETS.find((example) => example.id === 'bootstrap-125'),

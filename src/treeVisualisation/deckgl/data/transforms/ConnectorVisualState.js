@@ -1,6 +1,7 @@
 import { computeConnectionColor } from './ComparisonColorUtils.js';
 import { resolveConnectorColorEntry } from './ConnectorColorEntryResolver.js';
 import { resolveConnectorMovementState } from './ConnectorMovementState.js';
+import { getSplitKey, isSubset } from '../../../../domain/tree/splits.js';
 
 export function resolveConnectorVisualState(params) {
   const {
@@ -39,5 +40,16 @@ export function resolveConnectorVisualState(params) {
     movementState,
     color,
     isMoving: movementState.isMoving,
+    bundleGroupKey: resolveActiveBundleGroupKey(splitIndices, currentSubtreeSets, colorEntry),
   };
+}
+
+function resolveActiveBundleGroupKey(splitIndices, currentSubtreeSets, colorEntry) {
+  for (const subtreeSet of currentSubtreeSets) {
+    if (isSubset(splitIndices, subtreeSet)) {
+      return getSplitKey(subtreeSet);
+    }
+  }
+
+  return getSplitKey(colorEntry);
 }

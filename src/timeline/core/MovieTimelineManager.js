@@ -9,6 +9,7 @@ import { TimelineStateSynchronizer } from './TimelineStateSynchronizer.js';
 import { useAppStore } from '../../state/phyloStore/store.js';
 import { DeckTimelineRenderer } from '../renderers/DeckTimelineRenderer.js';
 import { buildTimelineStatusSnapshot } from '../view/timelineStatusModel.js';
+import { TransitionFrame } from '../time/TransitionFrame.js';
 
 // ============================================================================
 // MOVIE TIMELINE MANAGER
@@ -321,18 +322,54 @@ export class MovieTimelineManager {
     this.timeline?.moveTo?.(Math.max(0, total - visibleDuration));
   }
 
+  resolveFrameAtTimelineProgress(progress) {
+    const transitionFrame = this.timelineClock?.getTransitionFrameForProgress(progress) ?? null;
+    return this._hydrateResolvedFrame(transitionFrame);
+  }
+
+  resolveFrameAtIndex(frameIndex, options = {}) {
+    const cursor = this.timelineDataset?.getCursorForFrame(frameIndex, options);
+    if (!cursor) return null;
+    return this.resolveFrameAtTimelineProgress(cursor.timelineProgress);
+  }
+
   getTransitionFrameForTimelineProgress(progress) {
-    let transitionFrame = this.timelineClock?.getTransitionFrameForProgress(progress) ?? null;
+    return this.resolveFrameAtTimelineProgress(progress);
+  }
+
+  _hydrateResolvedFrame(transitionFrame) {
     if (
-      transitionFrame &&
-      (!transitionFrame.sourceTree || !transitionFrame.targetTree) &&
-      Number.isInteger(transitionFrame.sourceTreeIndex) &&
-      Number.isInteger(transitionFrame.targetTreeIndex)
+      !transitionFrame ||
+      !Number.isInteger(transitionFrame.sourceTreeIndex) ||
+      !Number.isInteger(transitionFrame.targetTreeIndex)
     ) {
-      const { ensureTreesHydrated } = useAppStore.getState();
-      ensureTreesHydrated?.([transitionFrame.sourceTreeIndex, transitionFrame.targetTreeIndex]);
-      transitionFrame = this.timelineClock?.getTransitionFrameForProgress(progress) ?? null;
+      return transitionFrame;
     }
+
+    if (!transitionFrame.sourceTree || !transitionFrame.targetTree) {
+      const state = useAppStore.getState();
+      const [hydratedSource, hydratedTarget] = state.ensureTreesHydrated?.([
+        transitionFrame.sourceTreeIndex,
+        transitionFrame.targetTreeIndex,
+      ]) ?? [];
+      const sourceTree = transitionFrame.sourceTree ?? hydratedSource;
+      const targetTree = transitionFrame.targetTree ?? hydratedTarget;
+      if (!sourceTree || !targetTree) return null;
+
+      return TransitionFrame.from({
+        sourceTree,
+        targetTree,
+        sourceTreeIndex: transitionFrame.sourceTreeIndex,
+        targetTreeIndex: transitionFrame.targetTreeIndex,
+        transitionProgress: transitionFrame.transitionProgress,
+        renderProgress: transitionFrame.renderProgress,
+        timelineProgress: transitionFrame.timelineProgress,
+        holdKind: transitionFrame.holdKind,
+        stage: transitionFrame.stage,
+        transitionChangeModel: transitionFrame.transitionChangeModel,
+      });
+    }
+
     return transitionFrame;
   }
 

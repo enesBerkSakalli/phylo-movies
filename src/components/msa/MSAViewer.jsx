@@ -290,18 +290,24 @@ function MSAWindowOverlapStatus({ status }) {
 
   return (
     <AppTooltip content={tooltip} contentClassName="text-2xs">
-      <div
-        className="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground"
-        aria-label={tooltip}
-      >
+      <div className="flex flex-col gap-1 text-muted-foreground" aria-label={tooltip}>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="font-medium text-foreground">{label}</span>
+          <span>
+            source W{status.sourceWindowIndex + 1} {status.source.startPosition}-
+            {status.source.endPosition}
+          </span>
+          <span>
+            target W{status.targetWindowIndex + 1} {status.target.startPosition}-
+            {status.target.endPosition}
+          </span>
+        </div>
         <MSAWindowOverlapTrack status={status} />
-        <span className="font-medium text-foreground">{label}</span>
-        <span>
-          source {status.source.startPosition}-{status.source.endPosition}
-        </span>
-        <span>
-          target {status.target.startPosition}-{status.target.endPosition}
-        </span>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px]">
+          <OverlapLegendItem className="bg-amber-500/45" label="leaving" />
+          <OverlapLegendItem className="bg-primary/35" label="shared" />
+          <OverlapLegendItem className="bg-emerald-500/45" label="entering" />
+        </div>
       </div>
     </AppTooltip>
   );
@@ -309,38 +315,70 @@ function MSAWindowOverlapStatus({ status }) {
 
 function MSAWindowOverlapTrack({ status }) {
   return (
-    <div className="relative h-7 w-52 shrink-0" aria-hidden>
-      <div className="absolute left-0 right-0 top-1 h-2 rounded-sm bg-muted/70" />
-      <div className="absolute left-0 right-0 bottom-1 h-2 rounded-sm bg-muted/70" />
-      {status.leavingRanges.map((range) => (
+    <div
+      className="grid w-[24rem] max-w-[70vw] shrink-0 grid-cols-[4.75rem_minmax(14rem,1fr)] gap-x-2 gap-y-1"
+      aria-hidden
+    >
+      <span className="self-center text-[10px] font-semibold uppercase leading-none text-sky-700 dark:text-sky-300">
+        Source W{status.sourceWindowIndex + 1}
+      </span>
+      <div className="relative row-span-2 h-10">
+        {status.overlap && (
+          <div
+            className="absolute inset-y-0 z-0 rounded-sm border-x border-primary/70 bg-primary/10"
+            style={getOverlapTrackStyle(status.overlap, status)}
+          />
+        )}
+        <div className="absolute left-0 right-0 top-1 z-10 h-3 rounded-sm bg-muted/70" />
+        <div className="absolute left-0 right-0 bottom-1 z-10 h-3 rounded-sm bg-muted/70" />
         <div
-          key={`leaving-${range.startPosition}-${range.endPosition}`}
-          className="absolute top-1 h-2 rounded-sm bg-amber-500/35"
-          style={getOverlapTrackStyle(range, status)}
+          className="absolute top-1 z-20 h-3 rounded-sm border border-sky-500/70 bg-sky-500/15"
+          style={getOverlapTrackStyle(status.source, status)}
         />
-      ))}
-      {status.enteringRanges.map((range) => (
         <div
-          key={`entering-${range.startPosition}-${range.endPosition}`}
-          className="absolute bottom-1 h-2 rounded-sm bg-emerald-500/35"
-          style={getOverlapTrackStyle(range, status)}
+          className="absolute bottom-1 z-20 h-3 rounded-sm border border-emerald-500/70 bg-emerald-500/15"
+          style={getOverlapTrackStyle(status.target, status)}
         />
-      ))}
-      <div
-        className="absolute top-1 h-2 rounded-sm border border-sky-500/70 bg-sky-500/20"
-        style={getOverlapTrackStyle(status.source, status)}
-      />
-      <div
-        className="absolute bottom-1 h-2 rounded-sm border border-emerald-500/70 bg-emerald-500/20"
-        style={getOverlapTrackStyle(status.target, status)}
-      />
-      {status.overlap && (
-        <div
-          className="absolute inset-y-0 rounded-sm border-x border-primary/70 bg-primary/15"
-          style={getOverlapTrackStyle(status.overlap, status)}
-        />
-      )}
+        {status.leavingRanges.map((range) => (
+          <div
+            key={`leaving-${range.startPosition}-${range.endPosition}`}
+            className="absolute top-1 z-30 h-3 rounded-sm bg-amber-500/45"
+            style={getOverlapTrackStyle(range, status)}
+          />
+        ))}
+        {status.enteringRanges.map((range) => (
+          <div
+            key={`entering-${range.startPosition}-${range.endPosition}`}
+            className="absolute bottom-1 z-30 h-3 rounded-sm bg-emerald-500/45"
+            style={getOverlapTrackStyle(range, status)}
+          />
+        ))}
+        {status.overlap && (
+          <>
+            <div
+              className="absolute top-1 z-40 h-3 rounded-sm border border-primary/70 bg-primary/35"
+              style={getOverlapTrackStyle(status.overlap, status)}
+            />
+            <div
+              className="absolute bottom-1 z-40 h-3 rounded-sm border border-primary/70 bg-primary/35"
+              style={getOverlapTrackStyle(status.overlap, status)}
+            />
+          </>
+        )}
+      </div>
+      <span className="self-center text-[10px] font-semibold uppercase leading-none text-emerald-700 dark:text-emerald-300">
+        Target W{status.targetWindowIndex + 1}
+      </span>
     </div>
+  );
+}
+
+function OverlapLegendItem({ className, label }) {
+  return (
+    <span className="inline-flex items-center gap-1">
+      <span className={`h-2 w-3 rounded-sm ${className}`} aria-hidden />
+      <span>{label}</span>
+    </span>
   );
 }
 

@@ -37,13 +37,13 @@ export class TimelineScrubController {
     if (!this.isScrubbing) {
       await this.startScrubbing(timeMs);
     } else {
-      await this.updateScrubbing(timeMs);
+      this.updateScrubbing(timeMs);
     }
   }
 
   async startScrubbing(timeMs) {
     if (this.isScrubbing) {
-      await this.updateScrubbing(timeMs);
+      this.updateScrubbing(timeMs);
       return;
     }
 
@@ -60,7 +60,7 @@ export class TimelineScrubController {
     }
   }
 
-  async updateScrubbing(timeMs) {
+  updateScrubbing(timeMs) {
     const scrubberAPI = this.getScrubberAPI();
     if (!scrubberAPI || !this.isScrubbing) return;
 
@@ -70,7 +70,7 @@ export class TimelineScrubController {
     if (now - this.lastScrubTime < TIMELINE_CONSTANTS.SCRUB_THROTTLE_MS) {
       if (this.scrubRequestId) return;
 
-      this.scrubRequestId = requestAnimationFrame(async () => {
+      this.scrubRequestId = requestAnimationFrame(() => {
         this.scrubRequestId = null;
         if (!this.isScrubbing) return;
 
@@ -78,16 +78,16 @@ export class TimelineScrubController {
         this.pendingScrubTimeMs = null;
 
         if (latestTimeMs != null) {
-          await scrubberAPI.updatePosition(this._timeToProgress(latestTimeMs));
           this.lastScrubTime = performance.now();
+          this._requestScrubRender(scrubberAPI, latestTimeMs);
         }
       });
       return;
     }
 
     this.pendingScrubTimeMs = null;
-    await scrubberAPI.updatePosition(this._timeToProgress(timeMs));
     this.lastScrubTime = now;
+    this._requestScrubRender(scrubberAPI, timeMs);
   }
 
   async endScrubbing(finalTimeMs) {
@@ -95,12 +95,13 @@ export class TimelineScrubController {
 
     const scrubberAPI = this.getScrubberAPI();
     const finalProgress = this._timeToProgress(finalTimeMs);
+    this.pendingScrubTimeMs = null;
+    this._clearPendingFrame();
     const lastState = scrubberAPI ? await scrubberAPI.endScrubbing(finalProgress) : null;
 
     this.isScrubbing = false;
     this.lastScrubEndTime = performance.now();
     this.getTimelineRenderer()?.syncScrubState();
-    this._clearPendingFrame();
 
     if (lastState?.transitionFrame) {
       this.store
@@ -136,5 +137,14 @@ export class TimelineScrubController {
 
   _timeToProgress(time) {
     return this.timelineDataset.getTimelineProgressAtMovieTime(time);
+  }
+
+  _requestScrubRender(scrubberAPI, timeMs) {
+    scrubberAPI.updatePosition(this._timeToProgress(timeMs)).catch((error) => {
+      console.error('[TimelineScrubController] Scrub render request failed:', {
+        timeMs,
+        error,
+      });
+    });
   }
 }

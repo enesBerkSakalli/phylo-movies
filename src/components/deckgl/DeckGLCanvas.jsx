@@ -20,10 +20,23 @@ const DeckGLCanvas = React.memo(function DeckGLCanvas() {
 
   // Return placeholder when controller is not ready - AFTER all hooks
   if (!animationController) {
-    return <div id="webgl-container" style={{ width: '100%', height: '100%' }} />;
+    return (
+      <div
+        id="webgl-container"
+        data-tour-id="workspace-canvas"
+        style={{ width: '100%', height: '100%' }}
+      />
+    );
   }
 
-  return <div id="webgl-container" ref={containerRef} style={{ width: '100%', height: '100%' }} />;
+  return (
+    <div
+      id="webgl-container"
+      ref={containerRef}
+      data-tour-id="workspace-canvas"
+      style={{ width: '100%', height: '100%' }}
+    />
+  );
 });
 
 export { DeckGLCanvas };

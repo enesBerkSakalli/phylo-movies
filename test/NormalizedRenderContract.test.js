@@ -8,6 +8,7 @@ import {
   getBaseBranchColor,
   getBaseNodeColor,
 } from '../src/treeVisualisation/systems/tree_color/monophyleticColoring.js';
+import { getConnectorsLayerProps } from '../src/treeVisualisation/deckgl/layers/factory/connectors/ConnectorLayers.js';
 import { getExtensionsLayerProps } from '../src/treeVisualisation/deckgl/layers/factory/extensions/ExtensionLayers.js';
 import { NodeDataBuilder } from '../src/treeVisualisation/deckgl/builders/data/nodes/NodeDataBuilder.js';
 import { LinkDataBuilder } from '../src/treeVisualisation/deckgl/builders/data/links/LinkDataBuilder.js';
@@ -121,6 +122,26 @@ describe('normalized render contract', () => {
 
   it('does not enable picking on comparison connector lines', () => {
     expect(LAYER_CONFIGS.connectors.defaultProps.pickable).toBe(false);
+  });
+
+  it('preserves connector data alpha in comparison connector layers', () => {
+    const activeConnector = {
+      path: new Float32Array([0, 0, 0, 1, 1, 0]),
+      color: [255, 0, 0, 255],
+      isCurrentlyMoving: true,
+    };
+    const passiveConnector = {
+      path: new Float32Array([0, 0, 0, 1, -1, 0]),
+      color: [0, 0, 255, 64],
+      isCurrentlyMoving: false,
+    };
+
+    const props = getConnectorsLayerProps([activeConnector, passiveConnector], {
+      linkConnectionOpacity: 0.1,
+    });
+
+    expect(props.getColor(activeConnector)).toEqual([255, 0, 0, 255]);
+    expect(props.getColor(passiveConnector)).toEqual([0, 0, 255, 64]);
   });
 
   it('prepares render ids explicitly on layout nodes', () => {

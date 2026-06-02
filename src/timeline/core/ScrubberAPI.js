@@ -109,6 +109,7 @@ export class ScrubberAPI {
 
   async _renderScrubFrame(transitionFrame, direction) {
     const state = this.store.getState();
+    if (!transitionFrame.sourceTree || !transitionFrame.targetTree) return;
 
     state.updateColorManagerForIndex?.(transitionFrame.highlightTreeIndex);
 
@@ -141,7 +142,7 @@ export class ScrubberAPI {
       return null;
     }
 
-    return this.timelineManager.getTransitionFrameForTimelineProgress(progress);
+    return this.timelineManager.resolveFrameAtTimelineProgress?.(progress) ?? null;
   }
 }
 

@@ -7,6 +7,7 @@ export function createRawConnectorConnectionFromCandidate(candidate, visualState
     target: candidate.target,
     color: visualState.color,
     isCurrentlyMoving: visualState.isMoving,
+    bundleGroupKey: visualState.bundleGroupKey,
     sourceInfo: candidate.leftInfo,
     targetInfo: candidate.rightInfo,
   });

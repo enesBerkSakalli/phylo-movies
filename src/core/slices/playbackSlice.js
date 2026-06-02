@@ -501,7 +501,7 @@ function getLinearProgressForTimelineProgress(movieTimelineManager, timelineProg
   }
 
   const transitionFrame =
-    movieTimelineManager?.getTransitionFrameForTimelineProgress?.(timelineProgress);
+    movieTimelineManager?.resolveFrameAtTimelineProgress?.(timelineProgress);
   if (!transitionFrame) return null;
 
   const fromIndex = Number(transitionFrame.sourceTreeIndex);
