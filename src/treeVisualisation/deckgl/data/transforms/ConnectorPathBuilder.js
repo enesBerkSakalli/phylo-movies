@@ -78,41 +78,46 @@ function buildBundledConnectorPaths(params) {
       return [];
     }
 
-    let srcBundlePoint = chooseBundlePoint(
-      connections,
-      null,
-      leftCenter,
-      leftRadius,
-      true,
-      leftInfoById
-    );
-    let dstBundlePoint = chooseBundlePoint(
-      connections,
-      null,
-      rightCenter,
-      rightRadius,
-      false,
-      rightInfoById
-    );
-
-    if (outwardPushFactor) {
-      srcBundlePoint = pushOutward(srcBundlePoint, leftCenter, outwardPushFactor);
-      dstBundlePoint = pushOutward(dstBundlePoint, rightCenter, outwardPushFactor);
-    }
-
-    connections.forEach((connection, index) => {
-      const path = buildPathForConnection(
-        connection,
-        srcBundlePoint,
-        dstBundlePoint,
+    const activeGroups = groupActiveConnectorConnections(connections);
+    activeGroups.forEach((group, groupIndex) => {
+      let srcBundlePoint = chooseBundlePoint(
+        group.connections,
+        null,
         leftCenter,
+        leftRadius,
+        true,
+        leftInfoById
+      );
+      let dstBundlePoint = chooseBundlePoint(
+        group.connections,
+        null,
         rightCenter,
-        bundlingStrength
+        rightRadius,
+        false,
+        rightInfoById
       );
 
-      if (path.length) {
-        results.push(createConnectorPathConnection(connection, path, `-active-${index}`, width));
+      if (outwardPushFactor) {
+        srcBundlePoint = pushOutward(srcBundlePoint, leftCenter, outwardPushFactor);
+        dstBundlePoint = pushOutward(dstBundlePoint, rightCenter, outwardPushFactor);
       }
+
+      group.connections.forEach((connection, index) => {
+        const path = buildPathForConnection(
+          connection,
+          srcBundlePoint,
+          dstBundlePoint,
+          leftCenter,
+          rightCenter,
+          bundlingStrength
+        );
+
+        if (path.length) {
+          results.push(
+            createConnectorPathConnection(connection, path, `-active-${groupIndex}-${index}`, width)
+          );
+        }
+      });
     });
     return results;
   }
@@ -152,6 +157,20 @@ function buildBundledConnectorPaths(params) {
   }
 
   return results;
+}
+
+function groupActiveConnectorConnections(connections) {
+  const groups = new Map();
+
+  connections.forEach((connection, index) => {
+    const groupKey = connection.bundleGroupKey || `active-${index}`;
+    if (!groups.has(groupKey)) {
+      groups.set(groupKey, { key: groupKey, connections: [] });
+    }
+    groups.get(groupKey).connections.push(connection);
+  });
+
+  return Array.from(groups.values());
 }
 
 function buildPathForConnection(

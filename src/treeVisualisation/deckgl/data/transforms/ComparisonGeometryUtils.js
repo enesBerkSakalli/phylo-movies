@@ -4,13 +4,17 @@ import { findLowestCommonAncestorById } from '../../builders/geometry/connectors
 export const ensureOutside = (pt, center, minRadius, depthOffset = 0) => {
   const dx = pt[0] - center[0];
   const dy = pt[1] - center[1];
-  const r = Math.hypot(dx, dy) || 1;
+  const r = Math.hypot(dx, dy);
 
   // Base radius plus offset based on hierarchy depth
   // The deeper in the tree (higher depth value), the closer to the base radius.
   // The shallower (closer to root), the further out.
   // We assume max offset
   const targetRadius = minRadius + depthOffset;
+
+  if (r < 1e-9) {
+    return [center[0], center[1] - targetRadius, 0];
+  }
 
   const scale = Math.max(1, targetRadius / r);
   return [center[0] + dx * scale, center[1] + dy * scale, 0];

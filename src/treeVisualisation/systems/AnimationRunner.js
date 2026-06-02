@@ -51,6 +51,7 @@ export class AnimationRunner {
     this._runToken = 0;
     this._lastAnimationStage = null;
     this._lastProgressSyncTime = 0;
+    this._deferRenderUntilNextFrame = false;
 
     // Performance optimization: Cache stage detection to avoid O(N) set building every frame
     this._stageCache = {
@@ -74,6 +75,8 @@ export class AnimationRunner {
     if (this.isRunning) return;
     this.isRunning = true;
     this._runToken += 1;
+    this._lastProgressSyncTime = 0;
+    this._deferRenderUntilNextFrame = true;
     this._scheduleFrame(this._runToken);
   }
 
@@ -84,6 +87,7 @@ export class AnimationRunner {
   stop() {
     this.isRunning = false;
     this._runToken += 1;
+    this._deferRenderUntilNextFrame = false;
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
@@ -162,29 +166,20 @@ export class AnimationRunner {
     const playback = getPlaybackState(state, timestamp);
     if (!playback) return true; // Stop if invalid config
 
-    const { progress, isFinished, fromIndex, toIndex, localT } = playback;
+    const { progress, isFinished } = playback;
 
-    // 2. Data Access
-    state.ensureTreesHydrated?.([fromIndex, toIndex]);
-    const trees = getActiveTreeSequence(state);
-    const fromTree = trees[fromIndex];
-    const toTree = trees[toIndex];
+    this._syncPlaybackProgress(timestamp, progress, isFinished, playback);
+    if (this._deferRenderUntilNextFrame) {
+      this._deferRenderUntilNextFrame = false;
+      return isFinished;
+    }
 
-    if (!fromTree) return true; // End of list safety
+    const transitionFrame = playback.transitionFrame ?? buildLinearTransitionFrame(state, playback);
 
-    const transitionFrame = TransitionFrame.from(
-      {
-        sourceTree: fromTree,
-        targetTree: toTree,
-        sourceTreeIndex: fromIndex,
-        targetTreeIndex: toIndex,
-        transitionProgress: localT,
-        holdKind: playback.holdKind,
-      },
-      {
-        timelineProgress: playback.timelineProgress,
-      }
-    );
+    if (!transitionFrame?.sourceTree || !transitionFrame?.targetTree) return true;
+    const fromIndex = transitionFrame.sourceTreeIndex;
+    const toIndex = transitionFrame.targetTreeIndex;
+    const localT = transitionFrame.transitionProgress;
 
     const { dataFrom, dataTo, transitionChangeModel } = this.getOrCacheInterpolationData(
       transitionFrame.sourceTree,
@@ -231,7 +226,7 @@ export class AnimationRunner {
       }
     }
 
-    this._syncStore(timestamp, progress, stage, isFinished, playback);
+    this._syncAnimationStage(stage);
     this.syncHighlightsForIndex(transitionFrame.highlightTreeIndex);
 
     // 5. Easing & Render
@@ -261,7 +256,7 @@ export class AnimationRunner {
     return isFinished;
   }
 
-  _syncStore(timestamp, progress, stage, isFinished, playback = {}) {
+  _syncPlaybackProgress(timestamp, progress, isFinished, playback = {}) {
     // Throttle progress updates to ~10fps
     if (isFinished || timestamp - this._lastProgressSyncTime > 100) {
       this.updateProgress(progress, {
@@ -271,7 +266,9 @@ export class AnimationRunner {
       });
       this._lastProgressSyncTime = timestamp;
     }
+  }
 
+  _syncAnimationStage(stage) {
     // Update Stage only on change
     if (stage !== this._lastAnimationStage) {
       this.setAnimationStage(stage);
@@ -344,7 +341,7 @@ function getSemanticTimelinePlaybackState(state, timestamp, treeList) {
 
   if (
     !movieTimelineManager ||
-    typeof movieTimelineManager.getTransitionFrameForTimelineProgress !== 'function' ||
+    typeof movieTimelineManager.resolveFrameAtTimelineProgress !== 'function' ||
     !Number.isFinite(totalDurationMs) ||
     totalDurationMs <= 0
   ) {
@@ -356,7 +353,7 @@ function getSemanticTimelinePlaybackState(state, timestamp, treeList) {
   const rawProgress = elapsedMs / totalDurationMs;
   const timelineProgress = Math.max(0, Math.min(1, rawProgress));
   const transitionFrame =
-    movieTimelineManager.getTransitionFrameForTimelineProgress(timelineProgress);
+    movieTimelineManager.resolveFrameAtTimelineProgress(timelineProgress);
 
   if (!transitionFrame) {
     return null;
@@ -378,6 +375,7 @@ function getSemanticTimelinePlaybackState(state, timestamp, treeList) {
     isInPause: Boolean(transitionFrame.holdKind),
     holdKind: playbackState.holdKind,
     frameIndex: playbackState.frameIndex,
+    transitionFrame,
   };
 }
 
@@ -386,6 +384,29 @@ function getSemanticTimelinePlaybackState(state, timestamp, treeList) {
  */
 function getActiveTreeSequence(state) {
   return selectActiveTreeList(state);
+}
+
+function buildLinearTransitionFrame(state, playback) {
+  const { fromIndex, toIndex, localT } = playback;
+  state.ensureTreesHydrated?.([fromIndex, toIndex]);
+  const trees = getActiveTreeSequence(state);
+  const fromTree = trees[fromIndex];
+  const toTree = trees[toIndex];
+  if (!fromTree) return null;
+
+  return TransitionFrame.from(
+    {
+      sourceTree: fromTree,
+      targetTree: toTree,
+      sourceTreeIndex: fromIndex,
+      targetTreeIndex: toIndex,
+      transitionProgress: localT,
+      holdKind: playback.holdKind,
+    },
+    {
+      timelineProgress: playback.timelineProgress,
+    }
+  );
 }
 
 function isFrameSensitiveLifecycleStage(transitionChangeModel) {

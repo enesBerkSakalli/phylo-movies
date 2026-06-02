@@ -6,6 +6,7 @@ import {
   EXAMPLE_DATASETS,
 } from '../../src/pages/WorkspaceInitialization/exampleDatasets.js';
 import { validatePhyloMovieData } from '../../src/domain/backend/phyloMovieSchema';
+import { buildSprAnalyticsModel } from '../../src/domain/spr/sprAnalytics';
 
 function publicationPathForExampleArtifact(artifact) {
   return path.join(process.cwd(), artifact.filePath.replace(/^.*examples\//, 'publication_data/'));
@@ -22,6 +23,14 @@ function countFramesByType(payload) {
   }, {});
 }
 
+function recurrenceCountBySignature(payload, signature) {
+  const analyticsModel = buildSprAnalyticsModel(payload.pairs, {
+    temporalEvents: payload.temporal_events,
+    pairMetrics: payload.pair_metrics,
+  });
+  return analyticsModel.movedSubtreeRecurrences.find((row) => row.signature === signature)?.count;
+}
+
 describe('example dataset configuration', () => {
   it('copies publication example assets into production builds', () => {
     const packageJson = JSON.parse(
@@ -29,6 +38,7 @@ describe('example dataset configuration', () => {
     );
 
     expect(packageJson.scripts.build).toContain('./scripts/copy-examples.sh dist');
+    expect(packageJson.scripts['build:gh']).toContain('npm run fixtures:generate:ci');
     expect(packageJson.scripts['fixtures:generate']).toContain('poetry run python');
     expect(packageJson.scripts['fixtures:check']).toContain('poetry run python');
   });
@@ -44,6 +54,7 @@ describe('example dataset configuration', () => {
     expect(fixtureGenerator).not.toContain('gh-pages-demo');
     expect(fixtureGenerator).toContain('demo-paper-example');
     expect(fixtureGenerator).toContain('demo-norovirus-334');
+    expect(fixtureGenerator).not.toContain('demo-norovirus-334-stability');
     expect(fixtureGenerator).toContain('demo-bootstrap-125');
     expect(fixtureGenerator).toContain('demo-msprime-1000-limit');
   });
@@ -51,7 +62,6 @@ describe('example dataset configuration', () => {
   it('keeps the browser demo library limited to generated payloads', () => {
     expect(DEMO_EXAMPLE_DATASETS.map((example) => example.id)).toEqual([
       'norovirus-334',
-      'norovirus-334-stability',
       'paper-example',
       'bootstrap-24',
       'bootstrap-125',
@@ -63,7 +73,6 @@ describe('example dataset configuration', () => {
     );
     expect(generatedDemoExamples.map((example) => example.id)).toEqual([
       'norovirus-334',
-      'norovirus-334-stability',
       'paper-example',
       'bootstrap-24',
       'bootstrap-125',
@@ -119,7 +128,6 @@ describe('example dataset configuration', () => {
       'all_trees_24_source-24_taxa24_sites14190.movie.json',
       'msprime_1000taxa_2trees_seed100005.movie.json',
       'norovirus_334_iqtree_fast_sh_alrt_window1000_step500.movie.json',
-      'norovirus_334_iqtree_fast_window750_step500.movie.json',
       'paper_example.movie.json',
       'quick_msa_demo_30taxa_10trees.movie.json',
     ];
@@ -161,18 +169,48 @@ describe('example dataset configuration', () => {
     expect(countFramesByType(payloadsById.get('norovirus-334')).interpolation_frame).toBeGreaterThan(
       0
     );
-    expect(payloadsById.get('norovirus-334').msa.window_size).toBe(750);
+    expect(payloadsById.get('norovirus-334').msa.window_size).toBe(1000);
+    expect(payloadsById.get('norovirus-334').msa.step_size).toBe(500);
+    expect(payloadsById.get('norovirus-334').frames).toHaveLength(6098);
+    expect(countFramesByType(payloadsById.get('norovirus-334'))).toMatchObject({
+      input_tree: 17,
+      interpolation_frame: 6081,
+    });
     expect(
-      countFramesByType(payloadsById.get('norovirus-334-stability')).interpolation_frame
-    ).toBeGreaterThan(0);
-    expect(payloadsById.get('norovirus-334-stability').msa.window_size).toBe(1000);
-    expect(payloadsById.get('norovirus-334-stability').msa.step_size).toBe(500);
+      payloadsById.get('norovirus-334').temporal_events.filter(
+        (event) => event.event_type === 'spr_move'
+      )
+    ).toHaveLength(1513);
     expect(countFramesByType(payloadsById.get('bootstrap-24')).interpolation_frame).toBeGreaterThan(
       0
     );
     expect(
       countFramesByType(payloadsById.get('bootstrap-125')).interpolation_frame
     ).toBeGreaterThan(0);
+  }, 30000);
+
+  it('keeps app-level SPR recurrence counts aligned with publication bootstrap CSVs', () => {
+    const bootstrap24Payload = JSON.parse(
+      fs.readFileSync(
+        path.join(
+          process.cwd(),
+          'publication_data/precomputed/all_trees_24_source-24_taxa24_sites14190.movie.json'
+        ),
+        'utf8'
+      )
+    );
+    const bootstrap125Payload = JSON.parse(
+      fs.readFileSync(
+        path.join(
+          process.cwd(),
+          'publication_data/precomputed/all_trees_125_source-125_taxa125_sites29149.movie.json'
+        ),
+        'utf8'
+      )
+    );
+
+    expect(recurrenceCountBySignature(bootstrap24Payload, '20')).toBe(79);
+    expect(recurrenceCountBySignature(bootstrap125Payload, '114')).toBe(91);
   }, 30000);
 
   it('keeps publication source artifacts copied into production builds', () => {
@@ -218,37 +256,31 @@ describe('example dataset configuration', () => {
 
     expect(iqtreeExamples.map((example) => example.id)).toEqual([
       'norovirus-334',
-      'norovirus-334-stability',
       'quick-msa-demo',
     ]);
     expect(
       iqtreeExamples
         .filter((example) => example.parameters?.iqtreeFastSearch === true)
         .map((example) => example.id)
-    ).toEqual(['norovirus-334', 'norovirus-334-stability', 'quick-msa-demo']);
+    ).toEqual(['norovirus-334', 'quick-msa-demo']);
   });
 
-  it('adds a norovirus stability-score run without duplicating source data', () => {
-    const fastNorovirusExample = EXAMPLE_DATASETS.find((example) => example.id === 'norovirus-334');
-    const stabilityNorovirusExample = EXAMPLE_DATASETS.find(
-      (example) => example.id === 'norovirus-334-stability'
-    );
+  it('keeps the norovirus publication example on the SH-aLRT stability-score run', () => {
+    const norovirusExample = EXAMPLE_DATASETS.find((example) => example.id === 'norovirus-334');
 
-    expect(stabilityNorovirusExample).toBeDefined();
-    expect(stabilityNorovirusExample.filePath).toBe(fastNorovirusExample.filePath);
-    expect(stabilityNorovirusExample.name).toBe('Norovirus Stability Scan');
-    expect(stabilityNorovirusExample.provenance.settings).toContainEqual({
+    expect(norovirusExample).toBeDefined();
+    expect(norovirusExample.provenance.settings).toContainEqual({
       label: 'Stability scores',
       value: 'SH-aLRT, 1000 replicates',
     });
-    expect(stabilityNorovirusExample.provenance.settings).toContainEqual({
+    expect(norovirusExample.provenance.settings).toContainEqual({
       label: 'Windowing',
       value: '1000 sites, 500-site step',
     });
-    expect(stabilityNorovirusExample.precomputedPayloadPath).toContain(
+    expect(norovirusExample.precomputedPayloadPath).toContain(
       'norovirus_334_iqtree_fast_sh_alrt_window1000_step500.movie.json'
     );
-    expect(stabilityNorovirusExample.parameters).toMatchObject({
+    expect(norovirusExample.parameters).toMatchObject({
       treeInferenceEngine: 'iqtree',
       iqtreeFastSearch: true,
       windowSize: 1000,
@@ -260,9 +292,8 @@ describe('example dataset configuration', () => {
       useGtr: true,
       useGamma: true,
     });
-    expect(stabilityNorovirusExample.runtimeWarning).toContain('Runs IQ-TREE');
 
-    const windowTableArtifact = stabilityNorovirusExample.generatedArtifactFiles.find(
+    const windowTableArtifact = norovirusExample.generatedArtifactFiles.find(
       (artifact) => artifact.fileName === 'norovirus_334_window1000_step500_windows.tsv'
     );
     const windowTableRows = fs
@@ -309,7 +340,7 @@ describe('example dataset configuration', () => {
       example.id.startsWith('norovirus-334')
     );
 
-    expect(norovirusExamples).toHaveLength(2);
+    expect(norovirusExamples).toHaveLength(1);
 
     for (const example of norovirusExamples) {
       expect(example.sourceTruthFile).toMatchObject({
@@ -330,12 +361,8 @@ describe('example dataset configuration', () => {
         'full_genome_metadata.tsv',
         'subsampled_350_metadata.csv',
         'rename_map.tsv',
-        ...(example.id === 'norovirus-334'
-          ? ['norovirus_334_iqtree_fast_window750_step500.nwk']
-          : [
-              'norovirus_334_window1000_step500_windows.tsv',
-              'norovirus_334_iqtree_fast_sh_alrt_window1000_step500.nwk',
-            ]),
+        'norovirus_334_window1000_step500_windows.tsv',
+        'norovirus_334_iqtree_fast_sh_alrt_window1000_step500.nwk',
       ]);
 
       for (const artifact of [
@@ -385,6 +412,8 @@ describe('example dataset configuration', () => {
           'DATASET_MANIFEST.json',
           'composition_ranked_bootstrap_replicates_24_source-24_taxa24_sites14190.tsv',
           'split_support_24_source-24_taxa24_sites14190.tsv',
+          'moved_subtree_recurrence_24_source-24_taxa24_sites14190.csv',
+          'SPR_RECURRENCE_SUMMARY.json',
           'ORDERING_SEMANTICS.md',
         ],
       ],
@@ -394,6 +423,8 @@ describe('example dataset configuration', () => {
           'DATASET_MANIFEST.json',
           'composition_ranked_bootstrap_replicates_125_source-125_taxa125_sites29149.tsv',
           'split_support_125_source-125_taxa125_sites29149.tsv',
+          'moved_subtree_recurrence_125_source-125_taxa125_sites29149.csv',
+          'SPR_RECURRENCE_SUMMARY.json',
           'ORDERING_SEMANTICS.md',
         ],
       ],
@@ -457,10 +488,20 @@ describe('example dataset configuration', () => {
       const splitSupportHeader = fs.readFileSync(splitSupportFile, 'utf8').split(/\r?\n/, 1)[0];
 
       expect(treeCount).toBe(200);
-      expect(treeContents).toContain('support_kind=bootstrap_replicate_subtree_frequency');
+      expect(treeContents).toContain('support_kind=bootstrap_replicate_split_frequency');
       expect(treeContents).toContain('bootstrap_frequency=');
+      expect(treeContents).toContain('iqtree_support_kind=sh_alrt');
+      expect(treeContents).toContain('iqtree_sh_alrt=');
       expect(splitSupportHeader).toContain('support_percent');
       expect(example.description).toContain('IQ-TREE default mode');
+      expect(example.description).toContain('SH-aLRT branch labels');
+      expect(example.description).toContain('split-frequency support context');
+      expect(example.description).toContain('SPR recurrence tables');
+      expect(example.provenance.settings).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ label: 'Support labels', value: 'SH-aLRT, 1,000 replicates' }),
+        ])
+      );
       expect(example.filePath).toContain('bootstrap_rogue_taxa/current_results');
       expect(example.fileName).toContain('source-');
     }

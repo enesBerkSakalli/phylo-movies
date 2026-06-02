@@ -29,13 +29,10 @@ export function getConnectorsLayerProps(connectors, state) {
     },
     getColor: (d) => {
       const baseColor = d.color || (d.isLeafToLeaf ? [70, 130, 220] : [150, 150, 150]);
-      // If baseColor has 4 components, use its alpha (unless overridden)
-      // For active edges, we want them to pop, so we use their assigned alpha.
-      // For others, we apply global opacity.
-
-      // Apply global opacity to ALL connectors, including active/moving ones
-      // This allows the slider to control visibility of highlighted elements as well
-      const alpha = Math.round((linkConnectionOpacity ?? 0.6) * 255);
+      const alpha =
+        Array.isArray(baseColor) && Number.isFinite(baseColor[3])
+          ? baseColor[3]
+          : Math.round((linkConnectionOpacity ?? 0.6) * 255);
       _connColorOut[0] = baseColor[0];
       _connColorOut[1] = baseColor[1];
       _connColorOut[2] = baseColor[2];

@@ -8,6 +8,9 @@ export function createConnectorConnection(params) {
     sourceInfo: params.sourceInfo,
     targetInfo: params.targetInfo,
   };
+  if (params.bundleGroupKey !== undefined) {
+    connection.bundleGroupKey = params.bundleGroupKey;
+  }
   if (params.path !== undefined) {
     connection.path = params.path;
   }
@@ -24,6 +27,7 @@ export function createConnectorPathConnection(connection, path, idSuffix, width)
     target: connection.target,
     color: connection.color,
     isCurrentlyMoving: connection.isCurrentlyMoving,
+    bundleGroupKey: connection.bundleGroupKey,
     sourceInfo: connection.sourceInfo,
     targetInfo: connection.targetInfo,
     path,

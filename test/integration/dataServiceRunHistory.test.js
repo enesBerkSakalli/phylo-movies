@@ -36,9 +36,13 @@ describe('phyloData run history', () => {
     expect(runs[0]).toMatchObject({
       sourceType: 'Integration fixture',
       treeCount: 10,
+      frameCount: secondRun.frames.length,
+      interpolatedTreeCount: secondRun.interpolated_trees.length,
+      payloadSchemaVersion: 1,
       windowing: '1500 sites, 1000-site step',
       support: 'SH-aLRT, 1000 replicates',
     });
+    expect(runs[0].payloadHash).toMatch(/^[a-f0-9]{64}$/);
 
     await phyloData.openRun(runs[1].id);
     expect((await phyloData.get()).dataset_provenance.source_label).toBe('First run');

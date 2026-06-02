@@ -13,6 +13,7 @@ const STORAGE_KEYS = {
 };
 const RUN_DATA_PREFIX = 'phyloMovieRun:';
 const MAX_STORED_RUNS = 8;
+const RUN_PAYLOAD_SCHEMA_VERSION = 1;
 
 /**
  * Generic storage operations
@@ -85,7 +86,7 @@ export const phyloData = {
 
   async set(data, options = {}) {
     const validatedBackendData = validatePhyloMovieData(data, { hydrateTrees: false });
-    const run = createRunRecord(validatedBackendData, options);
+    const run = await createRunRecord(validatedBackendData, options);
 
     try {
       await storeRunPayload(run.id, validatedBackendData);
@@ -193,7 +194,7 @@ function normalizeRunIndex(value) {
   );
 }
 
-function createRunRecord(data, options = {}) {
+async function createRunRecord(data, options = {}) {
   const provenance = data?.dataset_provenance || {};
   const label = options.label || provenance.source_label || data?.file_name || 'Processed run';
   const settings = Array.isArray(provenance.settings) ? provenance.settings : [];
@@ -202,6 +203,10 @@ function createRunRecord(data, options = {}) {
     settings.find((setting) =>
       ['Branch support', 'Stability scores', 'Support labels'].includes(setting?.label)
     )?.value ?? null;
+  const frameCount = Array.isArray(data?.frames) ? data.frames.length : null;
+  const interpolatedTreeCount = Array.isArray(data?.interpolated_trees)
+    ? data.interpolated_trees.length
+    : null;
 
   return {
     id: createRunId(),
@@ -210,9 +215,22 @@ function createRunRecord(data, options = {}) {
     createdAt: new Date().toISOString(),
     fileName: data?.file_name || null,
     treeCount: countInputTrees(data),
+    frameCount,
+    interpolatedTreeCount,
+    payloadSchemaVersion: RUN_PAYLOAD_SCHEMA_VERSION,
+    payloadHash: await createPayloadHash(data),
     windowing,
     support,
   };
+}
+
+async function createPayloadHash(data) {
+  const subtle = globalThis.crypto?.subtle;
+  if (!subtle || typeof TextEncoder === 'undefined') return null;
+
+  const bytes = new TextEncoder().encode(JSON.stringify(data));
+  const digest = await subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 function countInputTrees(data) {

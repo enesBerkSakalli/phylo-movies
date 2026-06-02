@@ -135,10 +135,11 @@ export function MoviePlayerBar() {
         className="movie-player-bar relative z-[1000] w-full shrink-0 bg-card border-t shadow-[0_2px_4px_rgba(0,0,0,0.08)]"
         role="region"
         aria-label={MOVIE_PLAYER_ARIA_LABELS.root}
+        data-tour-id="workspace-timeline"
       >
         <div className="flex flex-col">
           <div
-            className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 border-b border-border/70 bg-muted/20 px-2 py-1"
+            className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-border/70 bg-muted/20 px-2 py-1 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]"
             role="group"
             aria-label={MOVIE_PLAYER_ARIA_LABELS.primaryControls}
           >
@@ -165,20 +166,21 @@ export function MoviePlayerBar() {
                 <div className="flex min-w-0 items-center gap-2 overflow-hidden">
                   <TimelineStatusStrip />
                   <MsaPlayerBarAction hasMsa={hasMsa} onOpen={handleOpenMsaViewer} />
-                  <MotionStatusSlot stage={currentAnimationStage} />
                 </div>
               )}
             </div>
 
-            <div className="justify-self-center rounded-md border border-border/70 bg-background/80 px-1 py-0.5 shadow-sm">
+            <div className="justify-self-end rounded-md border border-border/70 bg-background/80 px-1 py-0.5 shadow-sm lg:justify-self-center">
               <TransportControls onBackward={backward} onForward={forward} />
             </div>
 
             <div
-              className="flex min-w-0 items-center justify-end gap-2"
+              className="col-span-2 flex min-w-0 flex-wrap items-center justify-end gap-2 lg:col-span-1"
               role="group"
               aria-label={MOVIE_PLAYER_ARIA_LABELS.playbackSettings}
             >
+              {hasTimeline && <MotionStatusSlot stage={currentAnimationStage} />}
+
               {toolbarExpanded && (
                 <PlaybackSpeedControl value={animationSpeed} setValue={setAnimationSpeed} />
               )}

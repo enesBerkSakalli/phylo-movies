@@ -45,16 +45,17 @@ function normalizedOptionalNumber(value) {
   return Number.isFinite(number) ? number : 'none';
 }
 
-function getDatasetCacheId(state = {}, treeList = null) {
+function getDatasetCacheId(state = {}, treeList = null, { includeHydration = false } = {}) {
   const resolvedTreeList = resolveTreeList(state, treeList);
   const fileName = selectFileName(state) || 'dataset';
   const treeCount = Array.isArray(resolvedTreeList) ? resolvedTreeList.length : 0;
   const referenceId = getReferenceId(resolvedTreeList);
+  const hydrationVersion = includeHydration ? `:h${state?.treeHydrationVersion ?? 0}` : '';
   if (Number.isInteger(state?.datasetVersion)) {
-    return `${fileName}:${treeCount}:v${state.datasetVersion}:r${referenceId}`;
+    return `${fileName}:${treeCount}:v${state.datasetVersion}:r${referenceId}${hydrationVersion}`;
   }
 
-  return `${fileName}:${treeCount}:r${referenceId}`;
+  return `${fileName}:${treeCount}:r${referenceId}${hydrationVersion}`;
 }
 
 export function createUniformScalingCacheKey({
@@ -78,7 +79,7 @@ export function createTransformCacheKey({
 } = {}) {
   const resolvedTreeList = resolveTreeList(state, treeList);
   return [
-    `dataset=${getDatasetCacheId(state, resolvedTreeList)}`,
+    `dataset=${getDatasetCacheId(state, resolvedTreeList, { includeHydration: true })}`,
     `branch=${branchTransformation}`,
   ].join('|');
 }
@@ -96,7 +97,7 @@ export function createLayoutCacheKey({
   const scale = normalizedOptionalNumber(maxGlobalScale);
 
   return [
-    `dataset=${getDatasetCacheId(state, resolvedTreeList)}`,
+    `dataset=${getDatasetCacheId(state, resolvedTreeList, { includeHydration: true })}`,
     `tree=${treeIndex}`,
     `branch=${state?.branchTransformation ?? 'none'}`,
     `linkGeometry=${state?.linkGeometryMode ?? 'radial-elbow'}`,

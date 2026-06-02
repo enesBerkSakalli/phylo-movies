@@ -77,6 +77,11 @@ export function RecentRunsPanel() {
                       {run.treeCount} trees
                     </Badge>
                   )}
+                  {run.frameCount != null && run.frameCount !== run.treeCount && (
+                    <Badge variant="secondary" className="shrink-0 text-2xs">
+                      {run.frameCount} frames
+                    </Badge>
+                  )}
                 </div>
                 <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-2xs text-muted-foreground">
                   <span className="inline-flex items-center gap-1">

@@ -194,22 +194,7 @@ export class InterpolationRenderer {
     }
 
     const state = useAppStore.getState();
-    let transitionFrame =
-      state.movieTimelineManager?.getTransitionFrameForTimelineProgress?.(progress);
-
-    if (
-      transitionFrame &&
-      (!transitionFrame.sourceTree || !transitionFrame.targetTree) &&
-      Number.isInteger(transitionFrame.sourceTreeIndex) &&
-      Number.isInteger(transitionFrame.targetTreeIndex)
-    ) {
-      state.ensureTreesHydrated?.([
-        transitionFrame.sourceTreeIndex,
-        transitionFrame.targetTreeIndex,
-      ]);
-      transitionFrame =
-        state.movieTimelineManager?.getTransitionFrameForTimelineProgress?.(progress);
-    }
+    const transitionFrame = state.movieTimelineManager?.resolveFrameAtTimelineProgress?.(progress);
 
     if (!transitionFrame?.sourceTree || !transitionFrame?.targetTree) {
       return;

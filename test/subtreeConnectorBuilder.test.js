@@ -656,6 +656,7 @@ describe('SubtreeConnectorBuilder', function () {
       },
       color: [255, 0, 0, 255],
       isMoving: true,
+      bundleGroupKey: toSubtreeKey([10, 11]),
     });
     expect(getNodeColor).toHaveBeenCalledWith(subtreeInfo);
 
@@ -858,12 +859,12 @@ describe('SubtreeConnectorBuilder', function () {
     const pathConnection = connectionObjects.createConnectorPathConnection(
       rawConnection,
       path,
-      '-active-0',
+      '-active-0-0',
       3
     );
 
     expect(pathConnection).toMatchObject({
-      id: 'connector-10-10-active-0',
+      id: 'connector-10-10-active-0-0',
       source: rawConnection.source,
       target: rawConnection.target,
       color: rawConnection.color,
@@ -991,7 +992,7 @@ describe('SubtreeConnectorBuilder', function () {
     });
     expect(paths[0].path).toBeInstanceOf(Float32Array);
     expect(paths[1]).toMatchObject({
-      id: 'connector-10-10-active-0',
+      id: 'connector-10-10-active-0-0',
       width: 3.0,
       isCurrentlyMoving: true,
       sourceInfo: activeConnection.sourceInfo,
@@ -1011,6 +1012,58 @@ describe('SubtreeConnectorBuilder', function () {
     expect(pathBuilderSource).not.toMatch(/ConnectorPassiveGroups\.js/);
     expect(pathBuilderSource).not.toMatch(/groupPassiveConnectorConnections/);
     expect(pathBuilderSource).not.toMatch(/\bpassiveConnections\b/);
+  });
+
+  it('keeps disjoint active connector groups in separate bundle lanes', async function () {
+    const pathBuilder = await importConnectorPathBuilder();
+
+    expect(pathBuilder).not.toBeNull();
+
+    const leftPositions = makePositionMap(0);
+    const rightPositions = makePositionMap(160);
+    const upperConnection = {
+      id: 'connector-10-10',
+      source: [-30, -20, 0],
+      target: [130, -20, 0],
+      color: [16, 185, 129, 255],
+      isCurrentlyMoving: true,
+      bundleGroupKey: 'moving-upper',
+      sourceInfo: leftPositions.get('10'),
+      targetInfo: rightPositions.get('10'),
+    };
+    const lowerConnection = {
+      id: 'connector-13-13',
+      source: [30, 20, 0],
+      target: [190, 20, 0],
+      color: [16, 185, 129, 255],
+      isCurrentlyMoving: true,
+      bundleGroupKey: 'moving-lower',
+      sourceInfo: leftPositions.get('13'),
+      targetInfo: rightPositions.get('13'),
+    };
+
+    const paths = pathBuilder.buildConnectorPathConnections({
+      activeConnections: [upperConnection, lowerConnection],
+      passiveConnectionGroups: [],
+      leftCenter: [0, 0],
+      rightCenter: [160, 0],
+      leftRadius: 50,
+      rightRadius: 50,
+      leftPositions,
+      rightPositions,
+    });
+
+    const activePaths = paths.filter((connector) => connector.isCurrentlyMoving);
+    const activePathIds = activePaths.map((connector) => connector.id);
+    const midpointY = (connector) => {
+      const pointCount = connector.path.length / 3;
+      const midpointOffset = Math.floor(pointCount / 2) * 3;
+      return connector.path[midpointOffset + 1];
+    };
+
+    expect(activePaths).toHaveLength(2);
+    expect(activePathIds).toEqual(['connector-10-10-active-0-0', 'connector-13-13-active-1-0']);
+    expect(Math.sign(midpointY(activePaths[0]))).not.toBe(Math.sign(midpointY(activePaths[1])));
   });
 
   it('builds connectors when positions are Maps', function () {

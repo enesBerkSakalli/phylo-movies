@@ -124,7 +124,7 @@ describe('InterpolationRenderer timeline progress', () => {
     useAppStore.setState({
       movieTimelineManager: {
         destroy: () => {},
-        getTransitionFrameForTimelineProgress: () => null,
+        resolveFrameAtTimelineProgress: () => null,
       },
     });
 

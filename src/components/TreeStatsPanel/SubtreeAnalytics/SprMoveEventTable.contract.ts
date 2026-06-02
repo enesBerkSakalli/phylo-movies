@@ -2,7 +2,7 @@ export const SPR_MOVE_EVENT_TABLE_COPY = {
   searchLabel: 'Search SPR moves',
   searchPlaceholder: 'Search SPR moves by taxa, window range, pivot edge, attachment...',
   subtreeValueFilterLabel: 'Filter SPR moves by moved-subtree branch value category',
-  contextValueFilterLabel: 'Filter SPR moves by placement-context branch value category',
+  contextValueFilterLabel: 'Filter SPR moves by parent-branch value category',
   branchValueThresholdLabel: 'Value threshold',
   branchValueThresholdInputLabel: 'Branch value threshold',
   clearSearchLabel: 'Clear SPR move search',
@@ -10,7 +10,7 @@ export const SPR_MOVE_EVENT_TABLE_COPY = {
   noMovements: 'No SPR moves available for this dataset.',
   branchValueFilters: {
     allSubtree: 'All subtree values',
-    allContext: 'All placement context values',
+    allContext: 'All parent branch values',
     bothHigh: '{target} both >= {threshold}',
     mixed: '{target} one >= {threshold}',
     low: '{target} both < {threshold}',
@@ -24,7 +24,7 @@ export const SPR_MOVE_EVENT_TABLE_COPY = {
   },
   branchValueRows: {
     movedSubtree: 'Moved subtree',
-    nearestAncestor: 'Placement context',
+    nearestAncestor: 'Parent branch',
   },
   columns: {
     movement: 'SPR Move',

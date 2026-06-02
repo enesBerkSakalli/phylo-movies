@@ -118,6 +118,30 @@ describe('MovieTimelineManager lifecycle', () => {
     manager.destroy();
   });
 
+  it('resolves timeline frames through hydration instead of treating sparse treeList as invalid', () => {
+    const treeList = new Array(movieData.interpolated_trees.length);
+    const hydratedIndices = [];
+    useAppStore.setState({
+      treeList,
+      ensureTreesHydrated: (indices) => {
+        hydratedIndices.push(indices);
+        return indices.map((index) => {
+          treeList[index] = movieData.interpolated_trees[index];
+          return treeList[index];
+        });
+      },
+    });
+
+    const manager = new MovieTimelineManager(movieData, treeList);
+    const frame = manager.resolveFrameAtIndex(1);
+
+    expect(hydratedIndices).to.not.deep.equal([]);
+    expect(frame.sourceTree).to.equal(movieData.interpolated_trees[0]);
+    expect(frame.targetTree).to.equal(movieData.interpolated_trees[1]);
+
+    manager.destroy();
+  });
+
   it('exposes timeline-owned status snapshots before mounting', () => {
     const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
     const cursor = manager.getCursorForFrame(22, { occurrence: 'last' });
@@ -372,7 +396,7 @@ describe('MovieTimelineManager lifecycle', () => {
       const trees = [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }, { id: 'e' }];
       const timelineProgress = 0.42;
       const manager = {
-        getTransitionFrameForTimelineProgress: (progress) => {
+        resolveFrameAtTimelineProgress: (progress) => {
           expect(progress).to.equal(timelineProgress);
           return TransitionFrame.from({
             sourceTreeIndex: 1,
@@ -420,7 +444,7 @@ describe('MovieTimelineManager lifecycle', () => {
       const trees = [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }, { id: 'e' }];
       const timelineProgress = 0.42;
       const manager = {
-        getTransitionFrameForTimelineProgress: () =>
+        resolveFrameAtTimelineProgress: () =>
           TransitionFrame.from({
             sourceTreeIndex: 1,
             targetTreeIndex: 2,
@@ -477,7 +501,7 @@ describe('MovieTimelineManager lifecycle', () => {
       const timelineProgress = 1100 / 4100;
       const manager = {
         timelineData: { totalDuration: 4100 },
-        getTransitionFrameForTimelineProgress: () =>
+        resolveFrameAtTimelineProgress: () =>
           TransitionFrame.from({
             sourceTreeIndex: 1,
             targetTreeIndex: 1,
@@ -561,7 +585,7 @@ describe('MovieTimelineManager lifecycle', () => {
     let syncedMeta = null;
     const manager = {
       timelineData: { totalDuration: 4100 },
-      getTransitionFrameForTimelineProgress: (progress) => {
+      resolveFrameAtTimelineProgress: (progress) => {
         timelineProgressSeen = progress;
         return TransitionFrame.from({
           sourceTree: trees[1],
@@ -619,6 +643,83 @@ describe('MovieTimelineManager lifecycle', () => {
       frameIndex: 1,
       holdKind: 'mover',
     });
+  });
+
+  it('syncs playback progress before building interpolation layout data', async () => {
+    const callOrder = [];
+
+    const runner = new AnimationRunner({
+      getState: () => ({
+        playing: true,
+        animationStartTime: 1_000,
+        animationSpeed: 1,
+        transitionDuration: 2,
+        pauseDuration: 0,
+        treeList: [{ id: 'a' }, { id: 'b' }],
+        comparisonMode: false,
+      }),
+      getOrCacheInterpolationData: () => {
+        callOrder.push('layout');
+        return {
+          dataFrom: { nodes: [] },
+          dataTo: { nodes: [] },
+        };
+      },
+      renderSingleFrame: async () => {},
+      renderComparisonFrame: async () => {},
+      setAnimationStage: () => {},
+      updateProgress: () => {
+        callOrder.push('progress');
+      },
+      stopAnimation: () => {},
+    });
+
+    runner.isRunning = true;
+    await runner._processFrame(2_000);
+
+    expect(callOrder).to.deep.equal(['progress', 'layout']);
+  });
+
+  it('defers first playback render so playhead movement is not blocked by layout', async () => {
+    const callOrder = [];
+
+    const runner = new AnimationRunner({
+      getState: () => ({
+        playing: true,
+        animationStartTime: 1_000,
+        animationSpeed: 1,
+        transitionDuration: 2,
+        pauseDuration: 0,
+        treeList: [{ id: 'a' }, { id: 'b' }],
+        comparisonMode: false,
+      }),
+      getOrCacheInterpolationData: () => {
+        callOrder.push('layout');
+        return {
+          dataFrom: { nodes: [] },
+          dataTo: { nodes: [] },
+        };
+      },
+      renderSingleFrame: async () => {
+        callOrder.push('render');
+      },
+      renderComparisonFrame: async () => {},
+      setAnimationStage: () => {},
+      updateProgress: () => {
+        callOrder.push('progress');
+      },
+      stopAnimation: () => {},
+    });
+
+    runner.isRunning = true;
+    runner._deferRenderUntilNextFrame = true;
+    await runner._processFrame(2_000);
+
+    expect(callOrder).to.deep.equal(['progress']);
+
+    await runner._processFrame(2_020);
+
+    expect(callOrder).to.deep.equal(['progress', 'layout', 'render']);
   });
 
   it('syncs highlight state to the rendered playback frame before drawing', async () => {
@@ -930,20 +1031,24 @@ describe('MovieTimelineManager lifecycle', () => {
       });
 
       runner.start();
-      const firstFrame = frameCallbacks[0](2_000);
+      const firstProgressFrame = frameCallbacks[0](2_000);
+      await firstProgressFrame;
+      expect(renderCount).to.equal(0);
+
+      const firstRenderFrame = frameCallbacks[1](2_020);
       await Promise.resolve();
       expect(renderCount).to.equal(1);
 
       runner.stop();
       runner.start();
-      const secondFrame = frameCallbacks[1](2_005);
+      const secondProgressFrame = frameCallbacks[2](2_025);
       await Promise.resolve();
 
       expect(renderCount).to.equal(1);
 
       releaseRender();
-      await firstFrame;
-      await secondFrame;
+      await firstRenderFrame;
+      await secondProgressFrame;
 
       expect(redrawCount).to.equal(0);
     } finally {

@@ -1,9 +1,6 @@
 import { formatSubtreeLabel } from '../../../domain/spr/sprAnalytics';
 import type { SprMovedSubtreeRecurrence, SprMoveEventRow } from './types';
-import {
-  buildSprMoveWindowRange,
-  type SprMoveWindowRangeOptions,
-} from './sprMoveWindowRange';
+import { buildSprMoveWindowRange, type SprMoveWindowRangeOptions } from './sprMoveWindowRange';
 
 const escapeCsvValue = (value: unknown): string => {
   const str = value === null || value === undefined ? '' : String(value);
@@ -95,11 +92,11 @@ export const createSprMoveEventCsv = (
     'Target Attachment Support',
     'Source Moved Subtree Value',
     'Target Moved Subtree Value',
-    'Source Placement Context Value',
-    'Target Placement Context Value',
+    'Source Parent Branch Value',
+    'Target Parent Branch Value',
     'Branch Value Label',
     'Moved Subtree Value Class',
-    'Placement Context Value Class',
+    'Parent Branch Value Class',
     'Step Range',
     'Path Hops',
     'Path Length',
