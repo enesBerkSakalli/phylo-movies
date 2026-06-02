@@ -57,7 +57,6 @@ export function buildSprMoveEventSearchText(
     event.signature,
     formatSubtreeSearchLabel(event.splitIndices, leafNamesByIndex),
     formatSubtreeSearchLabel(event.driverSplitIndices, leafNamesByIndex),
-    formatCompactSubtreeSearchLabel(event.contextSplitIndices, leafNamesByIndex, 4),
     formatCompactSubtreeSearchLabel(event.pivotEdge, leafNamesByIndex),
     formatCompactSubtreeSearchLabel(event.sourceAttachment, leafNamesByIndex),
     formatCompactSubtreeSearchLabel(event.destinationAttachment, leafNamesByIndex),
@@ -80,8 +79,6 @@ export function buildSprMoveEventSearchText(
       formatCompactSubtreeSearchLabel(group, leafNamesByIndex)
     ),
     Array.isArray(event.stepRange) ? event.stepRange.join('-') : '',
-    formatMaybeNumber(event.totalPathHops),
-    formatMaybeNumber(event.totalPathLength),
     formatMaybeNumber(event.rfDistance),
     formatMaybeNumber(event.weightedRfDistance),
   ]

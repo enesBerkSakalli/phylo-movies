@@ -46,6 +46,7 @@ function createUnavailableTopology(reason, splitIndices) {
   return {
     root: null,
     newick: '',
+    topologySignature: '',
     leafCount: splitIndices.length,
     nodeCount: 0,
     splitIndices,
@@ -319,8 +320,8 @@ function aggregateMovedSubtreeRows(eventRows) {
         totalPathLength: 0,
         pairIds: new Set(),
         attachmentContexts: [],
-        sourceTopologyNewicks: new Set(),
-        destinationTopologyNewicks: new Set(),
+        sourceTopologySignatures: new Set(),
+        destinationTopologySignatures: new Set(),
         sourceMovedSubtreeTopology: null,
         destinationMovedSubtreeTopology: null,
         sourceMovedSubtreeNewick: '',
@@ -345,11 +346,13 @@ function aggregateMovedSubtreeRows(eventRows) {
       movedSubtree.destinationMovedSubtreeTopology = event.destinationMovedSubtreeTopology;
       movedSubtree.destinationMovedSubtreeNewick = event.destinationMovedSubtreeNewick ?? '';
     }
-    if (event.sourceMovedSubtreeNewick) {
-      movedSubtree.sourceTopologyNewicks.add(event.sourceMovedSubtreeNewick);
+    if (event.sourceMovedSubtreeTopology?.topologySignature) {
+      movedSubtree.sourceTopologySignatures.add(event.sourceMovedSubtreeTopology.topologySignature);
     }
-    if (event.destinationMovedSubtreeNewick) {
-      movedSubtree.destinationTopologyNewicks.add(event.destinationMovedSubtreeNewick);
+    if (event.destinationMovedSubtreeTopology?.topologySignature) {
+      movedSubtree.destinationTopologySignatures.add(
+        event.destinationMovedSubtreeTopology.topologySignature
+      );
     }
     const sourceParentValue = numericBranchAnnotationValue(event.sourceParentBranchValue);
     const destinationParentValue = numericBranchAnnotationValue(event.destinationParentBranchValue);
@@ -388,11 +391,11 @@ function aggregateMovedSubtreeRows(eventRows) {
       averagePathLength: item.count > 0 ? item.totalPathLength / item.count : 0,
       pairCount: item.pairIds.size,
       pairIds: Array.from(item.pairIds).sort(),
-      sourceTopologyVariantCount: item.sourceTopologyNewicks.size,
-      destinationTopologyVariantCount: item.destinationTopologyNewicks.size,
+      sourceTopologyVariantCount: item.sourceTopologySignatures.size,
+      destinationTopologyVariantCount: item.destinationTopologySignatures.size,
       topologyVariantCount: new Set([
-        ...Array.from(item.sourceTopologyNewicks),
-        ...Array.from(item.destinationTopologyNewicks),
+        ...Array.from(item.sourceTopologySignatures),
+        ...Array.from(item.destinationTopologySignatures),
       ]).size,
       sourceParentBranchValueMedian: medianNumber(item.sourceParentBranchValues),
       destinationParentBranchValueMedian: medianNumber(item.destinationParentBranchValues),

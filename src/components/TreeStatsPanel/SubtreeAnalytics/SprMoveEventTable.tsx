@@ -595,14 +595,6 @@ function MovementEventRow({
   const windowRange = buildSprMoveWindowRange(event, windowRangeOptions);
   const subtreeLabel = formatCompactAttachment(event.splitIndices, leafNamesByIndex, 2);
   const fullSubtreeLabel = formatAttachment(event.splitIndices, leafNamesByIndex);
-  const contextSignature = getSignature(event.contextSplitIndices);
-  const hasSeparateContext = contextSignature !== null && contextSignature !== event.signature;
-  const contextLabel = hasSeparateContext
-    ? formatCompactAttachment(event.contextSplitIndices, leafNamesByIndex, 2)
-    : '';
-  const fullContextLabel = hasSeparateContext
-    ? formatAttachment(event.contextSplitIndices, leafNamesByIndex)
-    : '';
 
   return (
     <tr
@@ -644,14 +636,10 @@ function MovementEventRow({
             destinationNewick={event.destinationMovedSubtreeNewick}
             variantCount={1}
             taxaCount={event.splitIndices.length}
+            leafNamesByIndex={leafNamesByIndex}
             compact
           />
         </div>
-        {hasSeparateContext ? (
-          <div className="truncate text-2xs text-muted-foreground/70" title={fullContextLabel}>
-            parent branch: {contextLabel}
-          </div>
-        ) : null}
       </td>
       <td className={ROW_CELL_CLASS} title={formatAttachment(event.pivotEdge, leafNamesByIndex)}>
         <div className="truncate">{formatCompactAttachment(event.pivotEdge, leafNamesByIndex)}</div>

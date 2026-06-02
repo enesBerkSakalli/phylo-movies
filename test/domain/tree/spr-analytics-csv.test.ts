@@ -110,7 +110,6 @@ describe('createSprMoveEventCsv', () => {
     expect(header).toContain('SPR Move Index');
     expect(header).toContain('Source Window');
     expect(header).toContain('Target Window');
-    expect(header).toContain('Parent Branch Taxa');
     expect(header).toContain('Source Moved Subtree Newick');
     expect(header).toContain('Target Moved Subtree Newick');
     expect(header).toContain('Source Attachment');
@@ -119,15 +118,17 @@ describe('createSprMoveEventCsv', () => {
     expect(header).toContain('Target Parent Branch Value');
     expect(header).toContain('Moved Subtree Value Class');
     expect(header).toContain('Parent Branch Value Class');
+    expect(header).not.toContain('Parent Branch Taxa');
+    expect(header).not.toContain('Parent Branch Split Indices');
+    expect(header).not.toContain('Path Hops');
+    expect(header).not.toContain('Path Length');
     expect(header).not.toContain('Measured Path');
     expect(header).not.toContain('Event ID');
     expect(row).toContain('pair_0_1:0');
     expect(row).toContain('Input 1 sites 1-50 (mid 1)');
     expect(row).toContain('Input 2 sites 1-100 (mid 51)');
-    expect(row).toContain('"b, c"');
     expect(row).toContain('"h, i"');
     expect(row).toContain('"f, g"');
-    expect(row).toContain('0.600000');
     expect(row).not.toContain(',yes,');
     expect(row).not.toContain(',no,');
   });
@@ -159,19 +160,22 @@ describe('createSprMoveEventCsv', () => {
       ['a', 'b']
     );
 
-    const row = csv.split('\n')[1].split(',');
+    const [headerLine, rowLine] = csv.split('\n');
+    const headers = headerLine.split(',');
+    const row = rowLine.split(',');
+    const valueFor = (header: string) => row[headers.indexOf(header)];
 
-    expect(row[12]).toBe('');
-    expect(row[13]).toBe('');
-    expect(row[14]).toBe('');
-    expect(row[15]).toBe('');
-    expect(row[16]).toBe('');
-    expect(row[17]).toBe('');
-    expect(row[18]).toBe('');
-    expect(row[19]).toBe('');
-    expect(row[20]).toBe('');
-    expect(row[21]).toBe('');
-    expect(row[24]).toBe('0');
+    expect(valueFor('Source Attachment Support')).toBe('');
+    expect(valueFor('Target Attachment Support')).toBe('');
+    expect(valueFor('Source Moved Subtree Value')).toBe('');
+    expect(valueFor('Target Moved Subtree Value')).toBe('');
+    expect(valueFor('Source Parent Branch Value')).toBe('');
+    expect(valueFor('Target Parent Branch Value')).toBe('');
+    expect(valueFor('Step Range')).toBe('');
+    expect(valueFor('RF Distance')).toBe('');
+    expect(valueFor('Weighted RF Distance')).toBe('');
+    expect(headers).not.toContain('Path Hops');
+    expect(headers).not.toContain('Path Length');
   });
 
   it('uses SPR move terminology in exported filenames', () => {

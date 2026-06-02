@@ -70,6 +70,7 @@ describe('SubtreeExtractor normalized contract', () => {
 
     expect(snapshot).toMatchObject({
       newick: '(A:1,B:2)internal:0.5;',
+      topologySignature: '(0,1)',
       leafCount: 2,
       nodeCount: 3,
       splitIndices: [0, 1],

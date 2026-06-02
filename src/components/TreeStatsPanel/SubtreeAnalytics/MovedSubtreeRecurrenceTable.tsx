@@ -106,6 +106,7 @@ export const MovedSubtreeRecurrenceTable = ({
                   destinationNewick={item.destinationMovedSubtreeNewick}
                   variantCount={item.topologyVariantCount}
                   taxaCount={item.splitIndices.length}
+                  leafNamesByIndex={leafNamesByIndex}
                   compact
                 />
                 <div className="mt-1 text-2xs text-muted-foreground/70">
