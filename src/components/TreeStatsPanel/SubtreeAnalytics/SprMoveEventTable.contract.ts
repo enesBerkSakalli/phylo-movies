@@ -24,7 +24,7 @@ export const SPR_MOVE_EVENT_TABLE_COPY = {
   },
   branchValueRows: {
     movedSubtree: 'Moved subtree',
-    nearestAncestor: 'Parent branch',
+    parentBranch: 'Parent branch',
   },
   columns: {
     movement: 'SPR Move',

@@ -692,7 +692,7 @@ function MovementEventRow({
         </div>
         <div className="flex items-baseline justify-between gap-2 whitespace-nowrap">
           <span className="min-w-0 truncate text-left font-sans text-muted-foreground/70">
-            {SPR_MOVE_EVENT_TABLE_COPY.branchValueRows.nearestAncestor}
+            {SPR_MOVE_EVENT_TABLE_COPY.branchValueRows.parentBranch}
           </span>{' '}
           <span>
             {formatBranchValue(event.sourceParentBranchValue)} →{' '}

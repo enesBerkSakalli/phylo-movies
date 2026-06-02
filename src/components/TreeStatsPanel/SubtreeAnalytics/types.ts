@@ -67,8 +67,6 @@ export interface SprMoveEventRow {
   destinationMovedSubtreeBranchValue?: BranchAnnotationValue | null;
   sourceParentBranchValue?: BranchAnnotationValue | null;
   destinationParentBranchValue?: BranchAnnotationValue | null;
-  sourceAncestorBranchValue?: BranchAnnotationValue | null;
-  destinationAncestorBranchValue?: BranchAnnotationValue | null;
   branchValueClass?: string;
   contextBranchValueClass?: string;
   sourceMovedSubtreeTopology?: SprMovedSubtreeTopologySnapshot | null;

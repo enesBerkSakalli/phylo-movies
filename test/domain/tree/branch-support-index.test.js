@@ -131,7 +131,7 @@ describe('branch annotation indexing', () => {
     expect(index.getBranchValue(7, [0, 1], 'missing.value')).toBeNull();
   });
 
-  it('resolves nearest ancestor branch values without hard-coding bootstrap fields', () => {
+  it('resolves nearest parent branch values without hard-coding bootstrap fields', () => {
     const index = buildBranchSupportIndex({
       interpolatedTrees: [tree],
       frames: [
@@ -144,26 +144,26 @@ describe('branch annotation indexing', () => {
       ],
     });
 
-    expect(index.getNearestAncestorBranchValue(7, [0], BRANCH_ANNOTATION_NONE)).toMatchObject({
+    expect(index.getNearestParentBranchValue(7, [0], BRANCH_ANNOTATION_NONE)).toMatchObject({
       key: 'support.bootstrap.value',
       label: 'Support / Bootstrap / Bootstrap',
       displayValue: '91',
       role: 'branch_support',
       support: { primary: 91, bootstrap: 91 },
     });
-    expect(index.getNearestAncestorBranchValue(7, [2], BRANCH_ANNOTATION_NONE)).toMatchObject({
+    expect(index.getNearestParentBranchValue(7, [2], BRANCH_ANNOTATION_NONE)).toMatchObject({
       key: 'support.bootstrap.value',
       displayValue: '42',
       support: { primary: 42, bootstrap: 42 },
     });
-    expect(index.getNearestAncestorBranchValue(7, [0], 'label.raw_internal')).toMatchObject({
+    expect(index.getNearestParentBranchValue(7, [0], 'label.raw_internal')).toMatchObject({
       key: 'label.raw_internal',
       label: 'Label / Raw Internal Label',
       displayValue: '91',
       role: 'source_annotation',
     });
-    expect(index.getNearestAncestorBranchValue(7, [0], 'missing.value')).toBeNull();
-    expect(index.getNearestAncestorBranchValue(7, [0, 1], BRANCH_ANNOTATION_NONE)).toBeNull();
+    expect(index.getNearestParentBranchValue(7, [0], 'missing.value')).toBeNull();
+    expect(index.getNearestParentBranchValue(7, [0, 1], BRANCH_ANNOTATION_NONE)).toBeNull();
   });
 
   it('requires canonical timeline frame rows instead of guessing input tree indices', () => {

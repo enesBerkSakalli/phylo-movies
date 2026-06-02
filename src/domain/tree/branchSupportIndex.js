@@ -361,9 +361,6 @@ export function buildBranchSupportIndex({ interpolatedTrees, frames } = {}) {
       }
       return null;
     },
-    getNearestAncestorBranchValue(inputTreeIndex, splitIndices, valueKey = BRANCH_ANNOTATION_NONE) {
-      return this.getNearestParentBranchValue(inputTreeIndex, splitIndices, valueKey);
-    },
   };
 }
 
