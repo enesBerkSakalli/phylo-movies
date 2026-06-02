@@ -16,15 +16,24 @@ fi
 SOURCE_ROOT="${ROGUE_TAXA_SOURCE_ROOT:-${BOOTSTRAP_SOURCE_ROOT:-${REPO_ROOT}/publication_data/bootstrap_rogue_taxa/source_alignments}}"
 OUTPUT_BASE="${BOOTSTRAP_OUTPUT_BASE:-${REPO_ROOT}/publication_data/bootstrap_rogue_taxa/runs}"
 CONDA_ENV="${PHYLOMOVIES_PUBLICATION_ENV:-${PHYLOMOVIES_RAXML_ENV:-phylomovies-publication}}"
+case "$(uname -s)" in
+  Darwin*) IQTREE_PLATFORM="darwin" ;;
+  Linux*) IQTREE_PLATFORM="linux" ;;
+  *) IQTREE_PLATFORM="linux" ;;
+esac
+DEFAULT_IQTREE_BIN="${REPO_ROOT}/engine/BranchArchitect/bin/${IQTREE_PLATFORM}/iqtree3"
+IQTREE_BIN="${IQTREE_BIN:-${DEFAULT_IQTREE_BIN}}"
 
 TREE_PROGRAM="iqtree"
 IQTREE_MODE="default"
 IQTREE_MODE_SET="0"
+IQTREE_SH_ALRT_REPLICATES="${BOOTSTRAP_IQTREE_SH_ALRT_REPLICATES:-0}"
 REPLICATES="${BOOTSTRAP_REPLICATES:-200}"
 THREADS="1"
 JOBS="1"
 SEED="${BOOTSTRAP_SEED:-42}"
 RUN_LABEL=""
+RESUME_RUN_DIR=""
 DATASETS=("24" "125")
 
 usage() {
@@ -35,7 +44,7 @@ Usage:
 Default:
   Regenerate both rogue-taxon examples (datasets 24 and 125) using:
     RAxML -f j for bootstrap replicate MSAs
-    IQ-TREE 2 for per-replicate tree inference
+    IQ-TREE 3 for per-replicate tree inference
     corrected composition-distance ordering
 
 Options:
@@ -48,8 +57,11 @@ Options:
   --source-root DIR       Directory containing source alignment files.
   --output-base DIR       Base output directory.
   --run-label LABEL       Optional short label appended to the run directory name.
+  --resume-run-dir DIR    Resume an existing run directory and skip completed replicate tree jobs.
   --tree-program NAME     iqtree or fasttree. Default: iqtree.
   --iqtree-mode MODE      default or fast. Default: default.
+  --iqtree-sh-alrt N      Run IQ-TREE SH-aLRT with N replicates. Default: 0.
+  --iqtree-bin PATH       IQ-TREE 3 executable. Default: bundled BranchArchitect iqtree3.
   --conda-env NAME        Conda env containing RAxML, IQ-TREE, FastTree, and Python deps.
                           Default: phylomovies-publication.
   -h, --help              Show this help.
@@ -100,6 +112,10 @@ while [[ $# -gt 0 ]]; do
       RUN_LABEL="$2"
       shift 2
       ;;
+    --resume-run-dir)
+      RESUME_RUN_DIR="$2"
+      shift 2
+      ;;
     --tree-program)
       TREE_PROGRAM="$2"
       shift 2
@@ -107,6 +123,14 @@ while [[ $# -gt 0 ]]; do
     --iqtree-mode)
       IQTREE_MODE="$2"
       IQTREE_MODE_SET="1"
+      shift 2
+      ;;
+    --iqtree-sh-alrt)
+      IQTREE_SH_ALRT_REPLICATES="$2"
+      shift 2
+      ;;
+    --iqtree-bin)
+      IQTREE_BIN="$2"
       shift 2
       ;;
     --conda-env)
@@ -143,22 +167,30 @@ CONDA_ENV_PREFIX="$(
 )"
 
 CMD=(
-  conda run -n "${CONDA_ENV}" env "PATH=${CONDA_ENV_PREFIX}/bin:${PATH}" python "${PY_SCRIPT}"
+  conda run -n "${CONDA_ENV}" env
+  "PATH=${CONDA_ENV_PREFIX}/bin:${PATH}"
+  "PYTHONPATH=${REPO_ROOT}/engine/BranchArchitect${PYTHONPATH:+:${PYTHONPATH}}"
+  python "${PY_SCRIPT}"
   --source-root "${SOURCE_ROOT}"
   --output-base "${OUTPUT_BASE}"
   --tree-program "${TREE_PROGRAM}"
   --iqtree-mode "${IQTREE_MODE}"
+  --iqtree-sh-alrt-replicates "${IQTREE_SH_ALRT_REPLICATES}"
   --n-replicates "${REPLICATES}"
   --threads "${THREADS}"
   --jobs "${JOBS}"
   --seed "${SEED}"
   --raxml-hpc-bin "${CONDA_ENV_PREFIX}/bin/raxmlHPC"
-  --iqtree-bin "${CONDA_ENV_PREFIX}/bin/iqtree2"
+  --iqtree-bin "${IQTREE_BIN}"
   --fasttree-bin "${CONDA_ENV_PREFIX}/bin/FastTree"
 )
 
 if [[ -n "${RUN_LABEL}" ]]; then
   CMD+=(--run-label "${RUN_LABEL}")
+fi
+
+if [[ -n "${RESUME_RUN_DIR}" ]]; then
+  CMD+=(--resume-run-dir "${RESUME_RUN_DIR}")
 fi
 
 for dataset in "${DATASETS[@]}"; do
@@ -169,11 +201,16 @@ echo "Running bootstrap ordering workflow"
 echo "  datasets: ${DATASETS[*]}"
 echo "  tree program: ${TREE_PROGRAM}"
   echo "  IQ-TREE mode: ${IQTREE_MODE}"
+  echo "  IQ-TREE SH-aLRT replicates: ${IQTREE_SH_ALRT_REPLICATES}"
+  echo "  IQ-TREE binary: ${IQTREE_BIN}"
   echo "  replicates: ${REPLICATES}"
   echo "  threads per job: ${THREADS}"
   echo "  concurrent jobs: ${JOBS}"
 if [[ -n "${RUN_LABEL}" ]]; then
   echo "  run label: ${RUN_LABEL}"
+fi
+if [[ -n "${RESUME_RUN_DIR}" ]]; then
+  echo "  resume run dir: ${RESUME_RUN_DIR}"
 fi
 echo "  source root: ${SOURCE_ROOT}"
 echo "  output base: ${OUTPUT_BASE}"

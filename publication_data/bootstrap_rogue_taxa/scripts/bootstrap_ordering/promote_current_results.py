@@ -353,7 +353,7 @@ Reviewer-facing interpretation:
     if any(item.get("support_annotated") for item in validations):
         support = {
             "annotated_trees": True,
-            "mode": "bootstrap_replicate_clade_frequency",
+            "mode": "bootstrap_replicate_split_frequency",
             "n_replicates": run_manifest["n_replicates"],
             "primary": "bootstrap_frequency",
         }
@@ -414,7 +414,7 @@ score.
 Method summary:
 
 - bootstrap replicate alignments: RAxML `raxmlHPC -f j`
-- tree inference: IQ-TREE 2 default search mode, not `-fast`
+- tree inference: IQ-TREE 3 default search mode, not `-fast`
 - replicates: {run_manifest['n_replicates']} per dataset
 - support annotations: bootstrap replicate split frequencies when present in the source run
 - seed: {run_manifest['seed']}

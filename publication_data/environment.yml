@@ -14,7 +14,6 @@ dependencies:
   - csvtk=0.37.0
   - tsv-utils=2.2.3
   - nextclade=3.21.2
-  - iqtree=2.4.0
   - raxml=8.2.13
   - fasttree=2.2.0
   - pip

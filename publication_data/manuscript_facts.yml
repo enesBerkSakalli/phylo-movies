@@ -1,0 +1,58 @@
+schema_version: 1
+
+norovirus_publication_demo:
+  taxa: 334
+  alignment_bp: 8058
+  countries: 32
+  first_year: 1968
+  last_year: 2025
+  capsid_genotypes: 30
+  polymerase_genotypes: 28
+  recombinant_genotypes: 167
+  non_recombinant_genotypes: 135
+  recombinant_percent: 50.0
+  inference: IQ-TREE 3 fast-search mode
+  model: GTR+G
+  support: SH-aLRT
+  support_replicates: 1000
+  window_size_bp: 1000
+  step_size_bp: 500
+  input_trees: 17
+  tree_pairs: 16
+  frames: 6098
+  interpolation_frames: 6081
+  spr_moves: 1513
+
+bootstrap_rogue_taxa:
+  bootstrap_replicates: 200
+  replicate_alignment_generator: RAxML raxmlHPC -f j
+  inference: IQ-TREE 3 default search mode
+  support: SH-aLRT
+  support_replicates: 1000
+  rooting: Midpoint rooting
+  support_context: bootstrap replicate split-frequency support
+  datasets:
+    "24":
+      taxa: 24
+      sites: 14190
+      tree_pairs: 199
+      total_spr_moves: 403
+      recurrent_moved_subtrees: 27
+      roguenarok_target_taxon: Ostrich
+      roguenarok_rbic_before: 0.828810
+      roguenarok_rbic_after: 0.853333
+      target_rank: 1
+      target_spr_moves: 79
+      target_percent_of_spr_moves: 19.602978
+      target_percentile: 96.296296
+    "125":
+      taxa: 125
+      sites: 29149
+      tree_pairs: 199
+      total_spr_moves: 1074
+      recurrent_moved_subtrees: 44
+      roguenarok_target_taxon: Seq112
+      target_rank: 4
+      target_spr_moves: 91
+      target_percent_of_spr_moves: 8.472998
+      target_percentile: 90.909091

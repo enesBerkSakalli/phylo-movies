@@ -58,6 +58,8 @@ def build_run_id(args, datasets, timestamp):
         f"seed{args.seed}",
         f"ds{dataset_part}",
     ]
+    if args.tree_program == "iqtree" and args.iqtree_sh_alrt_replicates > 0:
+        pieces.append(f"shalrt{args.iqtree_sh_alrt_replicates}")
     if args.run_label:
         pieces.append(safe_slug(args.run_label))
     return "_".join(pieces)
@@ -223,7 +225,12 @@ def _format_support_label(value):
     return f"{value:.6g}"
 
 
-def annotate_newick_with_split_support(newick, all_taxa, split_support):
+def annotate_newick_with_split_support(
+    newick,
+    all_taxa,
+    split_support,
+    iqtree_sh_alrt_replicates=0,
+):
     tree = parse_newick(newick, order=all_taxa)
     taxa_by_index = {index: name for name, index in tree.taxa_encoding.items()}
     root_split = set(tree.split_indices.indices)
@@ -237,6 +244,7 @@ def annotate_newick_with_split_support(newick, all_taxa, split_support):
         key = canonical_split_key(split_names, all_taxa)
         support = split_support.get(key)
         if support:
+            iqtree_sh_alrt = node.name
             node.name = _format_support_label(support["support_percent"])
             node.values.update(
                 {
@@ -248,6 +256,14 @@ def annotate_newick_with_split_support(newick, all_taxa, split_support):
                     "replicate_total": support["replicate_total"],
                 }
             )
+            if iqtree_sh_alrt_replicates > 0 and iqtree_sh_alrt:
+                node.values.update(
+                    {
+                        "iqtree_support_kind": "sh_alrt",
+                        "iqtree_sh_alrt": iqtree_sh_alrt,
+                        "iqtree_sh_alrt_replicates": iqtree_sh_alrt_replicates,
+                    }
+                )
     return tree.to_newick(lengths=True)
 
 
@@ -298,6 +314,21 @@ def check_tool(executable, label):
         )
 
 
+def looks_complete_tree_file(path):
+    if not os.path.exists(path) or os.path.getsize(path) == 0:
+        return False
+    with open(path, "r") as f:
+        return f.read().strip().endswith(";")
+
+
+def looks_complete_iqtree_run(prefix):
+    return (
+        looks_complete_tree_file(f"{prefix}.treefile")
+        and os.path.exists(f"{prefix}.iqtree")
+        and os.path.getsize(f"{prefix}.iqtree") > 0
+    )
+
+
 def parse_datasets(dataset_args, source_root):
     selected = dataset_args or ["24", "125"]
     datasets = []
@@ -316,7 +347,12 @@ def parse_datasets(dataset_args, source_root):
 
 
 def generate_bootstrap_alignments(
-    alignment_path, output_dir, n_replicates, seed=42, raxml_hpc_bin="raxmlHPC"
+    alignment_path,
+    output_dir,
+    n_replicates,
+    seed=42,
+    raxml_hpc_bin="raxmlHPC",
+    resume=False,
 ):
     """
     Uses RAxML to generate bootstrap replicate alignments.
@@ -331,6 +367,12 @@ def generate_bootstrap_alignments(
     base_name = "bootstrap"
     local_alignment = os.path.join(output_dir, base_name)
     shutil.copy(alignment_path, local_alignment)
+
+    expected_bootstrap_files = [
+        os.path.join(output_dir, f"{base_name}.BS{i}") for i in range(n_replicates)
+    ]
+    if resume and all(os.path.exists(path) for path in expected_bootstrap_files):
+        return expected_bootstrap_files
 
     # Clean up any previous RAxML output files
     for f in glob.glob(os.path.join(output_dir, f"RAxML_*.{run_name}")):
@@ -385,6 +427,9 @@ def run_fasttree(alignment_path, output_dir, run_name, fasttree_bin="FastTree"):
     Returns the path to the tree file.
     """
     tree_path = os.path.join(output_dir, f"{run_name}.treefile")
+    if looks_complete_tree_file(tree_path):
+        print(f"    Reusing completed FastTree output for {run_name}.")
+        return tree_path
 
     # Convert PHYLIP to FASTA for FastTree input.
     fasta_path = os.path.join(output_dir, f"{run_name}.fa")
@@ -418,15 +463,20 @@ def run_iqtree(
     run_name,
     model="GTR+G",
     threads=1,
-    iqtree_bin="iqtree2",
+    iqtree_bin="iqtree3",
     iqtree_mode="default",
+    iqtree_sh_alrt_replicates=0,
     seed=42,
+    resume=False,
 ):
     """
     Runs IQ-TREE on a given alignment.
     Returns the path to the best tree.
     """
     prefix = os.path.join(output_dir, run_name)
+    if resume and looks_complete_iqtree_run(prefix):
+        print(f"    Reusing completed IQ-TREE output for {run_name}.")
+        return f"{prefix}.treefile"
 
     # Clean up any previous iqtree output files
     for f in glob.glob(f"{prefix}.*"):
@@ -450,7 +500,10 @@ def run_iqtree(
         "--redo",
     ]
     if iqtree_mode == "fast":
-        cmd.insert(-2, "-fast")
+        cmd.insert(-2, "--fast")
+    if iqtree_sh_alrt_replicates > 0:
+        cmd.insert(-2, "--alrt")
+        cmd.insert(-2, str(iqtree_sh_alrt_replicates))
 
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
@@ -478,6 +531,8 @@ def write_run_log(log_path, datasets, args, run_info):
         f.write(f"Tree inference program: {args.tree_program}\n")
         if args.tree_program == "iqtree":
             f.write(f"IQ-TREE mode: {args.iqtree_mode}\n")
+            if args.iqtree_sh_alrt_replicates > 0:
+                f.write(f"IQ-TREE SH-aLRT replicates: {args.iqtree_sh_alrt_replicates}\n")
         f.write(f"Number of bootstrap replicates: {args.n_replicates}\n")
         f.write(f"Random seed: {args.seed}\n")
         f.write(f"Number of threads per inference job: {args.threads}\n")
@@ -526,11 +581,16 @@ def write_run_log(log_path, datasets, args, run_info):
             f.write("  -quiet: Suppress progress output\n")
             f.write("  OpenMP: Uses all available CPU cores automatically\n")
         elif args.tree_program == "iqtree":
-            f.write("Program: IQ-TREE 2\n")
+            f.write("Program: IQ-TREE 3\n")
             f.write(f"Model: GTR+G; mode: {args.iqtree_mode}\n")
-            f.write("Command pattern: iqtree2 -s <replicate_alignment> -st DNA -m GTR+G -T <threads> -seed <seed> -pre <prefix> -quiet --redo\n")
+            command_name = os.path.basename(args.iqtree_bin) or "iqtree3"
+            f.write(
+                f"Command pattern: {command_name} -s <replicate_alignment> -st DNA -m GTR+G -T <threads> -seed <seed> -pre <prefix> -quiet --redo\n"
+            )
             if args.iqtree_mode == "fast":
-                f.write("Additional flag: -fast\n")
+                f.write("Additional flag: --fast\n")
+            if args.iqtree_sh_alrt_replicates > 0:
+                f.write(f"Additional flag: --alrt {args.iqtree_sh_alrt_replicates}\n")
         f.write("\n")
 
         f.write("OUTPUT FILES\n")
@@ -580,6 +640,12 @@ def main():
         help="IQ-TREE search mode. Use 'fast' only for exploratory/smoke runs.",
     )
     parser.add_argument(
+        "--iqtree-sh-alrt-replicates",
+        type=int,
+        default=0,
+        help="Run IQ-TREE SH-aLRT with this many replicates; 0 disables SH-aLRT.",
+    )
+    parser.add_argument(
         "--n-replicates",
         type=int,
         default=200,
@@ -625,14 +691,19 @@ def main():
         help="Optional short label appended to the timestamped run directory name.",
     )
     parser.add_argument(
+        "--resume-run-dir",
+        default=None,
+        help="Resume an existing run directory instead of creating a new timestamped run.",
+    )
+    parser.add_argument(
         "--raxml-hpc-bin",
         default="raxmlHPC",
         help="RAxML 8 executable used for -f j bootstrap-alignment generation.",
     )
     parser.add_argument(
         "--iqtree-bin",
-        default="iqtree2",
-        help="IQ-TREE 2 executable.",
+        default="iqtree3",
+        help="IQ-TREE 3 executable.",
     )
     parser.add_argument(
         "--fasttree-bin",
@@ -647,18 +718,25 @@ def main():
         raise SystemExit("--threads must be at least 1.")
     if args.jobs < 1:
         raise SystemExit("--jobs must be at least 1.")
+    if args.iqtree_sh_alrt_replicates < 0:
+        raise SystemExit("--iqtree-sh-alrt-replicates must be non-negative.")
 
     check_tool(args.raxml_hpc_bin, "RAxML 8 raxmlHPC")
     if args.tree_program == "iqtree":
-        check_tool(args.iqtree_bin, "IQ-TREE 2")
+        check_tool(args.iqtree_bin, "IQ-TREE 3")
     elif args.tree_program == "fasttree":
         check_tool(args.fasttree_bin, "FastTree")
 
     datasets = parse_datasets(args.dataset, args.source_root)
 
     timestamp = format_run_timestamp()
-    run_id = build_run_id(args, datasets, timestamp)
-    output_base = os.path.join(args.output_base, run_id)
+    if args.resume_run_dir:
+        output_base = args.resume_run_dir
+        run_id = os.path.basename(os.path.abspath(output_base))
+        print(f"Resuming existing output directory: {output_base}")
+    else:
+        run_id = build_run_id(args, datasets, timestamp)
+        output_base = os.path.join(args.output_base, run_id)
     ensure_dir(output_base)
     print(f"Output directory: {output_base}")
 
@@ -672,9 +750,13 @@ def main():
         "schema_version": "1.0",
         "run_id": run_id,
         "timestamp_local": timestamp,
+        "resumed": bool(args.resume_run_dir),
         "source_root": os.path.abspath(args.source_root),
         "tree_program": args.tree_program,
         "iqtree_mode": args.iqtree_mode if args.tree_program == "iqtree" else None,
+        "iqtree_sh_alrt_replicates": (
+            args.iqtree_sh_alrt_replicates if args.tree_program == "iqtree" else None
+        ),
         "n_replicates": args.n_replicates,
         "seed": args.seed,
         "threads": args.threads,
@@ -735,7 +817,12 @@ def main():
         # Generate bootstrap alignments using RAxML
         print(f"  Generating {n_replicates} bootstrap alignments with RAxML...")
         bootstrap_files = generate_bootstrap_alignments(
-            ds["path"], bootstrap_dir, n_replicates, seed=args.seed, raxml_hpc_bin=args.raxml_hpc_bin
+            ds["path"],
+            bootstrap_dir,
+            n_replicates,
+            seed=args.seed,
+            raxml_hpc_bin=args.raxml_hpc_bin,
+            resume=bool(args.resume_run_dir),
         )
         print(f"  Generated {len(bootstrap_files)} bootstrap alignments.")
 
@@ -767,7 +854,9 @@ def main():
                     threads=n_threads,
                     iqtree_bin=args.iqtree_bin,
                     iqtree_mode=args.iqtree_mode,
+                    iqtree_sh_alrt_replicates=args.iqtree_sh_alrt_replicates,
                     seed=args.seed + b,
+                    resume=bool(args.resume_run_dir),
                 )
             else:
                 raise RuntimeError(f"Unsupported tree program: {args.tree_program}")
@@ -839,6 +928,11 @@ def main():
                         tree_content,
                         names,
                         split_support,
+                        iqtree_sh_alrt_replicates=(
+                            args.iqtree_sh_alrt_replicates
+                            if args.tree_program == "iqtree"
+                            else 0
+                        ),
                     )
                     f.write(tree_content + "\n")
         print(f"  Saved all trees to {all_trees_file}\n")
@@ -878,6 +972,9 @@ def main():
             "ordering_semantics": ORDERING_SEMANTICS,
             "tree_program": args.tree_program,
             "iqtree_mode": args.iqtree_mode if args.tree_program == "iqtree" else None,
+            "iqtree_sh_alrt_replicates": (
+                args.iqtree_sh_alrt_replicates if args.tree_program == "iqtree" else None
+            ),
             "n_replicates_requested": n_replicates,
             "n_replicates_completed": len(sorted_replicates),
             "seed": args.seed,

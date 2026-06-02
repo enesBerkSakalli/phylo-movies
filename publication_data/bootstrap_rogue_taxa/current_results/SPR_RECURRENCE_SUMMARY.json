@@ -1,0 +1,182 @@
+{
+  "schema_version": "1.0",
+  "description": "SPR moved-subtree recurrence tables generated from Phylo-Movies temporal spr_move events in the static bootstrap demo payloads.",
+  "generation_command": "npm run publication:spr-recurrence",
+  "check_command": "npm run publication:spr-recurrence:check",
+  "datasets": [
+    {
+      "dataset": "24",
+      "source_tree_file": "publication_data/bootstrap_rogue_taxa/current_results/dataset_24_source-24_taxa24_sites14190/ranked/all_trees_24_source-24_taxa24_sites14190.nwk",
+      "generated_payload_file": "publication_data/precomputed/all_trees_24_source-24_taxa24_sites14190.movie.json",
+      "recurrence_table": "publication_data/bootstrap_rogue_taxa/current_results/dataset_24_source-24_taxa24_sites14190/analysis/moved_subtree_recurrence_24_source-24_taxa24_sites14190.csv",
+      "recurrence_table_sha256": "923a9aef94c9619de084a8ce31b5d2a225cfc8877bf0113de688d692960392cf",
+      "input_trees": 200,
+      "tree_pairs": 199,
+      "total_spr_moves": 403,
+      "recurrent_moved_subtrees": 27,
+      "target_summaries": [
+        {
+          "taxon": "Ostrich",
+          "top_match": {
+            "rank": 1,
+            "moved_subtree": "Ostrich",
+            "taxa_count": 1,
+            "spr_move_count": 79,
+            "percent_of_spr_moves": 19.602978,
+            "tree_pair_count": 79,
+            "higher_than_percent_of_recurrent_rows": 96.296296,
+            "split_indices": [
+              20
+            ]
+          },
+          "matches": [
+            {
+              "rank": 1,
+              "moved_subtree": "Ostrich",
+              "taxa_count": 1,
+              "spr_move_count": 79,
+              "percent_of_spr_moves": 19.602978,
+              "tree_pair_count": 79,
+              "higher_than_percent_of_recurrent_rows": 96.296296,
+              "split_indices": [
+                20
+              ]
+            },
+            {
+              "rank": 17,
+              "moved_subtree": "Cassowary, Emu, GreatRhea, LesserRhea, Ostrich, gskiwi, LSKiwi, BrownKiwi",
+              "taxa_count": 8,
+              "spr_move_count": 6,
+              "percent_of_spr_moves": 1.488834,
+              "tree_pair_count": 6,
+              "higher_than_percent_of_recurrent_rows": 37.037037,
+              "split_indices": [
+                0,
+                1,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23
+              ]
+            },
+            {
+              "rank": 20,
+              "moved_subtree": "Cassowary, Emu, EasternMoa, lbmoa, Dinornis, Gtinamou, Crypturellus, ECtinamou, GreatRhea, LesserRhea, Ostrich, gskiwi, LSKiwi, BrownKiwi",
+              "taxa_count": 14,
+              "spr_move_count": 3,
+              "percent_of_spr_moves": 0.744417,
+              "tree_pair_count": 3,
+              "higher_than_percent_of_recurrent_rows": 25.925926,
+              "split_indices": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23
+              ]
+            },
+            {
+              "rank": 24,
+              "moved_subtree": "Cassowary, Emu, Ostrich, gskiwi, LSKiwi, BrownKiwi",
+              "taxa_count": 6,
+              "spr_move_count": 2,
+              "percent_of_spr_moves": 0.496278,
+              "tree_pair_count": 2,
+              "higher_than_percent_of_recurrent_rows": 11.111111,
+              "split_indices": [
+                0,
+                1,
+                20,
+                21,
+                22,
+                23
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataset": "125",
+      "source_tree_file": "publication_data/bootstrap_rogue_taxa/current_results/dataset_125_source-125_taxa125_sites29149/ranked/all_trees_125_source-125_taxa125_sites29149.nwk",
+      "generated_payload_file": "publication_data/precomputed/all_trees_125_source-125_taxa125_sites29149.movie.json",
+      "recurrence_table": "publication_data/bootstrap_rogue_taxa/current_results/dataset_125_source-125_taxa125_sites29149/analysis/moved_subtree_recurrence_125_source-125_taxa125_sites29149.csv",
+      "recurrence_table_sha256": "fd3c28e64eb2cc365ec83b6751fa4c7ac5d7e2c645dfcb16a790a9c8f90d62de",
+      "input_trees": 200,
+      "tree_pairs": 199,
+      "total_spr_moves": 1074,
+      "recurrent_moved_subtrees": 44,
+      "target_summaries": [
+        {
+          "taxon": "Seq112",
+          "top_match": {
+            "rank": 4,
+            "moved_subtree": "Seq112",
+            "taxa_count": 1,
+            "spr_move_count": 91,
+            "percent_of_spr_moves": 8.472998,
+            "tree_pair_count": 91,
+            "higher_than_percent_of_recurrent_rows": 90.909091,
+            "split_indices": [
+              114
+            ]
+          },
+          "matches": [
+            {
+              "rank": 4,
+              "moved_subtree": "Seq112",
+              "taxa_count": 1,
+              "spr_move_count": 91,
+              "percent_of_spr_moves": 8.472998,
+              "tree_pair_count": 91,
+              "higher_than_percent_of_recurrent_rows": 90.909091,
+              "split_indices": [
+                114
+              ]
+            },
+            {
+              "rank": 26,
+              "moved_subtree": "Seq104, Seq107, Seq109, Seq121, Seq122, Seq108, Seq123, Seq110, Seq111, Seq119, Seq112, Seq113, Seq118, Seq114, Seq115, Seq116, Seq117, Seq120",
+              "taxa_count": 18,
+              "spr_move_count": 8,
+              "percent_of_spr_moves": 0.744879,
+              "tree_pair_count": 8,
+              "higher_than_percent_of_recurrent_rows": 40.909091,
+              "split_indices": [
+                104,
+                105,
+                106,
+                107,
+                108,
+                109,
+                110,
+                111,
+                112,
+                113,
+                114,
+                115,
+                116,
+                117,
+                118,
+                119,
+                120,
+                121
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

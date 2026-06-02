@@ -14,7 +14,7 @@
       "ranked_order_file": "dataset_24_source-24_taxa24_sites14190/ranked/composition_ranked_bootstrap_replicates_24_source-24_taxa24_sites14190.tsv",
       "ranked_order_sha256": "d896af72cdea92b09b2938f498d6b7ebf7c745c09ada952edb1d7f67cbf439ae",
       "ranked_trees_file": "dataset_24_source-24_taxa24_sites14190/ranked/all_trees_24_source-24_taxa24_sites14190.nwk",
-      "ranked_trees_sha256": "8e8b7cab875416fee4e49c6adab40e781a2149ef00e8a31d274e1877a2c81996",
+      "ranked_trees_sha256": "f5001befa4feaac0ed9594465f8b23bfa4e1b685d943d43d8b7cd5b770792939",
       "split_support_file": "dataset_24_source-24_taxa24_sites14190/ranked/split_support_24_source-24_taxa24_sites14190.tsv",
       "split_support_sha256": "6003d1fa7367c93f3ae7c4a1cf728f7c3cbe4b12e9a0a39005be8720f1eeed09",
       "support_annotated": true
@@ -33,7 +33,7 @@
       "ranked_order_file": "dataset_125_source-125_taxa125_sites29149/ranked/composition_ranked_bootstrap_replicates_125_source-125_taxa125_sites29149.tsv",
       "ranked_order_sha256": "0027d4b091a50f8c662d65e3a5153ba354d20c77ebdc8578c32091a8f147d8dc",
       "ranked_trees_file": "dataset_125_source-125_taxa125_sites29149/ranked/all_trees_125_source-125_taxa125_sites29149.nwk",
-      "ranked_trees_sha256": "a7bc3b19397cd637886cf9c246b5bd965638fc5526000e1af1611acb26814b8c",
+      "ranked_trees_sha256": "fa250ab0b94a60b027f8929491da1422de4f0ec288460381169bde783c5b9322",
       "split_support_file": "dataset_125_source-125_taxa125_sites29149/ranked/split_support_125_source-125_taxa125_sites29149.tsv",
       "split_support_sha256": "53d2aeac78caeb735e539024bcd0f453185aa82a2eb1ef8684eff85d7a48049d",
       "support_annotated": true
@@ -41,8 +41,9 @@
   ],
   "current_results_directory": "publication_data/bootstrap_rogue_taxa/current_results",
   "schema_version": "1.0",
-  "source_run_directory": "publication_data/bootstrap_rogue_taxa/runs/run_20260521T135932+0200_iqtree-default_bs200_seed42_ds24-125_annotations-subtree-bs200",
-  "source_run_id": "run_20260521T135932+0200_iqtree-default_bs200_seed42_ds24-125_annotations-subtree-bs200",
+  "source_run_directory": null,
+  "source_run_id": "run_20260602T093224+0200_iqtree-default_bs200_seed42_ds24-125_shalrt1000_iqtree3-default-shalrt-full",
+  "source_run_retention": "generated staging removed after promotion",
   "status": "PASS",
-  "verified_at": "2026-05-26T11:32:48+00:00"
+  "verified_at": "2026-06-02T20:02:01+02:00"
 }
