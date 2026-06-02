@@ -58,10 +58,10 @@ git archive --format=tar.gz \
 
 ## Verification Before Release
 
-Run checksum verification:
+Run publication data and checksum verification:
 
 ```bash
-(cd publication_data/bootstrap_rogue_taxa/current_results && shasum -a 256 -c MANIFEST.sha256)
+npm run publication:data:check
 (cd publication_data/recombination_norovirus && shasum -a 256 -c MANIFEST.sha256)
 ```
 

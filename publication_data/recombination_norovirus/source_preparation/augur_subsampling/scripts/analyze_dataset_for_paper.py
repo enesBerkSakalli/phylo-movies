@@ -277,12 +277,12 @@ Geographic sampling included {top_countries[0][0]} (n={top_countries[0][1]}),
 (n={top_countries[2][1]}), {top_countries[3][0]} (n={top_countries[3][1]}),
 and {top_countries[4][0]} (n={top_countries[4][1]}), among others.
 
-Sequences were aligned using MAFFT v7.526~\\citep{{mafft2013}} and trimmed using
-trimAl with the gappyout algorithm~\\citep{{trimal2009}}. For the sliding-window
-analysis, we used a window size of 300~bp with a step size of 100~bp, generating
-overlapping windows across the full genome alignment. For each window, a
-phylogenetic tree was inferred using FastTree~\\citep{{Price2010}} with the
-GTR model for nucleotide data.
+Sequences were aligned using MAFFT v7.526~\\citep{{Katoh2013}} and trimmed using
+trimAl with the gappyout algorithm~\\citep{{CapellaGutierrez2009}}. For the
+sliding-window analysis, we used a window size of 750~bp with a step size of
+500~bp, generating overlapping windows across the full genome alignment. For
+each window, a phylogenetic tree was inferred using IQ-TREE
+\\citep{{Minh2020IQTREE2}} in fast-search mode under GTR+G.
 
 All trees were midpoint-rooted for consistency, and pairwise Robinson--Foulds
 distances were computed to quantify topological differences between adjacent
@@ -298,11 +298,11 @@ genotype ({top_g[0][0]}, {top_g[1][0]}, etc.). This transition is clearly
 visible in the animated phylogeny, where clades reorganize as the window
 traverses the recombination breakpoint.
 
-For example, {top_combos[0][0]} genomes cluster with other {top_p[0][0]}
-sequences in the polymerase region, but shift to cluster with {top_g[0][0]}
-sequences in the capsid region. The animation captures these cluster
-transitions in real time, providing an intuitive visualization of recombination
-dynamics across the Norovirus genome.
+For example, recombinant genomes cluster with sequences sharing the same
+polymerase genotype in the polymerase region, but shift toward sequences
+sharing the same capsid genotype in the capsid region. The animation captures
+these cluster transitions in real time, providing an intuitive visualization of
+recombination dynamics across the Norovirus genome.
 
 Demonstrations are available in the supplementary video
 (\\url{{https://www.youtube.com/watch?v=lqur97hfok0}}) and the live site

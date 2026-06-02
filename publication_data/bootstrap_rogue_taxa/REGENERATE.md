@@ -45,6 +45,8 @@ docker compose --profile publication run --rm publication-env bash
 
 The container mounts the repository at `/workspace` and contains the same
 `phylomovies-publication` environment defined by `publication_data/environment.yml`.
+RAxML and FastTree come from that environment; IQ-TREE runs through the bundled
+BranchArchitect IQ-TREE 3 binary unless `--iqtree-bin` is supplied.
 
 Run a quick smoke regeneration:
 
@@ -70,6 +72,15 @@ conda run -n phylomovies-publication \
   ./publication_data/bootstrap_rogue_taxa/scripts/bootstrap_ordering/run_bootstrap_rogue_taxa.sh
 ```
 
+After the promoted tree files and static browser-demo payloads have been
+regenerated, rebuild and verify the moved-subtree SPR recurrence tables used by
+the manuscript:
+
+```bash
+npm run publication:spr-recurrence
+npm run publication:spr-recurrence:check
+```
+
 ## Outputs
 
 Generated runs are written under:
@@ -86,4 +97,6 @@ current_results/
 
 Each run writes logs, ordering metadata, tree-distance audit outputs, and a
 manifest so reviewers can verify the relationship between source alignment,
-bootstrap tree set, and final Phylo-Movies order.
+bootstrap tree set, and final Phylo-Movies order. The promoted
+`current_results/` folder also includes recurrence tables under each dataset's
+`analysis/` folder plus `SPR_RECURRENCE_SUMMARY.json` at the result root.

@@ -13,7 +13,8 @@
       "dataset_directory": "dataset_24_source-aberer_roguenarok_dataset_24_taxa24_sites14190.phy_taxa24_sites14190",
       "dataset_label": "dataset_24_source-aberer_roguenarok_dataset_24_taxa24_sites14190.phy_taxa24_sites14190",
       "iqtree_mode": "default",
-      "jobs": 4,
+      "iqtree_sh_alrt_replicates": 1000,
+      "jobs": 10,
       "n_replicates_completed": 200,
       "n_replicates_requested": 200,
       "n_sites": 14190,
@@ -37,7 +38,7 @@
       ],
       "ranked_outputs": {
         "all_trees": "ranked/all_trees_24_source-aberer_roguenarok_dataset_24_taxa24_sites14190.phy_taxa24_sites14190.nwk",
-        "all_trees_sha256": "8e8b7cab875416fee4e49c6adab40e781a2149ef00e8a31d274e1877a2c81996",
+        "all_trees_sha256": "f5001befa4feaac0ed9594465f8b23bfa4e1b685d943d43d8b7cd5b770792939",
         "composition_ranked_bootstrap_replicates": "ranked/composition_ranked_bootstrap_replicates_24_source-aberer_roguenarok_dataset_24_taxa24_sites14190.phy_taxa24_sites14190.tsv",
         "composition_ranked_bootstrap_replicates_sha256": "d896af72cdea92b09b2938f498d6b7ebf7c745c09ada952edb1d7f67cbf439ae",
         "split_support": "ranked/split_support_24_source-aberer_roguenarok_dataset_24_taxa24_sites14190.phy_taxa24_sites14190.tsv",
@@ -51,7 +52,7 @@
       "source_file_basename": "aberer_roguenarok_dataset_24_taxa24_sites14190.phy",
       "support": {
         "annotated_trees": true,
-        "mode": "bootstrap_replicate_clade_frequency",
+        "mode": "bootstrap_replicate_split_frequency",
         "n_replicates": 200,
         "primary": "bootstrap_frequency",
         "split_support_table": "ranked/split_support_24_source-aberer_roguenarok_dataset_24_taxa24_sites14190.phy_taxa24_sites14190.tsv"
@@ -73,7 +74,8 @@
       "dataset_directory": "dataset_125_source-aberer_roguenarok_dataset_125_taxa125_sites29149.phy_taxa125_sites29149",
       "dataset_label": "dataset_125_source-aberer_roguenarok_dataset_125_taxa125_sites29149.phy_taxa125_sites29149",
       "iqtree_mode": "default",
-      "jobs": 4,
+      "iqtree_sh_alrt_replicates": 1000,
+      "jobs": 10,
       "n_replicates_completed": 200,
       "n_replicates_requested": 200,
       "n_sites": 29149,
@@ -97,7 +99,7 @@
       ],
       "ranked_outputs": {
         "all_trees": "ranked/all_trees_125_source-aberer_roguenarok_dataset_125_taxa125_sites29149.phy_taxa125_sites29149.nwk",
-        "all_trees_sha256": "a7bc3b19397cd637886cf9c246b5bd965638fc5526000e1af1611acb26814b8c",
+        "all_trees_sha256": "fa250ab0b94a60b027f8929491da1422de4f0ec288460381169bde783c5b9322",
         "composition_ranked_bootstrap_replicates": "ranked/composition_ranked_bootstrap_replicates_125_source-aberer_roguenarok_dataset_125_taxa125_sites29149.phy_taxa125_sites29149.tsv",
         "composition_ranked_bootstrap_replicates_sha256": "0027d4b091a50f8c662d65e3a5153ba354d20c77ebdc8578c32091a8f147d8dc",
         "split_support": "ranked/split_support_125_source-aberer_roguenarok_dataset_125_taxa125_sites29149.phy_taxa125_sites29149.tsv",
@@ -111,7 +113,7 @@
       "source_file_basename": "aberer_roguenarok_dataset_125_taxa125_sites29149.phy",
       "support": {
         "annotated_trees": true,
-        "mode": "bootstrap_replicate_clade_frequency",
+        "mode": "bootstrap_replicate_split_frequency",
         "n_replicates": 200,
         "primary": "bootstrap_frequency",
         "split_support_table": "ranked/split_support_125_source-aberer_roguenarok_dataset_125_taxa125_sites29149.phy_taxa125_sites29149.tsv"
@@ -122,42 +124,38 @@
     }
   ],
   "iqtree_mode": "default",
-  "jobs": 4,
+  "iqtree_sh_alrt_replicates": 1000,
+  "jobs": 10,
   "n_replicates": 200,
   "outputs": {
     "run_log": "run_log.txt",
     "run_manifest": "RUN_MANIFEST.json"
   },
-  "run_id": "run_20260521T135932+0200_iqtree-default_bs200_seed42_ds24-125_annotations-subtree-bs200",
+  "resumed": true,
+  "run_id": "run_20260602T093224+0200_iqtree-default_bs200_seed42_ds24-125_shalrt1000_iqtree3-default-shalrt-full",
   "schema_version": "1.0",
   "seed": 42,
   "source_root": "publication_data/bootstrap_rogue_taxa/source_alignments",
   "threads": 1,
-  "timestamp_local": "20260521T135932+0200",
+  "timestamp_local": "20260602T134533+0000",
   "tool_versions": {
     "fasttree": null,
     "iqtree": {
-      "executable": "iqtree2",
+      "executable": "engine/BranchArchitect/bin/linux/iqtree3",
       "output": [
-        "IQ-TREE multicore version 2.4.0 for MacOS ARM 64-bit built Feb 12 2025",
-        "Developed by Bui Quang Minh, Nguyen Lam Tung, Olga Chernomor, Heiko Schmidt,",
-        "Dominik Schrempf, Michael Woodhams, Ly Trong Nhan, Thomas Wong"
+        "IQ-TREE version 3.1.1 for Linux x86 64-bit built Apr  2 2026",
+        "Developed by Bui Quang Minh, Thomas Wong, Nhan Ly-Trong, Huaiyan Ren",
+        "Contributed by Lam-Tung Nguyen, Dominik Schrempf, Chris Bielow,",
+        "Olga Chernomor, Michael Woodhams, Diep Thi Hoang, Heiko Schmidt"
       ],
       "returncode": 0
     },
     "raxml_hpc": {
-      "executable": "raxmlHPC",
+      "executable": null,
       "output": [
-        "This is RAxML version 8.2.12 released by Alexandros Stamatakis on May 2018.",
-        "",
-        "With greatly appreciated code contributions by:",
-        "Andre Aberer      (HITS)",
-        "Simon Berger      (HITS)",
-        "Alexey Kozlov     (HITS)",
-        "Kassian Kobert    (HITS)",
-        "David Dao         (KIT and HITS)"
+        "not probed during resumed run; bootstrap alignments were reused from the source run"
       ],
-      "returncode": 0
+      "returncode": null
     }
   },
   "tree_program": "iqtree"

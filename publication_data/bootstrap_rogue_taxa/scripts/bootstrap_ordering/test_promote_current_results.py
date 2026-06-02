@@ -22,7 +22,7 @@ def test_promote_uses_stable_publication_paths(tmp_path):
     ranked_dir.mkdir(parents=True)
 
     taxa = [f"T{index}" for index in range(24)]
-    annotation = "[&support_kind=bootstrap_replicate_subtree_frequency,bootstrap_frequency=100]"
+    annotation = "[&support_kind=bootstrap_replicate_split_frequency,bootstrap_frequency=100]"
     (ranked_dir / f"all_trees_{source_output_label}.nwk").write_text(
         "\n".join([make_star_tree(taxa, annotation), make_star_tree(taxa, annotation)]) + "\n"
     )

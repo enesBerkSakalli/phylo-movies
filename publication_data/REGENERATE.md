@@ -37,9 +37,15 @@ tools are already available:
 
 ```bash
 conda run -n phylomovies-publication raxmlHPC -v
-conda run -n phylomovies-publication iqtree2 --version
+engine/BranchArchitect/bin/darwin/iqtree3 --version
 conda run -n phylomovies-publication FastTree -expert
 ```
+
+Version note: publication workflows and the live app use the bundled
+BranchArchitect IQ-TREE 3 binary. On Linux, replace the Darwin path above with
+`engine/BranchArchitect/bin/linux/iqtree3`. `IQTREE_PATH` or `--iqtree-bin` can
+override discovery for local debugging, but publication regeneration should use
+the bundled IQ-TREE 3 binary.
 
 The shared shell defaults are stored in:
 
@@ -49,25 +55,26 @@ publication_data/publication_data.env
 
 ## Verify Promoted Results
 
-Verify the rogue-taxon bootstrap result set:
-
-```bash
-(cd publication_data/bootstrap_rogue_taxa/current_results && shasum -a 256 -c MANIFEST.sha256)
-```
-
-Verify the norovirus/ReCAN result set:
-
-```bash
-(cd publication_data/recombination_norovirus && shasum -a 256 -c MANIFEST.sha256)
-```
-
-The commands should report `OK` for every file.
-
 Verify manifest cleanliness, retained source-file counts, promoted bootstrap
 tree counts, checksums, and app-facing taxa scale tiers:
 
 ```bash
 npm run publication:data:check
+```
+
+Verify the norovirus/ReCAN checksum manifest:
+
+```bash
+(cd publication_data/recombination_norovirus && shasum -a 256 -c MANIFEST.sha256)
+```
+
+The checksum command should report `OK` for every file.
+
+Verify the moved-subtree recurrence tables used for the rogue-taxon manuscript
+claims:
+
+```bash
+npm run publication:spr-recurrence:check
 ```
 
 ## Regenerate Rogue-Taxon Bootstrap Results
@@ -94,6 +101,13 @@ Run the full IQ-TREE regeneration:
 ```bash
 conda run -n phylomovies-publication \
   ./publication_data/bootstrap_rogue_taxa/scripts/bootstrap_ordering/run_bootstrap_rogue_taxa.sh
+```
+
+After regenerating the static browser-demo payloads, rebuild the committed
+moved-subtree recurrence tables:
+
+```bash
+npm run publication:spr-recurrence
 ```
 
 Detailed notes are in:

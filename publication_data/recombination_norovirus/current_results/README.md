@@ -39,11 +39,17 @@ publication-data inspection.
 | `recan_recombination_plot.png` | Main grouped ReCAN validation plot. |
 | `norovirus_recombination_by_capsid.png` | Capsid-group highlighted validation plot. |
 
-## Phylo-Movies Window Table
+## Phylo-Movies Tree Series
 
-The publication-grade Norovirus Stability Scan uses the 334-taxon trimmed
-alignment with IQ-TREE fast search, SH-aLRT support, `windowSize=1000`, and
-`stepSize=500`. The exact live-analysis windows are stored in:
+The default reviewer-facing Norovirus browser demo uses the 334-taxon trimmed
+alignment with IQ-TREE fast search, GTR+G, SH-aLRT support,
+`windowSize=1000`, and `stepSize=500`:
+
+```text
+phylo_movies/norovirus_334_iqtree_fast_sh_alrt_window1000_step500.nwk
+```
+
+The exact live-analysis windows are stored in:
 
 ```text
 window_tables/norovirus_334_window1000_step500_windows.tsv
@@ -66,6 +72,13 @@ requested step grid and window names match the BranchArchitect-generated window
 centers. The tradeoff is that edge trees are inferred from fewer sites. For
 publication figures, use this explicit table when reporting or regenerating
 windows so the boundary behavior is transparent.
+
+The generated static demo payload contains 17 observed input trees, 16 adjacent
+tree pairs, and 6,098 rendered tree states: 17 input-tree states plus 6,081
+interpolation states.
+
+A previous 750/500 IQ-TREE fast-search tree series remains in `phylo_movies/`
+for traceability, but it is not the current reviewer-facing demo payload.
 
 ## Checksums
 
