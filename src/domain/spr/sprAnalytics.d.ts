@@ -10,6 +10,7 @@ export interface SprMovedSubtreeTopologyNode {
 export interface SprMovedSubtreeTopologySnapshot {
   root: SprMovedSubtreeTopologyNode | null;
   newick: string;
+  topologySignature: string;
   leafCount: number;
   nodeCount: number;
   splitIndices: number[];

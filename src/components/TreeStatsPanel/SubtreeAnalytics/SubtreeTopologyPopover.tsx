@@ -11,6 +11,7 @@ interface SubtreeTopologyPopoverProps {
   destinationNewick?: string;
   variantCount?: number;
   taxaCount: number;
+  leafNamesByIndex: string[];
   compact?: boolean;
 }
 
@@ -81,12 +82,20 @@ const getMaxDepth = (node: SprMovedSubtreeTopologyNode, depth = 0): number => {
 const findLayoutNode = (nodes: LayoutNode[], path: string): LayoutNode | undefined =>
   nodes.find((node) => node.path === path);
 
+const getLeafLabel = (node: SprMovedSubtreeTopologyNode, leafNamesByIndex: string[]): string => {
+  const leafIndex = node.splitIndices.length === 1 ? node.splitIndices[0] : null;
+  if (leafIndex !== null && leafNamesByIndex[leafIndex]) return leafNamesByIndex[leafIndex];
+  return node.name || node.splitIndices.join(',');
+};
+
 function MiniSubtreeSvg({
   topology,
   label,
+  leafNamesByIndex,
 }: {
   topology?: SprMovedSubtreeTopologySnapshot | null;
   label: string;
+  leafNamesByIndex: string[];
 }) {
   if (!topology?.root) {
     return (
@@ -144,7 +153,7 @@ function MiniSubtreeSvg({
                 y={layoutNode.y + 3}
                 className="fill-foreground text-[9px]"
               >
-                {layoutNode.node.name || layoutNode.node.splitIndices.join(',')}
+                {getLeafLabel(layoutNode.node, leafNamesByIndex)}
               </text>
             ) : null}
           </g>
@@ -170,6 +179,7 @@ export function SubtreeTopologyPopover({
   destinationNewick,
   variantCount = 0,
   taxaCount,
+  leafNamesByIndex,
   compact = false,
 }: SubtreeTopologyPopoverProps) {
   const hasTopology =
@@ -218,7 +228,11 @@ export function SubtreeTopologyPopover({
               <div className="text-2xs font-semibold uppercase text-muted-foreground">
                 Source tree
               </div>
-              <MiniSubtreeSvg topology={sourceTopology} label="Source moved subtree topology" />
+              <MiniSubtreeSvg
+                topology={sourceTopology}
+                label="Source moved subtree topology"
+                leafNamesByIndex={leafNamesByIndex}
+              />
               <NewickBlock label="Source Newick" value={sourceNewick || sourceTopology?.newick} />
             </div>
             <div className="min-w-0 space-y-2">
@@ -228,6 +242,7 @@ export function SubtreeTopologyPopover({
               <MiniSubtreeSvg
                 topology={destinationTopology}
                 label="Target moved subtree topology"
+                leafNamesByIndex={leafNamesByIndex}
               />
               <NewickBlock
                 label="Target Newick"

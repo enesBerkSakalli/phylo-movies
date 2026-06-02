@@ -48,6 +48,7 @@ export class SubtreeExtractor {
     return {
       root: topologyRoot,
       newick: `${this._nodeToNewick(node)};`,
+      topologySignature: this._nodeToTopologySignature(node),
       leafCount: stats.leafCount,
       nodeCount: stats.totalNodes,
       splitIndices: this._normalizeSplit(node.split_indices),
@@ -127,6 +128,19 @@ export class SubtreeExtractor {
     }
 
     return topologyNode;
+  }
+
+  static _nodeToTopologySignature(node) {
+    this._assertNormalizedNode(node);
+
+    if (!Array.isArray(node.children) || node.children.length === 0) {
+      return this._splitKey(node.split_indices);
+    }
+
+    const childSignatures = node.children
+      .map((child) => this._nodeToTopologySignature(child))
+      .sort();
+    return `(${childSignatures.join(',')})`;
   }
 
   /**

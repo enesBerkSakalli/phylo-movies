@@ -512,14 +512,15 @@ describe('SPR analytics model', () => {
       sourceMovedSubtreeNewick: '(C:1,D:1)source23:0.2;',
       destinationMovedSubtreeNewick: '(D:1,C:1)target23:0.4;',
     });
-    expect(model.eventRows[1].sourceMovedSubtreeTopology.root.children.map((child) => child.name)).toEqual([
-      'C',
-      'D',
-    ]);
+    expect(model.eventRows[1].sourceMovedSubtreeTopology.topologySignature).toBe('(2,3)');
+    expect(model.eventRows[1].destinationMovedSubtreeTopology.topologySignature).toBe('(2,3)');
+    expect(
+      model.eventRows[1].sourceMovedSubtreeTopology.root.children.map((child) => child.name)
+    ).toEqual(['C', 'D']);
     expect(model.movedSubtreeRecurrences.find((item) => item.signature === '2,3')).toMatchObject({
       sourceTopologyVariantCount: 1,
       destinationTopologyVariantCount: 1,
-      topologyVariantCount: 2,
+      topologyVariantCount: 1,
       sourceMovedSubtreeNewick: '(C:1,D:1)source23:0.2;',
       destinationMovedSubtreeNewick: '(D:1,C:1)target23:0.4;',
     });

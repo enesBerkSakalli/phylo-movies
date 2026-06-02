@@ -81,4 +81,45 @@ describe('SPR move event table rendering', () => {
       root.unmount();
     });
   });
+
+  it('labels mini topology leaves from leafNamesByIndex instead of snapshot node names', async () => {
+    const topology = {
+      root: {
+        name: 'internal',
+        length: null,
+        splitIndices: [1, 2],
+        children: [
+          { name: 'wrong-b', length: null, splitIndices: [1], children: [] },
+          { name: 'wrong-c', length: null, splitIndices: [2], children: [] },
+        ],
+      },
+      newick: '(B,C);',
+      topologySignature: '(1,2)',
+      leafCount: 2,
+      nodeCount: 3,
+      splitIndices: [1, 2],
+    };
+    const { container, root } = await renderTable([
+      createSprMoveEvent({
+        splitIndices: [1, 2],
+        sourceMovedSubtreeTopology: topology,
+        destinationMovedSubtreeTopology: topology,
+      }),
+    ]);
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>('button[aria-label^="Inspect moved subtree topology"]')
+        ?.click();
+    });
+
+    expect(document.body.textContent).toContain('B');
+    expect(document.body.textContent).toContain('C');
+    expect(document.body.textContent).not.toContain('wrong-b');
+    expect(document.body.textContent).not.toContain('wrong-c');
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
 });

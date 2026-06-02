@@ -93,7 +93,6 @@ export const createSprMoveEventCsv = (
     'Source Window',
     'Target Window',
     'Moved Subtree',
-    'Parent Branch Taxa',
     'Taxa Count',
     'Source Moved Subtree Newick',
     'Target Moved Subtree Newick',
@@ -110,12 +109,9 @@ export const createSprMoveEventCsv = (
     'Moved Subtree Value Class',
     'Parent Branch Value Class',
     'Step Range',
-    'Path Hops',
-    'Path Length',
     'RF Distance',
     'Weighted RF Distance',
     'Split Indices',
-    'Parent Branch Split Indices',
   ];
 
   const rows = events.map((event) => {
@@ -129,7 +125,6 @@ export const createSprMoveEventCsv = (
       windowRange?.sourceLabel ?? '',
       windowRange?.targetLabel ?? '',
       formatLabel(event.splitIndices, leafNamesByIndex),
-      formatLabel(event.contextSplitIndices, leafNamesByIndex),
       event.splitIndices.length,
       event.sourceMovedSubtreeNewick ?? '',
       event.destinationMovedSubtreeNewick ?? '',
@@ -150,12 +145,9 @@ export const createSprMoveEventCsv = (
       event.branchValueClass ?? '',
       event.contextBranchValueClass ?? '',
       formatStepRange(event.stepRange),
-      event.totalPathHops,
-      formatFixed(event.totalPathLength),
       formatOptionalFixed(event.rfDistance),
       formatOptionalFixed(event.weightedRfDistance),
       formatIndexList(event.splitIndices),
-      formatIndexList(event.contextSplitIndices),
     ];
   });
 
