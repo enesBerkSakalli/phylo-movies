@@ -80,6 +80,13 @@ const formatLabel = (indices: number[] | undefined, leafNamesByIndex: string[]):
 const formatStepRange = (stepRange: [number, number] | null | undefined): string =>
   Array.isArray(stepRange) && stepRange.length >= 2 ? `${stepRange[0]}-${stepRange[1]}` : '';
 
+const formatLocalDateStamp = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export const createSprMoveEventCsv = (
   events: SprMoveEventRow[],
   leafNamesByIndex: string[],
@@ -158,7 +165,7 @@ export const createSprMovedSubtreeRecurrenceExportName = (
   fileName: string,
   date = new Date()
 ): string => {
-  const dateStamp = date.toISOString().slice(0, 10);
+  const dateStamp = formatLocalDateStamp(date);
   const baseName =
     (fileName || 'dataset')
       .replace(/\.[^/.]+$/, '')
@@ -170,7 +177,7 @@ export const createSprMovedSubtreeRecurrenceExportName = (
 };
 
 export const createSprMoveEventExportName = (fileName: string, date = new Date()): string => {
-  const dateStamp = date.toISOString().slice(0, 10);
+  const dateStamp = formatLocalDateStamp(date);
   const baseName =
     (fileName || 'dataset')
       .replace(/\.[^/.]+$/, '')

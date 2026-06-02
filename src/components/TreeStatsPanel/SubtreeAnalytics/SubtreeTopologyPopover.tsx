@@ -166,7 +166,7 @@ function MiniSubtreeSvg({
 const NewickBlock = ({ label, value }: { label: string; value?: string }) => (
   <div className="min-w-0">
     <div className="mb-1 text-2xs font-semibold uppercase text-muted-foreground">{label}</div>
-    <pre className="max-h-24 overflow-auto whitespace-pre-wrap rounded border border-border/70 bg-muted/30 p-2 text-[10px] leading-snug">
+    <pre className="max-h-28 overflow-auto whitespace-pre rounded border border-border/70 bg-muted/30 p-2 text-[10px] leading-snug">
       {value || 'Unavailable'}
     </pre>
   </div>
@@ -212,9 +212,11 @@ export function SubtreeTopologyPopover({
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          align="start"
-          side="right"
-          className="z-[1300] w-[620px] max-w-[calc(100vw-48px)] p-3"
+          align="center"
+          collisionPadding={16}
+          side="bottom"
+          sideOffset={6}
+          className="z-[1300] max-h-[calc(100vh-96px)] w-[720px] max-w-[calc(100vw-48px)] overflow-auto p-3"
           onClick={(event) => event.stopPropagation()}
         >
           <div className="mb-2 flex items-center justify-between gap-2">
@@ -233,7 +235,6 @@ export function SubtreeTopologyPopover({
                 label="Source moved subtree topology"
                 leafNamesByIndex={leafNamesByIndex}
               />
-              <NewickBlock label="Source Newick" value={sourceNewick || sourceTopology?.newick} />
             </div>
             <div className="min-w-0 space-y-2">
               <div className="text-2xs font-semibold uppercase text-muted-foreground">
@@ -244,11 +245,14 @@ export function SubtreeTopologyPopover({
                 label="Target moved subtree topology"
                 leafNamesByIndex={leafNamesByIndex}
               />
-              <NewickBlock
-                label="Target Newick"
-                value={destinationNewick || destinationTopology?.newick}
-              />
             </div>
+          </div>
+          <div className="mt-3 grid gap-3">
+            <NewickBlock label="Source Newick" value={sourceNewick || sourceTopology?.newick} />
+            <NewickBlock
+              label="Target Newick"
+              value={destinationNewick || destinationTopology?.newick}
+            />
           </div>
         </PopoverContent>
       </Popover>
