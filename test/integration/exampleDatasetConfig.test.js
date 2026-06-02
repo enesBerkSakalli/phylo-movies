@@ -166,9 +166,9 @@ describe('example dataset configuration', () => {
       })
     );
 
-    expect(countFramesByType(payloadsById.get('norovirus-334')).interpolation_frame).toBeGreaterThan(
-      0
-    );
+    expect(
+      countFramesByType(payloadsById.get('norovirus-334')).interpolation_frame
+    ).toBeGreaterThan(0);
     expect(payloadsById.get('norovirus-334').msa.window_size).toBe(1000);
     expect(payloadsById.get('norovirus-334').msa.step_size).toBe(500);
     expect(payloadsById.get('norovirus-334').frames).toHaveLength(6098);
@@ -177,9 +177,9 @@ describe('example dataset configuration', () => {
       interpolation_frame: 6081,
     });
     expect(
-      payloadsById.get('norovirus-334').temporal_events.filter(
-        (event) => event.event_type === 'spr_move'
-      )
+      payloadsById
+        .get('norovirus-334')
+        .temporal_events.filter((event) => event.event_type === 'spr_move')
     ).toHaveLength(1513);
     expect(countFramesByType(payloadsById.get('bootstrap-24')).interpolation_frame).toBeGreaterThan(
       0
@@ -494,12 +494,19 @@ describe('example dataset configuration', () => {
       expect(treeContents).toContain('iqtree_sh_alrt=');
       expect(splitSupportHeader).toContain('support_percent');
       expect(example.description).toContain('IQ-TREE default mode');
-      expect(example.description).toContain('SH-aLRT branch labels');
-      expect(example.description).toContain('split-frequency support context');
+      expect(example.description).toContain('split-frequency branch labels');
+      expect(example.description).toContain('SH-aLRT support metadata');
       expect(example.description).toContain('SPR recurrence tables');
       expect(example.provenance.settings).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ label: 'Support labels', value: 'SH-aLRT, 1,000 replicates' }),
+          expect.objectContaining({
+            label: 'Branch labels',
+            value: 'Split-frequency support across the 200 trees',
+          }),
+          expect.objectContaining({
+            label: 'IQ-TREE support metadata',
+            value: 'SH-aLRT, 1,000 replicates',
+          }),
         ])
       );
       expect(example.filePath).toContain('bootstrap_rogue_taxa/current_results');

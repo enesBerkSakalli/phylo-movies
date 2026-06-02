@@ -30,7 +30,8 @@ Method summary:
 - bootstrap replicate alignments: RAxML `raxmlHPC -f j`
 - tree inference: IQ-TREE 3 default search mode, not `-fast`
 - replicates: 200 per dataset
-- support annotations: IQ-TREE SH-aLRT labels from 1,000 replicates, with bootstrap replicate split-frequency context retained when present in the source run
+- branch labels: bootstrap replicate split-frequency support across the 200 trees
+- IQ-TREE support metadata: SH-aLRT values from 1,000 replicates retained as `iqtree_sh_alrt`
 - seed: 42
 
 Source alignment provenance:

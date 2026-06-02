@@ -625,6 +625,16 @@ function auditManuscriptText(root, manuscriptFacts, errors) {
       snippet: `\\textcolor{red}{${formatLatexInteger(factNumber(norovirus, 'spr_moves', 1513))} SPR moves}`,
     },
     {
+      label: 'norovirus inferred tree and interpolation-frame counts',
+      snippet: `Although only \\textcolor{red}{${factNumber(
+        norovirus,
+        'input_trees',
+        17
+      )} trees} were inferred in the Norovirus analysis, the numerous and complex rearrangements between consecutive windows required \\textcolor{red}{${formatLatexInteger(
+        factNumber(norovirus, 'interpolation_frames', 6081)
+      )} interpolated intermediate trees}`,
+    },
+    {
       label: 'bootstrap IQ-TREE 3 default wording',
       snippet: 'inferred using IQ-TREE~3 in default search mode',
     },
@@ -669,6 +679,8 @@ function auditManuscriptText(root, manuscriptFacts, errors) {
     'window size of 750~bp',
     '1{,}403 \\textcolor{red}{SPR moves}',
     'IQ-TREE~2 in default search mode',
+    'only 16 trees were inferred',
+    '5,686 interpolated intermediate trees',
     '78 SPR moves',
     '405 SPR moves',
     'ranked 2nd out of 44 recurrent moved subtrees',
