@@ -128,8 +128,7 @@ export const EXAMPLE_DATASETS = [
     filePath: NOROVIRUS_SOURCE_BASE + '03_trimmed/subsampled_350_gappyout_final.fasta',
     fileType: 'msa',
     precomputedPayloadPath:
-      PRECOMPUTED_EXAMPLE_BASE +
-      'norovirus_334_iqtree_fast_sh_alrt_window1000_step500.movie.json',
+      PRECOMPUTED_EXAMPLE_BASE + 'norovirus_334_iqtree_fast_sh_alrt_window1000_step500.movie.json',
     sourceTruthFile: NOROVIRUS_SOURCE_TRUTH,
     regenerationGuide: NOROVIRUS_REGENERATION_GUIDE,
     generatedArtifactFiles: [
@@ -244,7 +243,7 @@ export const EXAMPLE_DATASETS = [
     id: 'bootstrap-24',
     name: 'IQ-TREE Bootstrap Trees (24 taxa)',
     description:
-      'Composition-ranked rogue-taxon bootstrap tree sequence inferred with IQ-TREE default mode, SH-aLRT branch labels, split-frequency support context, and SPR recurrence tables (200 trees, 24 taxa, source alignment 14,190 sites)',
+      'Composition-ranked rogue-taxon bootstrap tree sequence inferred with IQ-TREE default mode, split-frequency branch labels, SH-aLRT support metadata, and SPR recurrence tables (200 trees, 24 taxa, source alignment 14,190 sites)',
     workflow: 'Bootstrap tree series',
     scale: '24 taxa / 200 trees',
     bestFor: 'Rogue-taxon SPR recurrence and support review',
@@ -270,8 +269,8 @@ export const EXAMPLE_DATASETS = [
       settings: [
         { label: 'Tree inference', value: 'IQ-TREE 3 default search mode' },
         { label: 'Bootstrap inputs', value: 'RAxML replicate alignments, 200 trees' },
-        { label: 'Support labels', value: 'SH-aLRT, 1,000 replicates' },
-        { label: 'Split context', value: 'Split-frequency support across the 200 trees' },
+        { label: 'Branch labels', value: 'Split-frequency support across the 200 trees' },
+        { label: 'IQ-TREE support metadata', value: 'SH-aLRT, 1,000 replicates' },
         { label: 'Rooting', value: 'Midpoint rooting' },
       ],
     },
@@ -290,7 +289,7 @@ export const EXAMPLE_DATASETS = [
     id: 'bootstrap-125',
     name: 'IQ-TREE Bootstrap Trees (125 taxa)',
     description:
-      'Composition-ranked rogue-taxon bootstrap tree sequence inferred with IQ-TREE default mode, SH-aLRT branch labels, split-frequency support context, and SPR recurrence tables (200 trees, 125 taxa, source alignment 29,149 sites)',
+      'Composition-ranked rogue-taxon bootstrap tree sequence inferred with IQ-TREE default mode, split-frequency branch labels, SH-aLRT support metadata, and SPR recurrence tables (200 trees, 125 taxa, source alignment 29,149 sites)',
     workflow: 'Bootstrap tree series',
     scale: '125 taxa / 200 trees',
     bestFor: 'Larger rogue-taxon recurrence and support review',
@@ -316,8 +315,8 @@ export const EXAMPLE_DATASETS = [
       settings: [
         { label: 'Tree inference', value: 'IQ-TREE 3 default search mode' },
         { label: 'Bootstrap inputs', value: 'RAxML replicate alignments, 200 trees' },
-        { label: 'Support labels', value: 'SH-aLRT, 1,000 replicates' },
-        { label: 'Split context', value: 'Split-frequency support across the 200 trees' },
+        { label: 'Branch labels', value: 'Split-frequency support across the 200 trees' },
+        { label: 'IQ-TREE support metadata', value: 'SH-aLRT, 1,000 replicates' },
         { label: 'Rooting', value: 'Midpoint rooting' },
       ],
     },
