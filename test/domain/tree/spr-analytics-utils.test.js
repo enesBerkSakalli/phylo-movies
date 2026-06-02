@@ -198,6 +198,57 @@ const pairMetrics = {
 
 const analyticsOptions = { temporalEvents, pairMetrics };
 
+const topologySourceTree = {
+  name: 'sourceRoot',
+  length: 0,
+  split_indices: [1, 2, 3, 4, 5, 6],
+  children: [
+    { name: 'B', length: 1, split_indices: [1], children: [] },
+    {
+      name: 'source23',
+      length: 0.2,
+      split_indices: [2, 3],
+      children: [
+        { name: 'C', length: 1, split_indices: [2], children: [] },
+        { name: 'D', length: 1, split_indices: [3], children: [] },
+      ],
+    },
+    {
+      name: 'source456',
+      length: 0.3,
+      split_indices: [4, 5, 6],
+      children: [
+        { name: 'E', length: 1, split_indices: [4], children: [] },
+        { name: 'F', length: 1, split_indices: [5], children: [] },
+        { name: 'G', length: 1, split_indices: [6], children: [] },
+      ],
+    },
+  ],
+};
+
+const topologyTargetTree = {
+  ...topologySourceTree,
+  name: 'targetRoot',
+  children: [
+    { name: 'B', length: 1, split_indices: [1], children: [] },
+    {
+      name: 'target23',
+      length: 0.4,
+      split_indices: [2, 3],
+      children: [
+        { name: 'D', length: 1, split_indices: [3], children: [] },
+        { name: 'C', length: 1, split_indices: [2], children: [] },
+      ],
+    },
+    topologySourceTree.children[2],
+  ],
+};
+
+const topologyTrees = [];
+topologyTrees[0] = topologySourceTree;
+topologyTrees[10] = topologyTargetTree;
+topologyTrees[20] = topologySourceTree;
+
 describe('SPR analytics model', () => {
   it('builds an auditable SPR move event ledger from normalized temporal events', () => {
     const branchSupportIndex = {
@@ -447,6 +498,30 @@ describe('SPR analytics model', () => {
       activePairCount: 2,
       sprMoveEventCount: 4,
       uniqueMovedSubtreeCount: 3,
+    });
+  });
+
+  it('attaches exact moved-subtree topology and Newick to event and recurrence rows', () => {
+    const model = buildSprAnalyticsModel(pairs, {
+      ...analyticsOptions,
+      interpolatedTrees: topologyTrees,
+    });
+
+    expect(model.eventRows[1]).toMatchObject({
+      signature: '2,3',
+      sourceMovedSubtreeNewick: '(C:1,D:1)source23:0.2;',
+      destinationMovedSubtreeNewick: '(D:1,C:1)target23:0.4;',
+    });
+    expect(model.eventRows[1].sourceMovedSubtreeTopology.root.children.map((child) => child.name)).toEqual([
+      'C',
+      'D',
+    ]);
+    expect(model.movedSubtreeRecurrences.find((item) => item.signature === '2,3')).toMatchObject({
+      sourceTopologyVariantCount: 1,
+      destinationTopologyVariantCount: 1,
+      topologyVariantCount: 2,
+      sourceMovedSubtreeNewick: '(C:1,D:1)source23:0.2;',
+      destinationMovedSubtreeNewick: '(D:1,C:1)target23:0.4;',
     });
   });
 
