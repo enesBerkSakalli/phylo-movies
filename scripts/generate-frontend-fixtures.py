@@ -484,7 +484,7 @@ def _build_norovirus_provenance(
     *, tree_source: str, windowing: str, support: str | None
 ) -> dict:
     settings = [
-        {"label": "Tree inference", "value": "IQ-TREE, GTR+G, fast search"},
+        {"label": "Tree inference", "value": "IQ-TREE 3, GTR+G, fast search"},
         {"label": "Windowing", "value": windowing},
         {"label": "Rooting", "value": "Input rooting preserved"},
     ]
@@ -511,12 +511,16 @@ def _build_bootstrap_provenance(source_label: str, taxa: str) -> dict:
         "source_label": source_label,
         "tree_source": (
             f"Interpolated static payload generated from the {taxa}-taxon "
-            "composition-ranked bootstrap tree series with IQ-TREE SH-aLRT labels."
+            "composition-ranked IQ-TREE 3 bootstrap tree series with split-frequency "
+            "branch labels and SH-aLRT support metadata."
         ),
         "settings": [
             {"label": "Tree source", "value": "Precomputed bootstrap tree series"},
-            {"label": "Support labels", "value": "SH-aLRT, 1,000 replicates"},
-            {"label": "Split context", "value": "Split-frequency support across 200 trees"},
+            {
+                "label": "Branch labels",
+                "value": "Split-frequency support across 200 inferred bootstrap-replicate trees",
+            },
+            {"label": "Support metadata", "value": "IQ-TREE 3 SH-aLRT, 1,000 replicates"},
             {
                 "label": "Browser payload",
                 "value": "Input trees plus generated interpolation frames",
