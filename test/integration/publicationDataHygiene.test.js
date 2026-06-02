@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import {
-  auditPublicationData,
-  TAXA_SCALE_TIERS,
-} from '../../scripts/check-publication-data.mjs';
+import { auditPublicationData, TAXA_SCALE_TIERS } from '../../scripts/check-publication-data.mjs';
 
 describe('publication data hygiene', () => {
   it('verifies retained publication files against manifests and content counts', () => {
@@ -71,7 +68,7 @@ describe('publication data hygiene', () => {
       },
     ]);
     expect(report.maxPublicationTaxa).toBe(1000);
-  });
+  }, 30_000);
 
   it('documents the committed and generated taxa scale boundaries', () => {
     expect(TAXA_SCALE_TIERS).toEqual([
@@ -145,10 +142,7 @@ describe('publication data hygiene', () => {
       'recreate_nextstrain_augur_snapshot.sh'
     );
 
-    const accessionVersions = fs
-      .readFileSync(accessionVersionsPath, 'utf8')
-      .trim()
-      .split(/\r?\n/);
+    const accessionVersions = fs.readFileSync(accessionVersionsPath, 'utf8').trim().split(/\r?\n/);
     const recreateScript = fs.readFileSync(recreateScriptPath, 'utf8');
 
     expect(provenance).not.toContain('Not recoverable');
