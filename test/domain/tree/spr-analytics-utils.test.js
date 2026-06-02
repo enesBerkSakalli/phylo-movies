@@ -233,7 +233,7 @@ describe('SPR analytics model', () => {
           }[key] ?? null
         );
       },
-      getNearestAncestorBranchValue(inputTreeIndex, splitIndices) {
+      getNearestParentBranchValue(inputTreeIndex, splitIndices) {
         const key = `${inputTreeIndex}:${splitIndices.join(',')}`;
         return (
           {
@@ -289,8 +289,8 @@ describe('SPR analytics model', () => {
       destinationAttachmentSupport: { raw: '93', kind: 'bootstrap', primary: 93, bootstrap: 93 },
       sourceMovedSubtreeBranchValue: { displayValue: '61', role: 'branch_support' },
       destinationMovedSubtreeBranchValue: { displayValue: '79', role: 'branch_support' },
-      sourceAncestorBranchValue: { displayValue: '72.5', role: 'branch_support' },
-      destinationAncestorBranchValue: { displayValue: '84', role: 'branch_support' },
+      sourceParentBranchValue: { displayValue: '72.5', role: 'branch_support' },
+      destinationParentBranchValue: { displayValue: '84', role: 'branch_support' },
       branchValueClass: 'mixed_value',
       contextBranchValueClass: 'both_high_value',
     });

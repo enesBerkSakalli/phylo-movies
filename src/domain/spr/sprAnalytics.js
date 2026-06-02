@@ -209,25 +209,13 @@ function buildSprMoveEventRowsFromContext(pairs, options, context) {
               sourceInputTreeIndex,
               splitIndices,
               branchAnnotationValueKey
-            ) ??
-            branchSupportIndex?.getNearestAncestorBranchValue?.(
-              sourceInputTreeIndex,
-              splitIndices,
-              branchAnnotationValueKey
-            ) ??
-            null;
+            ) ?? null;
           const destinationParentBranchValue =
             branchSupportIndex?.getNearestParentBranchValue?.(
               targetInputTreeIndex,
               splitIndices,
               branchAnnotationValueKey
-            ) ??
-            branchSupportIndex?.getNearestAncestorBranchValue?.(
-              targetInputTreeIndex,
-              splitIndices,
-              branchAnnotationValueKey
-            ) ??
-            null;
+            ) ?? null;
           const sourceMovedSubtreeTopology = buildMovedSubtreeTopologySnapshot(
             interpolatedTrees?.[pair.source_frame_index],
             splitIndices
@@ -266,8 +254,6 @@ function buildSprMoveEventRowsFromContext(pairs, options, context) {
             destinationMovedSubtreeBranchValue,
             sourceParentBranchValue,
             destinationParentBranchValue,
-            sourceAncestorBranchValue: sourceParentBranchValue,
-            destinationAncestorBranchValue: destinationParentBranchValue,
             branchValueClass: classifyMovementBranchValues(
               sourceMovedSubtreeBranchValue,
               destinationMovedSubtreeBranchValue,
