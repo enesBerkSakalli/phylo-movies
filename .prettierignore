@@ -1,6 +1,9 @@
 node_modules/
 dist/
 coverage/
+manual/.docusaurus/
+manual/build/
+manual/node_modules/
 
 electron-app/node_modules/
 electron-app/frontend-dist/

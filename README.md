@@ -6,6 +6,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20488923.svg)](https://doi.org/10.5281/zenodo.20488923)
 
 [Website](https://enesberksakalli.github.io/phylo-movies/) ·
+[Manual](https://enesberksakalli.github.io/phylo-movies/manual/) ·
 [Browser demo](https://enesberksakalli.github.io/phylo-movies/demo/) ·
 [Source code](https://github.com/enesBerkSakalli/phylo-movies) ·
 [Publication](https://doi.org/10.64898/2026.04.01.715821) ·
@@ -15,16 +16,16 @@ Phylo-Movies is a React and Flask web tool for inspecting ordered phylogenetic t
 
 ![Phylo-Movies screenshot](assets/screenshot.png)
 
-The project information page at [enesberksakalli.github.io/phylo-movies](https://enesberksakalli.github.io/phylo-movies/) includes documentation and a precomputed browser demo. Dataset loading, interpolation, and MSA-driven workflows require the full-stack app from source, Docker, or the Electron desktop build.
+The project information page at [enesberksakalli.github.io/phylo-movies](https://enesberksakalli.github.io/phylo-movies/) includes documentation and a precomputed browser demo. Dataset loading, interpolation, and MSA-driven workflows require the full-stack app from source or Docker. Desktop release artifacts are provided as convenience builds, but macOS artifacts are unsigned and may be blocked by Gatekeeper.
 
 ## Choose the Right Entry Point
 
 | Entry point       | Use it for                                                                                      | Backend-dependent actions                                                                                                      |
 | ----------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | GitHub Pages site | Reading documentation, downloading releases/data, and opening generated demo movies at `/demo`. | New uploads, local example processing, interpolation, and MSA workflows do not run on the static site.                         |
-| Source checkout   | Development and full local processing from the browser.                                         | Run `./start.sh`, keep the terminal open, and use the printed `http://127.0.0.1:5173/` URL.                                    |
-| Docker            | Full-stack local execution without manually setting up the backend.                             | Run `docker compose up --build` and open `http://localhost:8080/`.                                                             |
-| Desktop release   | Packaged local app for end users.                                                               | macOS release artifacts may be unsigned; see [Troubleshooting](docs/troubleshooting.md#symptom-macos-says-the-app-is-damaged). |
+| Source checkout   | Recommended macOS/reviewer path for full local processing from the browser.                     | Run `./start.sh`, keep the terminal open, and use the printed `http://127.0.0.1:5173/` URL.                                    |
+| Docker            | Recommended full-stack path without manually setting up the backend.                            | Run `docker compose up --build` and open `http://localhost:8080/`.                                                             |
+| Desktop release   | Optional packaged convenience build.                                                            | macOS artifacts are unsigned and may need quarantine handling; see [Troubleshooting](docs/troubleshooting.md#symptom-macos-says-the-app-is-damaged). |
 
 ## Quick Start
 
@@ -62,6 +63,7 @@ Open <http://127.0.0.1:5173/>. The startup script runs the BranchArchitect Flask
 
 ## Documentation
 
+- [Public manual](https://enesberksakalli.github.io/phylo-movies/manual/) - researcher-facing guide with screenshots and workspace tour notes
 - [Getting started](docs/getting-started.md)
 - [Usage](docs/usage.md)
 - [Web interface](docs/web-interface.md)
@@ -79,7 +81,12 @@ Specialized source folders also keep their own documentation:
 - [Publication data](publication_data/README.md)
 - [Frontend tests](test/README.md)
 
-The root README and `docs/` are the canonical user and developer documentation for the combined web tool. The `wiki/` folder contains reviewer-response and analysis notes, not installation instructions.
+Documentation ownership:
+
+- `manual/` is the Docusaurus source for the public researcher manual published under `/manual/`.
+- `docs/` is the source-checkout technical documentation for development, deployment, API, and configuration details.
+- The root README is the short project entry point.
+- The ignored `wiki/` folder contains private reviewer-response and analysis notes, not installation instructions.
 
 ## Development Commands
 
@@ -87,6 +94,8 @@ The root README and `docs/` are the canonical user and developer documentation f
 ./start.sh                 # Start backend on 5002 and frontend on 5173
 npm run dev                # Start the Vite frontend only
 npm run build              # Build frontend assets and copy example data
+npm run manual:build       # Build the Docusaurus manual
+npm run docs:lint          # Lint Markdown docs and build the manual
 npm run preview            # Preview dist/ on 4173
 npm run lint               # Run ESLint
 npm run typecheck          # Run TypeScript checks

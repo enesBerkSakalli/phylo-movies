@@ -1,6 +1,9 @@
 .DS_Store
 node_modules
 /dist
+manual/.docusaurus/
+manual/build/
+manual/node_modules/
 
 env
 .venv/
@@ -92,3 +95,12 @@ publication_data/norovirus/augur_subsampling/paper_text_draft.tex
 Paper_Submission_TODO.md
 
 /wiki/
+
+# Local/private documentation drafts; do not publish through the manual or repo.
+/private_docs/
+/docs/private/
+/docs/internal/
+/manual/private/
+/manual/docs/private/
+/manual/docs/internal/
+/manual/docs/documentation-map.md

@@ -18,7 +18,7 @@ On macOS, Poetry can be installed at user level with Homebrew:
 brew install poetry
 ```
 
-This setup does not require `sudo`. If you prefer not to install local developer tools, use the Docker or desktop-app paths below.
+This setup does not require `sudo`. If you prefer not to install local developer tools, use the Docker path below. Desktop artifacts are convenience builds; on macOS they are unsigned and may be blocked by Gatekeeper.
 
 For MSA-to-tree inference, BranchArchitect uses IQ-TREE by default and can also use FastTree. Bundled binary details live in [engine/BranchArchitect/bin/README.md](../engine/BranchArchitect/bin/README.md).
 
@@ -50,7 +50,7 @@ Leave the terminal running while you use the app. The browser UI sends uploads, 
 
 ## Public Website vs Local App
 
-The GitHub Pages website is a static documentation and download site. Use its `/demo` route to inspect generated Phylo-Movies payloads in the browser without running a backend. Use the source checkout, Docker, or desktop app when you want to load bundled examples through **Example Library**, upload your own tree files, run interpolation, or infer trees from an MSA.
+The GitHub Pages website is a static documentation and download site. Use its `/demo` route to inspect generated Phylo-Movies payloads in the browser without running a backend. Use the source checkout or Docker when you want to load bundled examples through **Example Library**, upload your own tree files, run interpolation, or infer trees from an MSA.
 
 ## First Successful Run
 
@@ -99,7 +99,9 @@ npm run dev
 
 ## macOS Desktop App
 
-Download the macOS artifact for your architecture from GitHub Releases. If macOS reports that the downloaded app is damaged, the usual cause is Gatekeeper quarantine on an unsigned build. After confirming that the file came from the project release page, move the app to `/Applications` and clear quarantine:
+The supported macOS reviewer path is the source checkout with `./start.sh`, or Docker if you prefer a containerized full stack. macOS desktop artifacts are unsigned convenience builds because the project does not currently use a paid Apple Developer ID for notarization.
+
+If you still want to use the unsigned desktop artifact, download the macOS build for your architecture from GitHub Releases. macOS may report that the app is damaged or from an unidentified developer because Gatekeeper quarantines unsigned downloads. After confirming that the file came from the project release page and that you trust the artifact, move the app to `/Applications` and clear quarantine:
 
 ```bash
 xattr -dr com.apple.quarantine "/Applications/Phylo-Movies.app"
@@ -109,4 +111,4 @@ If you do not want to change quarantine metadata, run the source or Docker workf
 
 ## Current Limitation
 
-The GitHub Pages build is documentation-first and does not run the backend. It includes precomputed `/demo` payloads for browser-only inspection, but uploaded datasets and **Example Library** processing still require the local, Docker, or Electron backend workflow.
+The GitHub Pages build is documentation-first and does not run the backend. It includes precomputed `/demo` payloads for browser-only inspection, but uploaded datasets and **Example Library** processing still require the local source checkout, Docker, or optional Electron backend workflow.

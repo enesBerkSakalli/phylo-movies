@@ -10,6 +10,7 @@ import {
 } from '../../state/phyloStore/store.js';
 import { RecordingControls } from '../media/RecordingControls.jsx';
 import { SaveImageButton } from '../media/SaveImageButton.jsx';
+import { TourLauncher } from '../../features/tours/TourLauncher.jsx';
 
 const TOOL_GROUP_CLASS =
   'flex items-center gap-1 rounded-md border border-border/60 bg-background/85 p-1 shadow-lg backdrop-blur-sm';
@@ -42,7 +43,16 @@ export function TreeCanvasControls() {
       role="toolbar"
       aria-label="Tree canvas controls"
     >
-      <div className={TOOL_GROUP_CLASS} role="group" aria-label="Tree viewport controls">
+      <div className={TOOL_GROUP_CLASS} role="group" aria-label="Workspace help">
+        <TourLauncher />
+      </div>
+
+      <div
+        className={TOOL_GROUP_CLASS}
+        role="group"
+        aria-label="Tree viewport controls"
+        data-tour-id="workspace-canvas-controls"
+      >
         <AppTooltip content="Fit all visible content" side="left">
           <Button
             type="button"
@@ -96,7 +106,12 @@ export function TreeCanvasControls() {
         </AppTooltip>
       </div>
 
-      <div className={TOOL_GROUP_CLASS} role="group" aria-label="Canvas export controls">
+      <div
+        className={TOOL_GROUP_CLASS}
+        role="group"
+        aria-label="Canvas export controls"
+        data-tour-id="workspace-export-controls"
+      >
         <RecordingControls disabled={captureDisabled} />
         <Separator orientation="vertical" className="h-5" />
         <SaveImageButton disabled={captureDisabled} />

@@ -76,7 +76,19 @@ Related file: `scripts/check-submodule.sh`.
 
 ## Symptom: macOS Says the App Is Damaged
 
-Likely cause: the downloaded desktop app is unsigned and macOS Gatekeeper quarantined it.
+Likely cause: the downloaded desktop app is an unsigned convenience build and macOS Gatekeeper quarantined it. The project does not currently notarize macOS artifacts because notarization requires a paid Apple Developer ID.
+
+Recommended fix for reviewers: use the source checkout or Docker workflow instead of the unsigned desktop artifact:
+
+```bash
+./start.sh
+```
+
+or:
+
+```bash
+docker compose up --build
+```
 
 How to check:
 
@@ -84,13 +96,13 @@ How to check:
 xattr -l "/Applications/Phylo-Movies.app"
 ```
 
-Fix: if the app came from the project GitHub Releases page and you trust that artifact, move it to `/Applications` and clear quarantine:
+Fallback for the unsigned app: if the app came from the project GitHub Releases page and you trust that artifact, move it to `/Applications` and clear quarantine:
 
 ```bash
 xattr -dr com.apple.quarantine "/Applications/Phylo-Movies.app"
 ```
 
-Then open the app again. If you do not want to change quarantine metadata, use the source checkout with `./start.sh` or the Docker workflow.
+Then open the app again. Do not use this workaround for artifacts downloaded from any location other than the project release page.
 
 Related files: `electron-app/README.md`, `docs/getting-started.md`.
 
