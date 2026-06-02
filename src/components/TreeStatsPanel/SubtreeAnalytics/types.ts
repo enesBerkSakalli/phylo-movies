@@ -1,5 +1,21 @@
 import type { BranchAnnotationValue, BranchSupport } from '../../../domain/backend/phyloMovieTypes';
 
+export interface SprMovedSubtreeTopologyNode {
+  name: string;
+  length: number | null;
+  splitIndices: number[];
+  children: SprMovedSubtreeTopologyNode[];
+}
+
+export interface SprMovedSubtreeTopologySnapshot {
+  root: SprMovedSubtreeTopologyNode | null;
+  newick: string;
+  leafCount: number;
+  nodeCount: number;
+  splitIndices: number[];
+  unavailableReason?: string | null;
+}
+
 export interface SprMovedSubtreeRecurrence {
   signature: string;
   splitIndices: number[];
@@ -15,6 +31,17 @@ export interface SprMovedSubtreeRecurrence {
   averagePathLength: number;
   pairCount?: number;
   pairIds?: string[];
+  sourceMovedSubtreeTopology?: SprMovedSubtreeTopologySnapshot | null;
+  destinationMovedSubtreeTopology?: SprMovedSubtreeTopologySnapshot | null;
+  sourceMovedSubtreeNewick?: string;
+  destinationMovedSubtreeNewick?: string;
+  sourceTopologyVariantCount?: number;
+  destinationTopologyVariantCount?: number;
+  topologyVariantCount?: number;
+  sourceParentBranchValueMedian?: number | null;
+  destinationParentBranchValueMedian?: number | null;
+  lowParentBranchValueCount?: number;
+  missingParentBranchValueCount?: number;
 }
 
 export interface SprMoveEventRow {
@@ -38,10 +65,16 @@ export interface SprMoveEventRow {
   destinationAttachmentSupport?: BranchSupport | null;
   sourceMovedSubtreeBranchValue?: BranchAnnotationValue | null;
   destinationMovedSubtreeBranchValue?: BranchAnnotationValue | null;
+  sourceParentBranchValue?: BranchAnnotationValue | null;
+  destinationParentBranchValue?: BranchAnnotationValue | null;
   sourceAncestorBranchValue?: BranchAnnotationValue | null;
   destinationAncestorBranchValue?: BranchAnnotationValue | null;
   branchValueClass?: string;
   contextBranchValueClass?: string;
+  sourceMovedSubtreeTopology?: SprMovedSubtreeTopologySnapshot | null;
+  destinationMovedSubtreeTopology?: SprMovedSubtreeTopologySnapshot | null;
+  sourceMovedSubtreeNewick?: string;
+  destinationMovedSubtreeNewick?: string;
   stepRange: [number, number] | null;
   totalPathHops: number;
   totalPathLength: number;

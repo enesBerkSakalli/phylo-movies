@@ -23,14 +23,18 @@ describe('createSprMovedSubtreeRecurrenceCsv', () => {
     expect(header).toContain('SPR Move Count');
     expect(header).toContain('% of SPR Moves');
     expect(header).toContain('Tree Pair Count');
-    expect(header).toContain('Total Path Hops');
-    expect(header).toContain('Total Path Length');
+    expect(header).toContain('Topology Variant Count');
+    expect(header).toContain('Source Parent Branch Support Median');
+    expect(header).toContain('Target Parent Branch Support Median');
+    expect(header).toContain('Source Moved Subtree Newick');
+    expect(header).not.toContain('Total Path Hops');
+    expect(header).not.toContain('Total Path Length');
     expect(header).not.toContain('Path Event Count');
     expect(header).not.toContain('SPR Event Count');
     expect(header).not.toContain('Mover Occurrence Count');
   });
 
-  it('exports path travel metrics for moved subtrees', () => {
+  it('exports topology and parent-branch summaries for moved subtrees', () => {
     const csv = createSprMovedSubtreeRecurrenceCsv(
       [
         {
@@ -38,20 +42,25 @@ describe('createSprMovedSubtreeRecurrenceCsv', () => {
           splitIndices: [1, 2],
           count: 3,
           percentage: 50,
-          totalPathHops: 7,
-          averagePathHops: 3.5,
-          totalPathLength: 1.25,
-          averagePathLength: 0.625,
+          topologyVariantCount: 2,
+          sourceTopologyVariantCount: 1,
+          destinationTopologyVariantCount: 2,
+          sourceParentBranchValueMedian: 52.5,
+          destinationParentBranchValueMedian: 84,
+          lowParentBranchValueCount: 1,
+          missingParentBranchValueCount: 0,
+          sourceMovedSubtreeNewick: '(b:1,c:1):0.2;',
+          destinationMovedSubtreeNewick: '(c:1,b:1):0.2;',
         },
       ],
       ['a', 'b', 'c']
     );
     const row = csv.split('\n')[1];
 
-    expect(row).toContain('7');
-    expect(row).toContain('3.500000');
-    expect(row).toContain('1.250000');
-    expect(row).toContain('0.625000');
+    expect(row).toContain('2');
+    expect(row).toContain('52.500000');
+    expect(row).toContain('84.000000');
+    expect(row).toContain('"(b:1,c:1):0.2;"');
   });
 
   it('uses moved-subtree terminology in exported filenames', () => {
@@ -101,7 +110,9 @@ describe('createSprMoveEventCsv', () => {
     expect(header).toContain('SPR Move Index');
     expect(header).toContain('Source Window');
     expect(header).toContain('Target Window');
-    expect(header).toContain('Context Subtree');
+    expect(header).toContain('Parent Branch Taxa');
+    expect(header).toContain('Source Moved Subtree Newick');
+    expect(header).toContain('Target Moved Subtree Newick');
     expect(header).toContain('Source Attachment');
     expect(header).toContain('Target Attachment');
     expect(header).toContain('Source Moved Subtree Value');
@@ -160,7 +171,7 @@ describe('createSprMoveEventCsv', () => {
     expect(row[19]).toBe('');
     expect(row[20]).toBe('');
     expect(row[21]).toBe('');
-    expect(row[22]).toBe('0');
+    expect(row[24]).toBe('0');
   });
 
   it('uses SPR move terminology in exported filenames', () => {

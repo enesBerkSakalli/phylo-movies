@@ -18,6 +18,7 @@ import { buildSprMoveEventSearchText } from './sprMoveEventSearch';
 import { SPR_MOVE_EVENT_TABLE_COPY } from './SprMoveEventTable.contract';
 import { buildSprMoveWindowRange, type SprMoveWindowRangeOptions } from './sprMoveWindowRange';
 import { cn } from '../../../lib/utils';
+import { SubtreeTopologyPopover } from './SubtreeTopologyPopover';
 
 interface SprMoveEventTableProps {
   events: SprMoveEventRow[];
@@ -184,7 +185,7 @@ const formatBranchValueClass = (
 const formatBranchValue = (
   branchValue:
     | SprMoveEventRow['sourceMovedSubtreeBranchValue']
-    | SprMoveEventRow['sourceAncestorBranchValue']
+    | SprMoveEventRow['sourceParentBranchValue']
 ): string => {
   const value = branchValue?.displayValue;
   return typeof value === 'string' && value.length > 0 ? value : '-';
@@ -194,7 +195,7 @@ const formatBranchValueTitlePart = (
   label: string,
   value:
     | SprMoveEventRow['sourceMovedSubtreeBranchValue']
-    | SprMoveEventRow['sourceAncestorBranchValue']
+    | SprMoveEventRow['sourceParentBranchValue']
 ): string => {
   const formattedValue = formatBranchValue(value);
   return value?.label
@@ -205,12 +206,12 @@ const formatBranchValueTitlePart = (
 const formatBranchValueTitle = (
   sourceMovedSubtreeValue: SprMoveEventRow['sourceMovedSubtreeBranchValue'],
   destinationMovedSubtreeValue: SprMoveEventRow['destinationMovedSubtreeBranchValue'],
-  sourceAncestorValue: SprMoveEventRow['sourceAncestorBranchValue'],
-  destinationAncestorValue: SprMoveEventRow['destinationAncestorBranchValue']
+  sourceParentValue: SprMoveEventRow['sourceParentBranchValue'],
+  destinationParentValue: SprMoveEventRow['destinationParentBranchValue']
 ): string => {
   return [
     `Moved subtree value: ${formatBranchValueTitlePart('source', sourceMovedSubtreeValue)} -> ${formatBranchValueTitlePart('target', destinationMovedSubtreeValue)}`,
-    `Parent branch value: ${formatBranchValueTitlePart('source', sourceAncestorValue)} -> ${formatBranchValueTitlePart('target', destinationAncestorValue)}`,
+    `Parent branch value: ${formatBranchValueTitlePart('source', sourceParentValue)} -> ${formatBranchValueTitlePart('target', destinationParentValue)}`,
   ].join('; ');
 };
 
@@ -624,18 +625,31 @@ function MovementEventRow({
         ) : null}
       </td>
       <td className={ROW_CELL_CLASS} title={fullSubtreeLabel}>
-        <div className="truncate font-medium">{subtreeLabel}</div>
-        <div className="text-2xs text-muted-foreground/70">
-          {event.splitIndices.length} taxa
-          {isSelected ? (
-            <Badge variant="outline" className="ml-2 h-4 px-1 text-[10px]">
-              selected
-            </Badge>
-          ) : null}
+        <div className="flex min-w-0 items-start justify-between gap-2">
+          <div className="min-w-0">
+            <div className="truncate font-medium">{subtreeLabel}</div>
+            <div className="text-2xs text-muted-foreground/70">
+              {event.splitIndices.length} taxa
+              {isSelected ? (
+                <Badge variant="outline" className="ml-2 h-4 px-1 text-[10px]">
+                  selected
+                </Badge>
+              ) : null}
+            </div>
+          </div>
+          <SubtreeTopologyPopover
+            sourceTopology={event.sourceMovedSubtreeTopology}
+            destinationTopology={event.destinationMovedSubtreeTopology}
+            sourceNewick={event.sourceMovedSubtreeNewick}
+            destinationNewick={event.destinationMovedSubtreeNewick}
+            variantCount={1}
+            taxaCount={event.splitIndices.length}
+            compact
+          />
         </div>
         {hasSeparateContext ? (
           <div className="truncate text-2xs text-muted-foreground/70" title={fullContextLabel}>
-            context: {contextLabel}
+            parent branch: {contextLabel}
           </div>
         ) : null}
       </td>
@@ -663,8 +677,8 @@ function MovementEventRow({
         title={formatBranchValueTitle(
           event.sourceMovedSubtreeBranchValue,
           event.destinationMovedSubtreeBranchValue,
-          event.sourceAncestorBranchValue,
-          event.destinationAncestorBranchValue
+          event.sourceParentBranchValue,
+          event.destinationParentBranchValue
         )}
       >
         <div className="flex items-baseline justify-between gap-2 whitespace-nowrap">
@@ -681,8 +695,8 @@ function MovementEventRow({
             {SPR_MOVE_EVENT_TABLE_COPY.branchValueRows.nearestAncestor}
           </span>{' '}
           <span>
-            {formatBranchValue(event.sourceAncestorBranchValue)} →{' '}
-            {formatBranchValue(event.destinationAncestorBranchValue)}
+            {formatBranchValue(event.sourceParentBranchValue)} →{' '}
+            {formatBranchValue(event.destinationParentBranchValue)}
           </span>
         </div>
         <div className="text-2xs font-sans text-muted-foreground/70">
@@ -694,17 +708,6 @@ function MovementEventRow({
       </td>
       <td className={cn(ROW_CELL_CLASS, 'text-right font-mono tabular-nums')}>
         <div className="flex flex-col items-end gap-0.5">
-          <div className="whitespace-nowrap">
-            <span className="font-sans text-muted-foreground/70">
-              {SPR_MOVE_EVENT_TABLE_COPY.metrics.hops}
-            </span>{' '}
-            {event.totalPathHops}
-            <span className="mx-1 text-muted-foreground/50">/</span>
-            <span className="font-sans text-muted-foreground/70">
-              {SPR_MOVE_EVENT_TABLE_COPY.metrics.length}
-            </span>{' '}
-            {formatMetric(event.totalPathLength)}
-          </div>
           <div className="whitespace-nowrap text-2xs">
             <abbr
               title={SPR_MOVE_EVENT_TABLE_COPY.metrics.rfDistance}

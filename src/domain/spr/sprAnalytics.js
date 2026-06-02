@@ -4,6 +4,7 @@ import {
   toBackendSplitKey,
 } from '../tree/splits.js';
 import { classifyMovementBranchValues } from '../tree/branchSupportIndex.js';
+import { SubtreeExtractor } from '../tree/subtreeExtractor.js';
 import { TimelineEventIndex } from '../../timeline/data/TimelineEventIndex.js';
 
 /**
@@ -39,6 +40,46 @@ function normalizeHighlightGroup(highlightGroup) {
 
 function flattenHighlightGroup(highlightGroup) {
   return normalizeSubtreeIndices(Array.from(new Set(highlightGroup.flatMap((subtree) => subtree))));
+}
+
+function createUnavailableTopology(reason, splitIndices) {
+  return {
+    root: null,
+    newick: '',
+    leafCount: splitIndices.length,
+    nodeCount: 0,
+    splitIndices,
+    unavailableReason: reason,
+  };
+}
+
+function buildMovedSubtreeTopologySnapshot(tree, splitIndices) {
+  if (!tree) {
+    return createUnavailableTopology('Input tree is not hydrated.', splitIndices);
+  }
+
+  const snapshot = SubtreeExtractor.createTopologySnapshot(tree, splitIndices);
+  if (!snapshot) {
+    return createUnavailableTopology('Exact moved-subtree topology is unavailable.', splitIndices);
+  }
+
+  return {
+    ...snapshot,
+    unavailableReason: null,
+  };
+}
+
+function numericBranchAnnotationValue(branchValue) {
+  const number = Number(branchValue?.numericValue ?? branchValue?.displayValue);
+  return Number.isFinite(number) ? number : null;
+}
+
+function medianNumber(values) {
+  const sorted = values.filter(Number.isFinite).sort((left, right) => left - right);
+  if (sorted.length === 0) return null;
+  const middle = Math.floor(sorted.length / 2);
+  if (sorted.length % 2 === 1) return sorted[middle];
+  return (sorted[middle - 1] + sorted[middle]) / 2;
 }
 
 /**
@@ -83,7 +124,12 @@ function createSprAnalyticsContext(pairs, options) {
 }
 
 function buildSprMoveEventRowsFromContext(pairs, options, context) {
-  const { branchSupportIndex, branchAnnotationValueKey, branchValueThreshold = 70 } = options;
+  const {
+    branchSupportIndex,
+    branchAnnotationValueKey,
+    branchValueThreshold = 70,
+    interpolatedTrees,
+  } = options;
   const { metricByPairId, eventIndex } = context;
 
   return pairs
@@ -158,18 +204,38 @@ function buildSprMoveEventRowsFromContext(pairs, options, context) {
               splitIndices,
               branchAnnotationValueKey
             ) ?? null;
-          const sourceAncestorBranchValue =
+          const sourceParentBranchValue =
+            branchSupportIndex?.getNearestParentBranchValue?.(
+              sourceInputTreeIndex,
+              splitIndices,
+              branchAnnotationValueKey
+            ) ??
             branchSupportIndex?.getNearestAncestorBranchValue?.(
               sourceInputTreeIndex,
               splitIndices,
               branchAnnotationValueKey
-            ) ?? null;
-          const destinationAncestorBranchValue =
+            ) ??
+            null;
+          const destinationParentBranchValue =
+            branchSupportIndex?.getNearestParentBranchValue?.(
+              targetInputTreeIndex,
+              splitIndices,
+              branchAnnotationValueKey
+            ) ??
             branchSupportIndex?.getNearestAncestorBranchValue?.(
               targetInputTreeIndex,
               splitIndices,
               branchAnnotationValueKey
-            ) ?? null;
+            ) ??
+            null;
+          const sourceMovedSubtreeTopology = buildMovedSubtreeTopologySnapshot(
+            interpolatedTrees?.[pair.source_frame_index],
+            splitIndices
+          );
+          const destinationMovedSubtreeTopology = buildMovedSubtreeTopologySnapshot(
+            interpolatedTrees?.[pair.target_frame_index],
+            splitIndices
+          );
 
           return {
             eventId: event.event_id,
@@ -198,18 +264,24 @@ function buildSprMoveEventRowsFromContext(pairs, options, context) {
             destinationAttachmentSupport,
             sourceMovedSubtreeBranchValue,
             destinationMovedSubtreeBranchValue,
-            sourceAncestorBranchValue,
-            destinationAncestorBranchValue,
+            sourceParentBranchValue,
+            destinationParentBranchValue,
+            sourceAncestorBranchValue: sourceParentBranchValue,
+            destinationAncestorBranchValue: destinationParentBranchValue,
             branchValueClass: classifyMovementBranchValues(
               sourceMovedSubtreeBranchValue,
               destinationMovedSubtreeBranchValue,
               branchValueThreshold
             ),
             contextBranchValueClass: classifyMovementBranchValues(
-              sourceAncestorBranchValue,
-              destinationAncestorBranchValue,
+              sourceParentBranchValue,
+              destinationParentBranchValue,
               branchValueThreshold
             ),
+            sourceMovedSubtreeTopology,
+            destinationMovedSubtreeTopology,
+            sourceMovedSubtreeNewick: sourceMovedSubtreeTopology.newick,
+            destinationMovedSubtreeNewick: destinationMovedSubtreeTopology.newick,
             stepRange,
             frameRange: normalizeStepRange(event.frame_range),
             collapseHops: event.collapse_hops,
@@ -261,6 +333,16 @@ function aggregateMovedSubtreeRows(eventRows) {
         totalPathLength: 0,
         pairIds: new Set(),
         attachmentContexts: [],
+        sourceTopologyNewicks: new Set(),
+        destinationTopologyNewicks: new Set(),
+        sourceMovedSubtreeTopology: null,
+        destinationMovedSubtreeTopology: null,
+        sourceMovedSubtreeNewick: '',
+        destinationMovedSubtreeNewick: '',
+        sourceParentBranchValues: [],
+        destinationParentBranchValues: [],
+        lowParentBranchValueCount: 0,
+        missingParentBranchValueCount: 0,
       });
     }
 
@@ -269,6 +351,32 @@ function aggregateMovedSubtreeRows(eventRows) {
     movedSubtree.pairIds.add(event.pairId);
     movedSubtree.totalPathHops += event.totalPathHops;
     movedSubtree.totalPathLength += event.totalPathLength;
+    if (event.sourceMovedSubtreeTopology && !movedSubtree.sourceMovedSubtreeTopology) {
+      movedSubtree.sourceMovedSubtreeTopology = event.sourceMovedSubtreeTopology;
+      movedSubtree.sourceMovedSubtreeNewick = event.sourceMovedSubtreeNewick ?? '';
+    }
+    if (event.destinationMovedSubtreeTopology && !movedSubtree.destinationMovedSubtreeTopology) {
+      movedSubtree.destinationMovedSubtreeTopology = event.destinationMovedSubtreeTopology;
+      movedSubtree.destinationMovedSubtreeNewick = event.destinationMovedSubtreeNewick ?? '';
+    }
+    if (event.sourceMovedSubtreeNewick) {
+      movedSubtree.sourceTopologyNewicks.add(event.sourceMovedSubtreeNewick);
+    }
+    if (event.destinationMovedSubtreeNewick) {
+      movedSubtree.destinationTopologyNewicks.add(event.destinationMovedSubtreeNewick);
+    }
+    const sourceParentValue = numericBranchAnnotationValue(event.sourceParentBranchValue);
+    const destinationParentValue = numericBranchAnnotationValue(event.destinationParentBranchValue);
+    if (sourceParentValue !== null) movedSubtree.sourceParentBranchValues.push(sourceParentValue);
+    if (destinationParentValue !== null) {
+      movedSubtree.destinationParentBranchValues.push(destinationParentValue);
+    }
+    if (event.contextBranchValueClass === 'low_value') {
+      movedSubtree.lowParentBranchValueCount++;
+    }
+    if (event.contextBranchValueClass === 'value_missing') {
+      movedSubtree.missingParentBranchValueCount++;
+    }
     if (
       event.sourceAttachment.length > 0 ||
       event.destinationAttachment.length > 0 ||
@@ -294,6 +402,14 @@ function aggregateMovedSubtreeRows(eventRows) {
       averagePathLength: item.count > 0 ? item.totalPathLength / item.count : 0,
       pairCount: item.pairIds.size,
       pairIds: Array.from(item.pairIds).sort(),
+      sourceTopologyVariantCount: item.sourceTopologyNewicks.size,
+      destinationTopologyVariantCount: item.destinationTopologyNewicks.size,
+      topologyVariantCount: new Set([
+        ...Array.from(item.sourceTopologyNewicks),
+        ...Array.from(item.destinationTopologyNewicks),
+      ]).size,
+      sourceParentBranchValueMedian: medianNumber(item.sourceParentBranchValues),
+      destinationParentBranchValueMedian: medianNumber(item.destinationParentBranchValues),
     }));
 }
 

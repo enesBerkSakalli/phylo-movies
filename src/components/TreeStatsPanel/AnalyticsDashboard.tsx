@@ -218,6 +218,7 @@ const AnalyticsDashboardBody = () => {
       pairMetrics,
       temporalEvents,
       branchSupportIndex,
+      interpolatedTrees,
       branchAnnotationValueKey,
       branchValueThreshold,
     }),
@@ -225,6 +226,7 @@ const AnalyticsDashboardBody = () => {
       pairMetrics,
       temporalEvents,
       branchSupportIndex,
+      interpolatedTrees,
       branchAnnotationValueKey,
       branchValueThreshold,
     ]
@@ -234,11 +236,7 @@ const AnalyticsDashboardBody = () => {
     return buildSprAnalyticsModel(pairs, sprOptions);
   }, [pairs, sprOptions]);
 
-  const {
-    eventRows: sprMoveEvents,
-    movedSubtreeRecurrences,
-    summary: sprSummary,
-  } = analyticsModel;
+  const { eventRows: sprMoveEvents, movedSubtreeRecurrences, summary: sprSummary } = analyticsModel;
 
   const handleExportRecurrenceCsv = () => {
     const recurrenceCsvContent = createSprMovedSubtreeRecurrenceCsv(

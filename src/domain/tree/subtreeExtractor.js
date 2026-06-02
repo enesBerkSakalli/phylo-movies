@@ -5,6 +5,56 @@
  */
 export class SubtreeExtractor {
   /**
+   * Find the normalized tree node whose split exactly matches a leaf-index set.
+   * @param {Object} root - Root of the normalized plain tree
+   * @param {Array<number>} splitIndices - Leaf indices defining the target subtree
+   * @returns {Object|null}
+   */
+  static findNodeByExactSplit(root, splitIndices) {
+    this._assertNormalizedNode(root);
+    const targetKey = this._splitKey(splitIndices);
+    if (!targetKey) return null;
+
+    const stack = [root];
+    while (stack.length > 0) {
+      const node = stack.pop();
+      if (this._splitKey(node.split_indices) === targetKey) {
+        return node;
+      }
+      if (Array.isArray(node.children)) {
+        for (let index = node.children.length - 1; index >= 0; index -= 1) {
+          stack.push(node.children[index]);
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Build a compact immutable subtree topology snapshot for table rendering.
+   * @param {Object} root - Root of the normalized plain tree
+   * @param {Array<number>} splitIndices - Leaf indices defining the target subtree
+   * @returns {Object|null}
+   */
+  static createTopologySnapshot(root, splitIndices) {
+    this._assertNormalizedNode(root);
+    const node = this.findNodeByExactSplit(root, splitIndices);
+    if (!node) return null;
+
+    const topologyRoot = this._nodeToTopology(node);
+    const stats = this.getSubtreeStats(node);
+
+    return {
+      root: topologyRoot,
+      newick: `${this._nodeToNewick(node)};`,
+      leafCount: stats.leafCount,
+      nodeCount: stats.totalNodes,
+      splitIndices: this._normalizeSplit(node.split_indices),
+    };
+  }
+
+  /**
    * Extract a subtree starting from a given node
    * @param {Object} node - The root node of the subtree to extract
    * @param {Object} originalTreeData - Original tree data for context
@@ -60,6 +110,23 @@ export class SubtreeExtractor {
     }
 
     return cloned;
+  }
+
+  static _nodeToTopology(node) {
+    this._assertNormalizedNode(node);
+
+    const topologyNode = {
+      name: node.name || '',
+      length: node.length ?? null,
+      splitIndices: this._normalizeSplit(node.split_indices),
+      children: [],
+    };
+
+    if (Array.isArray(node.children) && node.children.length > 0) {
+      topologyNode.children = node.children.map((child) => this._nodeToTopology(child));
+    }
+
+    return topologyNode;
   }
 
   /**
@@ -208,5 +275,16 @@ export class SubtreeExtractor {
         'SubtreeExtractor requires a normalized plain tree node, not a D3 hierarchy node'
       );
     }
+  }
+
+  static _normalizeSplit(splitIndices) {
+    return Array.isArray(splitIndices)
+      ? splitIndices.filter(Number.isFinite).sort((a, b) => a - b)
+      : [];
+  }
+
+  static _splitKey(splitIndices) {
+    const normalized = this._normalizeSplit(splitIndices);
+    return normalized.length > 0 ? normalized.join(',') : '';
   }
 }
