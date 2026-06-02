@@ -34,11 +34,9 @@ export const SPR_MOVE_EVENT_TABLE_COPY = {
     to: 'Target attachment',
     branchValue: 'Branch Value',
     steps: 'Steps',
-    metrics: 'Metrics',
+    metrics: 'Pair Distance',
   },
   metrics: {
-    hops: 'Hops',
-    length: 'Length',
     rfDistance: 'RF Distance',
     weightedRf: 'Weighted RF',
   },

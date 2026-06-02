@@ -2,6 +2,7 @@ import React from 'react';
 import { Badge } from '../../ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../../ui/tooltip';
 import { formatSubtreeLabel } from '../../../domain/spr/sprAnalytics';
+import { SubtreeTopologyPopover } from './SubtreeTopologyPopover';
 import {
   selectMarkedNodes,
   selectSetManuallyMarkedNodes,
@@ -18,6 +19,9 @@ const getSignature = (indices?: number[]): string => {
   if (!Array.isArray(indices) || indices.length === 0) return '';
   return [...indices].sort((a, b) => a - b).join(',');
 };
+
+const formatMedian = (value?: number | null): string =>
+  typeof value === 'number' && Number.isFinite(value) ? value.toFixed(1) : '-';
 
 export const MovedSubtreeRecurrenceTable = ({
   recurrences,
@@ -44,6 +48,9 @@ export const MovedSubtreeRecurrenceTable = ({
           <th className="px-4 py-2 text-left font-bold uppercase tracking-wider text-2xs">
             Moved Subtree
           </th>
+          <th className="px-4 py-2 text-left font-bold uppercase tracking-wider text-2xs">
+            Topology
+          </th>
           <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">
             SPR Moves
           </th>
@@ -54,10 +61,7 @@ export const MovedSubtreeRecurrenceTable = ({
             % of SPR moves
           </th>
           <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">
-            Path Hops
-          </th>
-          <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">
-            Path Length
+            Parent Branch Support
           </th>
         </tr>
       </thead>
@@ -94,6 +98,22 @@ export const MovedSubtreeRecurrenceTable = ({
                   {item.splitIndices.length} taxa
                 </div>
               </td>
+              <td className="px-4 py-2">
+                <SubtreeTopologyPopover
+                  sourceTopology={item.sourceMovedSubtreeTopology}
+                  destinationTopology={item.destinationMovedSubtreeTopology}
+                  sourceNewick={item.sourceMovedSubtreeNewick}
+                  destinationNewick={item.destinationMovedSubtreeNewick}
+                  variantCount={item.topologyVariantCount}
+                  taxaCount={item.splitIndices.length}
+                  compact
+                />
+                <div className="mt-1 text-2xs text-muted-foreground/70">
+                  {item.topologyVariantCount && item.topologyVariantCount > 1
+                    ? `${item.topologyVariantCount} variants`
+                    : 'source / target'}
+                </div>
+              </td>
               <td className="px-4 py-2 text-right">
                 <Badge
                   variant={isActive ? 'default' : 'secondary'}
@@ -122,16 +142,11 @@ export const MovedSubtreeRecurrenceTable = ({
                 </Tooltip>
               </td>
               <td className="px-4 py-2 text-right font-mono text-muted-foreground tabular-nums">
-                <div>{item.totalPathHops}</div>
-                <div className="text-2xs text-muted-foreground/60">
-                  avg {item.averagePathHops.toFixed(1)}
+                <div>
+                  {formatMedian(item.sourceParentBranchValueMedian)} →{' '}
+                  {formatMedian(item.destinationParentBranchValueMedian)}
                 </div>
-              </td>
-              <td className="px-4 py-2 text-right font-mono text-muted-foreground tabular-nums">
-                <div>{item.totalPathLength.toFixed(3)}</div>
-                <div className="text-2xs text-muted-foreground/60">
-                  avg {item.averagePathLength.toFixed(3)}
-                </div>
+                <div className="text-2xs text-muted-foreground/60">median source → target</div>
               </td>
             </tr>
           );

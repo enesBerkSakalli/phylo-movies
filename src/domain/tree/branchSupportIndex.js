@@ -342,7 +342,7 @@ export function buildBranchSupportIndex({ interpolatedTrees, frames } = {}) {
       const key = canonicalSupportSplitKey(splitIndices, entry.allTaxaIndices);
       return getBranchValue(entry.branchRecordBySplit.get(key), valueKey);
     },
-    getNearestAncestorBranchValue(inputTreeIndex, splitIndices, valueKey = BRANCH_ANNOTATION_NONE) {
+    getNearestParentBranchValue(inputTreeIndex, splitIndices, valueKey = BRANCH_ANNOTATION_NONE) {
       const entry = supportByInputTree.get(inputTreeIndex);
       if (!entry) return null;
 
@@ -360,6 +360,9 @@ export function buildBranchSupportIndex({ interpolatedTrees, frames } = {}) {
         if (value) return value;
       }
       return null;
+    },
+    getNearestAncestorBranchValue(inputTreeIndex, splitIndices, valueKey = BRANCH_ANNOTATION_NONE) {
+      return this.getNearestParentBranchValue(inputTreeIndex, splitIndices, valueKey);
     },
   };
 }

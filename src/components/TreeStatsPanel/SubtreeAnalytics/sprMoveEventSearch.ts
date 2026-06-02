@@ -1,9 +1,6 @@
 import { formatSubtreeLabel } from '../../../domain/spr/sprAnalytics';
 import type { SprMoveEventRow } from './types';
-import {
-  buildSprMoveWindowRange,
-  type SprMoveWindowRangeOptions,
-} from './sprMoveWindowRange';
+import { buildSprMoveWindowRange, type SprMoveWindowRangeOptions } from './sprMoveWindowRange';
 
 const formatIndices = (indices?: number[] | null): string => {
   if (!Array.isArray(indices) || indices.length === 0) return '';
@@ -73,10 +70,12 @@ export function buildSprMoveEventSearchText(
     event.destinationMovedSubtreeBranchValue?.displayValue ?? '',
     event.sourceMovedSubtreeBranchValue?.label ?? '',
     event.destinationMovedSubtreeBranchValue?.label ?? '',
-    event.sourceAncestorBranchValue?.displayValue ?? '',
-    event.destinationAncestorBranchValue?.displayValue ?? '',
-    event.sourceAncestorBranchValue?.label ?? '',
-    event.destinationAncestorBranchValue?.label ?? '',
+    event.sourceParentBranchValue?.displayValue ?? '',
+    event.destinationParentBranchValue?.displayValue ?? '',
+    event.sourceParentBranchValue?.label ?? '',
+    event.destinationParentBranchValue?.label ?? '',
+    event.sourceMovedSubtreeNewick ?? '',
+    event.destinationMovedSubtreeNewick ?? '',
     ...(event.highlightGroup ?? []).map((group) =>
       formatCompactSubtreeSearchLabel(group, leafNamesByIndex)
     ),

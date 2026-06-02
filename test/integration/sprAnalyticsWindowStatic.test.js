@@ -52,7 +52,7 @@ describe('SPR analytics window shell', () => {
     expect(tableSource).toContain('branchValueThresholdInput');
     expect(tableSource).toContain('onBranchValueThresholdChange');
     expect(tableSource).toContain('sourceMovedSubtreeBranchValue');
-    expect(tableSource).toContain('sourceAncestorBranchValue');
+    expect(tableSource).toContain('sourceParentBranchValue');
     expect(tableSource).toContain('branchValueRows.nearestAncestor');
     expect(tableSource).not.toContain('bg-muted/40 text-muted-foreground font-bold sticky');
   });
