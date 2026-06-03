@@ -116,6 +116,23 @@ Detailed notes are in:
 publication_data/bootstrap_rogue_taxa/REGENERATE.md
 ```
 
+## Regenerate The IQ-TREE Search-Trajectory Example
+
+The committed topology-search example uses the complete IQ-TREE 3 fast-search
+trajectory generated from `.treels` output for Aberer/RogueNaRok Dataset 500.
+The promoted browser-facing tree series is:
+
+```text
+publication_data/topology_search_iqtree/current_results/iqtree500_fast_search_trajectory.nwk
+```
+
+The raw cloud run is intentionally not part of the public archive. Details and
+run metadata are in:
+
+```text
+publication_data/topology_search_iqtree/README.md
+```
+
 ## Regenerate Norovirus ReCAN Results
 
 Run the ReCAN validation workflow:

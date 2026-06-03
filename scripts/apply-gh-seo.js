@@ -83,7 +83,7 @@ const FAQ_ITEMS = [
   {
     question: 'Which problems is Phylo-Movies useful for?',
     answer:
-      'Typical use cases include recombination breakpoint exploration, rogue taxon detection across bootstrap trees, and qualitative inspection of local phylogenetic conflict.',
+      'Typical use cases include recombination breakpoint exploration, rogue-taxon movement review across bootstrap trees, tree-search trajectory inspection, and qualitative inspection of local phylogenetic conflict.',
   },
   {
     question: 'How should I cite Phylo-Movies?',
@@ -98,13 +98,7 @@ const DEMO_EXAMPLES = [
     scale: '334 taxa, 17 IQ-TREE SH-aLRT window trees, 8,058 bp alignment',
     description:
       'Generated IQ-TREE GTR+G fast-search browser payload with SH-aLRT support scores for norovirus recombination breakpoint exploration and genome-window topology changes.',
-    keywords: [
-      'norovirus',
-      'recombination',
-      'sliding-window phylogenetics',
-      'IQ-TREE',
-      'SH-aLRT',
-    ],
+    keywords: ['norovirus', 'recombination', 'sliding-window phylogenetics', 'IQ-TREE', 'SH-aLRT'],
   },
   {
     name: 'Paper Figure Example',
@@ -129,6 +123,14 @@ const DEMO_EXAMPLES = [
     description:
       'Larger generated bootstrap tree-series payload for topology-change and rogue-taxon exploration.',
     keywords: ['bootstrap trees', 'rogue taxa', 'large phylogenetic trees'],
+  },
+  {
+    name: 'IQ-TREE Search Trajectory (500 taxa)',
+    workflow: 'Tree search trajectory',
+    scale: '500 taxa, 21 fast-search trajectory trees',
+    description:
+      'Complete IQ-TREE fast-search trajectory payload for inspecting topology movement during tree search.',
+    keywords: ['IQ-TREE', 'tree search', 'topology search', 'large phylogenetic trees'],
   },
   {
     name: 'Quick MSA Demo',
@@ -419,7 +421,7 @@ function renderStaticDemoHtml() {
         <section style="max-width: 960px; margin: 0 auto; padding: 48px 24px 32px; text-align: center;">
           <img src="/phylo-movies/icons/phylo-tree-icon.svg" alt="" width="64" height="64" style="margin: 0 auto 16px; display: block;">
           <h1 style="margin: 0 auto 16px; max-width: 780px; font-size: 36px; line-height: 1.12; font-weight: 760;">Phylo-Movies Browser Demo: Generated Phylogenetic Examples</h1>
-          <p style="margin: 0 auto; max-width: 800px; color: #4b5563; font-size: 18px; line-height: 1.65;">Open generated Phylo-Movies examples directly in the browser without backend processing. The demo includes a norovirus sliding-window recombination dataset, IQ-TREE bootstrap rogue-taxon tree series, a paper figure example, a quick MSA-linked tree set, and a 1000-taxon scale-limit payload.</p>
+          <p style="margin: 0 auto; max-width: 800px; color: #4b5563; font-size: 18px; line-height: 1.65;">Open generated Phylo-Movies examples directly in the browser without backend processing. The demo includes a norovirus sliding-window recombination dataset, IQ-TREE bootstrap rogue-taxon tree series, an IQ-TREE fast-search trajectory, a paper figure example, a quick MSA-linked tree set, and a 1000-taxon scale-limit payload.</p>
           <nav aria-label="Demo links" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 24px;">
             <a href="${DEMO_URL}" style="${primaryLinkStyle()}">Open Generated Examples</a>
             <a href="${PRIMARY_URL}" style="${secondaryLinkStyle()}">Phylo-Movies Landing Page</a>
@@ -440,6 +442,7 @@ ${exampleRows}
           <div style="${gridStyle()}">
             <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Norovirus Recombination</h3><p style="${bodyStyle()}">Inspect topology changes and SH-aLRT support across generated IQ-TREE trees inferred from the 334-taxon norovirus MSA.</p></article>
             <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Rogue Taxa in Bootstrap Trees</h3><p style="${bodyStyle()}">Review subtree movement, split support, and SPR recurrence across composition-ranked IQ-TREE bootstrap tree series.</p></article>
+            <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">IQ-TREE Search Trajectory</h3><p style="${bodyStyle()}">Inspect how topology changes across the complete fast-search trajectory for a 500-taxon benchmark alignment.</p></article>
             <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Large Tree Visualization</h3><p style="${bodyStyle()}">Open a generated 1000-taxon two-tree payload for browser scale-limit inspection.</p></article>
           </div>
         </section>

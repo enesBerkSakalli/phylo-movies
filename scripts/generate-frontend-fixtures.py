@@ -115,6 +115,7 @@ FIXTURES: tuple[FixtureSpec, ...] = (
             support_mode="sh_alrt",
             sh_alrt_replicates=1000,
         ),
+        midpoint_rooting=True,
     ),
     FixtureSpec(
         name="demo-bootstrap-24",
@@ -147,6 +148,19 @@ FIXTURES: tuple[FixtureSpec, ...] = (
         / "all_trees_125_source-125_taxa125_sites29149.movie.json",
         filename="all_trees_125_source-125_taxa125_sites29149.nwk",
         midpoint_rooting=True,
+    ),
+    FixtureSpec(
+        name="demo-iqtree-search-500",
+        source=ROOT
+        / "publication_data"
+        / "topology_search_iqtree"
+        / "current_results"
+        / "iqtree500_fast_search_trajectory.nwk",
+        output=ROOT
+        / "publication_data"
+        / "precomputed"
+        / "iqtree500_fast_search_trajectory.movie.json",
+        filename="iqtree500_fast_search_trajectory.nwk",
     ),
     FixtureSpec(
         name="demo-msprime-1000-limit",
@@ -464,6 +478,28 @@ def _build_dataset_provenance(fixture: FixtureSpec) -> dict | None:
             taxa="125",
         )
 
+    if fixture.name == "demo-iqtree-search-500":
+        return {
+            "source_type": "Generated browser demo",
+            "source_label": "publication_data/topology_search_iqtree/current_results",
+            "tree_source": (
+                "Complete IQ-TREE 3 fast-search topology trajectory for "
+                "Aberer/RogueNaRok Dataset 500."
+            ),
+            "settings": [
+                {"label": "Tree inference", "value": "IQ-TREE 3.1.1"},
+                {"label": "Search mode", "value": "Fast search"},
+                {"label": "Search trajectory", "value": "21 trees from the full fast run"},
+                {"label": "Model", "value": "GTR+F+G4"},
+                {"label": "Seed", "value": "42"},
+                {"label": "Rooting", "value": "Input rooting preserved"},
+            ],
+            "citation": (
+                "Aberer, A. J., Krompass, D., and Stamatakis, A. (2013). "
+                "Pruning rogue taxa improves phylogenetic accuracy."
+            ),
+        }
+
     if fixture.name == "demo-msprime-1000-limit":
         return {
             "source_type": "Generated browser demo",
@@ -486,10 +522,10 @@ def _build_norovirus_provenance(
     settings = [
         {"label": "Tree inference", "value": "IQ-TREE 3, GTR+G, fast search"},
         {"label": "Windowing", "value": windowing},
-        {"label": "Rooting", "value": "Input rooting preserved"},
+        {"label": "Rooting", "value": "Midpoint rooting"},
     ]
     if support:
-        settings.insert(2, {"label": "Stability scores", "value": support})
+        settings.insert(2, {"label": "Branch support", "value": support})
 
     return {
         "source_type": "Generated browser demo",

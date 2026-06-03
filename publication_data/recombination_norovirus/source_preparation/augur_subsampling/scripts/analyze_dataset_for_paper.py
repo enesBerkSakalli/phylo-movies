@@ -282,7 +282,7 @@ trimAl with the gappyout algorithm~\\citep{{CapellaGutierrez2009}}. For the
 sliding-window analysis, we used a window size of 1000~bp with a step size of
 500~bp, generating overlapping windows across the full genome alignment. For
 each window, a phylogenetic tree was inferred using IQ-TREE~3
-\\citep{{Minh2020IQTREE2}} in fast-search mode under GTR+G with SH-aLRT support
+\\citep{{Wong2026IQTREE3}} in fast-search mode under GTR+G with SH-aLRT support
 (1,000 replicates).
 
 All trees were midpoint-rooted for consistency, and pairwise Robinson--Foulds
