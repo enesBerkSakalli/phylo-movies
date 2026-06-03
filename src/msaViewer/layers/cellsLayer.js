@@ -5,6 +5,7 @@
 
 import { PolygonLayer } from '@deck.gl/layers';
 import { getColorScheme } from '../utils/colorUtils.js';
+import { colorToRgb } from '../../services/ui/colorUtils.js';
 
 /**
  * Build cell data for the MSA visualization
@@ -12,9 +13,10 @@ import { getColorScheme } from '../utils/colorUtils.js';
  * @param {Array} sequences - Array of sequence objects
  * @param {Object} visibleRange - Visible range {r0, r1, c0, c1}
  * @param {number} maxCells - Maximum number of cells to render
+ * @param {Object} options - Optional rendering options
  * @returns {Array} Cell data array
  */
-export function buildCellData(cellSize, sequences, visibleRange, maxCells) {
+export function buildCellData(cellSize, sequences, visibleRange, maxCells, options = {}) {
   if (!sequences || sequences.length === 0) {
     return [];
   }
@@ -23,24 +25,30 @@ export function buildCellData(cellSize, sequences, visibleRange, maxCells) {
   const nR = r1 - r0 + 1;
   const nC = c1 - c0 + 1;
   const step = Math.max(1, Math.ceil(Math.sqrt((nR * nC) / maxCells)));
+  const rowStep = options.preserveRows ? 1 : step;
+  const colStep = options.preserveRows ? Math.max(1, Math.ceil((nR * nC) / maxCells)) : step;
   const data = [];
 
-  for (let r = r0; r <= r1; r += step) {
-    for (let c = c0; c <= c1; c += step) {
+  for (let r = r0; r <= r1; r += rowStep) {
+    for (let c = c0; c <= c1; c += colStep) {
       if (r >= sequences.length) continue;
       const seq = sequences[r];
       if (!seq || !seq.seq) continue;
 
       const x = c * cellSize;
       const y = r * cellSize;
-      const w = cellSize * Math.min(step, c1 - c + 1);
-      const h = cellSize * Math.min(step, r1 - r + 1);
+      const w = cellSize * Math.min(colStep, c1 - c + 1);
+      const h = cellSize * Math.min(rowStep, r1 - r + 1);
 
       data.push({
         kind: 'cell',
         row: r,
         col: c,
-        ch: step === 1 ? seq.seq[c] || '-' : getDominantResidue(sequences, r, c, step, r1, c1),
+        seqId: seq.id,
+        ch:
+          rowStep === 1 && colStep === 1
+            ? seq.seq[c] || '-'
+            : getDominantResidue(sequences, r, c, rowStep, colStep, r1, c1),
         polygon: [
           [x, y],
           [x + w, y],
@@ -54,16 +62,16 @@ export function buildCellData(cellSize, sequences, visibleRange, maxCells) {
   return data;
 }
 
-function getDominantResidue(sequences, startRow, startCol, step, maxRow, maxCol) {
+function getDominantResidue(sequences, startRow, startCol, rowStep, colStep, maxRow, maxCol) {
   const counts = new Map();
   let bestChar = '-';
   let bestCount = 0;
 
-  for (let r = startRow; r <= Math.min(maxRow, startRow + step - 1); r++) {
+  for (let r = startRow; r <= Math.min(maxRow, startRow + rowStep - 1); r++) {
     const seq = sequences[r]?.seq;
     if (!seq) continue;
 
-    for (let c = startCol; c <= Math.min(maxCol, startCol + step - 1); c++) {
+    for (let c = startCol; c <= Math.min(maxCol, startCol + colStep - 1); c++) {
       const ch = seq[c] || '-';
       const count = (counts.get(ch) || 0) + 1;
       counts.set(ch, count);
@@ -77,6 +85,41 @@ function getDominantResidue(sequences, startRow, startCol, step, maxRow, maxCol)
   return bestChar;
 }
 
+export function getTaxaCellColor(seqId, rowColorMap = {}) {
+  const rowColor = rowColorMap[seqId];
+  return rowColor ? [...colorToRgb(rowColor), 255] : [255, 255, 255, 255];
+}
+
+export function applySelectionTint(baseColor, col, selection, previousSelection) {
+  const inCurrentSelection =
+    selection && col >= selection.startCol - 1 && col <= selection.endCol - 1;
+
+  const inPreviousSelection =
+    previousSelection &&
+    col >= previousSelection.startCol - 1 &&
+    col <= previousSelection.endCol - 1;
+
+  if ((selection || previousSelection) && !inCurrentSelection && !inPreviousSelection) {
+    return [
+      baseColor[0] * 0.3 + 180,
+      baseColor[1] * 0.3 + 180,
+      baseColor[2] * 0.3 + 180,
+      baseColor[3],
+    ];
+  }
+
+  if (inPreviousSelection && !inCurrentSelection) {
+    return [
+      baseColor[0] * 0.7 + 60,
+      baseColor[1] * 0.7 + 60,
+      baseColor[2] * 0.7 + 60,
+      baseColor[3],
+    ];
+  }
+
+  return baseColor;
+}
+
 /**
  * Creates the cells polygon layer
  * @param {Array} cellData - The cell data from buildCellData
@@ -85,6 +128,7 @@ function getDominantResidue(sequences, startRow, startCol, step, maxRow, maxCol)
  * @param {string} colorScheme - Color scheme name
  * @param {string} consensus - The consensus sequence (optional)
  * @param {Object} previousSelection - Previous selection state (optional)
+ * @param {Object} rowColorMap - Optional map of taxon id -> color string
  * @returns {PolygonLayer} The cells layer
  */
 export function createCellsLayer(
@@ -93,7 +137,8 @@ export function createCellsLayer(
   selection,
   colorScheme = 'default',
   consensus = null,
-  previousSelection = null
+  previousSelection = null,
+  rowColorMap = {}
 ) {
   const colorFn = getColorScheme(colorScheme, sequenceType);
 
@@ -109,7 +154,9 @@ export function createCellsLayer(
     getFillColor: (d) => {
       let baseColor;
 
-      if (colorScheme === 'identity' && consensus) {
+      if (colorScheme === 'taxa') {
+        baseColor = getTaxaCellColor(d.seqId, rowColorMap);
+      } else if (colorScheme === 'identity' && consensus) {
         const consensusChar = consensus[d.col];
         // Dark blue for match, white for mismatch
         if (d.ch === consensusChar && d.ch !== '-' && d.ch !== ' ') {
@@ -131,41 +178,10 @@ export function createCellsLayer(
         baseColor = colorFn(d.ch);
       }
 
-      // Check if column is in current selection
-      const inCurrentSelection =
-        selection && d.col >= selection.startCol - 1 && d.col <= selection.endCol - 1;
-
-      // Check if column is in previous selection
-      const inPreviousSelection =
-        previousSelection &&
-        d.col >= previousSelection.startCol - 1 &&
-        d.col <= previousSelection.endCol - 1;
-
-      // Dim colors outside both selections
-      if ((selection || previousSelection) && !inCurrentSelection && !inPreviousSelection) {
-        // Dim by reducing saturation and brightness
-        return [
-          baseColor[0] * 0.3 + 180, // Blend with gray
-          baseColor[1] * 0.3 + 180,
-          baseColor[2] * 0.3 + 180,
-          baseColor[3],
-        ];
-      }
-
-      // Slightly dim previous selection (not as bright as current)
-      if (inPreviousSelection && !inCurrentSelection) {
-        return [
-          baseColor[0] * 0.7 + 60, // Slightly faded
-          baseColor[1] * 0.7 + 60,
-          baseColor[2] * 0.7 + 60,
-          baseColor[3],
-        ];
-      }
-
-      return baseColor;
+      return applySelectionTint(baseColor, d.col, selection, previousSelection);
     },
     updateTriggers: {
-      getFillColor: [colorScheme, selection, previousSelection, consensus],
+      getFillColor: [colorScheme, selection, previousSelection, consensus, rowColorMap],
     },
   });
 }

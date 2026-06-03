@@ -197,6 +197,17 @@ export function colorToRgb(color) {
 }
 
 /**
+ * Pick readable foreground text for a solid RGB/RGBA background.
+ * @param {number[]} backgroundRgb - RGB or RGBA background color.
+ * @returns {number[]} RGBA text color.
+ */
+export function getReadableTextColor(backgroundRgb) {
+  const [r = 255, g = 255, b = 255] = Array.isArray(backgroundRgb) ? backgroundRgb : [];
+  const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+  return luminance < 140 ? [255, 255, 255, 255] : [40, 40, 40, 255];
+}
+
+/**
  * Select the best contrasting highlight color.
  * Priority: Consistency!
  * We prefer a single robust "High Contrast" color (Magenta) for almost all cases

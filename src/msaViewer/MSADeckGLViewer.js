@@ -629,14 +629,23 @@ export class MSADeckGLViewer {
       this.state.rows,
       this.state.cols
     );
-    const cellData = buildCellData(cellSize, this.state.seqs, visibleRange, this.options.MAX_CELLS);
+    const cellData = buildCellData(
+      cellSize,
+      this.state.seqs,
+      visibleRange,
+      this.options.MAX_CELLS,
+      {
+        preserveRows: this.options.colorScheme === 'taxa',
+      }
+    );
     return createCellsLayer(
       cellData,
       this.state.type,
       this.state.selection,
       this.options.colorScheme,
       this.state.consensus,
-      this.state.previousSelection
+      this.state.previousSelection,
+      this.options.rowColorMap
     );
   }
 
@@ -697,7 +706,13 @@ export class MSADeckGLViewer {
       this.options.cellSize,
       zoomScale
     );
-    return createLettersLayer(textData);
+    return createLettersLayer(
+      textData,
+      this.options.colorScheme,
+      this.options.rowColorMap,
+      this.state.selection,
+      this.state.previousSelection
+    );
   } /**
    * Build the row labels text layer
    * @param {number} cellSize - Size of each cell
