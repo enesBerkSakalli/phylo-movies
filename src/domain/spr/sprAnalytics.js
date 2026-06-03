@@ -330,6 +330,9 @@ function aggregateMovedSubtreeRows(eventRows) {
         destinationParentBranchValues: [],
         lowParentBranchValueCount: 0,
         missingParentBranchValueCount: 0,
+        representativeSourceInputTreeIndex: event.sourceInputTreeIndex,
+        representativeTargetInputTreeIndex: event.targetInputTreeIndex,
+        representativeFrameRange: event.frameRange,
       });
     }
 
@@ -711,7 +714,9 @@ function buildMetricByPairId(pairMetrics) {
 
 function formatPairLabel(row) {
   if (row.sourceInputTreeIndex !== null && row.targetInputTreeIndex !== null) {
-    return `source input tree ${row.sourceInputTreeIndex + 1} to target input tree ${row.targetInputTreeIndex + 1}`;
+    return `Source tree ${row.sourceInputTreeIndex + 1} -> Target tree ${
+      row.targetInputTreeIndex + 1
+    }`;
   }
   return row.pairId;
 }

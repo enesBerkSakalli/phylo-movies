@@ -76,7 +76,7 @@ describe('createSprMoveEventCsv', () => {
       [
         {
           eventId: 'pair_0_1:0',
-          pairLabel: 'source input tree 1 to target input tree 2',
+          pairLabel: 'Source tree 1 -> Target tree 2',
           pairId: 'pair_0_1',
           pairIndex: 0,
           sourceInputTreeIndex: 0,
@@ -125,8 +125,8 @@ describe('createSprMoveEventCsv', () => {
     expect(header).not.toContain('Measured Path');
     expect(header).not.toContain('Event ID');
     expect(row).toContain('pair_0_1:0');
-    expect(row).toContain('Input 1 sites 1-50 (mid 1)');
-    expect(row).toContain('Input 2 sites 1-100 (mid 51)');
+    expect(row).toContain('Source tree 1 sites 1-50 (mid 1)');
+    expect(row).toContain('Target tree 2 sites 1-100 (mid 51)');
     expect(row).toContain('"h, i"');
     expect(row).toContain('"f, g"');
     expect(row).not.toContain(',yes,');
@@ -138,7 +138,7 @@ describe('createSprMoveEventCsv', () => {
       [
         {
           eventId: 'pair_0_1:0',
-          pairLabel: 'source input tree 1 to target input tree 2',
+          pairLabel: 'Source tree 1 -> Target tree 2',
           pairId: 'pair_0_1',
           pairIndex: 0,
           sourceInputTreeIndex: 0,

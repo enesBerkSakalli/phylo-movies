@@ -43,6 +43,9 @@ export interface SprMovedSubtreeRecurrence {
   destinationParentBranchValueMedian?: number | null;
   lowParentBranchValueCount?: number;
   missingParentBranchValueCount?: number;
+  representativeSourceInputTreeIndex?: number | null;
+  representativeTargetInputTreeIndex?: number | null;
+  representativeFrameRange?: [number, number] | null;
 }
 
 export interface SprMoveEventRow {
@@ -75,6 +78,7 @@ export interface SprMoveEventRow {
   sourceMovedSubtreeNewick?: string;
   destinationMovedSubtreeNewick?: string;
   stepRange: [number, number] | null;
+  frameRange?: [number, number] | null;
   totalPathHops: number;
   totalPathLength: number;
   rfDistance: number | null;

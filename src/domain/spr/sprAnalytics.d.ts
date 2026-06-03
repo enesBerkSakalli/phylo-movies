@@ -51,6 +51,9 @@ export interface SprMovedSubtreeRecurrence {
   destinationParentBranchValueMedian: number | null;
   lowParentBranchValueCount: number;
   missingParentBranchValueCount: number;
+  representativeSourceInputTreeIndex: number | null;
+  representativeTargetInputTreeIndex: number | null;
+  representativeFrameRange: [number, number] | null;
 }
 
 export interface SprMoveEventRow {

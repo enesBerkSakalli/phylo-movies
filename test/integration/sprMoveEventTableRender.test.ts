@@ -12,7 +12,7 @@ const leafNamesByIndex = ['A', 'B', 'C', 'D'];
 
 const createSprMoveEvent = (overrides: Partial<SprMoveEventRow> = {}): SprMoveEventRow => ({
   eventId: 'pair_0_1:spr:0',
-  pairLabel: 'source input tree 1 to target input tree 2',
+  pairLabel: 'Source tree 1 -> Target tree 2',
   pairId: 'pair_0_1',
   pairIndex: 0,
   sourceInputTreeIndex: 0,
@@ -36,6 +36,7 @@ const createSprMoveEvent = (overrides: Partial<SprMoveEventRow> = {}): SprMoveEv
   branchValueClass: 'value_missing',
   contextBranchValueClass: 'value_missing',
   stepRange: [0, 4],
+  frameRange: [1, 5],
   totalPathHops: 2,
   totalPathLength: 0.5,
   rfDistance: null,
@@ -109,7 +110,9 @@ describe('SPR move event table rendering', () => {
 
     await act(async () => {
       container
-        .querySelector<HTMLButtonElement>('button[aria-label^="Inspect moved subtree topology"]')
+        .querySelector<HTMLButtonElement>(
+          'button[aria-label^="Compare source and target moved subtree topology"]'
+        )
         ?.click();
     });
 
@@ -117,6 +120,22 @@ describe('SPR move event table rendering', () => {
     expect(document.body.textContent).toContain('C');
     expect(document.body.textContent).not.toContain('wrong-b');
     expect(document.body.textContent).not.toContain('wrong-c');
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it('shows clear topology and jump controls for each SPR move', async () => {
+    const { container, root } = await renderTable([createSprMoveEvent()]);
+
+    expect(container.textContent).toContain('Topology');
+    expect(container.textContent).toContain('Jump to move');
+    expect(container.textContent).toContain('Source tree 1 -> Target tree 2');
+    const jumpButton = Array.from(container.querySelectorAll<HTMLButtonElement>('button')).find(
+      (button) => button.textContent?.includes('Jump to move')
+    );
+    expect(jumpButton?.getAttribute('aria-label')).toContain('Jump to #1');
 
     await act(async () => {
       root.unmount();
