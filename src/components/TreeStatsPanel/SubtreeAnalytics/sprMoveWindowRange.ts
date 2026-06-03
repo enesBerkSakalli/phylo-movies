@@ -51,20 +51,24 @@ const resolveWindow = (
   ) as ResolvedMsaWindow;
 };
 
-const formatTreeLabel = (inputTreeIndex: number | null | undefined): string =>
+const formatTreeLabel = (
+  inputTreeIndex: number | null | undefined,
+  role: 'Source' | 'Target'
+): string =>
   typeof inputTreeIndex === 'number' && Number.isInteger(inputTreeIndex)
-    ? `Input ${inputTreeIndex + 1}`
-    : 'Input -';
+    ? `${role} tree ${inputTreeIndex + 1}`
+    : `${role} tree -`;
 
 const formatSiteRange = (window: ResolvedMsaWindow | null): string =>
   window ? `${window.startPosition}-${window.endPosition}` : '-';
 
 const formatCsvWindowLabel = (
   inputTreeIndex: number | null | undefined,
-  window: ResolvedMsaWindow | null
+  window: ResolvedMsaWindow | null,
+  role: 'Source' | 'Target'
 ): string => {
   if (!window) return '';
-  return `${formatTreeLabel(inputTreeIndex)} sites ${window.startPosition}-${window.endPosition} (mid ${window.midPosition})`;
+  return `${formatTreeLabel(inputTreeIndex, role)} sites ${window.startPosition}-${window.endPosition} (mid ${window.midPosition})`;
 };
 
 export function buildSprMoveWindowRange(
@@ -75,20 +79,15 @@ export function buildSprMoveWindowRange(
   const targetWindow = resolveWindow(event.targetInputTreeIndex, options);
   if (!sourceWindow && !targetWindow) return null;
 
-  const sourceTreeLabel = formatTreeLabel(event.sourceInputTreeIndex);
-  const targetTreeLabel = formatTreeLabel(event.targetInputTreeIndex);
+  const sourceTreeLabel = formatTreeLabel(event.sourceInputTreeIndex, 'Source');
+  const targetTreeLabel = formatTreeLabel(event.targetInputTreeIndex, 'Target');
   const sourceRange = formatSiteRange(sourceWindow);
   const targetRange = formatSiteRange(targetWindow);
-  const sourceLabel = formatCsvWindowLabel(event.sourceInputTreeIndex, sourceWindow);
-  const targetLabel = formatCsvWindowLabel(event.targetInputTreeIndex, targetWindow);
+  const sourceLabel = formatCsvWindowLabel(event.sourceInputTreeIndex, sourceWindow, 'Source');
+  const targetLabel = formatCsvWindowLabel(event.targetInputTreeIndex, targetWindow, 'Target');
   const treeLabel = `${sourceTreeLabel} -> ${targetTreeLabel}`;
   const displayLabel = `Sites ${sourceRange} -> ${targetRange}`;
-  const title = [
-    sourceLabel ? `Source ${sourceLabel}` : '',
-    targetLabel ? `Target ${targetLabel}` : '',
-  ]
-    .filter(Boolean)
-    .join('; ');
+  const title = [sourceLabel, targetLabel].filter(Boolean).join('; ');
 
   return {
     treeLabel,

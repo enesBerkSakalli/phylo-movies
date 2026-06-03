@@ -127,6 +127,35 @@ Selecting a timeline segment opens the **Transition Inspector**. It reports:
 - Source input tree scale when available
 - MSA window when available
 
+### SPR Analytics
+
+Open **Analysis -> Moved Subtrees** to inspect the movement tables behind the
+animation. The analytics window has three tabs:
+
+| Tab                | What it shows                                                                                                                                                                                          | How to use it                                                                                                                                                                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Overview           | Dataset-level counts for moved subtrees, SPR moves, and active tree pairs.                                                                                                                             | Use this first to see whether the current tree sequence contains a small or large number of movement events.                                                                                                                                  |
+| SPR Moves          | One row per SPR move between neighboring input trees. Each row reports the moved subtree, pivot edge, source attachment, target attachment, movement steps, RF/weighted RF metrics, and branch values. | Use this table to inspect the placement context for an individual movement: where a subtree was attached in the source tree, where it attaches in the target tree, and which support or annotation values are associated with those branches. |
+| Recurrent Subtrees | Moved subtrees aggregated across all SPR moves, ranked by repeat count. Columns include SPR move count, tree-pair count, percentage of moves, total/average path hops, and total/average path length.  | Use this table to identify taxa or subtrees that move repeatedly. Click a row to mark that subtree in the tree view, then switch to **SPR Moves** to inspect its source/target attachment contexts.                                           |
+
+The **SPR Moves** table is the detailed event ledger. Its **Source attachment**
+and **Target attachment** columns describe the neighboring tree context before
+and after the move. Its **Branch Value** column shows source-to-target values for
+both the moved subtree and the nearest parent branch. When the loaded trees carry
+branch-support, SH-aLRT, or bootstrap split-frequency labels, these values
+provide the support context for the placement being left or entered. The value
+filters classify rows against the selected threshold, which helps separate
+movements involving strongly supported placements from movements in weaker or
+missing-support contexts.
+
+The **Recurrent Subtrees** table is a summary, not a detector by itself. A high
+recurrence count means that the same taxon or subtree participates in many SPR
+moves, but interpretation should use the detailed **SPR Moves** rows, branch
+values, and the tree animation together. This is useful for exploratory questions
+such as whether a candidate rogue taxon jumps broadly across the tree or
+repeatedly switches between a small number of source and target attachment
+contexts.
+
 ### Floating Windows
 
 | Window             | How it opens                              | What it does                                                                                                                                                                |

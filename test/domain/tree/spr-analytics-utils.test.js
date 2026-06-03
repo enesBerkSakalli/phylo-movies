@@ -321,7 +321,7 @@ describe('SPR analytics model', () => {
       pairIndex: 0,
       sourceInputTreeIndex: 0,
       targetInputTreeIndex: 1,
-      pairLabel: 'source input tree 1 to target input tree 2',
+      pairLabel: 'Source tree 1 -> Target tree 2',
       eventIndex: 0,
       signature: '1',
       splitIndices: [1],
@@ -491,6 +491,9 @@ describe('SPR analytics model', () => {
       signature: '1',
       count: 2,
       percentage: 50,
+      representativeSourceInputTreeIndex: 0,
+      representativeTargetInputTreeIndex: 1,
+      representativeFrameRange: [1, 5],
     });
     expect(model.pairActivityRows[0].events[0]).toBe(model.eventRows[0]);
     expect(model.summary).toMatchObject({
@@ -714,7 +717,7 @@ describe('SPR analytics model', () => {
       {
         pairIndex: 0,
         pairId: 'pair_0_1',
-        pairLabel: 'source input tree 1 to target input tree 2',
+        pairLabel: 'Source tree 1 -> Target tree 2',
         sprMoveEvents: 3,
         uniqueMovedSubtrees: 2,
         singleTaxonMoveEventCount: 2,
@@ -724,7 +727,7 @@ describe('SPR analytics model', () => {
       {
         pairIndex: 1,
         pairId: 'pair_1_2',
-        pairLabel: 'source input tree 2 to target input tree 3',
+        pairLabel: 'Source tree 2 -> Target tree 3',
         sprMoveEvents: 1,
         uniqueMovedSubtrees: 1,
         singleTaxonMoveEventCount: 0,

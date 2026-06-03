@@ -223,7 +223,9 @@ function buildInspectorDetails({
   return {
     name: formatTreeName(segment),
     directionLabel: pair
-      ? `source input tree ${pair.sourceInputTreeIndex + 1} -> target input tree ${pair.targetInputTreeIndex + 1}`
+      ? `Source tree ${pair.sourceInputTreeIndex + 1} -> Target tree ${
+          pair.targetInputTreeIndex + 1
+        }`
       : segment.pairId,
     globalRangeLabel: formatRange(segment.globalStart, segment.globalEnd),
     localStepLabel: formatRange(segment.localStepStart, segment.localStepEnd),
