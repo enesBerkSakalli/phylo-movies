@@ -65,6 +65,17 @@ cp "$SOURCE/bootstrap_rogue_taxa/source_alignments/MANIFEST.tsv" \
 cp "$SOURCE/bootstrap_rogue_taxa/REGENERATE.md" \
    "$DEST/examples/bootstrap_rogue_taxa/"
 
+# Current IQ-TREE topology-search example
+mkdir -p "$DEST/examples/topology_search_iqtree/current_results"
+cp "$SOURCE/topology_search_iqtree/current_results/"*.nwk \
+   "$SOURCE/topology_search_iqtree/current_results/"*.tsv \
+   "$DEST/examples/topology_search_iqtree/current_results/"
+mkdir -p "$DEST/examples/topology_search_iqtree/source_alignments"
+cp "$SOURCE/topology_search_iqtree/source_alignments/aberer_roguenarok_dataset_500_taxa500_sites1398.phy" \
+   "$DEST/examples/topology_search_iqtree/source_alignments/"
+cp "$SOURCE/topology_search_iqtree/README.md" \
+   "$DEST/examples/topology_search_iqtree/"
+
 # Deterministic msprime performance fixtures
 mkdir -p "$DEST/examples/scale_fixtures"
 rm -rf "$DEST/examples/scale_fixtures/msprime_performance"
