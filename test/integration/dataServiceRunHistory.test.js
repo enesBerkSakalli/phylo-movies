@@ -70,7 +70,7 @@ function makePayload(label) {
       tree_source: label,
       settings: [
         { label: 'Windowing', value: '1500 sites, 1000-site step' },
-        { label: 'Stability scores', value: 'SH-aLRT, 1000 replicates' },
+        { label: 'Branch support', value: 'SH-aLRT, 1000 replicates' },
       ],
     },
   };
