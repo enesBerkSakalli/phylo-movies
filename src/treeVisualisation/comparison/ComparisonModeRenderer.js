@@ -6,7 +6,11 @@ import {
   selectTimelineFrameAtIndex,
 } from '../../state/phyloStore/selectors/treeSelectors.js';
 import { tagTreeSide } from '../utils/layerDataUtils.js';
-import { VIEWPORT_FIT_MODES } from '../viewport/viewportFit.js';
+import { VIEWPORT_FIT_OBSTRUCTION_SCOPES } from '../spatial/layout.js';
+import {
+  VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO,
+  VIEWPORT_FIT_MODES,
+} from '../viewport/viewportFit.js';
 import {
   applyOffset,
   combineLayerData,
@@ -172,6 +176,8 @@ export class ComparisonModeRenderer {
       this.controller.viewportManager.focusOnTree(combinedData.nodes, combinedData.labels, {
         fitMode: VIEWPORT_FIT_MODES.BRANCH,
         includeLabelAnchorBounds: labelsVisible !== false,
+        obstructionScope: VIEWPORT_FIT_OBSTRUCTION_SCOPES.CANVAS,
+        maxFitAreaCenterDriftRatio: VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO,
         links: [...combinedData.links, ...combinedData.extensions, ...combinedData.connectors],
       });
       this._lastFittedIndices = { left: clampedLeftIndex, right: clampedRightIndex };
@@ -217,9 +223,12 @@ export class ComparisonModeRenderer {
     });
 
     if (!rightBase) {
-      console.warn('[ComparisonModeRenderer] Cannot render animated comparison: right tree layout failed.', {
-        rightIndex,
-      });
+      console.warn(
+        '[ComparisonModeRenderer] Cannot render animated comparison: right tree layout failed.',
+        {
+          rightIndex,
+        }
+      );
       return;
     }
     if (isRenderCancelled(options)) return;
@@ -278,6 +287,8 @@ export class ComparisonModeRenderer {
       this.controller.viewportManager.focusOnTree(combinedData.nodes, combinedData.labels, {
         fitMode: VIEWPORT_FIT_MODES.BRANCH,
         includeLabelAnchorBounds: labelsVisible !== false,
+        obstructionScope: VIEWPORT_FIT_OBSTRUCTION_SCOPES.CANVAS,
+        maxFitAreaCenterDriftRatio: VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO,
         allowDuringPlayback: true,
         duration: 0,
         links: [...combinedData.links, ...combinedData.extensions, ...combinedData.connectors],
