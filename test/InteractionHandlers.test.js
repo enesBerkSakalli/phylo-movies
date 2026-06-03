@@ -44,6 +44,32 @@ describe('InteractionHandlers', () => {
     expect(controller.renderAllElements).toHaveBeenCalledOnce();
   });
 
+  it('does not rearm comparison auto-fit after the user adjusted the viewport', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('requestAnimationFrame', undefined);
+    useAppStore.setState({ playing: false });
+
+    const resetAutoFit = vi.fn();
+    const controller = {
+      _resizeRenderScheduled: false,
+      _lastFocusedTreeIndex: 3,
+      _hasUserViewportInteraction: true,
+      layerManager: {
+        comparisonRenderer: {
+          resetAutoFit,
+        },
+      },
+      renderAllElements: vi.fn(() => Promise.resolve()),
+    };
+
+    handleContainerResize(controller);
+    await vi.advanceTimersByTimeAsync(16);
+
+    expect(controller._lastFocusedTreeIndex).toBe(3);
+    expect(resetAutoFit).not.toHaveBeenCalled();
+    expect(controller.renderAllElements).toHaveBeenCalledOnce();
+  });
+
   it('updates explicit right-tree offsets during comparison drag', () => {
     useAppStore.setState({
       rightTreeOffsetX: 10,

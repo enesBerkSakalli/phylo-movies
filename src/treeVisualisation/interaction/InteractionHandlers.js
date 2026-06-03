@@ -114,8 +114,8 @@ export function handleContainerResize(controller) {
     if (playing) return;
     if (!controller._hasUserViewportInteraction) {
       controller._lastFocusedTreeIndex = null;
+      controller.layerManager?.comparisonRenderer?.resetAutoFit?.();
     }
-    controller.layerManager?.comparisonRenderer?.resetAutoFit?.();
     try {
       await controller.renderAllElements();
     } catch (err) {
