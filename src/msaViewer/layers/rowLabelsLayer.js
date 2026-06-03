@@ -4,18 +4,7 @@
  */
 
 import { TextLayer } from '@deck.gl/layers';
-import { colorToRgb } from '../../services/ui/colorUtils.js';
-
-/**
- * Pick contrasting text color based on background luminance
- * @param {number[]} bg - [r,g,b] or [r,g,b,a]
- * @returns {number[]} RGBA text color
- */
-function textColorFor(bg) {
-  const [r, g, b] = bg;
-  const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-  return luminance < 140 ? [255, 255, 255, 255] : [40, 40, 40, 255];
-}
+import { colorToRgb, getReadableTextColor } from '../../services/ui/colorUtils.js';
 
 /**
  * Build row labels data
@@ -64,7 +53,7 @@ export function buildRowLabels(
     // Slight brightness boost to match node render intensity (UI contrast)
     const boosted = baseColor ? rgb.map((v) => Math.min(255, Math.round(v * 1.08))) : rgb;
     const bg = baseColor ? [...boosted, 255] : [255, 255, 255, 255]; // full opacity
-    const fg = baseColor ? textColorFor(bg) : [0, 0, 0, 255]; // default black
+    const fg = baseColor ? getReadableTextColor(bg) : [0, 0, 0, 255]; // default black
 
     data.push({
       kind: 'label',

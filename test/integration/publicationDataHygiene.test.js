@@ -93,6 +93,11 @@ describe('publication data hygiene', () => {
         source: 'Norovirus publication MSA',
       },
       {
+        label: 'committed-tree-search',
+        taxa: 500,
+        source: 'IQ-TREE topology-search trajectory example',
+      },
+      {
         label: 'synthetic-performance-large',
         taxa: 500,
         source: 'msprime committed performance fixture',

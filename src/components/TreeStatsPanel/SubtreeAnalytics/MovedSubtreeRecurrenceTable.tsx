@@ -1,14 +1,18 @@
 import React from 'react';
+import { LocateFixed } from 'lucide-react';
 import { Badge } from '../../ui/badge';
+import { Button } from '../../ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../../ui/tooltip';
 import { formatSubtreeLabel } from '../../../domain/spr/sprAnalytics';
 import { SubtreeTopologyPopover } from './SubtreeTopologyPopover';
 import {
+  selectGoToPosition,
   selectMarkedNodes,
   selectSetManuallyMarkedNodes,
   useAppStore,
 } from '../../../state/phyloStore/store.js';
 import type { SprMovedSubtreeRecurrence } from './types';
+import { formatInputTreePair, getRecurrenceJumpFrame } from './sprMoveJumpTarget';
 
 interface MovedSubtreeRecurrenceTableProps {
   recurrences: SprMovedSubtreeRecurrence[];
@@ -29,6 +33,7 @@ export const MovedSubtreeRecurrenceTable = ({
 }: MovedSubtreeRecurrenceTableProps) => {
   const markedNodes = useAppStore(selectMarkedNodes);
   const setManuallyMarkedNodes = useAppStore(selectSetManuallyMarkedNodes);
+  const goToPosition = useAppStore(selectGoToPosition);
   const currentSignature = getSignature(markedNodes);
 
   const handleSubtreeClick = (splitIndices: number[]) => {
@@ -38,6 +43,19 @@ export const MovedSubtreeRecurrenceTable = ({
       return;
     }
     setManuallyMarkedNodes(splitIndices);
+  };
+
+  const handleJumpToMove = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    item: SprMovedSubtreeRecurrence
+  ) => {
+    event.stopPropagation();
+    setManuallyMarkedNodes(item.splitIndices);
+
+    const jumpFrame = getRecurrenceJumpFrame(item);
+    if (jumpFrame !== null) {
+      goToPosition(jumpFrame, 'jump');
+    }
   };
 
   return (
@@ -57,6 +75,9 @@ export const MovedSubtreeRecurrenceTable = ({
           <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">
             Tree Pairs
           </th>
+          <th className="px-4 py-2 text-left font-bold uppercase tracking-wider text-2xs">
+            Example Source → Target
+          </th>
           <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">
             % of SPR moves
           </th>
@@ -69,6 +90,12 @@ export const MovedSubtreeRecurrenceTable = ({
         {recurrences.map((item, idx) => {
           const isActive = getSignature(item.splitIndices) === currentSignature;
           const subtreeLabel = formatSubtreeLabel(item.splitIndices, leafNamesByIndex);
+          const jumpFrame = getRecurrenceJumpFrame(item);
+          const jumpPairLabel = formatInputTreePair(
+            item.representativeSourceInputTreeIndex,
+            item.representativeTargetInputTreeIndex
+          );
+          const jumpLabel = `Jump to move in ${jumpPairLabel}`;
 
           return (
             <tr
@@ -126,6 +153,26 @@ export const MovedSubtreeRecurrenceTable = ({
               <td className="px-4 py-2 text-right font-mono text-muted-foreground tabular-nums">
                 {item.pairCount ?? item.pairIds?.length ?? '-'}
               </td>
+              <td className="px-4 py-2">
+                <div className="font-semibold text-foreground">{jumpPairLabel}</div>
+                <div className="mt-0.5 text-2xs text-muted-foreground/70">
+                  first observed move for this subtree
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="xs"
+                  className="spr-analytics-no-drag mt-1.5 h-6 px-1.5 text-2xs"
+                  disabled={jumpFrame === null}
+                  onClick={(event) => handleJumpToMove(event, item)}
+                  onKeyDown={(event) => event.stopPropagation()}
+                  aria-label={jumpLabel}
+                  title={jumpLabel}
+                >
+                  <LocateFixed className="size-3" aria-hidden />
+                  Jump to move
+                </Button>
+              </td>
               <td className="px-4 py-2 text-right font-mono text-muted-foreground tabular-nums">
                 <Tooltip>
                   <TooltipTrigger className="cursor-help hover:text-foreground transition-colors">
@@ -154,7 +201,7 @@ export const MovedSubtreeRecurrenceTable = ({
         })}
         {recurrences.length === 0 && (
           <tr>
-            <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground italic">
+            <td colSpan={8} className="px-4 py-12 text-center text-muted-foreground italic">
               No moved subtrees detected for this dataset.
             </td>
           </tr>

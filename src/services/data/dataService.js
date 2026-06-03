@@ -163,10 +163,10 @@ async function storeRunPayload(runId, data) {
 
 async function addRunToIndex(run) {
   const existingRuns = normalizeRunIndex(await storage.get(STORAGE_KEYS.PHYLO_RUN_INDEX));
-  const nextRuns = [
-    run,
-    ...existingRuns.filter((candidate) => candidate.id !== run.id),
-  ].slice(0, MAX_STORED_RUNS);
+  const nextRuns = [run, ...existingRuns.filter((candidate) => candidate.id !== run.id)].slice(
+    0,
+    MAX_STORED_RUNS
+  );
   const removedRuns = existingRuns.filter(
     (candidate) => !nextRuns.some((nextRun) => nextRun.id === candidate.id)
   );
@@ -200,9 +200,8 @@ async function createRunRecord(data, options = {}) {
   const settings = Array.isArray(provenance.settings) ? provenance.settings : [];
   const windowing = settings.find((setting) => setting?.label === 'Windowing')?.value ?? null;
   const support =
-    settings.find((setting) =>
-      ['Branch support', 'Stability scores', 'Support labels'].includes(setting?.label)
-    )?.value ?? null;
+    settings.find((setting) => ['Branch support', 'Support labels'].includes(setting?.label))
+      ?.value ?? null;
   const frameCount = Array.isArray(data?.frames) ? data.frames.length : null;
   const interpolatedTreeCount = Array.isArray(data?.interpolated_trees)
     ? data.interpolated_trees.length

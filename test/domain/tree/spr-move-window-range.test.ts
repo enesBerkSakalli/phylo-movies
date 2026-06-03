@@ -4,7 +4,7 @@ import type { SprMoveEventRow } from '../../../src/components/TreeStatsPanel/Sub
 
 const baseEvent: SprMoveEventRow = {
   eventId: 'SPR-1',
-  pairLabel: 'source input tree 3 to target input tree 4',
+  pairLabel: 'Source tree 3 -> Target tree 4',
   pairId: 'pair_2_3',
   pairIndex: 2,
   sourceInputTreeIndex: 2,
@@ -36,10 +36,10 @@ describe('SPR move window ranges', () => {
     });
 
     expect(range).toMatchObject({
-      treeLabel: 'Input 3 -> Input 4',
+      treeLabel: 'Source tree 3 -> Target tree 4',
       displayLabel: 'Sites 51-150 -> 101-200',
-      sourceLabel: 'Input 3 sites 51-150 (mid 101)',
-      targetLabel: 'Input 4 sites 101-200 (mid 151)',
+      sourceLabel: 'Source tree 3 sites 51-150 (mid 101)',
+      targetLabel: 'Target tree 4 sites 101-200 (mid 151)',
     });
     expect(range?.searchText).toContain('Sites 51-150 -> 101-200');
   });

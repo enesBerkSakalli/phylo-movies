@@ -133,6 +133,7 @@ export function MSAControls() {
           <SelectContent className="z-[2000]">
             <SelectGroup>
               <SelectItem value="none">None (Empty)</SelectItem>
+              <SelectItem value="taxa">Taxa</SelectItem>
               <SelectItem value="default">Default</SelectItem>
               <SelectItem value="clustal">Clustal</SelectItem>
               <SelectItem value="clustal2">Clustal2</SelectItem>

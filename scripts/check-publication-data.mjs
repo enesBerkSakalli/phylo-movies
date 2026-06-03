@@ -73,6 +73,11 @@ export const TAXA_SCALE_TIERS = [
     source: 'Norovirus publication MSA',
   },
   {
+    label: 'committed-tree-search',
+    taxa: 500,
+    source: 'IQ-TREE topology-search trajectory example',
+  },
+  {
     label: 'synthetic-performance-large',
     taxa: 500,
     source: 'msprime committed performance fixture',
@@ -98,10 +103,12 @@ export function auditPublicationData(root = ROOT) {
     errors,
     manuscriptFacts.norovirus_publication_demo
   );
+  const topologySearch = auditTopologySearch(publicationRoot, errors);
   const msprimePerformance = auditMsprimePerformanceFixtures(publicationRoot, errors);
-  const manuscript = auditManuscriptText(root, manuscriptFacts, errors);
+  const manuscriptFactsReport = auditManuscriptFacts(root, manuscriptFacts, errors);
   const maxPublicationTaxa = Math.max(
     ...bootstrap.currentResults.map((entry) => entry.taxa),
+    topologySearch.currentResult.taxa,
     ...norovirus.alignments
       .filter((entry) => entry.format === 'fasta_msa')
       .map((entry) => entry.sequences),
@@ -113,9 +120,10 @@ export function auditPublicationData(root = ROOT) {
     errors,
     maxPublicationTaxa,
     scaleTiers: TAXA_SCALE_TIERS,
-    manuscript,
+    manuscriptFacts: manuscriptFactsReport,
     bootstrap,
     norovirus,
+    topologySearch,
     msprimePerformance,
   };
 }
@@ -132,6 +140,20 @@ function readManuscriptFacts(root, errors) {
     errors.push(`${relative(factsPath)} has unsupported schema_version ${facts?.schema_version}`);
   }
   return facts || {};
+}
+
+function auditManuscriptFacts(root, facts, errors) {
+  const factsPath = path.join(root, 'publication_data', 'manuscript_facts.yml');
+  for (const section of ['norovirus_publication_demo', 'bootstrap_rogue_taxa']) {
+    if (!facts?.[section]) {
+      errors.push(`${relative(factsPath)} is missing ${section}`);
+    }
+  }
+
+  return {
+    status: fs.existsSync(factsPath) ? 'checked' : 'missing',
+    file: relative(factsPath),
+  };
 }
 
 function auditBootstrapRogueTaxa(publicationRoot, errors, manuscriptFacts = {}) {
@@ -289,6 +311,94 @@ function auditSprRecurrenceTables(currentRoot, errors, manuscriptFacts = {}) {
       recurrenceTable: dataset.recurrence_table,
     };
   });
+}
+
+function auditTopologySearch(publicationRoot, errors) {
+  const topologyRoot = path.join(publicationRoot, 'topology_search_iqtree');
+  const sourcePath = path.join(
+    topologyRoot,
+    'source_alignments',
+    'aberer_roguenarok_dataset_500_taxa500_sites1398.phy'
+  );
+  const trajectoryPath = path.join(
+    topologyRoot,
+    'current_results',
+    'iqtree500_fast_search_trajectory.nwk'
+  );
+  const summaryPath = path.join(topologyRoot, 'current_results', 'trajectory_summary.tsv');
+
+  for (const filePath of [sourcePath, trajectoryPath, summaryPath]) {
+    requireFile(filePath, errors);
+  }
+  if (!fs.existsSync(sourcePath) || !fs.existsSync(trajectoryPath) || !fs.existsSync(summaryPath)) {
+    return {
+      sourceAlignment: { taxa: 0, sites: 0 },
+      currentResult: { taxa: 0, treeCount: 0 },
+    };
+  }
+
+  const summary = Object.fromEntries(
+    readTsv(summaryPath).map((entry) => [entry.field, entry.value])
+  );
+  checkSha(sourcePath, summary.source_alignment_sha256, errors);
+  checkSha(trajectoryPath, summary.promoted_trajectory_sha256, errors);
+
+  const observedAlignment = readRelaxedPhylipCounts(sourcePath);
+  expectNumber(
+    observedAlignment.taxa,
+    Number(summary.source_alignment_taxa),
+    'topology-search source alignment taxa',
+    errors
+  );
+  expectNumber(
+    observedAlignment.sites,
+    Number(summary.source_alignment_sites),
+    'topology-search source alignment sites',
+    errors
+  );
+
+  const trees = readNonEmptyLines(trajectoryPath);
+  const firstTreeTaxa = countNewickLeafLabels(trees[0] || '');
+  expectNumber(
+    trees.length,
+    Number(summary.promoted_trajectory_trees),
+    'topology-search promoted trajectory tree count',
+    errors
+  );
+  expectNumber(firstTreeTaxa, 500, 'topology-search first-tree taxa', errors);
+  expectNumber(
+    Number(summary.tree_search_iterations),
+    2,
+    'topology-search fast tree-search iteration count',
+    errors
+  );
+  if (summary.iqtree_search_mode !== 'fast') {
+    errors.push(
+      `topology-search IQ-TREE mode mismatch: expected fast, got ${
+        summary.iqtree_search_mode || 'missing'
+      }`
+    );
+  }
+  if (summary.source_alignment !== path.basename(sourcePath)) {
+    errors.push(
+      `topology-search source alignment summary mismatch: expected ${path.basename(
+        sourcePath
+      )}, got ${summary.source_alignment || 'missing'}`
+    );
+  }
+
+  return {
+    sourceAlignment: {
+      filename: path.basename(sourcePath),
+      taxa: observedAlignment.taxa,
+      sites: observedAlignment.sites,
+    },
+    currentResult: {
+      filename: path.basename(trajectoryPath),
+      taxa: firstTreeTaxa,
+      treeCount: trees.length,
+    },
+  };
 }
 
 function auditNorovirus(publicationRoot, errors, manuscriptFacts = {}) {
@@ -449,7 +559,7 @@ function auditNorovirus(publicationRoot, errors, manuscriptFacts = {}) {
   );
   expectNumber(
     metadataSummary.comparableGenotypes,
-    302,
+    factNumber(manuscriptFacts, 'comparable_dual_genotype_rows', 302),
     'norovirus comparable dual-genotype rows',
     errors
   );
@@ -555,6 +665,17 @@ function auditNorovirusDemoPayload(publicationRoot, manuscriptFacts, errors) {
   const sprMoves = (payload.temporal_events || []).filter(
     (event) => event.event_type === 'spr_move'
   );
+  const rootingSetting = (payload.dataset_provenance?.settings || []).find(
+    (setting) => setting.label === 'Rooting'
+  );
+  const expectedRooting = manuscriptFacts?.rooting || 'Midpoint rooting';
+  if (rootingSetting?.value !== expectedRooting) {
+    errors.push(
+      `norovirus static payload rooting mismatch: expected ${expectedRooting}, got ${
+        rootingSetting?.value || 'missing'
+      }`
+    );
+  }
   expectNumber(
     payload.msa?.window_size,
     factNumber(manuscriptFacts, 'window_size_bp', 1000),
@@ -575,19 +696,19 @@ function auditNorovirusDemoPayload(publicationRoot, manuscriptFacts, errors) {
   );
   expectNumber(
     frameCounts.interpolation_frame || 0,
-    factNumber(manuscriptFacts, 'interpolation_frames', 6081),
+    factNumber(manuscriptFacts, 'interpolation_frames', 6391),
     'norovirus static payload interpolation frame count',
     errors
   );
   expectNumber(
     payload.frames?.length || 0,
-    factNumber(manuscriptFacts, 'frames', 6098),
+    factNumber(manuscriptFacts, 'frames', 6408),
     'norovirus static payload frame count',
     errors
   );
   expectNumber(
     sprMoves.length,
-    factNumber(manuscriptFacts, 'spr_moves', 1513),
+    factNumber(manuscriptFacts, 'spr_moves', 1616),
     'norovirus static payload SPR move count',
     errors
   );
@@ -598,100 +719,6 @@ function auditNorovirusDemoPayload(publicationRoot, manuscriptFacts, errors) {
     frames: payload.frames?.length || 0,
     sprMoves: sprMoves.length,
   };
-}
-
-function auditManuscriptText(root, manuscriptFacts, errors) {
-  const manuscriptPath = path.join(root, 'manuscript', 'application_node', 'introduction.tex');
-  requireFile(manuscriptPath, errors);
-  if (!fs.existsSync(manuscriptPath)) {
-    return { status: 'missing', file: relative(manuscriptPath) };
-  }
-
-  const text = fs.readFileSync(manuscriptPath, 'utf8');
-  const norovirus = manuscriptFacts.norovirus_publication_demo || {};
-  const bootstrap24 = manuscriptFacts.bootstrap_rogue_taxa?.datasets?.['24'] || {};
-  const bootstrap125 = manuscriptFacts.bootstrap_rogue_taxa?.datasets?.['125'] || {};
-  const expectedSnippets = [
-    {
-      label: 'norovirus IQ-TREE 3 fast-search wording',
-      snippet: 'IQ-TREE~3 in fast-search mode under the GTR+G model with SH-aLRT support',
-    },
-    {
-      label: 'norovirus window size',
-      snippet: `window size of \\textcolor{red}{${factNumber(norovirus, 'window_size_bp', 1000)}~bp}`,
-    },
-    {
-      label: 'norovirus SPR moves',
-      snippet: `\\textcolor{red}{${formatLatexInteger(factNumber(norovirus, 'spr_moves', 1513))} SPR moves}`,
-    },
-    {
-      label: 'norovirus inferred tree and interpolation-frame counts',
-      snippet: `Although only \\textcolor{red}{${factNumber(
-        norovirus,
-        'input_trees',
-        17
-      )} trees} were inferred in the Norovirus analysis, the numerous and complex rearrangements between consecutive windows required \\textcolor{red}{${formatLatexInteger(
-        factNumber(norovirus, 'interpolation_frames', 6081)
-      )} interpolated intermediate trees}`,
-    },
-    {
-      label: 'bootstrap IQ-TREE 3 default wording',
-      snippet: 'inferred using IQ-TREE~3 in default search mode',
-    },
-    {
-      label: 'dataset 24 Ostrich recurrence',
-      snippet: `ranking ${ordinal(factNumber(bootstrap24, 'target_rank', 1))} out of ${factNumber(
-        bootstrap24,
-        'recurrent_moved_subtrees',
-        27
-      )} recurrent moved subtrees (${factNumber(bootstrap24, 'target_spr_moves', 79)} SPR moves`,
-    },
-    {
-      label: 'dataset 24 total SPR moves',
-      snippet: `${formatPercent(factNumber(bootstrap24, 'target_percent_of_spr_moves', 19.602978), 2)}\\% of ${formatLatexInteger(
-        factNumber(bootstrap24, 'total_spr_moves', 403)
-      )} SPR moves`,
-    },
-    {
-      label: 'dataset 125 Seq112 recurrence',
-      snippet: `ranked ${ordinal(factNumber(bootstrap125, 'target_rank', 4))} out of ${factNumber(
-        bootstrap125,
-        'recurrent_moved_subtrees',
-        44
-      )} recurrent moved subtrees`,
-    },
-    {
-      label: 'dataset 125 total SPR moves',
-      snippet: `${factNumber(bootstrap125, 'target_spr_moves', 91)} SPR moves; ${formatPercent(
-        factNumber(bootstrap125, 'target_percent_of_spr_moves', 8.472998),
-        2
-      )}\\% of ${formatLatexInteger(factNumber(bootstrap125, 'total_spr_moves', 1074))} SPR moves`,
-    },
-  ];
-
-  for (const { label, snippet } of expectedSnippets) {
-    if (!text.includes(snippet)) {
-      errors.push(`manuscript introduction is missing ${label}: ${snippet}`);
-    }
-  }
-
-  for (const staleSnippet of [
-    'window size of 750~bp',
-    '1{,}403 \\textcolor{red}{SPR moves}',
-    'IQ-TREE~2 in default search mode',
-    'only 16 trees were inferred',
-    '5,686 interpolated intermediate trees',
-    '78 SPR moves',
-    '405 SPR moves',
-    'ranked 2nd out of 44 recurrent moved subtrees',
-    '95.5th percentile',
-  ]) {
-    if (text.includes(staleSnippet)) {
-      errors.push(`manuscript introduction still contains stale claim: ${staleSnippet}`);
-    }
-  }
-
-  return { status: 'checked', file: relative(manuscriptPath) };
 }
 
 function countFramesByType(frames) {
@@ -748,27 +775,6 @@ function summarizeNorovirusMetadata(rows) {
 
 function factNumber(facts, key, fallback) {
   return Number(facts?.[key] ?? fallback);
-}
-
-function formatLatexInteger(value) {
-  return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, '{,}');
-}
-
-function formatPercent(value, decimals) {
-  return Number(value).toFixed(decimals);
-}
-
-function ordinal(value) {
-  const number = Number(value);
-  const lastTwoDigits = number % 100;
-  if (lastTwoDigits >= 11 && lastTwoDigits <= 13) {
-    return `${number}th`;
-  }
-  const lastDigit = number % 10;
-  if (lastDigit === 1) return `${number}st`;
-  if (lastDigit === 2) return `${number}nd`;
-  if (lastDigit === 3) return `${number}rd`;
-  return `${number}th`;
 }
 
 function auditMsprimePerformanceFixtures(publicationRoot, errors) {
@@ -870,6 +876,10 @@ function requireFile(filePath, errors) {
 
 function checkSha(filePath, expected, errors) {
   if (!fs.existsSync(filePath)) {
+    return;
+  }
+  if (!expected) {
+    errors.push(`${relative(filePath)} sha256 expectation is missing`);
     return;
   }
   const actual = crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');

@@ -12,13 +12,19 @@ import {
   SelectValue,
 } from '../../ui/select';
 import { formatSubtreeLabel } from '../../../domain/spr/sprAnalytics';
-import { Search, X } from 'lucide-react';
+import { LocateFixed, Search, X } from 'lucide-react';
 import type { SprMoveEventRow } from './types';
 import { buildSprMoveEventSearchText } from './sprMoveEventSearch';
 import { SPR_MOVE_EVENT_TABLE_COPY } from './SprMoveEventTable.contract';
 import { buildSprMoveWindowRange, type SprMoveWindowRangeOptions } from './sprMoveWindowRange';
 import { cn } from '../../../lib/utils';
 import { SubtreeTopologyPopover } from './SubtreeTopologyPopover';
+import {
+  selectGoToPosition,
+  selectSetManuallyMarkedNodes,
+  useAppStore,
+} from '../../../state/phyloStore/store.js';
+import { formatInputTreePair, getSprMoveJumpFrame } from './sprMoveJumpTarget';
 
 interface SprMoveEventTableProps {
   events: SprMoveEventRow[];
@@ -32,7 +38,7 @@ interface SprMoveEventTableProps {
 const TABLE_HEADER_CELL_CLASS = 'px-3 py-2 font-bold uppercase tracking-wider text-2xs';
 const ROW_CELL_CLASS = 'px-3 py-2';
 const MOVEMENT_EVENT_COLUMN_COUNT = 8;
-const VIRTUAL_ROW_HEIGHT = 80;
+const VIRTUAL_ROW_HEIGHT = 96;
 const VIRTUAL_ROW_OVERSCAN = 8;
 const EMPTY_WINDOW_RANGE_OPTIONS = Object.freeze({});
 const BRANCH_VALUE_FILTER_ALL = 'all';
@@ -246,6 +252,8 @@ export const SprMoveEventTable = ({
   windowRangeOptions = EMPTY_WINDOW_RANGE_OPTIONS,
 }: SprMoveEventTableProps) => {
   const [globalFilter, setGlobalFilter] = React.useState('');
+  const goToPosition = useAppStore(selectGoToPosition);
+  const setManuallyMarkedNodes = useAppStore(selectSetManuallyMarkedNodes);
   const [subtreeBranchValueFilter, setSubtreeBranchValueFilter] =
     React.useState<BranchValueFilterValue>(BRANCH_VALUE_FILTER_ALL);
   const [contextBranchValueFilter, setContextBranchValueFilter] =
@@ -315,6 +323,16 @@ export const SprMoveEventTable = ({
       onBranchValueThresholdChange(clampBranchValueThreshold(nextThreshold));
     },
     [onBranchValueThresholdChange]
+  );
+  const handleJumpToMove = React.useCallback(
+    (event: SprMoveEventRow) => {
+      setManuallyMarkedNodes(event.splitIndices);
+      const jumpFrame = getSprMoveJumpFrame(event);
+      if (jumpFrame !== null) {
+        goToPosition(jumpFrame, 'jump');
+      }
+    },
+    [goToPosition, setManuallyMarkedNodes]
   );
   const updateScrollMetrics = React.useCallback(() => {
     const element = scrollContainerRef.current;
@@ -544,6 +562,7 @@ export const SprMoveEventTable = ({
                 isSelected={selectedMovedSubtreeSignature === event.signature}
                 branchValueThreshold={normalizedBranchValueThreshold}
                 windowRangeOptions={windowRangeOptions}
+                onJumpToMove={handleJumpToMove}
               />
             ))}
             {virtualRange.bottomPadding > 0 ? (
@@ -580,6 +599,7 @@ interface MovementEventRowProps {
   isSelected: boolean;
   branchValueThreshold: number;
   windowRangeOptions: SprMoveWindowRangeOptions;
+  onJumpToMove: (event: SprMoveEventRow) => void;
 }
 
 function MovementEventRow({
@@ -590,17 +610,21 @@ function MovementEventRow({
   isSelected,
   branchValueThreshold,
   windowRangeOptions,
+  onJumpToMove,
 }: MovementEventRowProps) {
   const movementLabel = formatMovementLabel(eventOrdinal);
   const windowRange = buildSprMoveWindowRange(event, windowRangeOptions);
   const subtreeLabel = formatCompactAttachment(event.splitIndices, leafNamesByIndex, 2);
   const fullSubtreeLabel = formatAttachment(event.splitIndices, leafNamesByIndex);
+  const jumpFrame = getSprMoveJumpFrame(event);
+  const treePairLabel = formatInputTreePair(event.sourceInputTreeIndex, event.targetInputTreeIndex);
+  const jumpLabel = `Jump to ${movementLabel} in ${treePairLabel}`;
 
   return (
     <tr
       aria-rowindex={rowIndex + 1}
       className={cn(
-        'h-20 border-b border-border/10 align-top transition-colors',
+        'h-24 border-b border-border/10 align-top transition-colors',
         isSelected ? 'bg-primary/10 hover:bg-primary/15' : 'hover:bg-primary/5'
       )}
     >
@@ -609,9 +633,28 @@ function MovementEventRow({
         title={[event.eventId, windowRange?.title].filter(Boolean).join('\n')}
       >
         <div className="font-semibold text-foreground">{movementLabel}</div>
+        <div className="mt-1 font-sans text-2xs font-semibold leading-tight text-foreground">
+          {treePairLabel}
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="xs"
+          className="spr-analytics-no-drag mt-1.5 h-6 px-1.5 text-2xs"
+          disabled={jumpFrame === null}
+          onClick={(clickEvent) => {
+            clickEvent.stopPropagation();
+            onJumpToMove(event);
+          }}
+          onKeyDown={(keyEvent) => keyEvent.stopPropagation()}
+          aria-label={jumpLabel}
+          title={jumpLabel}
+        >
+          <LocateFixed className="size-3" aria-hidden />
+          Jump to move
+        </Button>
         {windowRange ? (
           <div className="mt-1 space-y-0.5 font-sans text-2xs leading-tight text-muted-foreground/70">
-            <div className="truncate">{windowRange.treeLabel}</div>
             <div className="truncate">{windowRange.displayLabel}</div>
           </div>
         ) : null}

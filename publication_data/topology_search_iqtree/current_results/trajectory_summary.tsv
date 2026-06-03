@@ -1,0 +1,14 @@
+field	value
+source_alignment	aberer_roguenarok_dataset_500_taxa500_sites1398.phy
+source_alignment_sha256	7d8df4523454416c0c98458167a18547a9fa1e21ba0588a26533025968ff1d20
+source_alignment_taxa	500
+source_alignment_sites	1398
+iqtree_version	3.1.1
+iqtree_seed	42
+iqtree_search_mode	fast
+iqtree_selected_model	GTR+F+G4
+tree_search_iterations	2
+promoted_trajectory_trees	21
+promoted_trajectory_sha256	d676aa7d38e797c9f77a8157a0d36740004655d119f06970acb4c489037a84c6
+source_treels_present	true
+source_treefile_present	true
