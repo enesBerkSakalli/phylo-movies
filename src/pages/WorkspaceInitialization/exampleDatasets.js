@@ -113,6 +113,18 @@ const PAPER_FIGURE_SOURCE_TRUTH = {
   fileName: 'paper_example.tree',
   filePath: import.meta.env.BASE_URL + 'examples/figure_example/paper_example.tree',
 };
+const TOPOLOGY_SEARCH_BASE = import.meta.env.BASE_URL + 'examples/topology_search_iqtree/';
+const TOPOLOGY_SEARCH_SOURCE_TRUTH = {
+  label: 'Source alignment',
+  fileName: 'aberer_roguenarok_dataset_500_taxa500_sites1398.phy',
+  filePath:
+    TOPOLOGY_SEARCH_BASE + 'source_alignments/aberer_roguenarok_dataset_500_taxa500_sites1398.phy',
+};
+const TOPOLOGY_SEARCH_SUMMARY = {
+  label: 'Trajectory summary',
+  fileName: 'trajectory_summary.tsv',
+  filePath: TOPOLOGY_SEARCH_BASE + 'current_results/trajectory_summary.tsv',
+};
 
 export const EXAMPLE_DATASETS = [
   {
@@ -144,7 +156,7 @@ export const EXAMPLE_DATASETS = [
       alignmentSource: 'subsampled_350_gappyout_final.fasta',
       settings: [
         { label: 'Tree inference', value: 'IQ-TREE, GTR+G, fast search' },
-        { label: 'Stability scores', value: 'SH-aLRT, 1000 replicates' },
+        { label: 'Branch support', value: 'SH-aLRT, 1000 replicates' },
         { label: 'Windowing', value: '1000 sites, 500-site step' },
         { label: 'Rooting', value: 'Midpoint rooting' },
       ],
@@ -330,6 +342,46 @@ export const EXAMPLE_DATASETS = [
     },
     citation: PUBLICATION_CITATION,
     badge: 'IQ-TREE',
+  },
+  {
+    id: 'iqtree-search-500',
+    name: 'IQ-TREE Search Trajectory (500 taxa)',
+    description:
+      'Complete IQ-TREE fast-search topology trajectory from Aberer/RogueNaRok Dataset 500 (21 trees from the full fast run)',
+    workflow: 'Tree search trajectory',
+    scale: '500 taxa / 21 trees',
+    bestFor: 'Topology-search movement diagnostics',
+    fileName: 'iqtree500_fast_search_trajectory.nwk',
+    filePath: TOPOLOGY_SEARCH_BASE + 'current_results/iqtree500_fast_search_trajectory.nwk',
+    precomputedPayloadPath:
+      PRECOMPUTED_EXAMPLE_BASE + 'iqtree500_fast_search_trajectory.movie.json',
+    fileType: 'newick',
+    sourceTruthFile: TOPOLOGY_SEARCH_SOURCE_TRUTH,
+    generatedArtifactFiles: [TOPOLOGY_SEARCH_SUMMARY],
+    provenance: {
+      sourceType: 'Publication topology-search example',
+      sourceLabel: 'publication_data/topology_search_iqtree',
+      treeSource:
+        'Complete IQ-TREE 3 fast-search topology trajectory for Aberer/RogueNaRok Dataset 500.',
+      settings: [
+        { label: 'Tree inference', value: 'IQ-TREE 3.1.1' },
+        { label: 'Search mode', value: 'Fast search' },
+        { label: 'Search trajectory', value: '21 trees from the full fast run' },
+        { label: 'Model', value: 'GTR+F+G4' },
+        { label: 'Seed', value: '42' },
+        { label: 'Rooting', value: 'Input rooting preserved' },
+      ],
+    },
+    parameters: {
+      windowSize: null,
+      stepSize: null,
+      midpointRooting: false,
+      useGtr: false,
+      useGamma: false,
+      usePseudo: false,
+    },
+    citation: PUBLICATION_CITATION,
+    badge: 'Tree Search',
   },
   {
     id: 'msprime-performance-250',
@@ -549,6 +601,7 @@ export const DEMO_EXAMPLE_DATASETS = [
   EXAMPLE_DATASETS.find((example) => example.id === 'paper-example'),
   EXAMPLE_DATASETS.find((example) => example.id === 'bootstrap-24'),
   EXAMPLE_DATASETS.find((example) => example.id === 'bootstrap-125'),
+  EXAMPLE_DATASETS.find((example) => example.id === 'iqtree-search-500'),
   EXAMPLE_DATASETS.find((example) => example.id === 'quick-msa-demo'),
   MS_PRIME_1000_LIMIT_DEMO,
 ].filter(Boolean);

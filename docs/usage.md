@@ -32,6 +32,7 @@ Backend upload validation requires at least one of `treeFile` or `msaFile`. Empt
 | Timeline                                       | Bottom movie player bar.                                                               |
 | RF, weighted RF, scale, and movement summaries | Timeline/chart panels, sidebar stats, and transition inspector when data is available. |
 | MSA view                                       | Floating **Sequence Alignment** window when MSA data is loaded.                        |
+| Moved-subtree analytics                        | **Analysis -> Moved Subtrees** floating window.                                        |
 | Static image export                            | Top-right canvas export button.                                                        |
 | WebM recording                                 | Top-right recording controls.                                                          |
 
@@ -94,6 +95,30 @@ Load data -> hover or select a timeline segment -> inspect tooltip or Transition
 Expected result: the inspector shows source/target context, moving taxa count, generated frame count, pivot edge, RF metrics, scale, and MSA window when available.
 
 Common failure: some metrics show unavailable. That means the processed payload did not include that metric for the selected segment.
+
+### Workflow: Inspect Recurrent Moved Subtrees
+
+Goal: identify which taxa or subtrees move repeatedly and inspect their
+placement context.
+
+Steps:
+
+```text
+Load data -> Analysis -> Moved Subtrees -> Recurrent Subtrees -> select a row -> SPR Moves
+```
+
+Expected result: the **Recurrent Subtrees** table ranks moved taxa or subtrees
+by repeat count, tree-pair count, percentage of SPR moves, and movement path
+length. Selecting a row marks that subtree in the tree view. The **SPR Moves**
+table then shows the per-event context: moved subtree, pivot edge, source
+attachment, target attachment, movement steps, RF/weighted RF metrics, and
+source-to-target branch values for the moved subtree and parent branch. If the
+input trees contain support or split-frequency labels, those branch values give
+support context for the placements being left or entered.
+
+Common failure: the tables are empty. That means the processed payload does not
+contain SPR move events for the current dataset, or the current tree sequence
+has no resolved moved subtrees.
 
 ### Workflow: Export Visual Output
 

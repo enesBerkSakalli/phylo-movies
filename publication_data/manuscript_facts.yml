@@ -8,20 +8,23 @@ norovirus_publication_demo:
   last_year: 2025
   capsid_genotypes: 30
   polymerase_genotypes: 28
+  comparable_dual_genotype_rows: 302
   recombinant_genotypes: 167
   non_recombinant_genotypes: 135
+  recombinant_comparable_percent: 55.3
   recombinant_percent: 50.0
   inference: IQ-TREE 3 fast-search mode
   model: GTR+G
   support: SH-aLRT
   support_replicates: 1000
+  rooting: Midpoint rooting
   window_size_bp: 1000
   step_size_bp: 500
   input_trees: 17
   tree_pairs: 16
-  frames: 6098
-  interpolation_frames: 6081
-  spr_moves: 1513
+  frames: 6408
+  interpolation_frames: 6391
+  spr_moves: 1616
 
 bootstrap_rogue_taxa:
   bootstrap_replicates: 200

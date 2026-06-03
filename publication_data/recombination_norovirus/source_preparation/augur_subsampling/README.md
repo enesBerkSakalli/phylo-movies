@@ -19,7 +19,7 @@ tables in this folder are generated from that locked accession-version list by
 | **Temporal Range**       | 1968–2025                                 |
 | **Capsid Genotypes**     | 30 types (dominant: GII.4, GII.17, GII.3) |
 | **Polymerase Genotypes** | 28 types (dominant: P16, P4, P17)         |
-| **Recombinants**         | 167 sequences (50.0%)                     |
+| **Polymerase-capsid discordance** | 167 sequences (50.0% of all retained sequences; 55.3% of 302 records with comparable numeric polymerase and capsid genotypes) |
 
 ---
 

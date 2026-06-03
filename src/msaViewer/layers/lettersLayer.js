@@ -4,6 +4,8 @@
  */
 
 import { TextLayer } from '@deck.gl/layers';
+import { applySelectionTint, getTaxaCellColor } from './cellsLayer.js';
+import { getReadableTextColor } from '../../services/ui/colorUtils.js';
 
 /**
  * Build text data for sequence letters
@@ -42,6 +44,8 @@ export function buildTextData(
           kind: 'text',
           position: [c * cellSize + cellSize / 2, r * cellSize + cellSize / 2, 0],
           text: ch,
+          col: c,
+          seqId: seq.id,
           cellSize, // Pass cellSize for getSize in 'common' units
         });
       }
@@ -54,9 +58,19 @@ export function buildTextData(
 /**
  * Creates the letters text layer
  * @param {Array} textData - The text data from buildTextData
+ * @param {string} colorScheme - Color scheme name
+ * @param {Object} rowColorMap - Optional map of taxon id -> color string
+ * @param {Object} selection - Current selection state
+ * @param {Object} previousSelection - Previous selection state
  * @returns {TextLayer} The letters layer
  */
-export function createLettersLayer(textData) {
+export function createLettersLayer(
+  textData,
+  colorScheme = 'default',
+  rowColorMap = {},
+  selection = null,
+  previousSelection = null
+) {
   return new TextLayer({
     id: 'letters',
     data: textData,
@@ -67,9 +81,18 @@ export function createLettersLayer(textData) {
     getSize: (d) => d.cellSize * 0.65, // 65% of cell height for breathing room
     sizeMinPixels: 6, // Readability floor
     sizeMaxPixels: 16, // Aesthetic ceiling
-    getColor: [0, 0, 0, 255],
+    getColor: (d) => {
+      if (colorScheme !== 'taxa') return [0, 0, 0, 255];
+      const baseColor = getTaxaCellColor(d.seqId, rowColorMap);
+      return getReadableTextColor(
+        applySelectionTint(baseColor, d.col, selection, previousSelection)
+      );
+    },
     getTextAnchor: 'middle',
     getAlignmentBaseline: 'center',
     fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+    updateTriggers: {
+      getColor: [colorScheme, rowColorMap, selection, previousSelection],
+    },
   });
 }

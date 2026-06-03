@@ -56,6 +56,7 @@ describe('example dataset configuration', () => {
     expect(fixtureGenerator).toContain('demo-norovirus-334');
     expect(fixtureGenerator).not.toContain('demo-norovirus-334-stability');
     expect(fixtureGenerator).toContain('demo-bootstrap-125');
+    expect(fixtureGenerator).toContain('demo-iqtree-search-500');
     expect(fixtureGenerator).toContain('demo-msprime-1000-limit');
   });
 
@@ -65,6 +66,7 @@ describe('example dataset configuration', () => {
       'paper-example',
       'bootstrap-24',
       'bootstrap-125',
+      'iqtree-search-500',
       'quick-msa-demo',
       'msprime-1000-two-tree-limit',
     ]);
@@ -76,6 +78,7 @@ describe('example dataset configuration', () => {
       'paper-example',
       'bootstrap-24',
       'bootstrap-125',
+      'iqtree-search-500',
       'quick-msa-demo',
       'msprime-1000-two-tree-limit',
     ]);
@@ -117,6 +120,7 @@ describe('example dataset configuration', () => {
     expect(seoSource).toContain('Phylo-Movies Browser Demo: Generated Phylogenetic Examples');
     expect(seoSource).toContain('Norovirus Polymerase-Capsid Recombination');
     expect(seoSource).toContain('IQ-TREE Bootstrap Trees (125 taxa)');
+    expect(seoSource).toContain('IQ-TREE Search Trajectory (500 taxa)');
     expect(seoSource).toContain('msprime 1000-Taxa Limit Demo');
     expect(seoSource).toContain('writeDemoIndexHtml(indexHtml)');
     expect(seoSource).not.toContain('writeDemoIndexHtml(updatedIndexHtml)');
@@ -126,6 +130,7 @@ describe('example dataset configuration', () => {
     const expectedPayloadFiles = [
       'all_trees_125_source-125_taxa125_sites29149.movie.json',
       'all_trees_24_source-24_taxa24_sites14190.movie.json',
+      'iqtree500_fast_search_trajectory.movie.json',
       'msprime_1000taxa_2trees_seed100005.movie.json',
       'norovirus_334_iqtree_fast_sh_alrt_window1000_step500.movie.json',
       'paper_example.movie.json',
@@ -171,16 +176,16 @@ describe('example dataset configuration', () => {
     ).toBeGreaterThan(0);
     expect(payloadsById.get('norovirus-334').msa.window_size).toBe(1000);
     expect(payloadsById.get('norovirus-334').msa.step_size).toBe(500);
-    expect(payloadsById.get('norovirus-334').frames).toHaveLength(6098);
+    expect(payloadsById.get('norovirus-334').frames).toHaveLength(6408);
     expect(countFramesByType(payloadsById.get('norovirus-334'))).toMatchObject({
       input_tree: 17,
-      interpolation_frame: 6081,
+      interpolation_frame: 6391,
     });
     expect(
       payloadsById
         .get('norovirus-334')
         .temporal_events.filter((event) => event.event_type === 'spr_move')
-    ).toHaveLength(1513);
+    ).toHaveLength(1616);
     expect(countFramesByType(payloadsById.get('bootstrap-24')).interpolation_frame).toBeGreaterThan(
       0
     );
@@ -233,6 +238,9 @@ describe('example dataset configuration', () => {
       'aberer_roguenarok_dataset_24_taxa24_sites14190.phy',
       'aberer_roguenarok_dataset_125_taxa125_sites29149.phy',
       'bootstrap_rogue_taxa/REGENERATE.md',
+      'topology_search_iqtree/current_results/"*.nwk',
+      'topology_search_iqtree/current_results/"*.tsv',
+      'aberer_roguenarok_dataset_500_taxa500_sites1398.phy',
     ]) {
       expect(copyScript).toContain(expectedSourceArtifact);
     }
@@ -265,12 +273,12 @@ describe('example dataset configuration', () => {
     ).toEqual(['norovirus-334', 'quick-msa-demo']);
   });
 
-  it('keeps the norovirus publication example on the SH-aLRT stability-score run', () => {
+  it('keeps the norovirus publication example on the SH-aLRT branch-support run', () => {
     const norovirusExample = EXAMPLE_DATASETS.find((example) => example.id === 'norovirus-334');
 
     expect(norovirusExample).toBeDefined();
     expect(norovirusExample.provenance.settings).toContainEqual({
-      label: 'Stability scores',
+      label: 'Branch support',
       value: 'SH-aLRT, 1000 replicates',
     });
     expect(norovirusExample.provenance.settings).toContainEqual({
@@ -511,6 +519,52 @@ describe('example dataset configuration', () => {
       );
       expect(example.filePath).toContain('bootstrap_rogue_taxa/current_results');
       expect(example.fileName).toContain('source-');
+    }
+  });
+
+  it('exposes the IQ-TREE topology-search trajectory example', () => {
+    const example = EXAMPLE_DATASETS.find((entry) => entry.id === 'iqtree-search-500');
+
+    expect(example).toBeDefined();
+    expect(example.name).toBe('IQ-TREE Search Trajectory (500 taxa)');
+    expect(example.workflow).toBe('Tree search trajectory');
+    expect(example.scale).toBe('500 taxa / 21 trees');
+    expect(example.precomputedPayloadPath).toContain('iqtree500_fast_search_trajectory.movie.json');
+    expect(example.sourceTruthFile).toMatchObject({
+      label: 'Source alignment',
+      fileName: 'aberer_roguenarok_dataset_500_taxa500_sites1398.phy',
+    });
+    expect(example.generatedArtifactFiles.map((file) => file.fileName)).toEqual([
+      'trajectory_summary.tsv',
+    ]);
+
+    const treeFile = path.join(
+      process.cwd(),
+      example.filePath.replace(/^.*examples\//, 'publication_data/')
+    );
+    const treeLines = fs.readFileSync(treeFile, 'utf8').trim().split(/\r?\n/).filter(Boolean);
+    const firstTreeTaxa = new Set(
+      Array.from(treeLines[0].matchAll(/(?<=[(,])([^(),:;]+):/g), (match) => match[1])
+    );
+    const alignmentHeader = fs
+      .readFileSync(publicationPathForExampleArtifact(example.sourceTruthFile), 'utf8')
+      .split(/\r?\n/, 1)[0]
+      .trim();
+
+    expect(treeLines).toHaveLength(21);
+    expect(firstTreeTaxa.size).toBe(500);
+    expect(alignmentHeader).toBe('500 1398');
+    expect(example.provenance.settings).toContainEqual({
+      label: 'Search mode',
+      value: 'Fast search',
+    });
+    expect(example.provenance.settings).toContainEqual({
+      label: 'Search trajectory',
+      value: '21 trees from the full fast run',
+    });
+
+    for (const artifact of [example.sourceTruthFile, ...example.generatedArtifactFiles]) {
+      expectExampleArtifactExists(artifact);
     }
   });
 

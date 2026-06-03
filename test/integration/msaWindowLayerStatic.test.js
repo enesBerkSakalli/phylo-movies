@@ -36,6 +36,15 @@ describe('MSA window layering', () => {
     expect(source).toContain('<SelectContent className="z-[2000]">');
   });
 
+  it('exposes taxa row coloring in the MSA coloring menu', () => {
+    const source = fs.readFileSync(
+      path.join(process.cwd(), 'src/components/msa/MSAControls.jsx'),
+      'utf8'
+    );
+
+    expect(source).toContain('<SelectItem value="taxa">Taxa</SelectItem>');
+  });
+
   it('does not vertically clip wrapped MSA toolbar controls', () => {
     const source = fs.readFileSync(
       path.join(process.cwd(), 'src/components/msa/MSAControls.jsx'),

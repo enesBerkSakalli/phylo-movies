@@ -190,6 +190,8 @@ export function SubtreeTopologyPopover({
       : variantCount === 1
         ? '1 topology'
         : 'Topology';
+  const triggerLabel = compact ? 'Topology' : variantLabel;
+  const triggerDescription = `Compare source and target moved subtree topology for ${taxaCount} taxa`;
 
   return (
     <div
@@ -204,11 +206,11 @@ export function SubtreeTopologyPopover({
             variant="outline"
             size="xs"
             className={compact ? 'h-6 px-1.5 text-2xs' : 'h-7 px-2 text-2xs'}
-            aria-label={`Inspect moved subtree topology for ${taxaCount} taxa`}
-            title={`Inspect moved subtree topology for ${taxaCount} taxa`}
+            aria-label={triggerDescription}
+            title={triggerDescription}
           >
             <ListTree className="size-3" aria-hidden />
-            {compact ? null : <span>{variantLabel}</span>}
+            <span>{triggerLabel}</span>
           </Button>
         </PopoverTrigger>
         <PopoverContent

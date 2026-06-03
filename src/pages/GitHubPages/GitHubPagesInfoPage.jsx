@@ -29,7 +29,12 @@ const USE_CASES = [
   {
     title: 'Rogue Taxa Analysis',
     description:
-      'Track taxa that change attachment across bootstrap trees and identify which subtrees move and where they attach.',
+      'Track taxa that change placement across bootstrap trees and identify which subtrees move between source and target trees.',
+  },
+  {
+    title: 'Tree Search Trajectories',
+    description:
+      'Inspect how topology changes during an IQ-TREE search trajectory and which subtrees continue to rearrange.',
   },
   {
     title: 'Sliding-Window Phylogenetics',
@@ -88,7 +93,7 @@ const PLATFORM_DOWNLOADS = [
 const HOW_IT_WORKS = [
   'Upload trees directly or derive them from sliding-window MSA workflows.',
   'BranchArchitect computes SPR moves and interpolated intermediate states.',
-  'Phylo-Movies renders animated transitions, linked statistics, and optional MSA context.',
+  'Phylo-Movies renders animated transitions, source/target placement context, linked statistics, and optional MSA context.',
 ];
 
 const FAQ_ITEMS = [
@@ -120,7 +125,7 @@ const FAQ_ITEMS = [
   {
     question: 'Which search intents should this page answer?',
     answer:
-      'Phylo-Movies supports phylogenetic tree interpolation, sliding-window phylogenetics, recombination visualization, rogue taxa detection, and MSA-linked tree analysis.',
+      'Phylo-Movies supports phylogenetic tree interpolation, sliding-window phylogenetics, recombination visualization, rogue taxa detection, tree-search trajectory inspection, and MSA-linked tree analysis.',
   },
 ];
 
@@ -249,7 +254,9 @@ export function GitHubPagesInfoPage() {
             <p>
               <strong>Animating Phylogenetic Trees from Sliding-Window Analyses</strong> presents
               the Phylo-Movies workflow for recombination-focused sliding-window phylogenetics and
-              rogue-taxon exploration across bootstrap tree sets.
+              rogue-taxon exploration across bootstrap tree sets. The generated browser examples
+              also include a 500-taxon IQ-TREE fast-search trajectory for inspecting topology
+              changes during tree search.
             </p>
             <p>Authors: E. B. Sakalli, S. E. Haendeler, A. von Haeseler, and H. A. Schmidt.</p>
             <p>
@@ -374,9 +381,9 @@ export function GitHubPagesInfoPage() {
           <CardContent className="space-y-3 text-sm text-muted-foreground">
             <p>
               The demo uses normalized Phylo-Movies JSON payloads generated from the bundled
-              norovirus, bootstrap, paper-figure, quick MSA, and scale-limit examples. Uploaded
-              datasets and backend-processed example loading still require the BranchArchitect
-              backend.
+              norovirus, bootstrap, IQ-TREE search trajectory, paper-figure, quick MSA, and
+              scale-limit examples. Uploaded datasets and backend-processed example loading still
+              require the BranchArchitect backend.
             </p>
             <Button asChild>
               <Link to="/demo">Open Generated Examples</Link>
@@ -394,7 +401,7 @@ export function GitHubPagesInfoPage() {
               Common analysis tasks supported by the desktop and full-stack application.
             </CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-3">
+          <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {USE_CASES.map((item) => (
               <div key={item.title} className="rounded-lg border bg-muted/30 p-4 space-y-2">
                 <h3 className="font-semibold text-foreground">{item.title}</h3>

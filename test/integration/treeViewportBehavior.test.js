@@ -284,11 +284,12 @@ describe('tree viewport behavior', () => {
 
   it('resize preserves a user-adjusted single-tree viewport', async () => {
     useAppStore.setState({ playing: false });
+    const resetAutoFit = vi.fn();
     const controller = {
       _resizeRenderScheduled: false,
       _lastFocusedTreeIndex: 0,
       _hasUserViewportInteraction: true,
-      layerManager: { comparisonRenderer: { resetAutoFit: vi.fn() } },
+      layerManager: { comparisonRenderer: { resetAutoFit } },
       renderAllElements: vi.fn(),
     };
 
@@ -296,6 +297,7 @@ describe('tree viewport behavior', () => {
     await Promise.resolve();
 
     expect(controller._lastFocusedTreeIndex).toBe(0);
+    expect(resetAutoFit).not.toHaveBeenCalled();
     expect(controller.renderAllElements).toHaveBeenCalledOnce();
   });
 });
