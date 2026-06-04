@@ -36,3 +36,36 @@ The corrected interpolated demo payloads are larger than the old input-only shor
 ## Next Larger Step
 
 Chunked tree payloads are the next larger step, not part of this reviewer-ready change. That version would add sidecar tree chunks for both backend runs and static examples, and `ensureTreeHydrated` would become asynchronous. It would reduce initial download and storage pressure further, but it would also expand the backend/static-example contract and touch more rendering call sites. For this release window, the safer change is the direct compact contract plus sparse hydration.
+
+## Planned Dexie Chunked Storage
+
+The next memory-focused implementation should replace the single `localforage`
+movie-payload write with a Dexie-backed run store. The normalized movie metadata
+would remain one direct contract object, but `interpolated_trees` would be stored
+as indexed chunks instead of one large array value.
+
+Proposed tables:
+
+- `runs`: run id, label, provenance, payload schema version, payload hash, frame
+  count, input-tree count, and created timestamp.
+- `movie_metadata`: one row per run containing frames, pairs, temporal events,
+  subtree highlighting, pair metrics, MSA metadata, annotation definitions, tree
+  name definitions, split definitions, file name, and provenance.
+- `tree_chunks`: one row per run and chunk index, containing compact transport
+  trees for a contiguous frame range.
+
+The frontend loading path would then:
+
+1. validate and store metadata without hydrating trees;
+2. write compact tree chunks in order;
+3. keep the active run reference in the existing app state;
+4. load and hydrate only the current frame, nearby frames, and frames explicitly
+   requested by analysis views.
+
+Static browser examples can use the same shape by publishing a small manifest
+next to chunked tree files. The demo would download metadata first, then fetch
+tree chunks on demand. The existing one-file `.movie.json` examples should stay
+supported until all render paths can tolerate asynchronous tree hydration.
+
+This plan targets storage and peak heap pressure. It does not replace the compact
+tree tuple transport and does not change the scientific metadata contract.
