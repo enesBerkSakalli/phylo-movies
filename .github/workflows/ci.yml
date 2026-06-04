@@ -512,7 +512,8 @@ jobs:
             exit 1
           fi
           if [ "${{ needs.backend-tests.result }}" != "success" ]; then
-            echo "⚠️ Backend tests had failures (known pre-existing issues in submodule)"
+            echo "Backend tests failed"
+            exit 1
           fi
           if [ "${{ needs.build.result }}" != "success" ]; then
             echo "Build failed"
