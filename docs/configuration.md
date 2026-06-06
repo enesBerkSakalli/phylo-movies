@@ -22,20 +22,27 @@ Vite dev server defaults:
 
 ## Backend
 
-| Variable        | Used by                 | Default                 | Meaning                                     |
-| --------------- | ----------------------- | ----------------------- | ------------------------------------------- |
-| `SECRET_KEY`    | Flask config            | random token at startup | Flask secret key.                           |
-| `FLASK_DEBUG`   | Flask config            | `1`                     | Enables Flask debug mode when equal to `1`. |
-| `CORS_ORIGINS`  | Flask config            | `*`                     | CORS origin setting.                        |
-| `LOG_LEVEL`     | Flask logging config    | `INFO`                  | Backend logging level.                      |
-| `IQTREE_PATH`   | `msa_to_trees` pipeline | unset                   | Explicit IQ-TREE executable path.           |
-| `FASTTREE_PATH` | `msa_to_trees` pipeline | unset                   | Explicit FastTree executable path.          |
+| Variable             | Used by                 | Default                 | Meaning                                                               |
+| -------------------- | ----------------------- | ----------------------- | --------------------------------------------------------------------- |
+| `SECRET_KEY`         | Flask config            | random token at startup | Flask secret key.                                                     |
+| `FLASK_DEBUG`        | Flask config            | `1`                     | Enables Flask debug mode when equal to `1`.                           |
+| `CORS_ORIGINS`       | Flask config            | `*`                     | CORS origin setting.                                                  |
+| `LOG_LEVEL`          | Flask logging config    | `INFO`                  | Backend logging level.                                                |
+| `LOG_FORMAT`         | Flask logging config    | `text`                  | `text` or `json` backend log records.                                 |
+| `LOG_ACCESS`         | Flask logging config    | `1`                     | Emits request access logs when truthy.                                |
+| `LOG_HEALTHCHECKS`   | Flask logging config    | `0`                     | Includes `/about` and `/health` in access logs when truthy.           |
+| `BACKEND_LOG_FILE`   | Flask logging config    | unset                   | Optional rotating backend log file path.                              |
+| `LOG_FILE`           | Flask logging config    | unset                   | Fallback optional rotating backend log file path.                     |
+| `IQTREE_PATH`        | `msa_to_trees` pipeline | unset                   | Explicit IQ-TREE executable path.                                     |
+| `FASTTREE_PATH`      | `msa_to_trees` pipeline | unset                   | Explicit FastTree executable path.                                    |
 
 Backend defaults:
 
 - Local backend port: `5002`
 - Upload limit: 100 MB
-- Development logs: `engine/BranchArchitect/logs/`
+- Console logging is the primary backend sink for Docker and Electron launchers.
+- `engine/BranchArchitect/start_movie_server.sh` redirects backend stdout/stderr to `engine/BranchArchitect/logs/backend.log`.
+- Direct Python backend runs do not create a file log unless `BACKEND_LOG_FILE` or `LOG_FILE` is set. Frozen desktop bundles default to a user log directory.
 
 ## Docker
 
