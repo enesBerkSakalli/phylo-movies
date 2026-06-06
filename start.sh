@@ -231,9 +231,10 @@ if ! lsof -i :5173 | grep -q LISTEN; then
 fi
 
 # Cleanup function
+STOP_REASON="frontend process exited"
 cleanup() {
   echo ""
-  echo "[cleanup] Shutting down services..."
+  echo "[cleanup] Shutting down services after: $STOP_REASON"
   if [ -n "$FRONTEND_PID" ] && kill -0 $FRONTEND_PID 2>/dev/null; then
     echo "[cleanup] Stopping frontend (PID: $FRONTEND_PID)..."
     kill $FRONTEND_PID 2>/dev/null
@@ -246,8 +247,26 @@ cleanup() {
   echo "[cleanup] Done"
 }
 
-# Trap cleanup on SIGINT (Ctrl+C), SIGTERM, and EXIT
-trap cleanup SIGINT SIGTERM EXIT
+on_sigint() {
+  STOP_REASON="SIGINT"
+  exit 130
+}
+
+on_sigterm() {
+  STOP_REASON="SIGTERM"
+  exit 143
+}
+
+on_sighup() {
+  STOP_REASON="SIGHUP"
+  exit 129
+}
+
+# Trap cleanup on Ctrl+C, termination, terminal hangup, and normal exit.
+trap on_sigint SIGINT
+trap on_sigterm SIGTERM
+trap on_sighup SIGHUP
+trap cleanup EXIT
 
 echo ""
 echo "========================================================================="
@@ -265,4 +284,10 @@ echo "========================================================================="
 echo ""
 
 # Keep the script running
-wait $FRONTEND_PID || true
+set +e
+wait $FRONTEND_PID
+FRONTEND_EXIT_STATUS=$?
+set -e
+STOP_REASON="frontend process exited with status $FRONTEND_EXIT_STATUS"
+echo "[frontend] Frontend process exited with status $FRONTEND_EXIT_STATUS"
+exit $FRONTEND_EXIT_STATUS
