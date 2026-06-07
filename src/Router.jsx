@@ -1,11 +1,20 @@
 import React from 'react';
 import { BrowserRouter, HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { WorkspaceInitializationPage } from './pages/WorkspaceInitialization/WorkspaceInitializationPage.jsx';
-import { GitHubPagesInfoPage } from './pages/GitHubPages/GitHubPagesInfoPage.jsx';
-import { UsageExamplesPage } from './pages/UsageExamples/UsageExamplesPage.jsx';
-import App from './App.jsx';
 import { ErrorBoundary } from './ErrorBoundary.jsx';
 import { isElectron } from './services/data/apiConfig.js';
+
+const VisualizationApp = React.lazy(() => import('./App.jsx'));
+const GitHubPagesInfoPage = React.lazy(() =>
+  import('./pages/GitHubPages/GitHubPagesInfoPage.jsx').then((module) => ({
+    default: module.GitHubPagesInfoPage,
+  }))
+);
+const UsageExamplesPage = React.lazy(() =>
+  import('./pages/UsageExamples/UsageExamplesPage.jsx').then((module) => ({
+    default: module.UsageExamplesPage,
+  }))
+);
 
 // Use HashRouter for Electron (file:// protocol), BrowserRouter for web
 const RouterComponent = isElectron() ? HashRouter : BrowserRouter;
@@ -17,7 +26,9 @@ const isDemoOnlyMode = import.meta.env.VITE_DEMO_ONLY === 'true';
 const landingElement = isDemoOnlyMode ? (
   <WorkspaceInitializationPage demoOnly />
 ) : isDocsOnlyMode ? (
-  <GitHubPagesInfoPage />
+  <LazyRoute>
+    <GitHubPagesInfoPage />
+  </LazyRoute>
 ) : (
   <WorkspaceInitializationPage />
 );
@@ -28,13 +39,47 @@ export function Router() {
       <ErrorBoundary>
         <Routes>
           <Route path="/" element={landingElement} />
-          <Route path="/usage" element={<UsageExamplesPage />} />
+          <Route
+            path="/usage"
+            element={
+              <LazyRoute>
+                <UsageExamplesPage />
+              </LazyRoute>
+            }
+          />
           <Route path="/demo" element={<WorkspaceInitializationPage demoOnly />} />
           <Route path="/demo/open" element={<Navigate to="/demo" replace />} />
-          <Route path="/visualization" element={<App />} />
+          <Route path="/visualization" element={<VisualizationRoute />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </ErrorBoundary>
     </RouterComponent>
+  );
+}
+
+function VisualizationRoute() {
+  return (
+    <LazyRoute>
+      <VisualizationApp />
+    </LazyRoute>
+  );
+}
+
+function LazyRoute({ children }) {
+  return (
+    <React.Suspense fallback={<RouteLoadingFallback />}>
+      {children}
+    </React.Suspense>
+  );
+}
+
+function RouteLoadingFallback() {
+  return (
+    <main
+      aria-live="polite"
+      className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground"
+    >
+      Loading page...
+    </main>
   );
 }
