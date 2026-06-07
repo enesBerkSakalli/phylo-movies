@@ -162,6 +162,9 @@ export function useTreeController() {
         // refits properly for the new layout (single ↔ side-by-side).
         const ctrl = controllerRef.current || state.treeControllers[0];
         if (state.comparisonMode !== prevState.comparisonMode) {
+          if (ctrl) {
+            ctrl._lastFocusedTreeIndex = null;
+          }
           ctrl?.layerManager?.comparisonRenderer?.resetAutoFit?.();
         }
         ensureController();

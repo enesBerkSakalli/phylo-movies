@@ -196,7 +196,11 @@ export class TimelineDataset {
       return this.buildCursor({ frameIndex, movieTimeMs: 0 });
     }
 
-    const occurrence = selectOccurrence(occurrences, options.occurrence);
+    const occurrence = selectOccurrence(
+      occurrences,
+      options.occurrence,
+      this.getFrameView(frameIndex)
+    );
     return this.buildCursor({
       frameIndex,
       movieTimeMs: occurrence.movieTimeStartMs,
@@ -247,14 +251,31 @@ export class TimelineDataset {
   }
 }
 
-function selectOccurrence(occurrences, occurrenceSelector = 'first') {
-  if (occurrenceSelector === 'last') {
+function selectOccurrence(occurrences, occurrenceSelector = 'semantic', frameView = null) {
+  const selector = occurrenceSelector ?? 'semantic';
+
+  if (selector === 'last') {
     return occurrences[occurrences.length - 1];
   }
-  if (Number.isInteger(occurrenceSelector)) {
-    return occurrences[Math.max(0, Math.min(occurrenceSelector, occurrences.length - 1))];
+  if (selector === 'first') {
+    return occurrences[0];
+  }
+  if (selector === 'input_tree_hold') {
+    return findInputTreeHold(occurrences) ?? occurrences[0];
+  }
+  if (selector === 'semantic' && frameView?.isObservedInput === true) {
+    return findInputTreeHold(occurrences) ?? occurrences[0];
+  }
+  if (Number.isInteger(selector)) {
+    return occurrences[Math.max(0, Math.min(selector, occurrences.length - 1))];
   }
   return occurrences[0];
+}
+
+function findInputTreeHold(occurrences) {
+  return occurrences.find(
+    (occurrence) => occurrence.role === 'hold' && occurrence.holdKind === 'input_tree'
+  );
 }
 
 function clamp01(value) {

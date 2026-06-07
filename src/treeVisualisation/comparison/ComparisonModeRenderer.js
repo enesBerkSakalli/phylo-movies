@@ -68,9 +68,15 @@ export class ComparisonModeRenderer {
     const clampedLeftIndex = clampIndex(leftIndex);
     const clampedRightIndex = clampIndex(rightIndex);
 
-    state.ensureTreesHydrated?.([clampedLeftIndex, clampedRightIndex]);
-    const leftTreeData = treeList?.[clampedLeftIndex];
-    const rightTreeData = treeList?.[clampedRightIndex];
+    const [hydratedLeftTree, hydratedRightTree] = state.ensureTreesHydrated?.([
+      clampedLeftIndex,
+      clampedRightIndex,
+    ]) ?? [null, null];
+    const latestTreeList = useAppStore.getState().treeList;
+    const leftTreeData =
+      hydratedLeftTree ?? latestTreeList?.[clampedLeftIndex] ?? treeList?.[clampedLeftIndex];
+    const rightTreeData =
+      hydratedRightTree ?? latestTreeList?.[clampedRightIndex] ?? treeList?.[clampedRightIndex];
 
     // Guard against null/undefined tree data
     if (!leftTreeData || !rightTreeData) {

@@ -273,6 +273,7 @@ describe('phylo store dataset normalization', () => {
 
     expect(hydratedTree).toEqual(tree0);
     expect(useAppStore.getState().treeList[1]).toEqual(tree0);
+    expect(useAppStore.getState().treeList).not.toBe(state.treeList);
     expect(phyloStoreModule.selectTreeHydrationStats(useAppStore.getState())).toMatchObject({
       totalTrees: 3,
       hydratedTrees: 3,
@@ -349,6 +350,81 @@ describe('phylo store dataset normalization', () => {
     expect(state.treeList[4]).toEqual(tree0);
     expect(state.treeList[5]).toBeUndefined();
     expect(state.treeList[6]).toEqual(tree0);
+  });
+
+  it('coalesces batch tree hydration into one treeList reference update', () => {
+    const interpolatedFrames = Array.from({ length: 5 }, (_value, index) => ({
+      frame_index: index + 1,
+      frame_type: 'interpolation_frame',
+      state_semantics: 'algorithmic_intermediate',
+      is_observed_input: false,
+      input_tree_index: null,
+      pair_id: 'pair_0_1',
+      pair_ordinal: 0,
+      local_step_index: index,
+      source_frame_index: 0,
+      target_frame_index: 6,
+    }));
+    const movieData = phyloData.validate(
+      {
+        ...makeBackendMovieData(),
+        ...compactTreeDefinitions,
+        interpolated_trees: Array.from({ length: 7 }, () => compactTree),
+        frames: [
+          {
+            ...makeBackendMovieData().frames[0],
+          },
+          ...interpolatedFrames,
+          {
+            frame_index: 6,
+            frame_type: 'input_tree',
+            state_semantics: 'processed_input_tree',
+            is_observed_input: true,
+            input_tree_index: 1,
+            pair_id: null,
+            pair_ordinal: null,
+            local_step_index: null,
+            source_frame_index: null,
+            target_frame_index: null,
+          },
+        ],
+        pairs: [
+          {
+            ...makeBackendMovieData().pairs[0],
+            target_frame_index: 6,
+            generated_frame_range: [1, 5],
+          },
+        ],
+        temporal_events: [],
+        subtree_highlight_tracking: Array.from({ length: 7 }, () => null),
+        pair_metrics: {
+          ...makeBackendMovieData().pair_metrics,
+          rows: [
+            {
+              ...makeBackendMovieData().pair_metrics.rows[0],
+            },
+          ],
+        },
+      },
+      { hydrateTrees: false }
+    );
+
+    useAppStore.getState().initialize(movieData);
+    const initialTreeList = useAppStore.getState().treeList;
+    const treeListUpdates = [];
+    const unsubscribe = useAppStore.subscribe((state, prevState) => {
+      if (state.treeList !== prevState.treeList) {
+        treeListUpdates.push(state.treeList);
+      }
+    });
+
+    const hydratedTrees = useAppStore.getState().ensureTreesHydrated([2, 3, 4]);
+
+    unsubscribe();
+    expect(hydratedTrees).toEqual([tree0, tree0, tree0]);
+    expect(treeListUpdates).toHaveLength(1);
+    expect(treeListUpdates[0]).not.toBe(initialTreeList);
+    expect(useAppStore.getState().treeHydrationVersion).toBe(1);
   });
 
   it('derives scale metadata without storing scale duplicates', () => {

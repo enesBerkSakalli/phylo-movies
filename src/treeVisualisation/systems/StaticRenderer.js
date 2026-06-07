@@ -82,8 +82,12 @@ export class StaticRenderer {
       : frameIndex;
 
     state.ensureTreeHydrated?.(targetIndex);
+    const latestState = useAppStore.getState();
+    const latestTreeList = selectActiveTreeList(latestState);
     const targetTreeData =
-      targetIndex === frameIndex ? selectCurrentTree(state) : treeList[targetIndex];
+      targetIndex === frameIndex
+        ? selectCurrentTree(latestState)
+        : (latestTreeList[targetIndex] ?? treeList[targetIndex]);
 
     const currentLayout = this.controller.calculateLayout(targetTreeData, {
       treeIndex: targetIndex,

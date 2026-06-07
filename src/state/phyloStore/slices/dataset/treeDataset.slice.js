@@ -33,26 +33,42 @@ export const createTreeDatasetSlice = (set, get) => ({
   temporalEvents: [],
 
   ensureTreeHydrated: (index) => {
-    const treeIndex = Number(index);
-    if (!Number.isInteger(treeIndex) || treeIndex < 0) return null;
-
-    const state = get();
-    const existingTree = state.treeList?.[treeIndex];
-    if (existingTree) return existingTree;
-    if (!state.treeHydrationSource || treeIndex >= state.treePayloadList.length) return null;
-
-    const hydratedTree = hydrateMovieTreeAtIndex(state.treeHydrationSource, treeIndex);
-    state.treeList[treeIndex] = hydratedTree;
-    set((currentState) => ({
-      treeHydrationVersion: (currentState.treeHydrationVersion ?? 0) + 1,
-    }));
-    return hydratedTree;
+    return get().ensureTreesHydrated?.([index])?.[0] ?? null;
   },
 
   ensureTreesHydrated: (indices) => {
     if (!Array.isArray(indices)) return [];
-    const { ensureTreeHydrated } = get();
-    return indices.map((index) => ensureTreeHydrated(index));
+
+    const state = get();
+    const treeList = Array.isArray(state.treeList) ? state.treeList : [];
+    const treePayloadList = Array.isArray(state.treePayloadList) ? state.treePayloadList : [];
+    let nextTreeList = null;
+
+    const hydratedTrees = indices.map((index) => {
+      const treeIndex = Number(index);
+      if (!Number.isInteger(treeIndex) || treeIndex < 0) return null;
+
+      const activeTreeList = nextTreeList ?? treeList;
+      const existingTree = activeTreeList[treeIndex];
+      if (existingTree) return existingTree;
+      if (!state.treeHydrationSource || treeIndex >= treePayloadList.length) return null;
+
+      const hydratedTree = hydrateMovieTreeAtIndex(state.treeHydrationSource, treeIndex);
+      if (!nextTreeList) {
+        nextTreeList = treeList.slice();
+      }
+      nextTreeList[treeIndex] = hydratedTree;
+      return hydratedTree;
+    });
+
+    if (nextTreeList) {
+      set((currentState) => ({
+        treeList: nextTreeList,
+        treeHydrationVersion: (currentState.treeHydrationVersion ?? 0) + 1,
+      }));
+    }
+
+    return hydratedTrees;
   },
 
   prefetchTreeHydrationWindow: (centerIndex, radius = 1) => {

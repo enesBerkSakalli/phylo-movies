@@ -16,10 +16,12 @@ export class TransitionFrame {
     const sourceTreeIndex = normalizeIndex(frame.sourceTreeIndex, 0);
     const targetTreeIndex = normalizeIndex(frame.targetTreeIndex, sourceTreeIndex);
     const transitionProgress = clamp01(frame.transitionProgress);
+    const targetTree =
+      frame.targetTree ?? (targetTreeIndex === sourceTreeIndex ? frame.sourceTree : null);
 
     return new TransitionFrame({
       sourceTree: frame.sourceTree ?? null,
-      targetTree: frame.targetTree ?? frame.sourceTree ?? null,
+      targetTree,
       sourceTreeIndex,
       targetTreeIndex,
       transitionProgress,
@@ -46,9 +48,10 @@ export class TransitionFrame {
     // Semantic progress drives topology/lifecycle clocks. Render progress is
     // allowed to be eased, but must not replace semantic transitionProgress.
     this.sourceTree = sourceTree;
-    this.targetTree = targetTree ?? sourceTree;
     this.sourceTreeIndex = normalizeIndex(sourceTreeIndex, 0);
     this.targetTreeIndex = normalizeIndex(targetTreeIndex, this.sourceTreeIndex);
+    this.targetTree =
+      targetTree ?? (this.targetTreeIndex === this.sourceTreeIndex ? sourceTree : null);
     this.transitionProgress = clamp01(transitionProgress);
     this.renderProgress = clamp01(renderProgress);
     this.timelineProgress = normalizeOptionalProgress(timelineProgress);
@@ -58,7 +61,7 @@ export class TransitionFrame {
   }
 
   get isStatic() {
-    return this.sourceTreeIndex === this.targetTreeIndex || this.sourceTree === this.targetTree;
+    return this.sourceTreeIndex === this.targetTreeIndex;
   }
 
   get cursorTreeIndex() {

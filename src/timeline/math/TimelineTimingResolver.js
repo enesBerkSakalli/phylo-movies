@@ -40,13 +40,14 @@ export class TimelineTimingResolver {
     return null;
   }
 
-  static getTimeForFrameIndex(segment, frameIndex, segmentDuration, epsilonMs) {
+  static getTimeForFrameIndex(segment, frameIndex, segmentDuration, epsilonMs, options = {}) {
+    const inputTreeHoldOnly = options.inputTreeHoldOnly === true;
     let elapsed = 0;
 
     for (const interval of segment.timing) {
       const duration = TimelineInterval.durationMs(interval);
 
-      if (TimelineInterval.isMotion(interval)) {
+      if (TimelineInterval.isMotion(interval) && !inputTreeHoldOnly) {
         if (interval.fromIndex === frameIndex) {
           return elapsed;
         }
@@ -56,7 +57,11 @@ export class TimelineTimingResolver {
             ? Math.max(0, segmentDuration - epsilonMs)
             : targetTime;
         }
-      } else if (TimelineInterval.isHold(interval) && interval.holdIndex === frameIndex) {
+      } else if (
+        TimelineInterval.isHold(interval) &&
+        interval.holdIndex === frameIndex &&
+        (!inputTreeHoldOnly || interval.holdKind === 'input_tree')
+      ) {
         return elapsed;
       }
 

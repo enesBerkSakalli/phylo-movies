@@ -43,4 +43,24 @@ describe('tree layout store invalidation', () => {
     expect(controller.resetInterpolationCaches).not.toHaveBeenCalled();
     expect(controller.renderAllElements).not.toHaveBeenCalled();
   });
+
+  it('resets comparison auto-fit once when linked comparison views change', () => {
+    const controller = {
+      layerManager: { comparisonRenderer: { resetAutoFit: vi.fn() } },
+      renderAllElements: vi.fn(),
+    };
+    useAppStore.setState({
+      treeControllers: [controller],
+      comparisonMode: true,
+      viewsConnected: false,
+      playing: false,
+    });
+
+    useAppStore.getState().setViewsConnected(true);
+    useAppStore.getState().setViewsConnected(true);
+
+    expect(useAppStore.getState().viewsConnected).toBe(true);
+    expect(controller.layerManager.comparisonRenderer.resetAutoFit).toHaveBeenCalledOnce();
+    expect(controller.renderAllElements).toHaveBeenCalledOnce();
+  });
 });

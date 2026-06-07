@@ -1,6 +1,7 @@
 const { expect } = require('chai');
 const fs = require('fs');
 const path = require('path');
+const sinon = require('sinon');
 const { JSDOM } = require('jsdom');
 const { clearTimelineModuleCache, installDeckGLMocks } = require('./helpers/deckGLMocks.js');
 
@@ -138,6 +139,32 @@ describe('MovieTimelineManager lifecycle', () => {
     expect(hydratedIndices).to.not.deep.equal([]);
     expect(frame.sourceTree).to.equal(movieData.interpolated_trees[0]);
     expect(frame.targetTree).to.equal(movieData.interpolated_trees[1]);
+
+    manager.destroy();
+  });
+
+  it('hydrates a sparse target tree when the source frame is already hydrated', () => {
+    const treeList = new Array(movieData.interpolated_trees.length);
+    treeList[0] = movieData.interpolated_trees[0];
+    const hydratedIndices = [];
+    useAppStore.setState({
+      treeList,
+      ensureTreesHydrated: (indices) => {
+        hydratedIndices.push(indices);
+        return indices.map((index) => {
+          treeList[index] = movieData.interpolated_trees[index];
+          return treeList[index];
+        });
+      },
+    });
+
+    const manager = new MovieTimelineManager(movieData, treeList);
+    const frame = manager.resolveFrameAtIndex(1);
+
+    expect(hydratedIndices).to.deep.equal([[0, 1]]);
+    expect(frame.sourceTree).to.equal(movieData.interpolated_trees[0]);
+    expect(frame.targetTree).to.equal(movieData.interpolated_trees[1]);
+    expect(frame.isStatic).to.equal(false);
 
     manager.destroy();
   });
@@ -883,6 +910,57 @@ describe('MovieTimelineManager lifecycle', () => {
 
     expect(stages).to.deep.equal(['COLLAPSE', 'REORDER']);
     expect(renderedTValues[1]).to.be.at.least(renderedTValues[0]);
+  });
+
+  it('renders zeroing lifecycle frames with trees returned by immutable hydration', async () => {
+    const sourceTree = { id: 'source-tree' };
+    const targetTree = { id: 'target-tree' };
+    const transitionChangeModel = {
+      linkChanges: new Map([['zeroing-1', { lifecycle: 'zeroing' }]]),
+      hasLifecycleChanges: true,
+    };
+    const state = {
+      playing: true,
+      animationStartTime: 1_000,
+      animationSpeed: 1,
+      transitionDuration: 2,
+      pauseDuration: 0,
+      treeList: [sourceTree, undefined],
+      comparisonMode: false,
+      ensureTreesHydrated: sinon.spy((indices) =>
+        indices.map((index) => (index === 0 ? sourceTree : targetTree))
+      ),
+    };
+    const renderedFrames = [];
+
+    const runner = new AnimationRunner({
+      getState: () => state,
+      getOrCacheInterpolationData: (fromTree, toTree) => {
+        expect(fromTree).to.equal(sourceTree);
+        expect(toTree).to.equal(targetTree);
+        return {
+          dataFrom: { layoutCacheKey: 'from', nodes: [{ id: 'node-a' }] },
+          dataTo: { layoutCacheKey: 'to', nodes: [{ id: 'node-a' }] },
+          transitionChangeModel,
+        };
+      },
+      renderSingleFrame: async (fromTree, toTree, easedT, options) => {
+        renderedFrames.push({ fromTree, toTree, easedT, options });
+      },
+      renderComparisonFrame: async () => {},
+      setAnimationStage: () => {},
+      updateProgress: () => {},
+      stopAnimation: () => {},
+    });
+
+    runner.isRunning = true;
+    await runner._processFrame(1_500);
+
+    expect(state.ensureTreesHydrated.calledWithMatch([0, 1])).to.equal(true);
+    expect(renderedFrames).to.have.lengthOf(1);
+    expect(renderedFrames[0].fromTree).to.equal(sourceTree);
+    expect(renderedFrames[0].toTree).to.equal(targetTree);
+    expect(renderedFrames[0].options.transitionChangeModel).to.equal(transitionChangeModel);
   });
 
   it('updates playback animation stage by current lifecycle clock phase without moving render progress backward', async () => {

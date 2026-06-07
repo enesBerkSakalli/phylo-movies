@@ -83,8 +83,10 @@ export class InterpolationRenderer {
 
     if (comparisonMode && typeof rightTreeIndex === 'number') {
       const state = useAppStore.getState();
-      state.ensureTreeHydrated?.(rightTreeIndex);
-      const rightTree = selectActiveTreeList(state)[rightTreeIndex];
+      const rightTree =
+        state.ensureTreeHydrated?.(rightTreeIndex) ??
+        useAppStore.getState().treeList?.[rightTreeIndex] ??
+        selectActiveTreeList(state)[rightTreeIndex];
 
       if (rightTree) {
         // Build raw interpolation inputs for comparison renderer
@@ -148,9 +150,13 @@ export class InterpolationRenderer {
     }
 
     // Get tree data
-    state.ensureTreesHydrated?.([fromIndex, toIndex]);
-    const fromTree = treeList[fromIndex];
-    const toTree = treeList[toIndex];
+    const [hydratedFromTree, hydratedToTree] = state.ensureTreesHydrated?.([
+      fromIndex,
+      toIndex,
+    ]) ?? [null, null];
+    const latestTreeList = selectActiveTreeList(useAppStore.getState());
+    const fromTree = hydratedFromTree ?? latestTreeList[fromIndex] ?? treeList[fromIndex];
+    const toTree = hydratedToTree ?? latestTreeList[toIndex] ?? treeList[toIndex];
     const transitionFrame = TransitionFrame.from({
       sourceTree: fromTree,
       targetTree: toTree,

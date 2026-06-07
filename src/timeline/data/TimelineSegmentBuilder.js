@@ -29,6 +29,7 @@ export class TimelineSegmentBuilder {
     segmentIndex,
     event,
     pair,
+    segmentEndFrameIndex = null,
     sprEvents,
     frames,
     interpolatedTrees,
@@ -38,7 +39,7 @@ export class TimelineSegmentBuilder {
     const contextStart = Math.max(pair.source_frame_index, globalStart - 1);
     const interpolationData = collectInterpolationData({
       startFrameIndex: contextStart,
-      endFrameIndex: globalEnd,
+      endFrameIndex: Number.isInteger(segmentEndFrameIndex) ? segmentEndFrameIndex : globalEnd,
       frames,
       interpolatedTrees,
     });

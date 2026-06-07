@@ -59,6 +59,19 @@ describe('TransitionFrame', () => {
     });
   });
 
+  it('does not mark distinct frame indices static just because their tree object is shared', () => {
+    const sharedTree = { id: 'shared' };
+    const frame = TransitionFrame.from({
+      sourceTree: sharedTree,
+      targetTree: sharedTree,
+      sourceTreeIndex: 0,
+      targetTreeIndex: 1,
+      transitionProgress: 0.5,
+    });
+
+    expect(frame.isStatic).toBe(false);
+  });
+
   it('does not expose the old interpolation-data adapter', () => {
     const frame = TransitionFrame.from({
       sourceTreeIndex: 1,

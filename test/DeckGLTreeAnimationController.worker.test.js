@@ -372,6 +372,32 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     );
   });
 
+  it('prefetches trees returned by immutable hydration state updates', () => {
+    const hydratedTree = { id: 'hydrated-tree-1', split_indices: [1], children: [] };
+    const ensureTreeHydrated = vi.fn((treeIndex) => {
+      if (treeIndex !== 1) return null;
+      const nextTreeList = useAppStore.getState().treeList.slice();
+      nextTreeList[treeIndex] = hydratedTree;
+      useAppStore.setState((state) => ({
+        treeList: nextTreeList,
+        treeHydrationVersion: (state.treeHydrationVersion ?? 0) + 1,
+      }));
+      return hydratedTree;
+    });
+    useAppStore.setState({
+      treeList: [{ id: 'tree-0', split_indices: [0], children: [] }, undefined],
+      treeHydrationVersion: 0,
+      ensureTreeHydrated,
+    });
+    controller = new ControllerClass(null);
+
+    controller._prefetchFrame(1);
+
+    expect(ensureTreeHydrated).toHaveBeenCalledWith(1);
+    expect(controller.layoutWorker.messages).toHaveLength(1);
+    expect(controller.layoutWorker.messages[0].data.treeData).toBe(hydratedTree);
+  });
+
   it('re-prefetches the same tree index when its layout cache key changes', () => {
     controller = new ControllerClass(null);
 

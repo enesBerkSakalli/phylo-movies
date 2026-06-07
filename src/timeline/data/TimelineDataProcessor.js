@@ -133,9 +133,16 @@ export class TimelineDataProcessor {
     }
 
     let coveredThroughFrameIndex = pair.source_frame_index;
-    for (const event of splitEvents) {
+    for (let index = 0; index < splitEvents.length; index += 1) {
+      const event = splitEvents[index];
       const eventStart = event.frame_range[0];
       const eventEnd = event.frame_range[1];
+      const segmentEndFrameIndex = resolveSplitEventSegmentEndFrameIndex({
+        pair,
+        eventEnd,
+        isLastSplitEvent: index === splitEvents.length - 1,
+        canFoldFinalTargetMotion: splitEvents.length > 1,
+      });
       const gapEnd = eventStart - 1;
       if (coveredThroughFrameIndex < gapEnd) {
         segments.push(
@@ -155,12 +162,13 @@ export class TimelineDataProcessor {
           segmentIndex: segments.length,
           event,
           pair,
+          segmentEndFrameIndex,
           sprEvents,
           frames,
           interpolatedTrees,
         })
       );
-      coveredThroughFrameIndex = Math.max(coveredThroughFrameIndex, eventEnd);
+      coveredThroughFrameIndex = Math.max(coveredThroughFrameIndex, segmentEndFrameIndex);
     }
 
     if (coveredThroughFrameIndex < pair.target_frame_index) {
@@ -176,6 +184,31 @@ export class TimelineDataProcessor {
       );
     }
   }
+}
+
+function resolveSplitEventSegmentEndFrameIndex({
+  pair,
+  eventEnd,
+  isLastSplitEvent,
+  canFoldFinalTargetMotion,
+}) {
+  if (!isLastSplitEvent || !canFoldFinalTargetMotion) return eventEnd;
+
+  const generatedFrameEnd = Array.isArray(pair.generated_frame_range)
+    ? pair.generated_frame_range[1]
+    : null;
+  const eventReachesGeneratedEnd =
+    Number.isInteger(generatedFrameEnd) && eventEnd >= generatedFrameEnd;
+
+  if (
+    eventReachesGeneratedEnd &&
+    Number.isInteger(pair.target_frame_index) &&
+    eventEnd < pair.target_frame_index
+  ) {
+    return pair.target_frame_index;
+  }
+
+  return eventEnd;
 }
 
 function isExactNoOpPair(pair, pairMetric) {
