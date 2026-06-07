@@ -10,7 +10,7 @@ The application has two main surfaces: the setup screen and the visualization wo
 
 Use **New Project** for local files and **Example Library** for bundled data. The backend status badge explains whether upload processing and tree inference are available.
 
-In GitHub Pages demo mode, generated examples can open without a backend. Uploads and backend-driven example processing still require a local or desktop backend.
+In GitHub Pages demo mode, generated examples can open without a backend. Uploads and backend-driven example processing still require the local source checkout, Docker full stack, or optional desktop backend.
 
 ## Visualization Workspace
 

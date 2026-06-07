@@ -16,7 +16,7 @@ Phylo-Movies is a React and Flask web tool for inspecting ordered phylogenetic t
 
 ![Phylo-Movies screenshot](assets/screenshot.png)
 
-The project information page at [enesberksakalli.github.io/phylo-movies](https://enesberksakalli.github.io/phylo-movies/) includes documentation and a precomputed browser demo. Dataset loading, interpolation, and MSA-driven workflows require the full-stack app from source or Docker. Desktop release artifacts are provided as convenience builds, but macOS artifacts are unsigned and may be blocked by Gatekeeper.
+The project information page at [enesberksakalli.github.io/phylo-movies](https://enesberksakalli.github.io/phylo-movies/) includes documentation and a precomputed browser demo. Dataset loading, interpolation, and MSA-driven workflows require the full-stack app from source or Docker. Desktop release artifacts are provided as convenience builds; macOS artifacts are unsigned because the project does not currently use a paid Apple Developer ID for notarization, so Gatekeeper may block them or report them as damaged.
 
 ## Choose the Right Entry Point
 
@@ -25,7 +25,7 @@ The project information page at [enesberksakalli.github.io/phylo-movies](https:/
 | GitHub Pages site | Reading documentation, downloading releases/data, and opening generated demo movies at `/demo`. | New uploads, local example processing, interpolation, and MSA workflows do not run on the static site.                         |
 | Source checkout   | Recommended macOS/reviewer path for full local processing from the browser.                     | Run `./start.sh`, keep the terminal open, and use the printed `http://127.0.0.1:5173/` URL.                                    |
 | Docker            | Recommended full-stack path without manually setting up the backend.                            | Run `docker compose up --build` and open `http://localhost:8080/`.                                                             |
-| Desktop release   | Optional packaged convenience build.                                                            | macOS artifacts are unsigned and may need quarantine handling; see [Troubleshooting](docs/troubleshooting.md#symptom-macos-says-the-app-is-damaged). |
+| Desktop release   | Optional packaged convenience build.                                                            | macOS artifacts are unsigned convenience builds; use source or Docker for review, or see [Troubleshooting](docs/troubleshooting.md#symptom-macos-says-the-app-is-damaged). |
 
 ## Quick Start
 
