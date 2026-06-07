@@ -39,6 +39,9 @@ describe('example dataset configuration', () => {
 
     expect(packageJson.scripts.build).toContain('./scripts/copy-examples.sh dist');
     expect(packageJson.scripts['build:gh']).toContain('npm run fixtures:generate:ci');
+    expect(packageJson.scripts['build:gh']).toContain('npm run build:gh:ci');
+    expect(packageJson.scripts['build:gh:ci']).toContain('./scripts/copy-examples.sh dist');
+    expect(packageJson.scripts['build:gh:ci']).not.toContain('fixtures:generate');
     expect(packageJson.scripts['fixtures:generate']).toContain('poetry run python');
     expect(packageJson.scripts['fixtures:check']).toContain('poetry run python');
   });
