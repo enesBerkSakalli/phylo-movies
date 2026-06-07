@@ -9,6 +9,7 @@ import {
   useAppStore,
 } from '../../state/phyloStore/store.js';
 import { RecordingControls } from '../media/RecordingControls.jsx';
+import { CopyImageButton } from '../media/CopyImageButton.jsx';
 import { SaveImageButton } from '../media/SaveImageButton.jsx';
 import { TourLauncher } from '../../features/tours/TourLauncher.jsx';
 
@@ -114,6 +115,7 @@ export function TreeCanvasControls() {
       >
         <RecordingControls disabled={captureDisabled} />
         <Separator orientation="vertical" className="h-5" />
+        <CopyImageButton disabled={captureDisabled} />
         <SaveImageButton disabled={captureDisabled} />
       </div>
     </div>
