@@ -10,6 +10,8 @@ not be edited as source data.
 - `PUBLICATION_ARCHIVE.md` defines the public archive boundary and release
   verification checks.
 - `SCALE_LIMITS.md` records the committed app-facing taxa scale tiers.
+- `manuscript_facts.yml` records the numerical manuscript claims that are
+  checked against committed publication data and generated demo payloads.
 - `REGENERATE.md` is the top-level regeneration and verification entry point.
 - `publication_data.env` defines shared workflow constants consumed by shell
   entry points and Python scripts.
@@ -31,6 +33,7 @@ not be edited as source data.
 
 | Group | Purpose |
 | --- | --- |
+| `manuscript_facts.yml` | Ledger of manuscript-facing numerical claims checked by `npm run publication:data:check`. |
 | `bootstrap_rogue_taxa/` | Source alignments, regeneration scripts, and promoted IQ-TREE bootstrap outputs for the Aberer/RogueNaRok-derived rogue-taxon example. |
 | `recombination_norovirus/` | Source alignments, source-preparation files, ReCAN scripts, and promoted ReCAN outputs for the norovirus recombination example. |
 | `topology_search_iqtree/` | Source alignment and promoted complete IQ-TREE 3 fast-search topology-search trajectory for the tree-search example. |
@@ -45,8 +48,8 @@ back to their source inputs and reproducible command surface.
 
 ## Hygiene Check
 
-Run the manifest, checksum, taxa-count, site-count, and promoted-tree checks
-with:
+Run the manifest, checksum, taxa-count, site-count, promoted-tree, and
+manuscript-fact checks with:
 
 ```bash
 npm run publication:data:check

@@ -33,7 +33,7 @@ git archive --format=tar.gz \
 
 | Layer | Include in archive | Purpose |
 | --- | --- | --- |
-| `README.md`, `REGENERATE.md`, `PUBLICATION_ARCHIVE.md`, `SCALE_LIMITS.md` | yes | Reader entry points, archive contract, and committed scale limits. |
+| `README.md`, `REGENERATE.md`, `PUBLICATION_ARCHIVE.md`, `SCALE_LIMITS.md`, `manuscript_facts.yml` | yes | Reader entry points, archive contract, committed scale limits, and manuscript-claim ledger. |
 | `environment.yml`, `publication_data.env` | yes | Reproducible environment and shared workflow constants. |
 | `bootstrap_rogue_taxa/source_alignments/` | yes | Selected Aberer/RogueNaRok source alignments with checksums. |
 | `bootstrap_rogue_taxa/scripts/bootstrap_ordering/` | yes | Bootstrap replicate generation, tree inference, ordering, and promotion scripts. |
