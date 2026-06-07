@@ -16,7 +16,7 @@ Use this manual when you want to:
 - export figures or WebM recordings,
 - troubleshoot backend and browser-demo behavior.
 
-The GitHub Pages browser demo contains precomputed examples. Uploading new data and running inference require the desktop app, Docker workflow, or local BranchArchitect backend.
+The GitHub Pages browser demo contains precomputed examples. Uploading new data and running inference require the local source checkout with BranchArchitect, Docker, or the optional desktop app. On macOS, the source checkout or Docker path is recommended because desktop artifacts are unsigned convenience builds.
 
 ## Quick Links
 

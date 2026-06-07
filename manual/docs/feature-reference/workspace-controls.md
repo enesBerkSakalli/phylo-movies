@@ -59,6 +59,8 @@ Original scale preserves proportional input branch lengths. Readable scale appli
 | **Tree Spread** | Controls how much of the circle the radial tree uses. |
 | **Rotation**    | Rotates the whole tree around the canvas.             |
 
+The tree canvas can also be magnified with the top-right zoom controls, mouse wheel, or two-finger trackpad gesture. Dragging the canvas moves the view across the current tree without changing the underlying topology or branch lengths.
+
 ## Geometry and Labels
 
 | Control               | Meaning                                                                                                                                                                                                                                                                   |

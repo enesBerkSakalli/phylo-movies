@@ -15,6 +15,8 @@ The MSA viewer appears when the dataset includes alignment data. It can be opene
 
 If **Follow Current Window** is disabled, the MSA viewer keeps its current viewport while the tree movie moves.
 
+When **Follow Current Window** is enabled, synchronization follows the current input-tree/window index. During an interpolated transition, the tree viewer distinguishes the source tree and target tree; the MSA viewer follows the corresponding input window rather than redrawing for every intermediate interpolation frame.
+
 ## Region Override
 
 | Control | Meaning |
