@@ -30,8 +30,15 @@ export function detectAnimationStage(dataFrom, dataTo, transitionChangeModel = n
     return ANIMATION_STAGES.REORDER;
   }
 
-  const fromIds = new Set(dataFrom.nodes.map((n) => n.id));
-  const toIds = new Set(dataTo.nodes.map((n) => n.id));
+  const fromIds = new Set();
+  for (const node of dataFrom.nodes) {
+    fromIds.add(node.id);
+  }
+
+  const toIds = new Set();
+  for (const node of dataTo.nodes) {
+    toIds.add(node.id);
+  }
 
   // Count exiting (in from but not in to) and entering (in to but not in from)
   let exiting = 0;

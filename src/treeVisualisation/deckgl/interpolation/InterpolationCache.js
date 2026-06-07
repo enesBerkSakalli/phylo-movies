@@ -1,6 +1,8 @@
 import memoizeOne from 'memoize-one';
 import { buildTransitionChangeModel } from './TransitionChangeModel.js';
 
+const MAX_PRECOMPUTED_CACHE_ENTRIES = 32;
+
 export class InterpolationCache {
   constructor({
     calculateLayout,
@@ -24,7 +26,11 @@ export class InterpolationCache {
   }
 
   setPrecomputedData(treeIndex, data) {
+    if (this._precomputedCache.has(treeIndex)) {
+      this._precomputedCache.delete(treeIndex);
+    }
     this._precomputedCache.set(treeIndex, data);
+    this._trimPrecomputedCache();
   }
 
   reset() {
@@ -142,6 +148,13 @@ export class InterpolationCache {
     return Boolean(
       precomputed?.layerData && precomputed.layerData.layoutCacheKey === expectedLayoutCacheKey
     );
+  }
+
+  _trimPrecomputedCache() {
+    while (this._precomputedCache.size > MAX_PRECOMPUTED_CACHE_ENTRIES) {
+      const oldestKey = this._precomputedCache.keys().next().value;
+      this._precomputedCache.delete(oldestKey);
+    }
   }
 
   _calculateLayout(treeData, treeIndex) {

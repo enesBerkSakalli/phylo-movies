@@ -14,6 +14,8 @@
  */
 import { shortestAngle, crossesAngle, longArcDelta } from '../../../domain/math/mathUtils.js';
 
+const ANGULAR_DISTANCE_TYPES = ['nodes', 'labels', 'links', 'extensions'];
+
 /**
  * Compute the absolute angular displacement between two elements,
  * respecting root-crossing avoidance (same logic as PolarNodeInterpolator).
@@ -68,21 +70,26 @@ export function buildGlobalVelocityMaps(angularDistanceMaps, t) {
   const MIN_DIST = 1e-8;
 
   let globalMaxAngle = 0;
-  for (const distances of Object.values(angularDistanceMaps)) {
+  for (const type of ANGULAR_DISTANCE_TYPES) {
+    const distances = angularDistanceMaps[type];
+    if (!distances) continue;
     for (const dist of distances.values()) {
       if (dist > globalMaxAngle) globalMaxAngle = dist;
     }
   }
 
   const velocityMaps = {};
-  const types = Object.keys(angularDistanceMaps);
 
-  for (const type of types) {
-    const angularDists = angularDistanceMaps[type] || new Map();
+  for (const type of ANGULAR_DISTANCE_TYPES) {
+    const angularDists = angularDistanceMaps[type];
     const velocityMap = new Map();
 
-    for (const id of angularDists.keys()) {
-      const aDist = angularDists.get(id) ?? 0;
+    if (!angularDists) {
+      velocityMaps[type] = velocityMap;
+      continue;
+    }
+
+    for (const [id, aDist = 0] of angularDists) {
 
       const angularT =
         aDist < MIN_DIST || globalMaxAngle < MIN_DIST

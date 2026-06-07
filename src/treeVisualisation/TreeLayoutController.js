@@ -158,6 +158,17 @@ export class TreeLayoutController {
     // initializeUniformScaling is cache-guarded and also catches dataset reference changes.
     this.initializeUniformScaling(branchTransformation);
 
+    const layoutCacheKey = this._getLayoutResultCacheKey({
+      state,
+      treeList,
+      treeData,
+      treeIndex,
+    });
+    if (layoutCacheKey) {
+      const cachedLayout = this._layoutResultCache.get(layoutCacheKey);
+      if (cachedLayout) return cachedLayout;
+    }
+
     const transformCacheKey = createTransformCacheKey({ state, treeList, branchTransformation });
     const transformedTreeData = this._getTransformedTreeData(
       treeData,
@@ -172,17 +183,6 @@ export class TreeLayoutController {
         treeCount: Array.isArray(treeList) ? treeList.length : 0,
       });
       return null;
-    }
-
-    const layoutCacheKey = this._getLayoutResultCacheKey({
-      state,
-      treeList,
-      treeData,
-      treeIndex,
-    });
-    if (layoutCacheKey) {
-      const cachedLayout = this._layoutResultCache.get(layoutCacheKey);
-      if (cachedLayout) return cachedLayout;
     }
 
     const layout = this._computeLayout(
@@ -238,8 +238,12 @@ export class TreeLayoutController {
     }
     if (treeData) {
       const transformedTree = transformBranchLengths(treeData, branchTransformation);
-      if (cached?.transformedList && canUseIndexedCache) {
-        cached.transformedList[treeIndex] = transformedTree;
+      if (canUseIndexedCache) {
+        const transformedList = cached?.transformedList || new Array(treeList.length);
+        transformedList[treeIndex] = transformedTree;
+        if (!cached?.transformedList) {
+          this._transformedCache.set(transformCacheKey, { transformedList });
+        }
       }
       return transformedTree;
     }

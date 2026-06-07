@@ -242,6 +242,29 @@ describe('InterpolationCache', () => {
     });
   });
 
+  it('bounds precomputed worker data and refreshes recently updated entries', () => {
+    for (let treeIndex = 0; treeIndex < 32; treeIndex += 1) {
+      cache.setPrecomputedData(treeIndex, {
+        layerData: { layoutCacheKey: `layout-${treeIndex}` },
+      });
+    }
+
+    cache.setPrecomputedData(0, {
+      layerData: { layoutCacheKey: 'layout-0-new' },
+    });
+    cache.setPrecomputedData(32, {
+      layerData: { layoutCacheKey: 'layout-32' },
+    });
+
+    expect(cache._precomputedCache.size).to.equal(32);
+    expect(cache._precomputedCache.has(0)).to.equal(true);
+    expect(cache._precomputedCache.has(1)).to.equal(false);
+    expect(cache._precomputedCache.has(32)).to.equal(true);
+    expect(cache._precomputedCache.get(0)).to.deep.equal({
+      layerData: { layoutCacheKey: 'layout-0-new' },
+    });
+  });
+
   it('should reset cache via reset()', () => {
     const tree1 = { id: 1 };
     const tree2 = { id: 2 };
