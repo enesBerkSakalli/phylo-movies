@@ -30,6 +30,7 @@ describe('error message quality guardrails', () => {
 
   it('keeps media failure toasts actionable instead of silent console-only failures', () => {
     const saveImageSource = source('src/components/media/SaveImageButton.jsx');
+    const copyImageSource = source('src/components/media/CopyImageButton.jsx');
     const recordingSource = source('src/components/media/RecordingControls.jsx');
 
     expect(saveImageSource).toContain('PNG export is not ready yet.');
@@ -38,6 +39,13 @@ describe('error message quality guardrails', () => {
     expect(saveImageSource).toContain('Saving PNG');
     expect(saveImageSource).toContain('aria-busy={isSaving}');
     expect(saveImageSource).toContain('Loader2');
+    expect(copyImageSource).toContain('PNG copy is not ready yet.');
+    expect(copyImageSource).toContain('PNG copy could not find the visualization canvas.');
+    expect(copyImageSource).toContain('PNG copied to clipboard.');
+    expect(copyImageSource).toContain('PNG image clipboard writes are not supported');
+    expect(copyImageSource).toContain('window.ClipboardItem');
+    expect(copyImageSource).toContain('navigator.clipboard.write');
+    expect(copyImageSource).toContain('aria-busy={isCopying}');
     expect(recordingSource).toContain('Recording could not start.');
     expect(recordingSource).toContain('Recording could not be saved.');
     expect(recordingSource).toContain("recordingState === 'starting'");

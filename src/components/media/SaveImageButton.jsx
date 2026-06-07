@@ -8,6 +8,11 @@ import {
   useAppStore,
 } from '../../state/phyloStore/store.js';
 import { toast } from 'sonner';
+import {
+  createCanvasPngBlob,
+  createPngFileName,
+  getActiveTreeCanvas,
+} from '../../services/media/canvasPngExport.js';
 
 // ==========================================================================
 // STORE SELECTORS
@@ -29,13 +34,11 @@ export function SaveImageButton({ disabled = false }) {
         return;
       }
 
-      const treeController = treeControllers[treeControllers.length - 1]; // Save the right-most view
-
-      const canvas = treeController.deckContext?.canvas;
+      const { canvas, treeController } = getActiveTreeCanvas(treeControllers);
 
       if (!canvas) {
         console.error('[SaveImageButton] Deck.gl canvas is missing from the active controller.', {
-          hasDeckContext: !!treeController.deckContext,
+          hasDeckContext: !!treeController?.deckContext,
         });
         toast.error('PNG export could not find the visualization canvas.', {
           description: 'Reload the dataset if the tree view is blank, then try again.',
@@ -43,38 +46,8 @@ export function SaveImageButton({ disabled = false }) {
         return;
       }
 
-      const fileName = `phylo-movie-export-${frameIndex + 1}.png`;
-
-      // Create a proxy 2D canvas to fix WebGL color drift issues
-      // Direct toBlob() on WebGL canvas causes color shifts due to premultiplied alpha
-      // and color space handling differences between WebGL and PNG encoding
-      const proxyCanvas = document.createElement('canvas');
-      proxyCanvas.width = canvas.width;
-      proxyCanvas.height = canvas.height;
-      const ctx = proxyCanvas.getContext('2d');
-      if (!ctx) {
-        throw new Error('Browser could not create a 2D canvas for PNG export.');
-      }
-
-      // Draw solid white background (handles alpha compositing correctly)
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, proxyCanvas.width, proxyCanvas.height);
-
-      // Composite WebGL canvas onto 2D canvas (this normalizes color space)
-      ctx.drawImage(canvas, 0, 0);
-
-      // Export from the proxy canvas for accurate colors
-      const blob = await new Promise((resolve) => {
-        proxyCanvas.toBlob(resolve, 'image/png');
-      });
-
-      if (!blob) {
-        console.error('[SaveImageButton] Browser returned an empty PNG blob.');
-        toast.error('PNG export failed.', {
-          description: 'The browser could not encode the current WebGL canvas.',
-        });
-        return;
-      }
+      const fileName = createPngFileName(frameIndex);
+      const blob = await createCanvasPngBlob(canvas);
 
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
