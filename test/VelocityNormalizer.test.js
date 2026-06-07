@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   computeAngularDistance,
   computeAngularDistances,
+  getGlobalAngularMaxAngle,
   buildGlobalVelocityMaps,
 } from '../src/treeVisualisation/deckgl/interpolation/VelocityNormalizer.js';
 import { PolarNodeInterpolator } from '../src/treeVisualisation/deckgl/interpolation/nodes/PolarNodeInterpolator.js';
@@ -68,6 +69,27 @@ describe('VelocityNormalizer', () => {
   });
 
   describe('buildGlobalVelocityMaps', () => {
+    it('computes the global max independently from velocity-map construction', () => {
+      const globalMaxAngle = getGlobalAngularMaxAngle({
+        nodes: new Map([['n1', 0.25]]),
+        labels: new Map([['l1', 1.5]]),
+        links: new Map([['link-1', 0.75]]),
+      });
+
+      expect(globalMaxAngle).toBeCloseTo(1.5, 10);
+    });
+
+    it('uses a precomputed global max angle when supplied', () => {
+      const { velocityMaps, globalMaxAngle } = buildGlobalVelocityMaps(
+        { nodes: new Map([['n1', 0.5]]) },
+        0.25,
+        { globalMaxAngle: 2 }
+      );
+
+      expect(globalMaxAngle).toBe(2);
+      expect(velocityMaps.nodes.get('n1').angularT).toBe(1);
+    });
+
     it('uses the global max angular displacement across element types', () => {
       const nodeAngular = new Map([
         ['n1', 0.5],

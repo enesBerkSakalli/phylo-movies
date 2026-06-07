@@ -25,9 +25,13 @@ export class PolarExtensionInterpolator {
    * @returns {Object} Interpolated extension data
    */
   interpolateExtension(fromExt, toExt, t, velocityEntry = null) {
+    const id = toExt?.id ?? fromExt?.id;
     return {
       ...toExt,
-      path: this.pathInterpolator.interpolatePath(fromExt, toExt, t, velocityEntry),
+      path: this.pathInterpolator.interpolatePath(fromExt, toExt, t, {
+        velocityEntry,
+        pathPoolKey: id != null ? `ext:${id}` : null,
+      }),
     };
   }
 
@@ -36,5 +40,6 @@ export class PolarExtensionInterpolator {
    */
   resetCache() {
     this.pathInterpolator?.resetCaches?.();
+    this.pathInterpolator?.resetPathBufferPool?.();
   }
 }

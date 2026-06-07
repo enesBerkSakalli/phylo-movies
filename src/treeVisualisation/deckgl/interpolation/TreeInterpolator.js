@@ -5,7 +5,11 @@ import { PolarLabelInterpolator } from './labels/PolarLabelInterpolator.js';
 import { PolarExtensionInterpolator } from './extensions/PolarExtensionInterpolator.js';
 import { PolarLinkInterpolator } from './PolarLinkInterpolator.js';
 import { OuterRadiusInterpolator } from './OuterRadiusInterpolator.js';
-import { computeAngularDistances, buildGlobalVelocityMaps } from './VelocityNormalizer.js';
+import {
+  computeAngularDistances,
+  buildGlobalVelocityMaps,
+  getGlobalAngularMaxAngle,
+} from './VelocityNormalizer.js';
 import { ANIMATION_STAGES } from './stages/animationStageDetector.js';
 import { measureFrameStep } from '../../performance/frameInstrumentation.js';
 import { Z_NODE } from '../constants/zOffsets.js';
@@ -30,6 +34,7 @@ export class TreeInterpolator {
     this._elementMapCache = new WeakMap();
     this._polarAngleMapCache = new WeakMap();
     this._angularDistanceCache = new WeakMap();
+    this._angularDistanceMaxCache = new WeakMap();
     this._rootAngle = 0;
   }
 
@@ -78,40 +83,42 @@ export class TreeInterpolator {
       !interpolationOptions.stage || interpolationOptions.stage === ANIMATION_STAGES.REORDER;
 
     if (isReorder) {
-      const rootAngle = this._rootAngle;
+      measureFrameStep('treeInterpolator.velocityMaps', () => {
+        const rootAngle = this._rootAngle;
 
-      // Angular distances for all element types
-      const angularDistanceMaps = {
-        nodes: this._getAngularDistances(nodeFromMap, nodeToMap, rootAngle),
-        labels: this._getAngularDistances(labelFromMap, labelToMap, rootAngle),
-        links: this._getAngularDistances(
-          this._polarAngleMap(linkFromMap),
-          this._polarAngleMap(linkToMap),
-          rootAngle
-        ),
-        extensions: this._getAngularDistances(
-          this._polarAngleMap(extFromMap),
-          this._polarAngleMap(extToMap),
-          rootAngle
-        ),
-      };
+        // Angular distances for all element types
+        const angularDistanceMaps = {
+          nodes: this._getAngularDistances(nodeFromMap, nodeToMap, rootAngle),
+          labels: this._getAngularDistances(labelFromMap, labelToMap, rootAngle),
+          links: this._getAngularDistances(
+            this._polarAngleMap(linkFromMap),
+            this._polarAngleMap(linkToMap),
+            rootAngle
+          ),
+          extensions: this._getAngularDistances(
+            this._polarAngleMap(extFromMap),
+            this._polarAngleMap(extToMap),
+            rootAngle
+          ),
+        };
 
-      // Build velocity maps with a single global angular maximum across all types
-      ({ velocityMaps } = buildGlobalVelocityMaps(angularDistanceMaps, t));
+        // Build velocity maps with a single global angular maximum across all types
+        const globalMaxAngle = this._getGlobalAngularDistanceMax(angularDistanceMaps);
+        ({ velocityMaps } = buildGlobalVelocityMaps(angularDistanceMaps, t, { globalMaxAngle }));
+      });
     }
 
     // Interpolate each element type
-    const interpolatedNodes = this._interpolateNodes(dataFrom.nodes, dataTo.nodes, t, {
-      fromMap: nodeFromMap,
-      toMap: nodeToMap,
-      velocityMap: velocityMaps?.nodes ?? null,
-      ...structuralOpacity,
-    });
-    const interpolatedLinks = this.linkInterpolator.interpolateLinks(
-      dataFrom.links,
-      dataTo.links,
-      t,
-      {
+    const interpolatedNodes = measureFrameStep('treeInterpolator.nodes', () =>
+      this._interpolateNodes(dataFrom.nodes, dataTo.nodes, t, {
+        fromMap: nodeFromMap,
+        toMap: nodeToMap,
+        velocityMap: velocityMaps?.nodes ?? null,
+        ...structuralOpacity,
+      })
+    );
+    const interpolatedLinks = measureFrameStep('treeInterpolator.links', () =>
+      this.linkInterpolator.interpolateLinks(dataFrom.links, dataTo.links, t, {
         fromMap: linkFromMap,
         toMap: linkToMap,
         velocityMap: velocityMaps?.links ?? null,
@@ -122,24 +129,23 @@ export class TreeInterpolator {
         transitionChangeModel: interpolationOptions.transitionChangeModel,
         rawTimeFactor: interpolationOptions.rawTimeFactor,
         linkGeometryMode: interpolationOptions.linkGeometryMode,
-      }
+      })
     );
-    const interpolatedLabels = this._interpolateLabels(dataFrom.labels, dataTo.labels, t, {
-      fromMap: labelFromMap,
-      toMap: labelToMap,
-      velocityMap: velocityMaps?.labels ?? null,
-      ...structuralOpacity,
-    });
-    const interpolatedExtensions = this._interpolateExtensions(
-      dataFrom.extensions,
-      dataTo.extensions,
-      t,
-      {
+    const interpolatedLabels = measureFrameStep('treeInterpolator.labels', () =>
+      this._interpolateLabels(dataFrom.labels, dataTo.labels, t, {
+        fromMap: labelFromMap,
+        toMap: labelToMap,
+        velocityMap: velocityMaps?.labels ?? null,
+        ...structuralOpacity,
+      })
+    );
+    const interpolatedExtensions = measureFrameStep('treeInterpolator.extensions', () =>
+      this._interpolateExtensions(dataFrom.extensions, dataTo.extensions, t, {
         fromMap: extFromMap,
         toMap: extToMap,
         velocityMap: velocityMaps?.extensions ?? null,
         ...structuralOpacity,
-      }
+      })
     );
     const maxRadius = this.outerRadiusInterpolator.interpolateMaxRadius(dataFrom, dataTo, t);
     const { labelRadius, extensionRadius } = this.outerRadiusInterpolator.interpolateRadii(
@@ -149,9 +155,8 @@ export class TreeInterpolator {
       maxRadius
     );
 
-    const endpointAlignedNodes = alignNodesToRenderedLinkTargets(
-      interpolatedNodes,
-      interpolatedLinks
+    const endpointAlignedNodes = measureFrameStep('treeInterpolator.endpointAlign', () =>
+      alignNodesToRenderedLinkTargets(interpolatedNodes, interpolatedLinks)
     );
 
     return {
@@ -221,6 +226,39 @@ export class TreeInterpolator {
     return map;
   }
 
+  _getGlobalAngularDistanceMax(angularDistanceMaps) {
+    const { nodes, labels, links, extensions } = angularDistanceMaps || {};
+    if (!nodes || !labels || !links || !extensions) {
+      return getGlobalAngularMaxAngle(angularDistanceMaps || {});
+    }
+
+    let labelsCache = this._angularDistanceMaxCache.get(nodes);
+    if (!labelsCache) {
+      labelsCache = new WeakMap();
+      this._angularDistanceMaxCache.set(nodes, labelsCache);
+    }
+
+    let linksCache = labelsCache.get(labels);
+    if (!linksCache) {
+      linksCache = new WeakMap();
+      labelsCache.set(labels, linksCache);
+    }
+
+    let extensionsCache = linksCache.get(links);
+    if (!extensionsCache) {
+      extensionsCache = new WeakMap();
+      linksCache.set(links, extensionsCache);
+    }
+
+    if (extensionsCache.has(extensions)) {
+      return extensionsCache.get(extensions);
+    }
+
+    const globalMaxAngle = getGlobalAngularMaxAngle(angularDistanceMaps);
+    extensionsCache.set(extensions, globalMaxAngle);
+    return globalMaxAngle;
+  }
+
   /**
    * Interpolate nodes between two states
    * @private
@@ -271,12 +309,14 @@ export class TreeInterpolator {
    */
   resetCaches() {
     this.pathInterpolator?.resetCaches?.();
+    this.pathInterpolator?.resetPathBufferPool?.();
     this.nodeInterpolator?.resetCache?.();
     this.labelInterpolator?.resetCache?.();
     this.extensionInterpolator?.resetCache?.();
     this._elementMapCache = new WeakMap();
     this._polarAngleMapCache = new WeakMap();
     this._angularDistanceCache = new WeakMap();
+    this._angularDistanceMaxCache = new WeakMap();
   }
 }
 
@@ -316,14 +356,18 @@ function structuralOpacityOptions(options) {
 }
 
 function alignNodesToRenderedLinkTargets(nodes, links) {
-  const targetPositionByNodeId = new Map();
+  if (!Array.isArray(nodes) || nodes.length === 0 || !Array.isArray(links) || links.length === 0) {
+    return nodes;
+  }
 
-  for (const link of links || []) {
+  let targetPositionByNodeId = null;
+  for (const link of links) {
     if (!link?.targetId || !isFinitePoint(link.targetPosition)) continue;
+    targetPositionByNodeId ??= new Map();
     targetPositionByNodeId.set(link.targetId, link.targetPosition);
   }
 
-  if (targetPositionByNodeId.size === 0) return nodes;
+  if (!targetPositionByNodeId) return nodes;
 
   let changed = false;
   const alignedNodes = nodes.map((node) => {

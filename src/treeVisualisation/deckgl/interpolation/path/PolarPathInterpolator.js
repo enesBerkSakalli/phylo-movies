@@ -5,19 +5,53 @@
 import { calculateInterpolatedBranchCoordinates } from '../../../layout/RadialTreeGeometry.js';
 import { shortestAngle, crossesAngle, longArcDelta } from '../../../../domain/math/mathUtils.js';
 import {
-  ARC_SEGMENT_COUNT,
   LINK_GEOMETRY_MODES,
   normalizeLinkGeometryMode,
 } from '../../builders/geometry/links/LinkGeometryBuilder.js';
 import { rootAwareAngleDelta } from '../../../utils/polarGeometry.js';
 import { twoPointFloat32Path } from '../../utils/pathFormat.js';
+import { measureFrameStep } from '../../../performance/frameInstrumentation.js';
+
+const ANIMATED_ARC_SEGMENT_COUNT = 10;
 
 export class PolarPathInterpolator {
   constructor() {
-    this.segmentCount = ARC_SEGMENT_COUNT;
+    this.segmentCount = ANIMATED_ARC_SEGMENT_COUNT;
     this._angleCache = new Map();
     // Root angle (where tree root is positioned) - default 0
     this._rootAngle = 0;
+    // Optional per-key Float32Array pool. When a caller passes a stable
+    // `pathPoolKey` (e.g. a link/extension id), the path buffer for that key is
+    // reused across frames instead of reallocated, cutting per-frame garbage.
+    //
+    // Safety: each key owns a distinct buffer, so paths within one frame never
+    // alias. deck.gl PathLayer repacks paths into its own GPU buffer during the
+    // synchronous layer update (getPath updateTrigger fires every frame because
+    // the `links` array identity changes), so the previous frame's contents are
+    // already consumed before we overwrite them on the next frame.
+    this._pathBufferPool = new Map();
+  }
+
+  /**
+   * Clear the path buffer pool. Call when the dataset/tree set changes so stale
+   * keys do not retain buffers.
+   */
+  resetPathBufferPool() {
+    this._pathBufferPool.clear();
+  }
+
+  /**
+   * Get a pooled Float32Array of exactly `length` for `key`, or null if pooling
+   * is disabled (no key). Reallocates if the cached buffer length differs.
+   * @private
+   */
+  _acquirePathBuffer(key, length) {
+    if (key === undefined || key === null) return null;
+    const existing = this._pathBufferPool.get(key);
+    if (existing && existing.length === length) return existing;
+    const buffer = new Float32Array(length);
+    this._pathBufferPool.set(key, buffer);
+    return buffer;
   }
 
   /**
@@ -40,7 +74,8 @@ export class PolarPathInterpolator {
     const pathOptions =
       options &&
       (Object.prototype.hasOwnProperty.call(options, 'velocityEntry') ||
-        Object.prototype.hasOwnProperty.call(options, 'linkGeometryMode'))
+        Object.prototype.hasOwnProperty.call(options, 'linkGeometryMode') ||
+        Object.prototype.hasOwnProperty.call(options, 'pathPoolKey'))
         ? options
         : { velocityEntry: options };
 
@@ -93,7 +128,19 @@ export class PolarPathInterpolator {
       },
     };
 
+    const pathPoolKey = pathOptions.pathPoolKey ?? null;
+
     if (normalizeLinkGeometryMode(pathOptions.linkGeometryMode) === LINK_GEOMETRY_MODES.STRAIGHT) {
+      const straight = this._acquirePathBuffer(pathPoolKey, 6);
+      if (straight) {
+        straight[0] = linkData.source.x;
+        straight[1] = linkData.source.y;
+        straight[2] = 0;
+        straight[3] = linkData.target.x;
+        straight[4] = linkData.target.y;
+        straight[5] = 0;
+        return straight;
+      }
       return twoPointFloat32Path(
         [linkData.source.x, linkData.source.y, 0],
         [linkData.target.x, linkData.target.y, 0]
@@ -101,15 +148,17 @@ export class PolarPathInterpolator {
     }
 
     // Use static branch coordinates calculation (t=1, no further interpolation needed)
-    const coordinates = calculateInterpolatedBranchCoordinates(
-      linkData,
-      1.0, // Already interpolated
-      interpSourceAngle,
-      interpSourceRadius,
-      interpTargetAngle,
-      interpTargetRadius,
-      undefined,
-      { useShortestAngle: true } // OK to use shortest for arc within branch
+    const coordinates = measureFrameStep('path.coordinateCalc', () =>
+      calculateInterpolatedBranchCoordinates(
+        linkData,
+        1.0, // Already interpolated
+        interpSourceAngle,
+        interpSourceRadius,
+        interpTargetAngle,
+        interpTargetRadius,
+        undefined,
+        { useShortestAngle: true } // OK to use shortest for arc within branch
+      )
     );
 
     // Apply strict root crossing check on the generated geometry
@@ -123,19 +172,21 @@ export class PolarPathInterpolator {
       }
     }
 
-    return this._coordinatesToPath(coordinates);
+    return measureFrameStep('path.coordinatesToPath', () =>
+      this._coordinatesToPath(coordinates, pathPoolKey)
+    );
   }
 
   /**
    * Convert branch coordinates to flat path array
    * @private
    */
-  _coordinatesToPath(coordinates) {
+  _coordinatesToPath(coordinates, pathPoolKey = null) {
     const { movePoint, arcEndPoint, lineEndPoint, arcProperties } = coordinates;
 
     // Straight line (no arc)
     if (!arcProperties) {
-      const result = new Float32Array(6);
+      const result = this._acquirePathBuffer(pathPoolKey, 6) ?? new Float32Array(6);
       result[0] = movePoint.x;
       result[1] = movePoint.y;
       result[2] = 0;
@@ -158,7 +209,8 @@ export class PolarPathInterpolator {
     const segmentCount = this.segmentCount;
 
     const totalPoints = segmentCount + 2;
-    const result = new Float32Array(totalPoints * 3);
+    const result =
+      this._acquirePathBuffer(pathPoolKey, totalPoints * 3) ?? new Float32Array(totalPoints * 3);
 
     // Move point
     result[0] = movePoint.x;
@@ -195,7 +247,7 @@ export class PolarPathInterpolator {
    * Set segment count for arc generation
    */
   setSegmentCount(count) {
-    this.segmentCount = Math.max(4, Math.floor(count) || ARC_SEGMENT_COUNT);
+    this.segmentCount = Math.max(4, Math.floor(count) || ANIMATED_ARC_SEGMENT_COUNT);
   }
 
   /**
