@@ -15,6 +15,48 @@ echo "  Phylo-Movies Desktop Build Script"
 echo "  Root: $PROJECT_ROOT"
 echo "=========================================="
 
+# Determine target before doing expensive work so incompatible macOS
+# architecture requests fail before rebuilding the backend and frontend.
+TARGET_ARGS=()
+if [[ "$1" == "win" || "$1" == "windows" ]]; then
+    TARGET_ARGS=("--win")
+elif [[ "$1" == "linux" ]]; then
+    TARGET_ARGS=("--linux")
+else
+    TARGET_ARGS=("--mac") # Default to Mac
+fi
+
+# Collect extra args (e.g., --publish always for release builds)
+shift || true
+EXTRA_ARGS=("$@")
+
+if [[ "${TARGET_ARGS[0]}" == "--mac" ]]; then
+    HOST_ARCH="$(uname -m)"
+    if [[ "$HOST_ARCH" == "arm64" ]]; then
+        DEFAULT_MAC_ARCH="--arm64"
+    elif [[ "$HOST_ARCH" == "x86_64" ]]; then
+        DEFAULT_MAC_ARCH="--x64"
+    else
+        echo "Error: Unsupported macOS build architecture: $HOST_ARCH"
+        exit 1
+    fi
+
+    REQUESTED_MAC_ARCH=""
+    for arg in "${EXTRA_ARGS[@]}"; do
+        if [[ "$arg" == "--arm64" || "$arg" == "--x64" || "$arg" == "--universal" ]]; then
+            REQUESTED_MAC_ARCH="$arg"
+        fi
+    done
+
+    if [[ -z "$REQUESTED_MAC_ARCH" ]]; then
+        TARGET_ARGS+=("$DEFAULT_MAC_ARCH")
+    elif [[ "$REQUESTED_MAC_ARCH" != "$DEFAULT_MAC_ARCH" ]]; then
+        echo "Error: Cannot build $REQUESTED_MAC_ARCH macOS package on $HOST_ARCH."
+        echo "The bundled PyInstaller backend is built for the host architecture."
+        exit 1
+    fi
+fi
+
 # -----------------------------------------------------------------------------
 # 1. Cleanup
 # -----------------------------------------------------------------------------
@@ -65,22 +107,8 @@ echo "Frontend prepared successfully."
 # -----------------------------------------------------------------------------
 echo "[4/4] Packaging Electron application..."
 
-# Determine target
-TARGET=""
-if [[ "$1" == "win" || "$1" == "windows" ]]; then
-    TARGET="--win"
-elif [[ "$1" == "linux" ]]; then
-    TARGET="--linux"
-else
-    TARGET="--mac" # Default to Mac
-fi
-
-# Collect extra args (e.g., --publish always for release builds)
-shift || true
-EXTRA_ARGS=("$@")
-
-echo "Running electron-builder for target: $TARGET ${EXTRA_ARGS[*]}"
-npx electron-builder "$TARGET" "${EXTRA_ARGS[@]}"
+echo "Running electron-builder for target: ${TARGET_ARGS[*]} ${EXTRA_ARGS[*]}"
+npx electron-builder "${TARGET_ARGS[@]}" "${EXTRA_ARGS[@]}"
 
 echo "=========================================="
 echo "  Build Success!"

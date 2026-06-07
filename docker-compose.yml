@@ -5,8 +5,8 @@
 #    docker compose up --build
 #    → http://localhost:8080
 #
-#  Development (hot-reload frontend + live backend):
-#    docker compose --profile dev up --build
+#  Development backend only (use with `npm run dev` on the host):
+#    docker compose up --build backend-dev
 #    → Frontend: http://localhost:5173  (Vite HMR)
 #    → Backend:  http://localhost:5002  (Flask)
 # ==============================================================================
@@ -15,11 +15,17 @@ services:
   # ── Production: combined frontend + backend ────────────────────────────────
   app:
     build: .
+    init: true
     ports:
       - '8080:8080'
+    environment:
+      LOG_FORMAT: json
+      LOG_ACCESS: '1'
+      LOG_HEALTHCHECKS: '0'
     restart: unless-stopped
+    stop_grace_period: 30s
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:8080/about']
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:8080/health']
       interval: 30s
       timeout: 5s
       retries: 3
@@ -30,15 +36,21 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.backend
+    init: true
     ports:
       - '5002:5002'
     volumes:
       - ./engine/BranchArchitect:/app/engine/BranchArchitect
+    environment:
+      LOG_FORMAT: json
+      LOG_ACCESS: '1'
+      LOG_HEALTHCHECKS: '0'
     profiles:
       - dev
     restart: unless-stopped
+    stop_grace_period: 30s
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:5002/about']
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:5002/health']
       interval: 15s
       timeout: 5s
       retries: 3

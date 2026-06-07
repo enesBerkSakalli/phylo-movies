@@ -90,10 +90,16 @@ docker compose up --build
 
 Open `http://localhost:8080/`.
 
+Check the container health endpoint with:
+
+```bash
+curl http://localhost:8080/health
+```
+
 For backend-in-Docker plus frontend hot reload on the host:
 
 ```bash
-docker compose --profile dev up --build
+docker compose up --build backend-dev
 npm run dev
 ```
 
