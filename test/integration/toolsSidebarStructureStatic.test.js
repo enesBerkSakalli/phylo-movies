@@ -35,7 +35,7 @@ describe('tools sidebar structure', () => {
   it('orders tools by the research workflow', () => {
     const sidebarSource = source('src/components/sidebar/ToolsSidebar.jsx');
 
-    expect(TOOLS_SIDEBAR_GROUP_LABELS).toEqual(['Dataset', 'Layout', 'Style', 'Analysis', 'Focus']);
+    expect(TOOLS_SIDEBAR_GROUP_LABELS).toEqual(['Dataset', 'Layout', 'Style', 'Analysis', 'View']);
     const labelUsePositions = [0, 1, 2, 3, 4].map((index) =>
       sidebarSource.indexOf(`TOOLS_SIDEBAR_GROUP_LABELS[${index}]`)
     );
@@ -49,8 +49,23 @@ describe('tools sidebar structure', () => {
       sidebarSource.indexOf('<TreeStatsPanel />')
     );
     expect(sidebarSource.indexOf('<TreeStatsPanel />')).toBeLessThan(
+      sidebarSource.indexOf('<ViewModeSection />')
+    );
+    expect(sidebarSource.indexOf('<ViewModeSection />')).toBeLessThan(
       sidebarSource.indexOf('<FocusAndChangeEffects />')
     );
+  });
+
+  it('keeps camera controls grouped with view effects rather than tree layout controls', () => {
+    const sidebarSource = source('src/components/sidebar/ToolsSidebar.jsx');
+    const layoutGroupStart = sidebarSource.indexOf('TOOLS_SIDEBAR_GROUP_LABELS[1]');
+    const styleGroupStart = sidebarSource.indexOf('TOOLS_SIDEBAR_GROUP_LABELS[2]');
+    const viewGroupStart = sidebarSource.indexOf('TOOLS_SIDEBAR_GROUP_LABELS[4]');
+    const layoutGroupSource = sidebarSource.slice(layoutGroupStart, styleGroupStart);
+    const viewGroupSource = sidebarSource.slice(viewGroupStart);
+
+    expect(layoutGroupSource).not.toContain('<ViewModeSection />');
+    expect(viewGroupSource).toContain('<ViewModeSection />');
   });
 
   it('keeps visual element and visual effect sections scoped to their responsibility', () => {

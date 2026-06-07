@@ -18,17 +18,17 @@ The workspace is organized around the tree canvas, sidebar, and movie timeline.
 
 <figure className="manual-screenshot">
   <img src="/phylo-movies/manual/img/screenshots/workspace-overview.png" alt="Phylo-Movies visualization workspace with sidebar, tree canvas, and movie timeline" />
-  <figcaption>The workspace combines the tool sidebar, central tree canvas, comparison panel, and bottom movie timeline.</figcaption>
+  <figcaption>The workspace combines the tool sidebar, central tree canvas, pinned tree panel, and bottom movie timeline.</figcaption>
 </figure>
 
-| Area | Purpose |
-| --- | --- |
-| Sidebar | Dataset, layout, style, analysis, and focus controls. |
-| Tree canvas | Main deck.gl visualization for the current tree or comparison view. |
-| Canvas controls | Fit, zoom, reset, PNG export, and WebM recording. |
-| Movie timeline | Input tree markers, generated frames, transport controls, speed, and charts. |
-| Transition Inspector | Detailed report for the selected topology-change segment. |
-| Floating windows | MSA viewer, taxa coloring, and SPR analytics when available. |
+| Area                 | Purpose                                                                      |
+| -------------------- | ---------------------------------------------------------------------------- |
+| Sidebar              | Dataset, layout, style, analysis, and view controls.                         |
+| Tree canvas          | Main deck.gl visualization for the current tree or comparison view.          |
+| Canvas controls      | Fit, zoom, reset, PNG export, and WebM recording.                            |
+| Movie timeline       | Input tree markers, generated frames, transport controls, speed, and charts. |
+| Transition Inspector | Detailed report for the selected topology-change segment.                    |
+| Floating windows     | MSA viewer, taxa coloring, and SPR analytics when available.                 |
 
 For detailed settings and methods, see the [Feature Reference](feature-reference/index.md).
 

@@ -28,14 +28,14 @@ export function HUD() {
   if (!isVisible) {
     return (
       <div className="phylo-hud-restore absolute bottom-4 left-4 z-50 pointer-events-auto sm:bottom-48">
-        <AppTooltip content="Show comparison panel">
+        <AppTooltip content="Show pinned reference tree panel">
           <Button
             type="button"
             size="icon-xs"
             variant="outline"
             className="border-sidebar-border bg-sidebar/90 shadow-lg backdrop-blur-md"
-            aria-label="Show comparison panel"
-            title="Show comparison panel"
+            aria-label="Show pinned reference tree panel"
+            title="Show pinned reference tree panel"
             onClick={() => setIsVisible(true)}
           >
             <Eye className="size-3.5" aria-hidden />
@@ -50,11 +50,11 @@ export function HUD() {
       <div
         className="phylo-hud absolute bottom-4 left-4 z-50 pointer-events-auto sm:bottom-48"
         role="complementary"
-        aria-label="Comparison Panel"
+        aria-label="Pinned Tree Panel"
       >
         <Card className="flex items-center gap-3 px-3 py-2 shadow-lg backdrop-blur-md border-sidebar-border bg-sidebar/90 cursor-default ring-1 ring-border/50">
           {/* Drag Handle */}
-          <AppTooltip content="Drag to move comparison panel">
+          <AppTooltip content="Drag to move pinned reference tree panel">
             <div className="hud-drag-handle cursor-grab active:cursor-grabbing p-1 -ml-2 hover:bg-accent rounded transition-colors duration-200">
               <GripVertical className="size-3.5 text-muted-foreground" />
             </div>
@@ -67,14 +67,14 @@ export function HUD() {
             onClear={clearClipboard}
           />
 
-          <AppTooltip content="Hide comparison panel">
+          <AppTooltip content="Hide pinned reference tree panel">
             <Button
               type="button"
               size="icon-xs"
               variant="ghost"
               className="-mr-2 size-6 text-muted-foreground hover:text-foreground"
-              aria-label="Hide comparison panel"
-              title="Hide comparison panel"
+              aria-label="Hide pinned reference tree panel"
+              title="Hide pinned reference tree panel"
               onClick={() => setIsVisible(false)}
             >
               <X className="size-3.5" aria-hidden />

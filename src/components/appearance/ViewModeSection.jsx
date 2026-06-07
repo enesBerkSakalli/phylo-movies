@@ -48,12 +48,15 @@ export function ViewModeSection() {
                   onClick={handleCameraModeToggle}
                 >
                   <span id="camera-mode-text">
-                    {cameraMode === 'orbit' ? 'Switch to 2D' : 'Switch to 3D'}
+                    {cameraMode === 'orbit' ? 'Switch to 2D Camera' : 'Switch to 3D Camera'}
                   </span>
                 </Button>
                 <div className="flex items-start gap-2 text-2xs leading-relaxed text-muted-foreground/80 italic">
                   <Info className="mt-1 size-3 shrink-0" />
-                  <span>Switch between flat 2D and interactive 3D tree views.</span>
+                  <span>
+                    3D tilts and orbits the same flat tree layout; topology, rooting, and branch
+                    lengths are unchanged.
+                  </span>
                 </div>
               </div>
             </SidebarMenuSubItem>

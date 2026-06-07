@@ -3,24 +3,46 @@ import { CLIPBOARD_LAYER_ID_PREFIX } from '../deckgl/layers/config/layerConfigs.
 import { selectInputFrameIndices, useAppStore } from '../../state/phyloStore/store.js';
 import { calculateLabelBounds, calculateNodeBounds, mergeBounds } from './TreeBoundsUtils.js';
 
+const EMPTY_CLIPBOARD_OVERLAY = Object.freeze({
+  layers: [],
+  fitData: null,
+  treeIndex: null,
+  fitKey: null,
+});
+
 /**
  * Get clipboard layers if clipboard is active
  * @param {Object} controller - The DeckGLTreeAnimationController instance
  * @returns {Array} Clipboard layers or empty array
  */
 export function getClipboardLayers(controller) {
-  const { clipboardTreeIndex, treeList } = useAppStore.getState();
-  if (clipboardTreeIndex === null || !treeList?.[clipboardTreeIndex]) {
-    return [];
-  }
+  return getClipboardOverlay(controller).layers;
+}
 
-  return createClipboardVisualLayers(controller, clipboardTreeIndex, treeList[clipboardTreeIndex]);
+/**
+ * Get clipboard layers plus world-space fit data for the pinned tree overlay.
+ * The rendered layers are offset by a modelMatrix, so the viewport fitter needs
+ * equivalent CPU-side offset coordinates to include the pinned tree in auto-fit.
+ */
+export function getClipboardOverlay(controller) {
+  const state = useAppStore.getState();
+  const { clipboardTreeIndex, treeList } = state;
+  if (clipboardTreeIndex === null) return EMPTY_CLIPBOARD_OVERLAY;
+
+  const treeData =
+    state.ensureTreeHydrated?.(clipboardTreeIndex) ??
+    useAppStore.getState().treeList?.[clipboardTreeIndex] ??
+    treeList?.[clipboardTreeIndex] ??
+    null;
+  if (!treeData) return EMPTY_CLIPBOARD_OVERLAY;
+
+  return createClipboardVisualOverlay(controller, clipboardTreeIndex, treeData);
 }
 
 /**
  * Create clipboard tree layers with visual positioning.
  */
-function createClipboardVisualLayers(controller, treeIndex, treeData) {
+function createClipboardVisualOverlay(controller, treeIndex, treeData) {
   const linkGeometryMode = useAppStore.getState().linkGeometryMode || 'radial-elbow';
   const layout = controller.calculateLayout(treeData, {
     treeIndex,
@@ -28,7 +50,7 @@ function createClipboardVisualLayers(controller, treeIndex, treeData) {
 
   if (!layout?.layoutTree) {
     console.warn('[DeckGLTreeAnimationController] Clipboard layout not available');
-    return [];
+    return EMPTY_CLIPBOARD_OVERLAY;
   }
 
   const { extensionRadius, labelRadius } = controller._getConsistentRadii(layout);
@@ -60,6 +82,13 @@ function createClipboardVisualLayers(controller, treeIndex, treeData) {
   const yOffset = mainTreeBounds.minY - clipboardBounds.maxY - gap + clipboardOffsetY;
 
   const treeLayers = controller.layerManager.createClipboardLayers(layerData, 0, xOffset, yOffset);
+  const labelData = createClipboardLabelData(
+    treeIndex,
+    clipboardBounds,
+    inputFrameIndices,
+    xOffset,
+    yOffset
+  );
   const labelLayer = createClipboardLabelLayer(
     treeIndex,
     clipboardBounds,
@@ -68,7 +97,12 @@ function createClipboardVisualLayers(controller, treeIndex, treeData) {
     yOffset
   );
 
-  return [...treeLayers, labelLayer].filter(Boolean);
+  return {
+    layers: [...treeLayers, labelLayer].filter(Boolean),
+    fitData: createOffsetLayerDataForFit(layerData, xOffset, yOffset, labelData),
+    treeIndex,
+    fitKey: `pinned:${treeIndex}`,
+  };
 }
 
 /**
@@ -103,29 +137,17 @@ export function createClipboardLabelLayer(
   yOffset = 0
 ) {
   if (!bounds) return null;
-
-  const minY = bounds.minY;
-  const avgX = (bounds.minX + bounds.maxX) / 2;
-
-  let labelText = `Tree #${treeIndex + 1}`;
-  // Check if it is one of the original input trees.
-  const inputTreeOrdinal = inputFrameIndices.indexOf(treeIndex);
-  if (inputTreeOrdinal >= 0) {
-    labelText = `Input tree ${inputTreeOrdinal + 1}`; // 1-based index for user
-  }
+  const labelData = createClipboardLabelData(
+    treeIndex,
+    bounds,
+    inputFrameIndices,
+    xOffset,
+    yOffset
+  );
 
   return new TextLayer({
     id: `${CLIPBOARD_LAYER_ID_PREFIX}-tree-label`,
-    data: [
-      {
-        text: labelText,
-        // Place well above the visual top (minY).
-        // Visual bounds include label extent, so this should be safe.
-        // Add extra padding (e.g. 50px) to separate from top-most tree label.
-        position: [avgX + xOffset, minY + yOffset - 50, 0],
-        treeSide: 'clipboard',
-      },
-    ],
+    data: [labelData],
     pickable: true,
     getText: (d) => d.text,
     getPosition: (d) => d.position,
@@ -136,4 +158,79 @@ export function createClipboardLabelLayer(
     getTextAnchor: 'middle',
     getAlignmentBaseline: 'bottom',
   });
+}
+
+function createClipboardLabelData(
+  treeIndex,
+  bounds,
+  inputFrameIndices = [],
+  xOffset = 0,
+  yOffset = 0
+) {
+  const minY = bounds.minY;
+  const avgX = (bounds.minX + bounds.maxX) / 2;
+  const inputTreeOrdinal = inputFrameIndices.indexOf(treeIndex);
+  const text =
+    inputTreeOrdinal >= 0 ? `Input tree ${inputTreeOrdinal + 1}` : `Tree #${treeIndex + 1}`;
+
+  return {
+    text,
+    position: [avgX + xOffset, minY + yOffset - 50, 0],
+    treeSide: 'clipboard',
+  };
+}
+
+function createOffsetLayerDataForFit(layerData, offsetX, offsetY, labelData = null) {
+  return {
+    nodes: (layerData.nodes || []).map((node) => ({
+      ...node,
+      position: offsetPoint(node.position, offsetX, offsetY),
+      renderPosition: offsetPoint(node.renderPosition, offsetX, offsetY),
+    })),
+    links: (layerData.links || []).map((link) => ({
+      ...link,
+      sourcePosition: offsetPoint(link.sourcePosition, offsetX, offsetY),
+      targetPosition: offsetPoint(link.targetPosition, offsetX, offsetY),
+      path: offsetPath(link.path, offsetX, offsetY),
+    })),
+    labels: (layerData.labels || [])
+      .map((label) => ({
+        ...label,
+        position: offsetPoint(label.position, offsetX, offsetY),
+      }))
+      .concat(labelData ? [labelData] : []),
+    extensions: (layerData.extensions || []).map((extension) => ({
+      ...extension,
+      sourcePosition: offsetPoint(extension.sourcePosition, offsetX, offsetY),
+      targetPosition: offsetPoint(extension.targetPosition, offsetX, offsetY),
+      path: offsetPath(extension.path, offsetX, offsetY),
+    })),
+    connectors: [],
+  };
+}
+
+function offsetPoint(point, offsetX, offsetY) {
+  if (!Array.isArray(point)) return point;
+  return [point[0] + offsetX, point[1] + offsetY, point[2] ?? 0];
+}
+
+function offsetPath(path, offsetX, offsetY) {
+  if (!path) return path;
+
+  if (ArrayBuffer.isView(path)) {
+    const nextPath = new path.constructor(path);
+    for (let index = 0; index < nextPath.length; index += 3) {
+      nextPath[index] += offsetX;
+      nextPath[index + 1] += offsetY;
+    }
+    return nextPath;
+  }
+
+  if (Array.isArray(path)) {
+    return path.map((point) =>
+      Array.isArray(point) ? offsetPoint(point, offsetX, offsetY) : point
+    );
+  }
+
+  return path;
 }

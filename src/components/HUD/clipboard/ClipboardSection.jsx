@@ -45,17 +45,17 @@ export function ClipboardSection({
       <Clipboard className="size-3.5 text-primary" aria-hidden />
       <div className="flex flex-col gap-0">
         <span className="text-2xs font-medium text-muted-foreground uppercase tracking-wider">
-          Compare with
+          Pinned tree
         </span>
         <div className="flex items-center gap-1 mt-1">
-          <AppTooltip content="Previous input tree to compare">
+          <AppTooltip content="Pin previous input tree as an overlay reference">
             <Button
               variant="ghost"
               size="icon"
               className="h-5 w-5 hover:bg-accent rounded-sm"
               onClick={handlePreviousInputTree}
               disabled={!hasInputTrees}
-              aria-label="Previous input tree to compare"
+              aria-label="Pin previous input tree as an overlay reference"
             >
               <ChevronLeft className="size-3" />
             </Button>
@@ -68,27 +68,27 @@ export function ClipboardSection({
             {getClipboardLabel()}
           </Badge>
 
-          <AppTooltip content="Next input tree to compare">
+          <AppTooltip content="Pin next input tree as an overlay reference">
             <Button
               variant="ghost"
               size="icon"
               className="h-5 w-5 hover:bg-accent rounded-sm"
               onClick={handleNextInputTree}
               disabled={!hasInputTrees}
-              aria-label="Next input tree to compare"
+              aria-label="Pin next input tree as an overlay reference"
             >
               <ChevronRight className="size-3" />
             </Button>
           </AppTooltip>
 
           {isShowing && (
-            <AppTooltip content="Hide comparison tree">
+            <AppTooltip content="Hide pinned tree">
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-5 w-5 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-sm ml-1"
                 onClick={onClear}
-                aria-label="Hide comparison tree"
+                aria-label="Hide pinned tree"
               >
                 <X className="size-3" />
               </Button>

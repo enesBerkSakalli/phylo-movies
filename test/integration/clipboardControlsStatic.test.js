@@ -17,6 +17,9 @@ describe('clipboard comparison controls', () => {
     expect(
       existsSync(join(repoRoot, 'src/components/HUD/clipboard/ClipboardDismissButton.jsx'))
     ).toBe(false);
-    expect(clipboardSectionSource).toContain('aria-label="Hide comparison tree"');
+    expect(clipboardSectionSource).toContain('aria-label="Hide pinned tree"');
+    expect(clipboardSectionSource).toContain('Pinned tree');
+    expect(clipboardSectionSource).not.toContain('Compare with');
+    expect(clipboardSectionSource).not.toContain('comparison tree');
   });
 });

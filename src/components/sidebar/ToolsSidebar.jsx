@@ -93,7 +93,6 @@ export function ToolsSidebar({
             <SidebarMenu>
               <TreeStructureGroup />
               <LayoutTransformSection />
-              <ViewModeSection />
             </SidebarMenu>
           </SidebarGroup>
 
@@ -134,6 +133,7 @@ export function ToolsSidebar({
           <SidebarGroup>
             <SidebarGroupLabel>{TOOLS_SIDEBAR_GROUP_LABELS[4]}</SidebarGroupLabel>
             <SidebarMenu>
+              <ViewModeSection />
               <FocusAndChangeEffects />
             </SidebarMenu>
           </SidebarGroup>

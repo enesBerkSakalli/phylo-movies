@@ -49,21 +49,23 @@ export function TreeStructure() {
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectItem value="none">Metric: raw branch lengths</SelectItem>
-                <SelectItem value="sqrt">Readable: global sqrt transform</SelectItem>
-                <SelectItem value="log">Readable: global log transform</SelectItem>
-                <SelectItem value="normalized-sqrt">Animation: normalized sqrt</SelectItem>
-                <SelectItem value="normalized">Animation: normalized raw lengths</SelectItem>
-                <SelectItem value="normalized-log">Animation: normalized log</SelectItem>
+                <SelectItem value="none">Original: input branch lengths</SelectItem>
+                <SelectItem value="sqrt">Readable scale: global sqrt transform</SelectItem>
+                <SelectItem value="log">Readable scale: global log transform</SelectItem>
+                <SelectItem value="normalized-sqrt">Animation scale: normalized sqrt</SelectItem>
+                <SelectItem value="normalized">
+                  Animation scale: normalized input lengths
+                </SelectItem>
+                <SelectItem value="normalized-log">Animation scale: normalized log</SelectItem>
                 <SelectItem value="ignore">Topology only: cladogram-style</SelectItem>
-                <SelectItem value="linear-scale">Metric: doubled branch lengths</SelectItem>
-                <SelectItem value="power2">Experimental: square branch lengths</SelectItem>
+                <SelectItem value="linear-scale">Experimental: doubled input lengths</SelectItem>
+                <SelectItem value="power2">Experimental: squared input lengths</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
           <p className="text-[11px] leading-snug text-muted-foreground">
-            Metric modes preserve proportional input branch lengths. Readable modes apply one global
-            transform. Animation modes normalize each tree for stable motion, so they are not
+            Original scale preserves proportional input branch lengths. Readable scale applies one
+            global transform. Animation scale normalizes each tree for stable motion, so it is not
             absolute evolutionary scale.
           </p>
 
