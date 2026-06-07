@@ -463,9 +463,6 @@ jobs:
       - name: Install backend fixture dependencies
         run: cd engine/BranchArchitect && poetry install
 
-      - name: Regenerate generated browser demo payloads
-        run: npm run fixtures:generate:ci
-
       - name: Build for GitHub Pages
         run: npm run build:gh
 
