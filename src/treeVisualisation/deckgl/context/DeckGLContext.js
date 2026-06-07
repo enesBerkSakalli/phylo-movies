@@ -38,10 +38,12 @@ export class DeckGLContext {
     this._viewStateListeners = new Set();
     this._layerListeners = new Set();
     this._resizeListeners = new Set();
+    this._isDestroyed = false;
 
     // OPTIMIZATION: Throttle view state notifications
     this._viewStateNotifyPending = false;
     this._pendingViewStateId = null;
+    this._viewStateFrameId = null;
 
     // Event callbacks
     this._onWebGLInitialized = null;
@@ -77,6 +79,7 @@ export class DeckGLContext {
   // ==========================================================================
 
   initialize() {
+    this._isDestroyed = false;
     removeChildren(this.container);
     this._createCanvas();
 
@@ -192,6 +195,8 @@ export class DeckGLContext {
   // ==========================================================================
 
   _handleViewStateChange(viewState, viewId) {
+    if (this._isDestroyed) return;
+
     const id = viewId || this._activeViewId();
     this.viewStates[id] = { ...this.viewStates[id], ...viewState };
     this.deck.setProps({ viewState: this.viewStates[id] });
@@ -201,7 +206,10 @@ export class DeckGLContext {
     // This prevents flooding listeners during rapid pan/zoom
     if (!this._viewStateNotifyPending) {
       this._viewStateNotifyPending = true;
-      requestAnimationFrame(() => {
+      this._viewStateFrameId = requestAnimationFrame(() => {
+        this._viewStateFrameId = null;
+        if (this._isDestroyed) return;
+
         this._viewStateNotifyPending = false;
         const notifyId = this._pendingViewStateId || this._activeViewId();
         this._pendingViewStateId = null;
@@ -440,6 +448,15 @@ export class DeckGLContext {
   // ==========================================================================
 
   destroy() {
+    this._isDestroyed = true;
+
+    if (this._viewStateFrameId !== null) {
+      if (typeof cancelAnimationFrame === 'function') {
+        cancelAnimationFrame(this._viewStateFrameId);
+      }
+      this._viewStateFrameId = null;
+    }
+
     // Only finalize deck if we own it (not external/React-managed)
     if (this.deck) {
       this.deck.finalize();

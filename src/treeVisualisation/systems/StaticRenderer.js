@@ -25,9 +25,11 @@ export class StaticRenderer {
    * Handles both single tree and comparison modes.
    */
   async renderAllElements(options = {}) {
+    if (this.controller._destroyed) return;
     if (!this.controller.ready) {
       await this.controller.readyPromise;
     }
+    if (this.controller._destroyed) return;
 
     if (!this.controller.deckContext?.deck) return;
 
@@ -75,6 +77,7 @@ export class StaticRenderer {
     linkGeometryMode = 'radial-elbow',
     options = {}
   ) {
+    if (this.controller._destroyed) return;
     if (!treeList?.length) return;
 
     const targetIndex = Number.isInteger(treeIndex)
@@ -92,6 +95,7 @@ export class StaticRenderer {
     const currentLayout = this.controller.calculateLayout(targetTreeData, {
       treeIndex: targetIndex,
     });
+    if (this.controller._destroyed) return;
     if (!currentLayout) return;
 
     const { extensionRadius, labelRadius } = this.controller._getConsistentRadii(currentLayout);
