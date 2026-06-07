@@ -103,6 +103,7 @@ publication_data/norovirus/augur_subsampling/paper_text_draft.tex
 publication_data/recombination_norovirus/source_preparation/augur_subsampling/paper_text_draft.tex
 publication_data/topology_search_iqtree/dataset_500/aws_runs/
 publication_data/topology_search_iqtree/runs/
+local_publication_data_archive/
 scripts/run-iqtree500-search-aws.sh
 AGENTS.md
 .github/copilot-instructions.md
