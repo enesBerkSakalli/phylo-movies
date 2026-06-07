@@ -807,12 +807,6 @@ function expectArrayEqual(actual, expected, label, errors) {
   }
 }
 
-function expectMetadataValue(metadata, key, expected, fileName, errors) {
-  if (metadata[key] !== expected) {
-    errors.push(`${fileName} metadata ${key} mismatch: expected ${expected}, got ${metadata[key]}`);
-  }
-}
-
 function compareSameFileContent(leftPath, rightPath, label, errors) {
   for (const filePath of [leftPath, rightPath]) {
     requireFile(filePath, errors);
