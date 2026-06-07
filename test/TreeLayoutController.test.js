@@ -464,6 +464,36 @@ describe('TreeLayoutController radii', () => {
     expect(controller._layoutResultCache.size).toBe(1);
   });
 
+  it('bounds layout cache growth and refreshes recency on reads', () => {
+    const controller = new TreeLayoutController(null);
+
+    for (let index = 0; index < 10; index += 1) {
+      controller._setCacheEntry(controller._layoutResultCache, `layout-${index}`, { index });
+    }
+    controller._getCacheEntry(controller._layoutResultCache, 'layout-0');
+    controller._setCacheEntry(controller._layoutResultCache, 'layout-10', { index: 10 });
+
+    expect(controller._layoutResultCache.size).toBe(10);
+    expect(controller._layoutResultCache.has('layout-0')).toBe(true);
+    expect(controller._layoutResultCache.has('layout-1')).toBe(false);
+    expect(controller._layoutResultCache.has('layout-10')).toBe(true);
+  });
+
+  it('bounds transformed tree cache growth', () => {
+    const controller = new TreeLayoutController(null);
+
+    for (let index = 0; index < 12; index += 1) {
+      controller._setCacheEntry(controller._transformedCache, `dataset-${index}`, {
+        transformedList: [{ id: `tree-${index}` }],
+      });
+    }
+
+    expect(controller._transformedCache.size).toBe(10);
+    expect(controller._transformedCache.has('dataset-0')).toBe(false);
+    expect(controller._transformedCache.has('dataset-1')).toBe(false);
+    expect(controller._transformedCache.has('dataset-11')).toBe(true);
+  });
+
   it('does not replace explicit tree data with the indexed active tree', () => {
     const activeTreeList = [
       {

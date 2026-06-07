@@ -19,6 +19,7 @@ import {
 } from './layout/labelRingRadii.js';
 
 const TREE_LAYOUT_MARGIN = 60;
+const TREE_LAYOUT_CACHE_ENTRY_LIMIT = 10;
 
 export class TreeLayoutController {
   // ==========================================================================
@@ -76,6 +77,30 @@ export class TreeLayoutController {
 
   clearTransformedCache() {
     this._transformedCache?.clear();
+  }
+
+  _getCacheEntry(cache, key) {
+    if (!cache?.has(key)) return undefined;
+
+    const value = cache.get(key);
+    cache.delete(key);
+    cache.set(key, value);
+    return value;
+  }
+
+  _setCacheEntry(cache, key, value) {
+    if (!cache || !key) return;
+
+    if (cache.has(key)) {
+      cache.delete(key);
+    }
+
+    cache.set(key, value);
+
+    while (cache.size > TREE_LAYOUT_CACHE_ENTRY_LIMIT) {
+      const oldestKey = cache.keys().next().value;
+      cache.delete(oldestKey);
+    }
   }
 
   // ==========================================================================
@@ -165,7 +190,7 @@ export class TreeLayoutController {
       treeIndex,
     });
     if (layoutCacheKey) {
-      const cachedLayout = this._layoutResultCache.get(layoutCacheKey);
+      const cachedLayout = this._getCacheEntry(this._layoutResultCache, layoutCacheKey);
       if (cachedLayout) return cachedLayout;
     }
 
@@ -192,7 +217,7 @@ export class TreeLayoutController {
     );
     if (layoutCacheKey && layout) {
       layout.layoutCacheKey = layoutCacheKey;
-      this._layoutResultCache.set(layoutCacheKey, layout);
+      this._setCacheEntry(this._layoutResultCache, layoutCacheKey, layout);
     }
 
     return layout;
@@ -224,7 +249,7 @@ export class TreeLayoutController {
     transformCacheKey,
     treeList = null
   ) {
-    const cached = this._transformedCache.get(transformCacheKey);
+    const cached = this._getCacheEntry(this._transformedCache, transformCacheKey);
     const canUseIndexedCache =
       typeof treeIndex === 'number' && Array.isArray(treeList) && treeList[treeIndex] === treeData;
     if (cached && cached.transformedList && canUseIndexedCache) {
@@ -242,7 +267,7 @@ export class TreeLayoutController {
         const transformedList = cached?.transformedList || new Array(treeList.length);
         transformedList[treeIndex] = transformedTree;
         if (!cached?.transformedList) {
-          this._transformedCache.set(transformCacheKey, { transformedList });
+          this._setCacheEntry(this._transformedCache, transformCacheKey, { transformedList });
         }
       }
       return transformedTree;
@@ -322,7 +347,7 @@ export class TreeLayoutController {
     }
 
     const transformCacheKey = createTransformCacheKey({ state, treeList, branchTransformation });
-    const cached = this._transformedCache.get(transformCacheKey);
+    const cached = this._getCacheEntry(this._transformedCache, transformCacheKey);
     if (cached) {
       return cached.transformedList;
     }
@@ -331,7 +356,7 @@ export class TreeLayoutController {
       transformBranchLengths(treeData, branchTransformation)
     );
 
-    this._transformedCache.set(transformCacheKey, {
+    this._setCacheEntry(this._transformedCache, transformCacheKey, {
       transformedList,
     });
 
