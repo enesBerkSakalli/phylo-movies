@@ -33,7 +33,8 @@ describe('HUD status controls', () => {
     expect(hudSource).not.toContain('InterpolationSection');
     expect(hudSource).not.toContain('MSAWindowSection');
     expect(hudSource).toContain('ClipboardSection');
-    expect(hudSource).toContain('Comparison Panel');
+    expect(hudSource).toContain('Pinned Tree Panel');
+    expect(hudSource).not.toContain('Comparison Panel');
     expect(hudSource).toContain('bottom-4 left-4');
     expect(hudSource).toContain('sm:bottom-48');
     expect(hudSource).not.toContain('Sequence Status Panel');

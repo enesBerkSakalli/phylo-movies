@@ -52,7 +52,7 @@ describe('spatial viewport fit layout helpers', () => {
       '[role="group"][aria-label="Canvas export controls"]',
     ]);
     expect(VIEWPORT_FIT_FLOATING_OBSTRUCTION_SELECTORS).toEqual([
-      '[role="complementary"][aria-label="Comparison Panel"]',
+      '[role="complementary"][aria-label="Pinned Tree Panel"]',
       '.phylo-hud',
       '.phylo-hud-restore',
       '[aria-label="Transition Inspector"]',
@@ -62,7 +62,7 @@ describe('spatial viewport fit layout helpers', () => {
       '#top-scale-bar-container',
       '[role="group"][aria-label="Tree viewport controls"]',
       '[role="group"][aria-label="Canvas export controls"]',
-      '[role="complementary"][aria-label="Comparison Panel"]',
+      '[role="complementary"][aria-label="Pinned Tree Panel"]',
       '.phylo-hud',
       '.phylo-hud-restore',
       '[aria-label="Transition Inspector"]',
@@ -109,7 +109,7 @@ describe('spatial viewport fit layout helpers', () => {
       bounds: rect(116, 550, 180, 120),
     });
     panel.setAttribute('role', 'complementary');
-    panel.setAttribute('aria-label', 'Comparison Panel');
+    panel.setAttribute('aria-label', 'Pinned Tree Panel');
 
     expect(calculateViewportFitAreas(container)[0]).toEqual({
       left: 216,
@@ -131,7 +131,7 @@ describe('spatial viewport fit layout helpers', () => {
       bounds: rect(14, 328, 142, 112),
     });
     panel.setAttribute('role', 'complementary');
-    panel.setAttribute('aria-label', 'Comparison Panel');
+    panel.setAttribute('aria-label', 'Pinned Tree Panel');
 
     expect(
       calculateViewportFitAreas(container, {

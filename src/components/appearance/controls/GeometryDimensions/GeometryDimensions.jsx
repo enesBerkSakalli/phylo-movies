@@ -19,6 +19,25 @@ const clampValue = (value, fallback) => {
 
 const MIN_NODE_SIZE = 0.01;
 
+function getBranchAnnotationHelpText(option) {
+  if (!option || option.value === 'none') return 'Internal branch annotations are hidden.';
+
+  const path = Array.isArray(option.path) ? option.path.join('.') : option.value;
+  if (path === 'label.raw_internal') {
+    return 'Original internal Newick label text; combined source labels can contain multiple values.';
+  }
+  if (path === 'support.iqtree.sh_alrt') {
+    return 'Parsed numeric IQ-TREE SH-aLRT support. It can match Raw internal label when that source label contains only SH-aLRT.';
+  }
+  if (option.role === 'branch_support') {
+    return 'Parsed numeric branch-support value from the source tree annotations.';
+  }
+  if (option.role === 'branch_support_context') {
+    return 'Support metadata such as replicate counts, not a branch-support score.';
+  }
+  return 'Dataset-provided annotation value for internal branches.';
+}
+
 export function GeometryDimensions({
   nodeSize,
   setNodeSize,
@@ -35,6 +54,10 @@ export function GeometryDimensions({
 }) {
   const isRenderingRef = useRef(false);
   const needsRenderRef = useRef(false);
+  const selectedBranchAnnotationOption = (branchAnnotationOptions || []).find(
+    (option) => option.value === (branchAnnotationLabelKey || 'none')
+  );
+  const branchAnnotationHelpText = getBranchAnnotationHelpText(selectedBranchAnnotationOption);
 
   const renderControllers = useCallback(
     async (options = {}) => {
@@ -116,7 +139,7 @@ export function GeometryDimensions({
             ariaLabel="Branch width control"
             valueDisplay={clampValue(strokeWidth, 1).toFixed(1)}
             value={clampValue(strokeWidth, 1)}
-            min={0.1}
+            min={1}
             max={5}
             step={0.1}
             onChange={handleStrokeWidthChange}
@@ -178,6 +201,9 @@ export function GeometryDimensions({
                   </SelectGroup>
                 </SelectContent>
               </Select>
+              <div className="text-2xs leading-relaxed text-muted-foreground/80 italic">
+                {branchAnnotationHelpText}
+              </div>
             </div>
           </div>
         </div>

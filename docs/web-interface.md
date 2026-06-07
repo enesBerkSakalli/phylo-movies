@@ -10,9 +10,9 @@ This guide describes the UI surfaces that exist in the current React app.
 - Confirm the top status says **Engine Connected** before loading examples or processing uploads.
 - After processing, the visualization workspace opens with the tree canvas in the center, analysis/style tools in the left sidebar, and the movie timeline at the bottom.
 - Use the bottom transport buttons to move between input trees and generated frames. Select or hover timeline segments to inspect topology changes.
-- Use the left sidebar for dataset, layout, style, analysis, and focus controls. MSA and taxa-color tools open as floating windows when those data are available.
+- Use the left sidebar for dataset, layout, style, analysis, and view controls. MSA and taxa-color tools open as floating windows when those data are available.
 - Use the top-right canvas buttons, mouse wheel, or two-finger trackpad gesture to fit, zoom, reset, export a PNG, or record a WebM movie.
-- Use the floating comparison panel to choose a neighboring input tree for comparison. It can be hidden with the close button and restored with the eye button.
+- Use the floating **Pinned tree** panel to pin one input tree as an overlay reference. Use the bottom-bar comparison button for the true side-by-side two-tree view.
 
 ## Setup Screen
 
@@ -63,10 +63,10 @@ The left sidebar has five groups, verified from `src/components/sidebar/ToolsSid
 | Group    | Purpose                                                        |
 | -------- | -------------------------------------------------------------- |
 | Dataset  | Change dataset and open MSA controls when available.           |
-| Layout   | Tree structure, layout transform, and view mode controls.      |
+| Layout   | Tree structure and layout transform controls.                  |
 | Style    | Geometry dimensions, taxa/highlight controls, and taxa legend. |
 | Analysis | SPR analytics and tree statistics.                             |
-| Focus    | Focus and change-effect controls.                              |
+| View     | Camera mode, focus, dimming, and change-effect controls.       |
 
 ### Main Canvas
 
@@ -83,9 +83,9 @@ Top-right canvas controls:
 
 The tree-size, label-size, branch-width, and label-spacing controls are in **Style -> Geometry & Labels**. These controls are useful when tip labels occupy more space than the tree, especially in circular layouts.
 
-### Comparison Panel
+### Pinned Tree Panel
 
-The floating comparison panel starts in the lower-left corner of the canvas. Use it to move the comparison target to the previous or next input tree. The drag handle moves the panel, the close button hides it, and the eye button restores it. Tooltips describe each panel control.
+The floating **Pinned tree** panel starts in the lower-left corner of the canvas. It pins a selected input tree as a translucent overlay reference while the active tree remains in the main view. Previous/next controls choose which input tree is pinned. The viewport fits the active tree and pinned tree together so both remain visible after the pinned tree changes. The drag handle moves the panel, the close button hides the pinned overlay, and the eye button restores the panel.
 
 ### Bottom Movie Player
 
@@ -109,8 +109,8 @@ Transport buttons:
 - Play/Pause sequence
 - Next generated frame
 - Next input tree
-- Show/hide comparison view
-- Link/unlink tree views when comparison mode is active
+- Show/hide side-by-side comparison view
+- Link/unlink the two trees when comparison mode is active
 
 ### Transition Inspector
 

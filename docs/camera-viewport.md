@@ -34,3 +34,4 @@
 - Orthographic and orbit modes keep separate view-state objects.
 - Switching modes preserves target and zoom so a 2D/3D toggle does not reset scale.
 - Orbit keeps its own rotation defaults unless the user changes it through deck.gl controls.
+- Orbit mode changes only the camera. Tree topology, rooting, branch lengths, and node coordinates from the layout stay unchanged.
