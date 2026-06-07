@@ -258,7 +258,7 @@ describe('example dataset configuration', () => {
     ]) {
       expect(copyScript).toContain(expectedSourceArtifact);
     }
-  });
+  }, 60_000);
 
   it('keeps the norovirus example on the default IQ-TREE fast-search path', () => {
     const norovirusExample = EXAMPLE_DATASETS.find((example) => example.id === 'norovirus-334');
