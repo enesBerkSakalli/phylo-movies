@@ -239,6 +239,22 @@ describe('TreeInterpolator label radius smoothing', () => {
       createMap.mockRestore();
     }
   });
+
+  it('reuses derived angle and distance maps for stable element maps', () => {
+    const interpolator = new TreeInterpolator();
+    const fromMap = new Map([['link-1', link('link-1', 5, 10, 0, Math.PI / 4)]]);
+    const toMap = new Map([['link-1', link('link-1', 5, 10, 0, Math.PI / 2)]]);
+
+    const fromAngles = interpolator._polarAngleMap(fromMap);
+    expect(interpolator._polarAngleMap(fromMap)).toBe(fromAngles);
+
+    const toAngles = interpolator._polarAngleMap(toMap);
+    const distances = interpolator._getAngularDistances(fromAngles, toAngles, 0);
+    expect(interpolator._getAngularDistances(fromAngles, toAngles, 0)).toBe(distances);
+    expect(interpolator._getAngularDistances(fromAngles, toAngles, 1)).not.toBe(
+      distances
+    );
+  });
 });
 
 function treeData(prefix, angle) {

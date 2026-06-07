@@ -112,7 +112,11 @@ export class PolarLinkInterpolator {
       return computed;
     };
 
-    return this._attachChildSourcesToRenderedParents(entries.map(resolveEntry), options);
+    const resolvedLinks = [];
+    for (const entry of entries) {
+      resolvedLinks.push(resolveEntry(entry));
+    }
+    return this._attachChildSourcesToRenderedParents(resolvedLinks, options);
   }
 
   _computeLifecycleEntry(entry, timeFactor, options = {}) {
@@ -289,13 +293,21 @@ export class PolarLinkInterpolator {
       if (link?.targetId) parentLinkByTargetId.set(link.targetId, link);
     }
 
-    return links.map((link) => {
+    let result = null;
+    for (let index = 0; index < links.length; index += 1) {
+      const link = links[index];
       const parentLink = link?.sourceId ? parentLinkByTargetId.get(link.sourceId) : null;
-      if (!parentLink?.targetPosition || parentLink.id === link.id) return link;
+      if (!parentLink?.targetPosition || parentLink.id === link.id) {
+        result?.push(link);
+        continue;
+      }
 
-      if (pointsMatch(link.sourcePosition, parentLink.targetPosition)) return link;
+      if (pointsMatch(link.sourcePosition, parentLink.targetPosition)) {
+        result?.push(link);
+        continue;
+      }
 
-      return this._createLinkDatumFromPositions(
+      const adjustedLink = this._createLinkDatumFromPositions(
         link,
         parentLink.targetPosition,
         link.targetPosition,
@@ -305,7 +317,14 @@ export class PolarLinkInterpolator {
           linkGeometryMode: options.linkGeometryMode,
         }
       );
-    });
+
+      if (!result) {
+        result = links.slice(0, index);
+      }
+      result.push(adjustedLink);
+    }
+
+    return result ?? links;
   }
 }
 

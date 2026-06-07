@@ -10,8 +10,6 @@ export const LINK_LIFECYCLES = Object.freeze({
 });
 
 const DEFAULT_ZERO_EPSILON = 1e-6;
-const COLLAPSE_LIFECYCLES = new Set([LINK_LIFECYCLES.EXITING, LINK_LIFECYCLES.ZEROING]);
-const EXPAND_LIFECYCLES = new Set([LINK_LIFECYCLES.ENTERING, LINK_LIFECYCLES.REVIVING]);
 
 export function buildTransitionChangeModel(dataFrom, dataTo, options = {}) {
   const zeroEpsilon = Number.isFinite(options.zeroEpsilon)
@@ -20,30 +18,25 @@ export function buildTransitionChangeModel(dataFrom, dataTo, options = {}) {
   const fromLinks = createLinkMap(dataFrom?.links);
   const toLinks = createLinkMap(dataTo?.links);
   const linkChanges = new Map();
-  const ids = new Set([...fromLinks.keys(), ...toLinks.keys()]);
 
   let hasLifecycleChanges = false;
 
-  for (const id of ids) {
-    const fromLink = fromLinks.get(id) || null;
-    const toLink = toLinks.get(id) || null;
-    const fromLength = getVisibleBranchLength(fromLink);
-    const toLength = getVisibleBranchLength(toLink);
-    const lifecycle = classifyLinkLifecycle(fromLink, toLink, fromLength, toLength, zeroEpsilon);
-
-    if (lifecycle !== LINK_LIFECYCLES.UNCHANGED) {
+  for (const [id, fromLink] of fromLinks) {
+    const changed = createLinkChange(id, fromLink, toLinks.get(id) || null, zeroEpsilon);
+    if (changed.lifecycle !== LINK_LIFECYCLES.UNCHANGED) {
       hasLifecycleChanges = true;
     }
+    linkChanges.set(id, changed);
+  }
 
-    linkChanges.set(id, {
-      id,
-      splitKey: id,
-      lifecycle,
-      fromLink,
-      toLink,
-      fromLength,
-      toLength,
-    });
+  for (const [id, toLink] of toLinks) {
+    if (fromLinks.has(id)) continue;
+
+    const changed = createLinkChange(id, null, toLink, zeroEpsilon);
+    if (changed.lifecycle !== LINK_LIFECYCLES.UNCHANGED) {
+      hasLifecycleChanges = true;
+    }
+    linkChanges.set(id, changed);
   }
 
   const result = {
@@ -87,8 +80,10 @@ export function summarizeTransitionLifecycles(transitionChangeModel) {
     counts[lifecycle] = (counts[lifecycle] ?? 0) + 1;
   }
 
-  const hasCollapseChanges = [...COLLAPSE_LIFECYCLES].some((lifecycle) => counts[lifecycle] > 0);
-  const hasExpandChanges = [...EXPAND_LIFECYCLES].some((lifecycle) => counts[lifecycle] > 0);
+  const hasCollapseChanges =
+    counts[LINK_LIFECYCLES.EXITING] > 0 || counts[LINK_LIFECYCLES.ZEROING] > 0;
+  const hasExpandChanges =
+    counts[LINK_LIFECYCLES.ENTERING] > 0 || counts[LINK_LIFECYCLES.REVIVING] > 0;
 
   return {
     counts,
@@ -137,6 +132,22 @@ function createLinkMap(links) {
     if (key) map.set(key, link);
   }
   return map;
+}
+
+function createLinkChange(id, fromLink, toLink, zeroEpsilon) {
+  const fromLength = getVisibleBranchLength(fromLink);
+  const toLength = getVisibleBranchLength(toLink);
+  const lifecycle = classifyLinkLifecycle(fromLink, toLink, fromLength, toLength, zeroEpsilon);
+
+  return {
+    id,
+    splitKey: id,
+    lifecycle,
+    fromLink,
+    toLink,
+    fromLength,
+    toLength,
+  };
 }
 
 function classifyLinkLifecycle(fromLink, toLink, fromLength, toLength, zeroEpsilon) {

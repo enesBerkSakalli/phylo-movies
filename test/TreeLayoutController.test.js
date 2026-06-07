@@ -246,6 +246,70 @@ describe('TreeLayoutController radii', () => {
     warnSpy.mockRestore();
   });
 
+  it('returns cached layouts before transforming tree data again', () => {
+    const treeList = [
+      {
+        name: 'root',
+        length: 0,
+        children: [{ name: 'child', length: 4 }],
+      },
+    ];
+    useAppStore.setState({
+      treeList,
+      timelineFrames,
+      branchTransformation: 'sqrt',
+      layoutAngleDegrees: 360,
+      layoutRotationDegrees: 0,
+    });
+
+    const controller = new TreeLayoutController(null);
+    const transformSpy = vi.spyOn(controller, '_getTransformedTreeData');
+
+    const firstLayout = controller.calculateLayout(treeList[0], { treeIndex: 0 });
+    transformSpy.mockClear();
+    const secondLayout = controller.calculateLayout(treeList[0], { treeIndex: 0 });
+
+    expect(secondLayout).toBe(firstLayout);
+    expect(transformSpy).not.toHaveBeenCalled();
+  });
+
+  it('creates a transformed-cache entry for a single tree under a new hydration key', () => {
+    const treeList = [
+      {
+        name: 'input-root',
+        length: 0,
+        children: [{ name: 'input-child', length: 1 }],
+      },
+      {
+        name: 'hydrated-root',
+        length: 0,
+        children: [{ name: 'hydrated-child', length: 4 }],
+      },
+    ];
+    useAppStore.setState({
+      treeList,
+      treeHydrationVersion: 0,
+      timelineFrames,
+      branchTransformation: 'sqrt',
+      layoutAngleDegrees: 360,
+      layoutRotationDegrees: 0,
+    });
+
+    const controller = new TreeLayoutController(null);
+    controller.initializeUniformScaling('sqrt');
+
+    useAppStore.setState({ treeHydrationVersion: 1 });
+    controller.calculateLayout(treeList[1], { treeIndex: 1 });
+
+    const hydratedEntry = [...controller._transformedCache.entries()].find(([key]) =>
+      key.includes(':h1')
+    );
+
+    expect(hydratedEntry).toBeTruthy();
+    expect(hydratedEntry[1].transformedList[1].name).toBe('hydrated-root');
+    expect(hydratedEntry[1].transformedList[1].children[0].visualBranchLength).toBe(2);
+  });
+
   it('uses normalized square-root branch lengths as display geometry without changing metrics', () => {
     const treeList = [
       {

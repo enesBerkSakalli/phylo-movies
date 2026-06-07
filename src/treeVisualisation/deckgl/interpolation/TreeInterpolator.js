@@ -28,6 +28,8 @@ export class TreeInterpolator {
       nodeInterpolator: this.nodeInterpolator,
     });
     this._elementMapCache = new WeakMap();
+    this._polarAngleMapCache = new WeakMap();
+    this._angularDistanceCache = new WeakMap();
     this._rootAngle = 0;
   }
 
@@ -80,14 +82,14 @@ export class TreeInterpolator {
 
       // Angular distances for all element types
       const angularDistanceMaps = {
-        nodes: computeAngularDistances(nodeFromMap, nodeToMap, rootAngle),
-        labels: computeAngularDistances(labelFromMap, labelToMap, rootAngle),
-        links: computeAngularDistances(
+        nodes: this._getAngularDistances(nodeFromMap, nodeToMap, rootAngle),
+        labels: this._getAngularDistances(labelFromMap, labelToMap, rootAngle),
+        links: this._getAngularDistances(
           this._polarAngleMap(linkFromMap),
           this._polarAngleMap(linkToMap),
           rootAngle
         ),
-        extensions: computeAngularDistances(
+        extensions: this._getAngularDistances(
           this._polarAngleMap(extFromMap),
           this._polarAngleMap(extToMap),
           rootAngle
@@ -175,13 +177,39 @@ export class TreeInterpolator {
    * @private
    */
   _polarAngleMap(elementMap) {
+    const cached = this._polarAngleMapCache.get(elementMap);
+    if (cached) return cached;
+
     const result = new Map();
     for (const [id, el] of elementMap) {
       result.set(id, {
         angle: el.polarData?.target?.angle ?? 0,
       });
     }
+    this._polarAngleMapCache.set(elementMap, result);
     return result;
+  }
+
+  _getAngularDistances(fromMap, toMap, rootAngle = 0) {
+    let toCache = this._angularDistanceCache.get(fromMap);
+    if (!toCache) {
+      toCache = new WeakMap();
+      this._angularDistanceCache.set(fromMap, toCache);
+    }
+
+    let rootAngleCache = toCache.get(toMap);
+    if (!rootAngleCache) {
+      rootAngleCache = new Map();
+      toCache.set(toMap, rootAngleCache);
+    }
+
+    const cacheKey = Number.isFinite(rootAngle) ? rootAngle : 0;
+    const cached = rootAngleCache.get(cacheKey);
+    if (cached) return cached;
+
+    const distances = computeAngularDistances(fromMap, toMap, cacheKey);
+    rootAngleCache.set(cacheKey, distances);
+    return distances;
   }
 
   _getElementMap(elements) {
@@ -247,6 +275,8 @@ export class TreeInterpolator {
     this.labelInterpolator?.resetCache?.();
     this.extensionInterpolator?.resetCache?.();
     this._elementMapCache = new WeakMap();
+    this._polarAngleMapCache = new WeakMap();
+    this._angularDistanceCache = new WeakMap();
   }
 }
 
