@@ -13,7 +13,9 @@ const STORAGE_KEYS = {
 };
 const RUN_DATA_PREFIX = 'phyloMovieRun:';
 const MAX_STORED_RUNS = 8;
-const RUN_PAYLOAD_SCHEMA_VERSION = 1;
+const RUN_PAYLOAD_SCHEMA_VERSION = 2;
+const STALE_RUN_MESSAGE =
+  'Saved run was created with an older movie update pattern. Reprocess the dataset before visualizing it again.';
 
 /**
  * Generic storage operations
@@ -35,7 +37,7 @@ const storage = {
       // Handle IndexedDB quota/memory errors
       if (error.name === 'DataCloneError' || error.message?.includes('out of memory')) {
         console.error(
-          `[DataService] Dataset is too large for IndexedDB storage. Trees: ${value?.interpolated_trees?.length || 'unknown'}`
+          `[DataService] Dataset is too large for IndexedDB storage. Trees: ${storedTreeCount(value)}`
         );
         throw new Error(
           `Dataset is too large for browser storage. Try fewer input trees, a larger MSA step size, or a smaller selected range.`,
@@ -70,14 +72,35 @@ export const phyloData = {
 
     try {
       if (isRunReference(data)) {
+        const run = await getRunRecord(data.runId);
+        if (!isCompatibleRunRecord(run)) {
+          await discardRun(data.runId);
+          await this.remove();
+          console.warn(`[DataService] ${STALE_RUN_MESSAGE}`);
+          return null;
+        }
+
         const runData = await storage.get(runDataKey(data.runId));
         if (!runData) {
+          await removeRunFromIndex(data.runId);
           await this.remove();
           return null;
         }
         return this.validate(runData);
       }
-      return this.validate(data);
+
+      if (isInlinePayload(data)) {
+        if (!isCompatibleInlinePayload(data)) {
+          await this.remove();
+          console.warn(`[DataService] ${STALE_RUN_MESSAGE}`);
+          return null;
+        }
+        return this.validate(data.data);
+      }
+
+      await this.remove();
+      console.warn(`[DataService] ${STALE_RUN_MESSAGE}`);
+      return null;
     } catch (error) {
       await this.remove();
       throw error;
@@ -91,10 +114,10 @@ export const phyloData = {
     try {
       await storeRunPayload(run.id, validatedBackendData);
       await addRunToIndex(run);
-      await storage.set(STORAGE_KEYS.PHYLO_DATA, { __phyloRunRef: true, runId: run.id });
+      await storage.set(STORAGE_KEYS.PHYLO_DATA, createRunReference(run.id));
     } catch (error) {
       await storage.remove(runDataKey(run.id));
-      await storage.set(STORAGE_KEYS.PHYLO_DATA, validatedBackendData);
+      await storage.set(STORAGE_KEYS.PHYLO_DATA, createInlinePayload(validatedBackendData));
       console.warn('[DataService] Saved current run without adding it to run history:', error);
     }
 
@@ -106,10 +129,16 @@ export const phyloData = {
   },
 
   async listRuns() {
-    return normalizeRunIndex(await storage.get(STORAGE_KEYS.PHYLO_RUN_INDEX));
+    return pruneIncompatibleRuns(await getRunIndex());
   },
 
   async openRun(runId) {
+    const run = await getRunRecord(runId);
+    if (!isCompatibleRunRecord(run)) {
+      await discardRun(runId);
+      throw new Error(STALE_RUN_MESSAGE);
+    }
+
     const runData = await storage.get(runDataKey(runId));
     if (!runData) {
       await removeRunFromIndex(runId);
@@ -117,7 +146,7 @@ export const phyloData = {
     }
 
     const validatedBackendData = validatePhyloMovieData(runData, { hydrateTrees: false });
-    await storage.set(STORAGE_KEYS.PHYLO_DATA, { __phyloRunRef: true, runId });
+    await storage.set(STORAGE_KEYS.PHYLO_DATA, createRunReference(runId));
     return validatedBackendData;
   },
 
@@ -140,8 +169,67 @@ function isRunReference(value) {
   return value && value.__phyloRunRef === true && typeof value.runId === 'string';
 }
 
+function createRunReference(runId) {
+  return {
+    __phyloRunRef: true,
+    runId,
+    payloadSchemaVersion: RUN_PAYLOAD_SCHEMA_VERSION,
+  };
+}
+
+function isInlinePayload(value) {
+  return value && value.__phyloInlinePayload === true && typeof value === 'object';
+}
+
+function createInlinePayload(data) {
+  return {
+    __phyloInlinePayload: true,
+    payloadSchemaVersion: RUN_PAYLOAD_SCHEMA_VERSION,
+    data,
+  };
+}
+
+function isCompatibleInlinePayload(value) {
+  return value?.payloadSchemaVersion === RUN_PAYLOAD_SCHEMA_VERSION;
+}
+
+function isCompatibleRunRecord(run) {
+  return run?.payloadSchemaVersion === RUN_PAYLOAD_SCHEMA_VERSION;
+}
+
 function runDataKey(runId) {
   return `${RUN_DATA_PREFIX}${runId}`;
+}
+
+async function getRunIndex() {
+  return normalizeRunIndex(await storage.get(STORAGE_KEYS.PHYLO_RUN_INDEX));
+}
+
+async function getRunRecord(runId) {
+  const runs = await getRunIndex();
+  return runs.find((run) => run.id === runId) ?? null;
+}
+
+async function pruneIncompatibleRuns(runs) {
+  const compatibleRuns = runs.filter(isCompatibleRunRecord);
+  const incompatibleRuns = runs.filter((run) => !isCompatibleRunRecord(run));
+
+  if (incompatibleRuns.length > 0) {
+    await storage.set(STORAGE_KEYS.PHYLO_RUN_INDEX, compatibleRuns);
+    await Promise.all(incompatibleRuns.map((run) => storage.remove(runDataKey(run.id))));
+  }
+
+  return compatibleRuns;
+}
+
+async function discardRun(runId) {
+  await storage.remove(runDataKey(runId));
+  await removeRunFromIndex(runId);
+
+  const activeData = await storage.get(STORAGE_KEYS.PHYLO_DATA);
+  if (isRunReference(activeData) && activeData.runId === runId) {
+    await storage.remove(STORAGE_KEYS.PHYLO_DATA);
+  }
 }
 
 async function storeRunPayload(runId, data) {
@@ -248,4 +336,8 @@ function createRunId() {
     return crypto.randomUUID();
   }
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function storedTreeCount(value) {
+  return value?.interpolated_trees?.length || value?.data?.interpolated_trees?.length || 'unknown';
 }

@@ -31,6 +31,9 @@ const ENGINE_STATUS = {
   },
 };
 
+const ALERT_CODE_CLASS =
+  'rounded border border-current/20 bg-background/70 px-1.5 py-0.5 font-mono text-[0.85em] text-current';
+
 function getEngineStatus(state) {
   return ENGINE_STATUS[state] || ENGINE_STATUS.checking;
 }
@@ -56,6 +59,8 @@ export function WorkspaceInitializationPage({ demoOnly = false }) {
   const disabled = submitting || loadingExample || !backendReady;
   const engineStatus = getEngineStatus(backendStatus.state);
   const EngineIcon = demoOnly ? Database : engineStatus.icon;
+  const backendBadgeVariant =
+    !demoOnly && backendStatus.state === 'unavailable' ? 'destructive' : 'secondary';
   const exampleDatasets = demoOnly ? DEMO_EXAMPLE_DATASETS : undefined;
 
   return (
@@ -66,7 +71,7 @@ export function WorkspaceInitializationPage({ demoOnly = false }) {
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex min-w-0 flex-wrap items-center gap-3">
                 <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Phylo-Movies</h1>
-                <Badge variant="secondary" className="gap-1">
+                <Badge variant={backendBadgeVariant} className="gap-1">
                   <EngineIcon />
                   {demoOnly ? 'Generated Examples' : `Backend ${engineStatus.label}`}
                 </Badge>
@@ -75,19 +80,30 @@ export function WorkspaceInitializationPage({ demoOnly = false }) {
           </section>
 
           {!demoOnly && backendStatus.state !== 'ready' && (
-            <Alert className="mx-4 mt-4 sm:mx-6 lg:mx-8 xl:mx-10">
+            <Alert
+              variant={backendStatus.state === 'unavailable' ? 'destructive' : 'default'}
+              className="mx-4 mt-4 sm:mx-6 lg:mx-8 xl:mx-10"
+            >
               <EngineIcon />
               <AlertTitle>BranchArchitect backend: {engineStatus.badge}</AlertTitle>
               <AlertDescription>
-                Loading examples, processing uploaded trees, interpolation, and MSA-derived tree
-                inference require the BranchArchitect backend.
-                {backendStatus.state === 'checking' && <> Waiting for readiness from /health.</>}
+                <p>
+                  Loading examples, processing uploaded trees, interpolation, and MSA-derived tree
+                  inference require the BranchArchitect backend.
+                </p>
+                {backendStatus.state === 'checking' && (
+                  <p>
+                    Waiting for readiness from <code className={ALERT_CODE_CLASS}>/health</code>.
+                  </p>
+                )}
                 {backendStatus.state === 'unavailable' && (
-                  <>
-                    {' '}
-                    Start it with <code>./start.sh</code> or{' '}
-                    <code>cd engine/BranchArchitect &amp;&amp; ./start_movie_server.sh</code>.
-                  </>
+                  <p>
+                    Start it with <code className={ALERT_CODE_CLASS}>./start.sh</code>, or run{' '}
+                    <code className={ALERT_CODE_CLASS}>
+                      cd engine/BranchArchitect &amp;&amp; ./start_movie_server.sh
+                    </code>
+                    .
+                  </p>
                 )}
               </AlertDescription>
             </Alert>

@@ -145,6 +145,12 @@ describe('workspace initialization input contract', () => {
 
     expect(pageSource).toContain("const backendReady = backendStatus.state === 'ready';");
     expect(pageSource).toContain('const disabled = submitting || loadingExample || !backendReady;');
+    expect(pageSource).toContain(
+      "variant={backendStatus.state === 'unavailable' ? 'destructive' : 'default'}"
+    );
+    expect(pageSource).toContain("const backendBadgeVariant =");
+    expect(pageSource).toContain('variant={backendBadgeVariant}');
+    expect(pageSource).toContain('const ALERT_CODE_CLASS =');
     expect(pageSource).toContain('backendReady={backendReady}');
     expect(exampleTabSource).toContain('loadingExample || submitting || (!demoOnly && !backendReady)');
     expect(hookSource).toContain("resolveApiUrl('/health')");
