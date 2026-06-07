@@ -55,7 +55,9 @@ describe('example dataset configuration', () => {
     expect(fixtureGenerator).toContain('demo-paper-example');
     expect(fixtureGenerator).toContain('demo-norovirus-334');
     expect(fixtureGenerator).not.toContain('demo-norovirus-334-stability');
+    expect(fixtureGenerator).toContain('demo-bootstrap-24-weighted-rf');
     expect(fixtureGenerator).toContain('demo-bootstrap-125');
+    expect(fixtureGenerator).toContain('demo-bootstrap-125-weighted-rf');
     expect(fixtureGenerator).toContain('demo-iqtree-search-500');
     expect(fixtureGenerator).toContain('demo-msprime-1000-limit');
   });
@@ -65,7 +67,9 @@ describe('example dataset configuration', () => {
       'norovirus-334',
       'paper-example',
       'bootstrap-24',
+      'bootstrap-24-weighted-rf',
       'bootstrap-125',
+      'bootstrap-125-weighted-rf',
       'iqtree-search-500',
       'quick-msa-demo',
       'msprime-1000-two-tree-limit',
@@ -77,7 +81,9 @@ describe('example dataset configuration', () => {
       'norovirus-334',
       'paper-example',
       'bootstrap-24',
+      'bootstrap-24-weighted-rf',
       'bootstrap-125',
+      'bootstrap-125-weighted-rf',
       'iqtree-search-500',
       'quick-msa-demo',
       'msprime-1000-two-tree-limit',
@@ -135,6 +141,8 @@ describe('example dataset configuration', () => {
       'norovirus_334_iqtree_fast_sh_alrt_window1000_step500.movie.json',
       'paper_example.movie.json',
       'quick_msa_demo_30taxa_10trees.movie.json',
+      'weighted_rf_nearest_neighbor_all_trees_125_source-125_taxa125_sites29149.movie.json',
+      'weighted_rf_nearest_neighbor_all_trees_24_source-24_taxa24_sites14190.movie.json',
     ];
     const generatedPayloadFiles = fs
       .readdirSync(path.join(process.cwd(), 'publication_data/precomputed'))
@@ -190,7 +198,13 @@ describe('example dataset configuration', () => {
       0
     );
     expect(
+      countFramesByType(payloadsById.get('bootstrap-24-weighted-rf')).interpolation_frame
+    ).toBeGreaterThan(0);
+    expect(
       countFramesByType(payloadsById.get('bootstrap-125')).interpolation_frame
+    ).toBeGreaterThan(0);
+    expect(
+      countFramesByType(payloadsById.get('bootstrap-125-weighted-rf')).interpolation_frame
     ).toBeGreaterThan(0);
   }, 30000);
 
@@ -475,7 +489,9 @@ describe('example dataset configuration', () => {
 
     expect(bootstrapExamples.map((example) => example.id)).toEqual([
       'bootstrap-24',
+      'bootstrap-24-weighted-rf',
       'bootstrap-125',
+      'bootstrap-125-weighted-rf',
     ]);
 
     for (const example of bootstrapExamples) {
@@ -486,13 +502,11 @@ describe('example dataset configuration', () => {
       const treeFile = path.join(process.cwd(), publicationRelativePath);
       const treeContents = fs.readFileSync(treeFile, 'utf8');
       const treeCount = treeContents.trim().split(/\r?\n/).filter(Boolean).length;
-      const splitSupportFile = path.join(
-        path.dirname(treeFile),
-        path
-          .basename(treeFile)
-          .replace(/^all_trees_/, 'split_support_')
-          .replace(/\.nwk$/, '.tsv')
+      const splitSupportArtifact = example.generatedArtifactFiles.find((artifact) =>
+        artifact.fileName.startsWith('split_support_')
       );
+      expect(splitSupportArtifact).toBeDefined();
+      const splitSupportFile = publicationPathForExampleArtifact(splitSupportArtifact);
       const splitSupportHeader = fs.readFileSync(splitSupportFile, 'utf8').split(/\r?\n/, 1)[0];
 
       expect(treeCount).toBe(200);
@@ -501,10 +515,15 @@ describe('example dataset configuration', () => {
       expect(treeContents).toContain('iqtree_support_kind=sh_alrt');
       expect(treeContents).toContain('iqtree_sh_alrt=');
       expect(splitSupportHeader).toContain('support_percent');
-      expect(example.description).toContain('IQ-TREE default mode');
-      expect(example.description).toContain('split-frequency branch labels');
-      expect(example.description).toContain('SH-aLRT support metadata');
-      expect(example.description).toContain('SPR recurrence tables');
+      if (example.id.endsWith('weighted-rf')) {
+        expect(example.description).toContain('Weighted-RF ordered');
+        expect(example.description).toContain('SPR moves');
+      } else {
+        expect(example.description).toContain('IQ-TREE default mode');
+        expect(example.description).toContain('split-frequency branch labels');
+        expect(example.description).toContain('SH-aLRT support metadata');
+        expect(example.description).toContain('SPR recurrence tables');
+      }
       expect(example.provenance.settings).toEqual(
         expect.arrayContaining([
           expect.objectContaining({

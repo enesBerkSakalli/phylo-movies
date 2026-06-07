@@ -66,6 +66,8 @@
     "fixtures:check": "cd engine/BranchArchitect && poetry run python ../../scripts/generate-frontend-fixtures.py --check",
     "fixtures:list": "cd engine/BranchArchitect && poetry run python ../../scripts/generate-frontend-fixtures.py --list",
     "publication:data:check": "node scripts/check-publication-data.mjs",
+    "publication:bootstrap-tree-distance": "cd engine/BranchArchitect && poetry run python ../../scripts/generate-bootstrap-tree-distance-analysis.py",
+    "publication:bootstrap-tree-distance:check": "cd engine/BranchArchitect && poetry run python ../../scripts/generate-bootstrap-tree-distance-analysis.py --check",
     "publication:spr-recurrence": "node scripts/generate-spr-recurrence-tables.mjs",
     "publication:spr-recurrence:check": "node scripts/generate-spr-recurrence-tables.mjs --check",
     "fixtures:msprime-scale": "python3 scripts/generate-msprime-scale-dataset.py",

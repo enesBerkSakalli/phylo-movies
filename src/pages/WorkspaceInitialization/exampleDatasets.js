@@ -78,12 +78,17 @@ const makeBootstrapSourceTruthFile = ({ taxa, sites }) => ({
     BOOTSTRAP_SOURCE_BASE +
     `source_alignments/aberer_roguenarok_dataset_${taxa}_taxa${taxa}_sites${sites}.phy`,
 });
-const makeBootstrapGeneratedArtifacts = ({ taxa, sites, dataset }) => {
+const makeBootstrapGeneratedArtifacts = ({
+  taxa,
+  sites,
+  dataset,
+  includeTreeDistanceArtifacts = false,
+}) => {
   const rankedPath = `${BOOTSTRAP_SOURCE_BASE}current_results/${dataset}/ranked/`;
   const analysisPath = `${BOOTSTRAP_SOURCE_BASE}current_results/${dataset}/analysis/`;
   const sourceId = `${taxa}_source-${taxa}_taxa${taxa}_sites${sites}`;
 
-  return [
+  const artifacts = [
     {
       label: 'Dataset manifest',
       fileName: 'DATASET_MANIFEST.json',
@@ -107,6 +112,33 @@ const makeBootstrapGeneratedArtifacts = ({ taxa, sites, dataset }) => {
     BOOTSTRAP_RECURRENCE_SUMMARY,
     BOOTSTRAP_ORDERING_SEMANTICS,
   ];
+
+  if (includeTreeDistanceArtifacts) {
+    artifacts.push(
+      {
+        label: 'Tree-distance ordering comparison',
+        fileName: `tree_distance_ordering_comparison_${sourceId}.tsv`,
+        filePath: `${analysisPath}tree_distance_ordering_comparison_${sourceId}.tsv`,
+      },
+      {
+        label: 'Weighted-RF order table',
+        fileName: `weighted_rf_nearest_neighbor_order_${sourceId}.tsv`,
+        filePath: `${analysisPath}weighted_rf_nearest_neighbor_order_${sourceId}.tsv`,
+      },
+      {
+        label: 'RF order table',
+        fileName: `rf_nearest_neighbor_order_${sourceId}.tsv`,
+        filePath: `${analysisPath}rf_nearest_neighbor_order_${sourceId}.tsv`,
+      },
+      {
+        label: 'Tree-distance ordering summary',
+        fileName: 'TREE_DISTANCE_ORDERING_SUMMARY.json',
+        filePath: `${BOOTSTRAP_SOURCE_BASE}current_results/TREE_DISTANCE_ORDERING_SUMMARY.json`,
+      }
+    );
+  }
+
+  return artifacts;
 };
 const PAPER_FIGURE_SOURCE_TRUTH = {
   label: 'Source tree file',
@@ -298,6 +330,56 @@ export const EXAMPLE_DATASETS = [
     badge: 'IQ-TREE',
   },
   {
+    id: 'bootstrap-24-weighted-rf',
+    name: 'IQ-TREE Bootstrap Trees (24 taxa, weighted-RF ordered)',
+    description:
+      'Weighted-RF ordered secondary view of the 24-taxon rogue-taxon bootstrap tree sequence. The signal is stable: Ostrich remains the rank-1 recurrent mover with 38 SPR moves, while the total movie complexity drops to 166 SPR moves.',
+    workflow: 'Bootstrap tree series',
+    scale: '24 taxa / 200 trees',
+    bestFor: 'Weighted-RF topology-space rogue-taxon signal check',
+    fileName: 'weighted_rf_nearest_neighbor_all_trees_24_source-24_taxa24_sites14190.nwk',
+    filePath:
+      BOOTSTRAP_SOURCE_BASE +
+      `current_results/${BOOTSTRAP_24_DATASET}/analysis/weighted_rf_nearest_neighbor_all_trees_24_source-24_taxa24_sites14190.nwk`,
+    precomputedPayloadPath:
+      PRECOMPUTED_EXAMPLE_BASE +
+      'weighted_rf_nearest_neighbor_all_trees_24_source-24_taxa24_sites14190.movie.json',
+    fileType: 'newick',
+    sourceTruthFile: makeBootstrapSourceTruthFile({ taxa: 24, sites: 14190 }),
+    regenerationGuide: BOOTSTRAP_REGENERATION_GUIDE,
+    generatedArtifactFiles: makeBootstrapGeneratedArtifacts({
+      taxa: 24,
+      sites: 14190,
+      dataset: BOOTSTRAP_24_DATASET,
+      includeTreeDistanceArtifacts: true,
+    }),
+    provenance: {
+      sourceType: 'Publication bootstrap secondary analysis',
+      sourceLabel: 'publication_data/bootstrap_rogue_taxa',
+      treeSource:
+        '200 bootstrap-replicate trees reordered by rooted weighted Robinson-Foulds nearest-neighbor plus 2-opt after the same midpoint-rooted preprocessing used by Phylo-Movies. Ostrich remains the rank-1 recurrent mover with 38 SPR moves; total SPR moves drop from 403 to 166.',
+      settings: [
+        { label: 'Tree inference', value: 'IQ-TREE 3 default search mode' },
+        { label: 'Bootstrap inputs', value: 'RAxML replicate alignments, 200 trees' },
+        { label: 'Secondary order', value: 'Rooted weighted RF nearest-neighbor plus 2-opt' },
+        { label: 'Signal', value: 'Ostrich rank 1; 38 SPR moves; total SPR moves 166' },
+        { label: 'Branch labels', value: 'Split-frequency support across the 200 trees' },
+        { label: 'IQ-TREE support metadata', value: 'SH-aLRT, 1,000 replicates' },
+        { label: 'Rooting', value: 'Midpoint rooting' },
+      ],
+    },
+    parameters: {
+      windowSize: null,
+      stepSize: null,
+      midpointRooting: true,
+      useGtr: false,
+      useGamma: false,
+      usePseudo: false,
+    },
+    citation: PUBLICATION_CITATION,
+    badge: 'Weighted RF',
+  },
+  {
     id: 'bootstrap-125',
     name: 'IQ-TREE Bootstrap Trees (125 taxa)',
     description:
@@ -342,6 +424,56 @@ export const EXAMPLE_DATASETS = [
     },
     citation: PUBLICATION_CITATION,
     badge: 'IQ-TREE',
+  },
+  {
+    id: 'bootstrap-125-weighted-rf',
+    name: 'IQ-TREE Bootstrap Trees (125 taxa, weighted-RF ordered)',
+    description:
+      'Weighted-RF ordered secondary view of the 125-taxon rogue-taxon bootstrap tree sequence. The signal is stable: Seq112 remains the rank-1 recurrent mover with 70 SPR moves, while the total movie complexity drops to 661 SPR moves.',
+    workflow: 'Bootstrap tree series',
+    scale: '125 taxa / 200 trees',
+    bestFor: 'Weighted-RF topology-space rogue-taxon signal check',
+    fileName: 'weighted_rf_nearest_neighbor_all_trees_125_source-125_taxa125_sites29149.nwk',
+    filePath:
+      BOOTSTRAP_SOURCE_BASE +
+      `current_results/${BOOTSTRAP_125_DATASET}/analysis/weighted_rf_nearest_neighbor_all_trees_125_source-125_taxa125_sites29149.nwk`,
+    precomputedPayloadPath:
+      PRECOMPUTED_EXAMPLE_BASE +
+      'weighted_rf_nearest_neighbor_all_trees_125_source-125_taxa125_sites29149.movie.json',
+    fileType: 'newick',
+    sourceTruthFile: makeBootstrapSourceTruthFile({ taxa: 125, sites: 29149 }),
+    regenerationGuide: BOOTSTRAP_REGENERATION_GUIDE,
+    generatedArtifactFiles: makeBootstrapGeneratedArtifacts({
+      taxa: 125,
+      sites: 29149,
+      dataset: BOOTSTRAP_125_DATASET,
+      includeTreeDistanceArtifacts: true,
+    }),
+    provenance: {
+      sourceType: 'Publication bootstrap secondary analysis',
+      sourceLabel: 'publication_data/bootstrap_rogue_taxa',
+      treeSource:
+        '200 bootstrap-replicate trees reordered by rooted weighted Robinson-Foulds nearest-neighbor plus 2-opt after the same midpoint-rooted preprocessing used by Phylo-Movies. Seq112 remains the rank-1 recurrent mover with 70 SPR moves; total SPR moves drop from 1074 to 661.',
+      settings: [
+        { label: 'Tree inference', value: 'IQ-TREE 3 default search mode' },
+        { label: 'Bootstrap inputs', value: 'RAxML replicate alignments, 200 trees' },
+        { label: 'Secondary order', value: 'Rooted weighted RF nearest-neighbor plus 2-opt' },
+        { label: 'Signal', value: 'Seq112 rank 1; 70 SPR moves; total SPR moves 661' },
+        { label: 'Branch labels', value: 'Split-frequency support across the 200 trees' },
+        { label: 'IQ-TREE support metadata', value: 'SH-aLRT, 1,000 replicates' },
+        { label: 'Rooting', value: 'Midpoint rooting' },
+      ],
+    },
+    parameters: {
+      windowSize: null,
+      stepSize: null,
+      midpointRooting: true,
+      useGtr: false,
+      useGamma: false,
+      usePseudo: false,
+    },
+    citation: PUBLICATION_CITATION,
+    badge: 'Weighted RF',
   },
   {
     id: 'iqtree-search-500',
@@ -600,7 +732,9 @@ export const DEMO_EXAMPLE_DATASETS = [
   EXAMPLE_DATASETS.find((example) => example.id === 'norovirus-334'),
   EXAMPLE_DATASETS.find((example) => example.id === 'paper-example'),
   EXAMPLE_DATASETS.find((example) => example.id === 'bootstrap-24'),
+  EXAMPLE_DATASETS.find((example) => example.id === 'bootstrap-24-weighted-rf'),
   EXAMPLE_DATASETS.find((example) => example.id === 'bootstrap-125'),
+  EXAMPLE_DATASETS.find((example) => example.id === 'bootstrap-125-weighted-rf'),
   EXAMPLE_DATASETS.find((example) => example.id === 'iqtree-search-500'),
   EXAMPLE_DATASETS.find((example) => example.id === 'quick-msa-demo'),
   MS_PRIME_1000_LIMIT_DEMO,

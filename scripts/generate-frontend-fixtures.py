@@ -134,6 +134,22 @@ FIXTURES: tuple[FixtureSpec, ...] = (
         midpoint_rooting=True,
     ),
     FixtureSpec(
+        name="demo-bootstrap-24-weighted-rf",
+        source=ROOT
+        / "publication_data"
+        / "bootstrap_rogue_taxa"
+        / "current_results"
+        / "dataset_24_source-24_taxa24_sites14190"
+        / "analysis"
+        / "weighted_rf_nearest_neighbor_all_trees_24_source-24_taxa24_sites14190.nwk",
+        output=ROOT
+        / "publication_data"
+        / "precomputed"
+        / "weighted_rf_nearest_neighbor_all_trees_24_source-24_taxa24_sites14190.movie.json",
+        filename="weighted_rf_nearest_neighbor_all_trees_24_source-24_taxa24_sites14190.nwk",
+        midpoint_rooting=True,
+    ),
+    FixtureSpec(
         name="demo-bootstrap-125",
         source=ROOT
         / "publication_data"
@@ -147,6 +163,22 @@ FIXTURES: tuple[FixtureSpec, ...] = (
         / "precomputed"
         / "all_trees_125_source-125_taxa125_sites29149.movie.json",
         filename="all_trees_125_source-125_taxa125_sites29149.nwk",
+        midpoint_rooting=True,
+    ),
+    FixtureSpec(
+        name="demo-bootstrap-125-weighted-rf",
+        source=ROOT
+        / "publication_data"
+        / "bootstrap_rogue_taxa"
+        / "current_results"
+        / "dataset_125_source-125_taxa125_sites29149"
+        / "analysis"
+        / "weighted_rf_nearest_neighbor_all_trees_125_source-125_taxa125_sites29149.nwk",
+        output=ROOT
+        / "publication_data"
+        / "precomputed"
+        / "weighted_rf_nearest_neighbor_all_trees_125_source-125_taxa125_sites29149.movie.json",
+        filename="weighted_rf_nearest_neighbor_all_trees_125_source-125_taxa125_sites29149.nwk",
         midpoint_rooting=True,
     ),
     FixtureSpec(
@@ -472,10 +504,34 @@ def _build_dataset_provenance(fixture: FixtureSpec) -> dict | None:
             taxa="24",
         )
 
+    if fixture.name == "demo-bootstrap-24-weighted-rf":
+        return _build_bootstrap_provenance(
+            source_label=(
+                "publication_data/bootstrap_rogue_taxa/current_results/"
+                "dataset_24_source-24_taxa24_sites14190/analysis"
+            ),
+            taxa="24",
+            order_label="weighted-RF ordered",
+            order_method="Rooted weighted RF nearest-neighbor plus 2-opt",
+            signal="Ostrich rank 1; 38 SPR moves; total SPR moves 166",
+        )
+
     if fixture.name == "demo-bootstrap-125":
         return _build_bootstrap_provenance(
             source_label="publication_data/bootstrap_rogue_taxa/current_results/dataset_125",
             taxa="125",
+        )
+
+    if fixture.name == "demo-bootstrap-125-weighted-rf":
+        return _build_bootstrap_provenance(
+            source_label=(
+                "publication_data/bootstrap_rogue_taxa/current_results/"
+                "dataset_125_source-125_taxa125_sites29149/analysis"
+            ),
+            taxa="125",
+            order_label="weighted-RF ordered",
+            order_method="Rooted weighted RF nearest-neighbor plus 2-opt",
+            signal="Seq112 rank 1; 70 SPR moves; total SPR moves 661",
         )
 
     if fixture.name == "demo-iqtree-search-500":
@@ -541,28 +597,40 @@ def _build_norovirus_provenance(
     }
 
 
-def _build_bootstrap_provenance(source_label: str, taxa: str) -> dict:
+def _build_bootstrap_provenance(
+    source_label: str,
+    taxa: str,
+    order_label: str = "composition-ranked",
+    order_method: str | None = None,
+    signal: str | None = None,
+) -> dict:
+    settings = [
+        {"label": "Tree source", "value": f"Precomputed {order_label} bootstrap tree series"},
+        {
+            "label": "Branch labels",
+            "value": "Split-frequency support across 200 inferred bootstrap-replicate trees",
+        },
+        {"label": "Support metadata", "value": "IQ-TREE 3 SH-aLRT, 1,000 replicates"},
+        {
+            "label": "Browser payload",
+            "value": "Input trees plus generated interpolation frames",
+        },
+        {"label": "Rooting", "value": "Midpoint rooting"},
+    ]
+    if order_method:
+        settings.insert(1, {"label": "Secondary order", "value": order_method})
+    if signal:
+        settings.insert(2 if order_method else 1, {"label": "Signal", "value": signal})
+
     return {
         "source_type": "Generated browser demo",
         "source_label": source_label,
         "tree_source": (
             f"Interpolated static payload generated from the {taxa}-taxon "
-            "composition-ranked IQ-TREE 3 bootstrap tree series with split-frequency "
+            f"{order_label} IQ-TREE 3 bootstrap tree series with split-frequency "
             "branch labels and SH-aLRT support metadata."
         ),
-        "settings": [
-            {"label": "Tree source", "value": "Precomputed bootstrap tree series"},
-            {
-                "label": "Branch labels",
-                "value": "Split-frequency support across 200 inferred bootstrap-replicate trees",
-            },
-            {"label": "Support metadata", "value": "IQ-TREE 3 SH-aLRT, 1,000 replicates"},
-            {
-                "label": "Browser payload",
-                "value": "Input trees plus generated interpolation frames",
-            },
-            {"label": "Rooting", "value": "Midpoint rooting"},
-        ],
+        "settings": settings,
         "citation": (
             "Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, "
             "H. A. (2026). Animating Phylogenetic Trees from Sliding-Window "

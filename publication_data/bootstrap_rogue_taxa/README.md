@@ -20,3 +20,4 @@ from those source alignments and the workflow in `REGENERATE.md`.
 | `source_alignments/MANIFEST.tsv` | Source, checksum, taxa/site count, role, and notes for each copied source alignment. |
 | `REGENERATE.md` | Reviewer-facing commands for regenerating the bootstrap results from this source layer. |
 | `current_results/` | Generated tree series, ranked replicate tables, split-support tables, manifests, and verification output. |
+| `current_results/TREE_DISTANCE_ORDERING_SUMMARY.json` | Secondary additive RF and weighted-RF ordering analysis for the current bootstrap tree series. |

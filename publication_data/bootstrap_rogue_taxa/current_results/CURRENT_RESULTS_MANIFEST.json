@@ -47,6 +47,13 @@
   "publication_outputs": "ranked Newick tree files, semantic composition-ranked bootstrap replicate tables, and split-support tables when available",
   "publication_status": "current_results",
   "schema_version": "1.0",
+  "secondary_analysis": {
+    "tree_distance_ordering": {
+      "description": "Secondary additive analysis comparing the current composition-ranked bootstrap order with RF and weighted-RF nearest-neighbor-plus-2-opt tree-distance orderings.",
+      "summary": "publication_data/bootstrap_rogue_taxa/current_results/TREE_DISTANCE_ORDERING_SUMMARY.json",
+      "summary_sha256": "9e24ebc35644c254dee5e3d879f85ca64bb2d40400aa8dd3990d34863f8b5108"
+    }
+  },
   "seed": 42,
   "source_run_directory": null,
   "source_run_id": "run_20260602T093224+0200_iqtree-default_bs200_seed42_ds24-125_shalrt1000_iqtree3-default-shalrt-full",
