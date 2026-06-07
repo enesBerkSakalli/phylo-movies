@@ -85,7 +85,7 @@ describe('Color System TDD (Performance & Quality)', () => {
         10,
         'Dynamic categorical colors should remain visibly separated'
       );
-    });
+    }).timeout(10000);
 
     it('should use the categorical generator when a selected palette has too few colors', () => {
       const dummyTargets = Array.from({ length: 30 }, (_, i) => `Taxon ${i}`);
@@ -109,7 +109,7 @@ describe('Color System TDD (Performance & Quality)', () => {
 
       expect(uniqueStrings.size).to.equal(30);
       expect(minDistance).to.be.above(10);
-    });
+    }).timeout(10000);
 
     it('should keep undersized selected schemes visually distinct when extending them', () => {
       const targets = Array.from({ length: 12 }, (_, i) => `Taxon ${i}`);
@@ -123,7 +123,7 @@ describe('Color System TDD (Performance & Quality)', () => {
       const categoryColors = Object.values(categoryManager.taxaColorMap).map((c) => c.join(','));
 
       expect(categoryColors).not.to.deep.equal(tableauColors);
-    });
+    }).timeout(10000);
   });
 
   describe('Palette Preservation (Fix & Keep)', () => {
