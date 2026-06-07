@@ -43,7 +43,7 @@ git archive --format=tar.gz \
 | `recombination_norovirus/scripts/recan_recombination_analysis/` | yes | ReCAN validation workflow scripts. |
 | `recombination_norovirus/current_results/` | yes | Promoted ReCAN validation outputs and manifest. |
 | `quick_msa_demo/` | yes | Lightweight app/demo input used for smoke tests and examples. |
-| `figure_example/` | yes | Small figure/demo tree input. |
+| `figure_example/` | yes | Small figure/demo tree input and local QA-folder notes. |
 
 ## Excluded Layers
 
@@ -51,6 +51,7 @@ git archive --format=tar.gz \
 | --- | --- | --- |
 | `dist/examples/` | yes | Generated web build artifact copied from `publication_data/`. |
 | `electron-app/frontend-dist/examples/` | yes | Generated Electron build artifact copied from `publication_data/`. |
+| `precomputed/*.movie.json` | yes | Generated browser-demo JSON cache; regenerate from source inputs instead of archiving as source data. |
 | Any `runs/` directory | yes | Timestamped regeneration staging; recreate from scripts. |
 | Any `__pycache__/` directory or `*.pyc` file | yes | Python cache output. |
 | Old quarantined or stale result folders | yes | Superseded working material, not publication evidence. |
