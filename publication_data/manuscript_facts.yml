@@ -25,6 +25,24 @@ norovirus_publication_demo:
   frames: 6408
   interpolation_frames: 6391
   spr_moves: 1616
+  branch_support_label_scope: observed input trees only
+  branch_support_labels: 5322
+  branch_support_median: 86.0
+  branch_support_median_nonzero: 91.7
+  branch_support_ge_70: 3713
+  branch_support_ge_70_percent: 69.8
+  highlighted_recombinant_groups:
+    gii4_p16_sequences: 28
+    gii2_p16_sequences: 13
+    gii6_p7_sequences: 14
+    gii6_p7_countries: 8
+  frequent_moving_subtree_genotype_labels:
+    - GII.17[P17]
+    - GII.4[P4]
+    - GII.4[P31]
+    - GII.4[P16]
+    - GII.6[P7]
+    - GII.2[P16]
 
 bootstrap_rogue_taxa:
   bootstrap_replicates: 200
@@ -64,6 +82,8 @@ bootstrap_rogue_taxa:
       total_spr_moves: 1074
       recurrent_moved_subtrees: 44
       roguenarok_target_taxon: Seq112
+      roguenarok_rbic_before: 0.958484
+      roguenarok_rbic_after: 0.958549
       target_rank: 4
       target_spr_moves: 91
       target_percent_of_spr_moves: 8.472998

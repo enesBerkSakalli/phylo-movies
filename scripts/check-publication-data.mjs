@@ -652,12 +652,111 @@ function auditNorovirusDemoPayload(publicationRoot, manuscriptFacts, errors) {
     errors
   );
 
+  const supportSummary = summarizeObservedInputBranchSupport(payload);
+  expectNumber(
+    supportSummary.labels,
+    factNumber(manuscriptFacts, 'branch_support_labels', 5322),
+    'norovirus observed input-tree SH-aLRT label count',
+    errors
+  );
+  expectRoundedNumber(
+    supportSummary.median,
+    factNumber(manuscriptFacts, 'branch_support_median', 86.0),
+    1,
+    'norovirus observed input-tree SH-aLRT median',
+    errors
+  );
+  expectRoundedNumber(
+    supportSummary.medianNonzero,
+    factNumber(manuscriptFacts, 'branch_support_median_nonzero', 91.7),
+    1,
+    'norovirus observed input-tree nonzero SH-aLRT median',
+    errors
+  );
+  expectNumber(
+    supportSummary.labelsAtOrAbove70,
+    factNumber(manuscriptFacts, 'branch_support_ge_70', 3713),
+    'norovirus observed input-tree SH-aLRT labels at or above 70',
+    errors
+  );
+  expectRoundedNumber(
+    supportSummary.percentAtOrAbove70,
+    factNumber(manuscriptFacts, 'branch_support_ge_70_percent', 69.8),
+    1,
+    'norovirus observed input-tree SH-aLRT percent at or above 70',
+    errors
+  );
+
   return {
     status: 'checked',
     payloadFile: relative(payloadPath),
     frames: payload.frames?.length || 0,
     sprMoves: sprMoves.length,
+    branchSupport: supportSummary,
   };
+}
+
+function summarizeObservedInputBranchSupport(payload) {
+  const supportAnnotationIndex = (payload.annotation_definitions || []).findIndex(
+    (definition) => definition.role === 'branch_support'
+  );
+  const observedInputFrameIndexes = (payload.frames || [])
+    .filter((frame) => frame.is_observed_input)
+    .map((frame) => frame.frame_index)
+    .filter(Number.isInteger);
+  const values = [];
+
+  for (const frameIndex of observedInputFrameIndexes) {
+    collectNodeAnnotationValues(
+      payload.interpolated_trees?.[frameIndex],
+      supportAnnotationIndex,
+      values
+    );
+  }
+
+  values.sort((left, right) => left - right);
+  const nonzeroValues = values.filter((value) => value > 0);
+  const labelsAtOrAbove70 = values.filter((value) => value >= 70).length;
+
+  return {
+    observedInputTrees: observedInputFrameIndexes.length,
+    labels: values.length,
+    median: median(values),
+    medianNonzero: median(nonzeroValues),
+    labelsAtOrAbove70,
+    percentAtOrAbove70: values.length ? (labelsAtOrAbove70 / values.length) * 100 : 0,
+  };
+}
+
+function collectNodeAnnotationValues(node, annotationIndex, values) {
+  if (!Array.isArray(node) || annotationIndex < 0) {
+    return;
+  }
+
+  const annotations = node[3];
+  if (Array.isArray(annotations)) {
+    for (const annotation of annotations) {
+      if (annotation?.[0] === annotationIndex && typeof annotation[1] === 'number') {
+        values.push(annotation[1]);
+      }
+    }
+  }
+
+  const children = node[4];
+  if (Array.isArray(children)) {
+    for (const child of children) {
+      collectNodeAnnotationValues(child, annotationIndex, values);
+    }
+  }
+}
+
+function median(values) {
+  if (!values.length) {
+    return 0;
+  }
+  const lower = values[Math.floor((values.length - 1) / 2)];
+  const upper = values[Math.ceil((values.length - 1) / 2)];
+  return (lower + upper) / 2;
 }
 
 function countFramesByType(frames) {
@@ -791,6 +890,13 @@ function countNewickLeafLabels(newick) {
 function expectNumber(actual, expected, label, errors) {
   if (actual !== expected) {
     errors.push(`${label} mismatch: expected ${expected}, got ${actual}`);
+  }
+}
+
+function expectRoundedNumber(actual, expected, decimals, label, errors) {
+  const rounded = Number(actual.toFixed(decimals));
+  if (rounded !== expected) {
+    errors.push(`${label} mismatch: expected ${expected}, got ${rounded}`);
   }
 }
 

@@ -56,7 +56,8 @@ publication_data/publication_data.env
 ## Verify Promoted Results
 
 Verify manifest cleanliness, retained source-file counts, promoted bootstrap
-tree counts, checksums, and app-facing taxa scale tiers:
+tree counts, checksums, manuscript-facing numerical claims, and app-facing taxa
+scale tiers:
 
 ```bash
 npm run publication:data:check
