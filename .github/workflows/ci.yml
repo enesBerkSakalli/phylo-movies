@@ -18,10 +18,10 @@ permissions:
 
 jobs:
   # ===========================================================================
-  # Frontend Tests (fast, no backend needed)
+  # Generated Browser Demo Payloads (shared by frontend build/test jobs)
   # ===========================================================================
-  frontend-tests:
-    name: Frontend Unit Tests
+  generated-fixtures:
+    name: Generated Browser Demo Payloads
     runs-on: ubuntu-latest
 
     steps:
@@ -34,7 +34,6 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: 22
-          cache: 'npm'
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -58,14 +57,48 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-poetry-
 
-      - name: Install dependencies
-        run: npm ci
-
       - name: Install backend fixture dependencies
         run: cd engine/BranchArchitect && poetry install
 
-      - name: Regenerate generated browser demo payloads
+      - name: Generate browser demo payloads
         run: npm run fixtures:generate:ci
+
+      - name: Upload generated browser demo payloads
+        uses: actions/upload-artifact@v6
+        with:
+          name: precomputed-browser-demo-payloads
+          path: publication_data/precomputed/*.movie.json
+          if-no-files-found: error
+          retention-days: 7
+
+  # ===========================================================================
+  # Frontend Tests (consume generated browser demo payloads)
+  # ===========================================================================
+  frontend-tests:
+    name: Frontend Unit Tests
+    runs-on: ubuntu-latest
+    needs: [generated-fixtures]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Download generated browser demo payloads
+        uses: actions/download-artifact@v6
+        with:
+          name: precomputed-browser-demo-payloads
+          path: publication_data/precomputed
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Run strict lint
         run: npm run lint:strict
@@ -127,7 +160,7 @@ jobs:
   build:
     name: Build & Verify
     runs-on: ubuntu-latest
-    needs: [frontend-tests] # Only build if tests pass
+    needs: [frontend-tests, generated-fixtures] # Only build if fixtures and tests pass
 
     steps:
       - name: Checkout
@@ -141,36 +174,14 @@ jobs:
           node-version: 22
           cache: 'npm'
 
-      - name: Setup Python
-        uses: actions/setup-python@v6
+      - name: Download generated browser demo payloads
+        uses: actions/download-artifact@v6
         with:
-          python-version: '3.11'
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: 1.7.1
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
-      - name: Cache Poetry dependencies
-        uses: actions/cache@v5
-        with:
-          path: |
-            engine/BranchArchitect/.venv
-            ~/.cache/pypoetry
-          key: ${{ runner.os }}-poetry-${{ hashFiles('engine/BranchArchitect/poetry.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-poetry-
+          name: precomputed-browser-demo-payloads
+          path: publication_data/precomputed
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Install backend fixture dependencies
-        run: cd engine/BranchArchitect && poetry install
-
-      - name: Regenerate generated browser demo payloads
-        run: npm run fixtures:generate:ci
 
       - name: Build frontend
         run: npm run build
@@ -417,7 +428,7 @@ jobs:
   gh-pages-build:
     name: GitHub Pages Build
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [build, generated-fixtures]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
@@ -432,27 +443,11 @@ jobs:
           node-version: 22
           cache: 'npm'
 
-      - name: Setup Python
-        uses: actions/setup-python@v6
+      - name: Download generated browser demo payloads
+        uses: actions/download-artifact@v6
         with:
-          python-version: '3.11'
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: 1.7.1
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
-      - name: Cache Poetry dependencies
-        uses: actions/cache@v5
-        with:
-          path: |
-            engine/BranchArchitect/.venv
-            ~/.cache/pypoetry
-          key: ${{ runner.os }}-poetry-${{ hashFiles('engine/BranchArchitect/poetry.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-poetry-
+          name: precomputed-browser-demo-payloads
+          path: publication_data/precomputed
 
       - name: Install dependencies
         run: npm ci
@@ -460,11 +455,8 @@ jobs:
       - name: Install manual dependencies
         run: npm --prefix manual ci
 
-      - name: Install backend fixture dependencies
-        run: cd engine/BranchArchitect && poetry install
-
       - name: Build for GitHub Pages
-        run: npm run build:gh
+        run: npm run build:gh:ci
 
       - name: Copy index.html to 404.html (SPA fallback)
         run: cp dist/index.html dist/404.html
@@ -498,12 +490,24 @@ jobs:
     name: CI Success
     runs-on: ubuntu-latest
     needs:
-      [frontend-tests, backend-tests, build, integration-tests, docker-build, desktop-smoke-build]
+      [
+        generated-fixtures,
+        frontend-tests,
+        backend-tests,
+        build,
+        integration-tests,
+        docker-build,
+        desktop-smoke-build,
+      ]
     if: always()
 
     steps:
       - name: Check all jobs
         run: |
+          if [ "${{ needs.generated-fixtures.result }}" != "success" ]; then
+            echo "Generated browser demo payloads failed"
+            exit 1
+          fi
           if [ "${{ needs.frontend-tests.result }}" != "success" ]; then
             echo "Frontend tests failed"
             exit 1
