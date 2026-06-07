@@ -27,6 +27,9 @@ const getSignature = (indices?: number[]): string => {
 const formatMedian = (value?: number | null): string =>
   typeof value === 'number' && Number.isFinite(value) ? value.toFixed(1) : '-';
 
+const sumSprMoveCounts = (recurrences: SprMovedSubtreeRecurrence[]): number =>
+  recurrences.reduce((sum, item) => sum + (Number.isFinite(item.count) ? item.count : 0), 0);
+
 export const MovedSubtreeRecurrenceTable = ({
   recurrences,
   leafNamesByIndex,
@@ -35,6 +38,7 @@ export const MovedSubtreeRecurrenceTable = ({
   const setManuallyMarkedNodes = useAppStore(selectSetManuallyMarkedNodes);
   const goToPosition = useAppStore(selectGoToPosition);
   const currentSignature = getSignature(markedNodes);
+  const totalSprMoveCount = React.useMemo(() => sumSprMoveCounts(recurrences), [recurrences]);
 
   const handleSubtreeClick = (splitIndices: number[]) => {
     const signature = getSignature(splitIndices);
@@ -79,7 +83,20 @@ export const MovedSubtreeRecurrenceTable = ({
             Example Source → Target
           </th>
           <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">
-            % of SPR moves
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex cursor-help justify-end transition-colors hover:text-foreground">
+                  Share of SPR Moves
+                </span>
+              </TooltipTrigger>
+              <TooltipContent
+                side="left"
+                className="max-w-64 border-border bg-popover text-2xs font-normal normal-case tracking-normal"
+              >
+                SPR move count divided by all SPR move events in this dataset. This is not tree-pair
+                or genome-window coverage.
+              </TooltipContent>
+            </Tooltip>
           </th>
           <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">
             Parent Branch Support
@@ -96,6 +113,7 @@ export const MovedSubtreeRecurrenceTable = ({
             item.representativeTargetInputTreeIndex
           );
           const jumpLabel = `Jump to move in ${jumpPairLabel}`;
+          const sharePercentLabel = `${item.percentage.toFixed(1)}%`;
 
           return (
             <tr
@@ -103,7 +121,7 @@ export const MovedSubtreeRecurrenceTable = ({
               role="button"
               tabIndex={0}
               aria-pressed={isActive}
-              aria-label={`${subtreeLabel}, ${item.count} SPR moves, ${item.percentage.toFixed(1)}%`}
+              aria-label={`${subtreeLabel}, ${item.count} SPR moves, ${sharePercentLabel} of all SPR move events`}
               onClick={() => handleSubtreeClick(item.splitIndices)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
@@ -175,15 +193,22 @@ export const MovedSubtreeRecurrenceTable = ({
               </td>
               <td className="px-4 py-2 text-right font-mono text-muted-foreground tabular-nums">
                 <Tooltip>
-                  <TooltipTrigger className="cursor-help hover:text-foreground transition-colors">
-                    {item.percentage.toFixed(1)}%
+                  <TooltipTrigger asChild>
+                    <span className="cursor-help transition-colors hover:text-foreground">
+                      {sharePercentLabel}
+                    </span>
                   </TooltipTrigger>
                   <TooltipContent
                     side="left"
                     className="text-2xs font-mono bg-popover border-border"
                   >
                     <div className="flex flex-col gap-1">
-                      <div>Full Precision:</div>
+                      <div>
+                        {item.count} of {totalSprMoveCount} SPR move events
+                      </div>
+                      <div className="font-sans text-muted-foreground">
+                        Event share, not tree-pair or genome-window coverage.
+                      </div>
                       <div className="font-bold text-primary">{item.percentage.toFixed(6)}%</div>
                     </div>
                   </TooltipContent>

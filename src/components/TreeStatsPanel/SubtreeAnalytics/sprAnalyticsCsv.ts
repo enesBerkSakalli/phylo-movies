@@ -1,5 +1,6 @@
 import { formatSubtreeLabel } from '../../../domain/spr/sprAnalytics';
 import type { SprMovedSubtreeRecurrence, SprMoveEventRow } from './types';
+import { formatInputTreePair } from './sprMoveJumpTarget';
 import { buildSprMoveWindowRange, type SprMoveWindowRangeOptions } from './sprMoveWindowRange';
 
 const escapeCsvValue = (value: unknown): string => {
@@ -21,6 +22,14 @@ const formatOptionalFixed = (value: unknown): string => {
   return Number.isFinite(number) ? number.toFixed(6) : '';
 };
 
+const formatOptionalInputTreeNumber = (value: unknown): string => {
+  if (typeof value !== 'number' || !Number.isInteger(value)) return '';
+  return String(value + 1);
+};
+
+const formatFrameRange = (frameRange: [number, number] | null | undefined): string =>
+  Array.isArray(frameRange) && frameRange.length >= 2 ? `${frameRange[0]}-${frameRange[1]}` : '';
+
 export const createSprMovedSubtreeRecurrenceCsv = (
   recurrences: SprMovedSubtreeRecurrence[],
   leafNamesByIndex: string[]
@@ -30,8 +39,12 @@ export const createSprMovedSubtreeRecurrenceCsv = (
     'Moved Subtree',
     'Taxa Count',
     'SPR Move Count',
-    '% of SPR Moves',
+    'Share of SPR Moves',
     'Tree Pair Count',
+    'Example Source Tree',
+    'Example Target Tree',
+    'Example Source -> Target',
+    'Example Frame Range',
     'Topology Variant Count',
     'Source Topology Variant Count',
     'Target Topology Variant Count',
@@ -54,6 +67,13 @@ export const createSprMovedSubtreeRecurrenceCsv = (
       item.count,
       formatFixed(item.percentage),
       item.pairCount ?? item.pairIds?.length ?? '',
+      formatOptionalInputTreeNumber(item.representativeSourceInputTreeIndex),
+      formatOptionalInputTreeNumber(item.representativeTargetInputTreeIndex),
+      formatInputTreePair(
+        item.representativeSourceInputTreeIndex,
+        item.representativeTargetInputTreeIndex
+      ),
+      formatFrameRange(item.representativeFrameRange),
       item.topologyVariantCount ?? '',
       item.sourceTopologyVariantCount ?? '',
       item.destinationTopologyVariantCount ?? '',

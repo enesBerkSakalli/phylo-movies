@@ -21,8 +21,12 @@ describe('createSprMovedSubtreeRecurrenceCsv', () => {
     const header = csv.split('\n')[0];
 
     expect(header).toContain('SPR Move Count');
-    expect(header).toContain('% of SPR Moves');
+    expect(header).toContain('Share of SPR Moves');
     expect(header).toContain('Tree Pair Count');
+    expect(header).toContain('Example Source Tree');
+    expect(header).toContain('Example Target Tree');
+    expect(header).toContain('Example Source -> Target');
+    expect(header).toContain('Example Frame Range');
     expect(header).toContain('Topology Variant Count');
     expect(header).toContain('Source Parent Branch Support Median');
     expect(header).toContain('Target Parent Branch Support Median');
@@ -49,6 +53,9 @@ describe('createSprMovedSubtreeRecurrenceCsv', () => {
           destinationParentBranchValueMedian: 84,
           lowParentBranchValueCount: 1,
           missingParentBranchValueCount: 0,
+          representativeSourceInputTreeIndex: 0,
+          representativeTargetInputTreeIndex: 1,
+          representativeFrameRange: [4, 6],
           sourceMovedSubtreeNewick: '(b:1,c:1):0.2;',
           destinationMovedSubtreeNewick: '(c:1,b:1):0.2;',
         },
@@ -60,6 +67,8 @@ describe('createSprMovedSubtreeRecurrenceCsv', () => {
     expect(row).toContain('2');
     expect(row).toContain('52.500000');
     expect(row).toContain('84.000000');
+    expect(row).toContain('Source tree 1 -> Target tree 2');
+    expect(row).toContain('4-6');
     expect(row).toContain('"(b:1,c:1):0.2;"');
   });
 
