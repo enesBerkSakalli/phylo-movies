@@ -1,6 +1,7 @@
 import React, { type ReactNode, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Rnd } from 'react-rnd';
+import { useShallow } from 'zustand/react/shallow';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { ScrollArea } from '../ui/scroll-area';
 import { Activity, ListTree, BookOpen, Download, X } from 'lucide-react';
@@ -181,19 +182,37 @@ const AnalyticsDashboardBody = () => {
   const [branchValueThreshold, setBranchValueThreshold] = React.useState(
     DEFAULT_BRANCH_VALUE_THRESHOLD
   );
-  const pairs = useAppStore(selectPairs);
-  const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
-  const fileName = useAppStore(selectFileName) || 'dataset';
-  const pairMetrics = useAppStore(selectPairMetrics);
-  const temporalEvents = useAppStore(selectTemporalEvents);
-  const interpolatedTrees = useAppStore(selectActiveTreeList);
-  const frames = useAppStore(selectTimelineFrames);
-  const hasMsa = useAppStore(selectHasMsa);
-  const msaStepSize = useAppStore(selectMsaStepSize);
-  const msaWindowSize = useAppStore(selectMsaWindowSize);
-  const msaColumnCount = useAppStore(selectMsaColumnCount);
-  const selectedMovedSubtreeIndices = useAppStore(selectMarkedNodes);
-  const branchAnnotationValueKey = useAppStore(selectBranchAnnotationLabelKey);
+  const {
+    pairs,
+    leafNamesByIndex,
+    fileName,
+    pairMetrics,
+    temporalEvents,
+    interpolatedTrees,
+    frames,
+    hasMsa,
+    msaStepSize,
+    msaWindowSize,
+    msaColumnCount,
+    selectedMovedSubtreeIndices,
+    branchAnnotationValueKey,
+  } = useAppStore(
+    useShallow((state) => ({
+      pairs: selectPairs(state),
+      leafNamesByIndex: selectLeafNamesByIndex(state),
+      fileName: selectFileName(state) || 'dataset',
+      pairMetrics: selectPairMetrics(state),
+      temporalEvents: selectTemporalEvents(state),
+      interpolatedTrees: selectActiveTreeList(state),
+      frames: selectTimelineFrames(state),
+      hasMsa: selectHasMsa(state),
+      msaStepSize: selectMsaStepSize(state),
+      msaWindowSize: selectMsaWindowSize(state),
+      msaColumnCount: selectMsaColumnCount(state),
+      selectedMovedSubtreeIndices: selectMarkedNodes(state),
+      branchAnnotationValueKey: selectBranchAnnotationLabelKey(state),
+    }))
+  );
   const windowRangeOptions = useMemo(
     () => ({
       hasMsa,

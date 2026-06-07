@@ -33,7 +33,6 @@ export function App() {
   const initializeStore = useAppStore(selectInitialize);
   const resetStore = useAppStore(selectReset);
   const setTaxaColoringOpen = useAppStore(selectSetTaxaColoringOpen);
-  const renderInProgress = useAppStore((state) => state.renderInProgress);
   const [sprAnalyticsOpen, setSprAnalyticsOpen] = React.useState(false);
   const [activeFloatingWindow, setActiveFloatingWindow] = React.useState(null);
   const [bootstrapState, setBootstrapState] = React.useState('loading');
@@ -128,7 +127,7 @@ export function App() {
               <TreeCanvasControls />
               <HUD />
               <TransitionInspectorPanel />
-              <VisualizationTreeRenderOverlay visible={renderInProgress} />
+              <VisualizationTreeRenderOverlay />
             </div>
           </SidebarInset>
         </div>
@@ -151,7 +150,9 @@ export function App() {
 
 export default App;
 
-export function VisualizationTreeRenderOverlay({ visible }) {
+export function VisualizationTreeRenderOverlay() {
+  const visible = useAppStore((state) => state.renderInProgress);
+
   if (!visible) return null;
 
   return (

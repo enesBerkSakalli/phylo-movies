@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { ArrowRightLeft, Dna, Gauge, GitBranch, X } from 'lucide-react';
+import { useShallow } from 'zustand/react/shallow';
 import { calculateWindow } from '../domain/msa/msaWindowCalculator';
 import { formatScaleValue, getScaleValue } from '../domain/tree/scaleUtils';
 import { useAppStore } from '../state/phyloStore/store.js';
@@ -23,16 +24,31 @@ import {
 } from './timeline/timelineSegmentTooltipUtils.js';
 
 export function TransitionInspectorPanel() {
-  const segmentIndex = useAppStore(selectSelectedTimelineSegmentIndex);
-  const setSelectedTimelineSegment = useAppStore(selectSetSelectedTimelineSegment);
-  const movieTimelineManager = useAppStore(selectMovieTimelineManager);
-  const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
-  const pairMetrics = useAppStore(selectPairMetrics);
-  const scaleList = useAppStore(selectScaleList);
-  const hasMsa = useAppStore(selectHasMsa);
-  const msaStepSize = useAppStore(selectMsaStepSize);
-  const msaWindowSize = useAppStore(selectMsaWindowSize);
-  const msaColumnCount = useAppStore(selectMsaColumnCount);
+  const {
+    segmentIndex,
+    setSelectedTimelineSegment,
+    movieTimelineManager,
+    leafNamesByIndex,
+    pairMetrics,
+    scaleList,
+    hasMsa,
+    msaStepSize,
+    msaWindowSize,
+    msaColumnCount,
+  } = useAppStore(
+    useShallow((state) => ({
+      segmentIndex: selectSelectedTimelineSegmentIndex(state),
+      setSelectedTimelineSegment: selectSetSelectedTimelineSegment(state),
+      movieTimelineManager: selectMovieTimelineManager(state),
+      leafNamesByIndex: selectLeafNamesByIndex(state),
+      pairMetrics: selectPairMetrics(state),
+      scaleList: selectScaleList(state),
+      hasMsa: selectHasMsa(state),
+      msaStepSize: selectMsaStepSize(state),
+      msaWindowSize: selectMsaWindowSize(state),
+      msaColumnCount: selectMsaColumnCount(state),
+    }))
+  );
   const segment = Number.isInteger(segmentIndex)
     ? (movieTimelineManager?.getSegment?.(segmentIndex) ?? null)
     : null;

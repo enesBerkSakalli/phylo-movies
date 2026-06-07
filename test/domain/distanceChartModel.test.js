@@ -6,7 +6,12 @@ import {
   resolveCursorX,
   resolveNavigationTarget,
 } from '../../src/components/DistanceChart/distanceChartModel.js';
-import { DISTANCE_CHART_METRIC_OPTIONS } from '../../src/components/DistanceChart/distanceChartLanguage.js';
+import {
+  DISTANCE_CHART_METRIC_OPTIONS,
+  getDistanceChartAriaLabel,
+  getDistanceChartMetric,
+  getDistanceChartSectionLabel,
+} from '../../src/components/DistanceChart/distanceChartLanguage.js';
 
 const pairMetrics = {
   rows: [
@@ -52,6 +57,20 @@ describe('distanceChartModel', () => {
       ['w-rfd', 'Raw Weighted RF'],
       ['scale', 'Raw Tree Size'],
     ]);
+  });
+
+  it('names MSA pairwise distance charts as neighboring-window distances', () => {
+    expect(getDistanceChartSectionLabel('rfd', true)).toBe('Neighboring-window distances');
+    expect(getDistanceChartSectionLabel('w-rfd', true)).toBe('Neighboring-window distances');
+    expect(getDistanceChartSectionLabel('scale', true)).toBe('Genome-window metrics');
+    expect(getDistanceChartSectionLabel('rfd', false)).toBe('Input-tree metrics');
+
+    expect(getDistanceChartAriaLabel(getDistanceChartMetric('rfd'), 'rfd', true)).toBe(
+      'Normalized RF neighboring-window distance chart'
+    );
+    expect(getDistanceChartAriaLabel(getDistanceChartMetric('scale'), 'scale', true)).toBe(
+      'Raw Tree Size genome-window metric chart'
+    );
   });
 
   it('keeps scale point display order separate from input tree navigation target', () => {

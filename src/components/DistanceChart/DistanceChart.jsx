@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { Area, AreaChart, CartesianGrid, ReferenceLine, XAxis, YAxis } from 'recharts';
+import { useShallow } from 'zustand/react/shallow';
 import {
   selectBarOptionValue,
   selectHasMsa,
@@ -23,16 +24,18 @@ import {
   resolveCursorX,
   resolveNavigationTarget,
 } from './distanceChartModel.js';
-import { formatMetricValue, getDistanceChartMetric } from './distanceChartLanguage.js';
+import {
+  formatMetricValue,
+  getDistanceChartAriaLabel,
+  getDistanceChartMetric,
+} from './distanceChartLanguage.js';
 
 const CHART_MARGINS = { top: 4, right: 8, bottom: 0, left: 2 };
 const X_AXIS_HEIGHT = 16;
 const Y_AXIS_WIDTH = 34;
 
-const useTimelineData = ({
+const useSeriesData = ({
   barOptionValue,
-  timelineCursor,
-  inputFrameIndices,
   hasMsa,
   msaStepSize,
   msaWindowSize,
@@ -49,26 +52,13 @@ const useTimelineData = ({
       msaColumnCount,
     });
 
-    const hasData = points.length > 0;
-    const activePointIndex = resolveActivePointIndex(
-      barOptionValue,
-      timelineCursor,
-      inputFrameIndices,
-      points
-    );
-    const currentX = resolveCursorX(points, activePointIndex);
-
     return {
       points,
       yMax,
-      currentX,
-      activePointIndex,
-      hasData,
+      hasData: points.length > 0,
     };
   }, [
     barOptionValue,
-    timelineCursor,
-    inputFrameIndices,
     hasMsa,
     msaStepSize,
     msaWindowSize,
@@ -78,23 +68,52 @@ const useTimelineData = ({
     scaleList,
   ]);
 
-export function DistanceChart() {
-  const barOptionValue = useAppStore(selectBarOptionValue);
-  const timelineCursor = useAppStore(selectTimelineCursor);
-  const inputFrameIndices = useAppStore(selectInputFrameIndices);
-  const hasMsa = useAppStore(selectHasMsa);
-  const msaStepSize = useAppStore(selectMsaStepSize);
-  const msaWindowSize = useAppStore(selectMsaWindowSize);
-  const msaColumnCount = useAppStore(selectMsaColumnCount);
-  const pairs = useAppStore(selectPairs);
-  const pairMetrics = useAppStore(selectPairMetrics);
-  const scaleList = useAppStore(selectScaleList);
-  const goToPosition = useAppStore(selectGoToPosition);
+const useCursorData = ({ barOptionValue, timelineCursor, inputFrameIndices, points }) =>
+  useMemo(() => {
+    const activePointIndex = resolveActivePointIndex(
+      barOptionValue,
+      timelineCursor,
+      inputFrameIndices,
+      points
+    );
 
-  const { points, yMax, currentX, activePointIndex, hasData } = useTimelineData({
+    return {
+      activePointIndex,
+      currentX: resolveCursorX(points, activePointIndex),
+    };
+  }, [barOptionValue, timelineCursor, inputFrameIndices, points]);
+
+export function DistanceChart() {
+  const {
     barOptionValue,
     timelineCursor,
     inputFrameIndices,
+    hasMsa,
+    msaStepSize,
+    msaWindowSize,
+    msaColumnCount,
+    pairs,
+    pairMetrics,
+    scaleList,
+    goToPosition,
+  } = useAppStore(
+    useShallow((state) => ({
+      barOptionValue: selectBarOptionValue(state),
+      timelineCursor: selectTimelineCursor(state),
+      inputFrameIndices: selectInputFrameIndices(state),
+      hasMsa: selectHasMsa(state),
+      msaStepSize: selectMsaStepSize(state),
+      msaWindowSize: selectMsaWindowSize(state),
+      msaColumnCount: selectMsaColumnCount(state),
+      pairs: selectPairs(state),
+      pairMetrics: selectPairMetrics(state),
+      scaleList: selectScaleList(state),
+      goToPosition: selectGoToPosition(state),
+    }))
+  );
+
+  const { points, yMax, hasData } = useSeriesData({
+    barOptionValue,
     hasMsa,
     msaStepSize,
     msaWindowSize,
@@ -103,8 +122,15 @@ export function DistanceChart() {
     pairs,
     scaleList,
   });
+  const { currentX, activePointIndex } = useCursorData({
+    barOptionValue,
+    timelineCursor,
+    inputFrameIndices,
+    points,
+  });
 
   const metric = getDistanceChartMetric(barOptionValue);
+  const chartAriaLabel = getDistanceChartAriaLabel(metric, barOptionValue, hasMsa);
   const activePoint = points[activePointIndex] ?? null;
   const activeValueText = buildPointValueText(metric, activePoint, points.length);
 
@@ -178,7 +204,7 @@ export function DistanceChart() {
       className="h-full w-full cursor-pointer rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70"
       role="slider"
       tabIndex={0}
-      aria-label={`${metric.label} genome-window metric chart`}
+      aria-label={chartAriaLabel}
       aria-orientation="horizontal"
       aria-valuemin={1}
       aria-valuemax={points.length}
