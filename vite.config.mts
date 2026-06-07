@@ -5,6 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath } from 'url';
 import fs from 'node:fs';
 import { stat } from 'node:fs/promises';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicationDataRoot = path.resolve(__dirname, 'publication_data');
@@ -89,13 +90,26 @@ function servePublicationData() {
 export default defineConfig(async (): Promise<UserConfig> => {
   // Use relative paths for Electron builds
   const isElectronBuild = process.env.ELECTRON_BUILD === 'true';
+  const shouldAnalyzeBundle = process.env.BUNDLE_ANALYZE === 'true';
   const packageJson = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf8'));
 
   return {
     root: 'src',
     publicDir: 'public',
     base: isElectronBuild ? './' : '/',
-    plugins: [react(), stripImportMapsOnBuild(), tailwindcss(), servePublicationData()],
+    plugins: [
+      react(),
+      stripImportMapsOnBuild(),
+      tailwindcss(),
+      servePublicationData(),
+      shouldAnalyzeBundle &&
+        visualizer({
+          filename: path.resolve(__dirname, 'dist/bundle-stats.html'),
+          template: 'treemap',
+          gzipSize: true,
+          brotliSize: true,
+        }),
+    ],
     define: {
       'import.meta.env.VITE_APP_VERSION': JSON.stringify(packageJson.version),
     },
@@ -144,6 +158,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
       include: ['d3-hierarchy', 'd3-scale-chromatic'],
     },
     build: {
+      modulePreload: false,
       outDir: '../dist',
       emptyOutDir: true,
       rollupOptions: {

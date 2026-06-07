@@ -7,9 +7,15 @@ import { TimelineNavigationController } from './TimelineNavigationController.js'
 import { TimelineScrubController } from './TimelineScrubController.js';
 import { TimelineStateSynchronizer } from './TimelineStateSynchronizer.js';
 import { useAppStore } from '../../state/phyloStore/store.js';
-import { DeckTimelineRenderer } from '../renderers/DeckTimelineRenderer.js';
 import { buildTimelineStatusSnapshot } from '../view/timelineStatusModel.js';
 import { TransitionFrame } from '../time/TransitionFrame.js';
+
+let deckTimelineRendererModulePromise = null;
+
+function loadDeckTimelineRenderer() {
+  deckTimelineRendererModulePromise ??= import('../renderers/DeckTimelineRenderer.js');
+  return deckTimelineRendererModulePromise;
+}
 
 // ============================================================================
 // MOVIE TIMELINE MANAGER
@@ -34,6 +40,7 @@ export class MovieTimelineManager {
     this.container = null;
     this.scrubberAPI = null;
     this.timeline = null;
+    this._timelineCreationToken = 0;
     this._timelineUpdateFrameId = null;
     this.segments = TimelineDataProcessor.createSegments(movieData);
     this.timelineData = TimelineDataProcessor.createTimelineData(this.segments);
@@ -125,7 +132,7 @@ export class MovieTimelineManager {
   // ==========================================================================
 
   mount(container) {
-    if (this.isDestroyed || !container) return;
+    if (this.isDestroyed || !container) return Promise.resolve(null);
 
     const isSameContainer = this.container === container;
     const isTimelineAttached =
@@ -136,24 +143,16 @@ export class MovieTimelineManager {
         this.timeline,
         this.scrubController.lastScrubEndTime
       );
-      return;
+      return Promise.resolve(this.timeline);
     }
 
     this.unmount();
     this.container = container;
-    this._createTimeline();
-
-    if (this.timeline) {
-      this._setupEvents();
-      this.stateSynchronizer.restoreMountedState(
-        this.timeline,
-        this.scrubController.lastScrubEndTime
-      );
-      this._syncSelectedSegmentFromStore();
-    }
+    return this._createTimeline();
   }
 
   unmount() {
+    this._timelineCreationToken += 1;
     this.scrubController?.resetOnUnmount();
     this.timeline?.destroy();
     this.timeline = null;
@@ -163,8 +162,10 @@ export class MovieTimelineManager {
     useAppStore.getState().setHoveredSegment(null, null);
   }
 
-  _createTimeline() {
-    if (this.isDestroyed || !this.container) return;
+  async _createTimeline() {
+    if (this.isDestroyed || !this.container) return null;
+    const container = this.container;
+    const creationToken = ++this._timelineCreationToken;
 
     // Safety check for renderer constructor
     if (!this.timelineData || typeof this.timelineData !== 'object') {
@@ -172,15 +173,41 @@ export class MovieTimelineManager {
         '[MovieTimelineManager] Cannot create timeline: invalid timelineData',
         this.timelineData
       );
-      return;
+      return null;
     }
 
     if (this.timelineData.totalDuration <= 0) {
       console.warn('[MovieTimelineManager] Cannot create timeline: totalDuration is 0');
-      return;
+      return null;
     }
 
-    this.timeline = new DeckTimelineRenderer(this.timelineData, this.segments).init(this.container);
+    let DeckTimelineRenderer;
+    try {
+      ({ DeckTimelineRenderer } = await loadDeckTimelineRenderer());
+    } catch (error) {
+      console.error('[MovieTimelineManager] Failed to load timeline renderer:', error);
+      return null;
+    }
+
+    if (
+      this.isDestroyed ||
+      this.container !== container ||
+      creationToken !== this._timelineCreationToken
+    ) {
+      return null;
+    }
+
+    const timeline = new DeckTimelineRenderer(this.timelineData, this.segments).init(container);
+    if (
+      this.isDestroyed ||
+      this.container !== container ||
+      creationToken !== this._timelineCreationToken
+    ) {
+      timeline.destroy?.();
+      return null;
+    }
+
+    this.timeline = timeline;
     this.timeline.bindScrubState({
       getIsScrubbing: () => this.scrubController?.isScrubbing ?? false,
     });
@@ -189,6 +216,13 @@ export class MovieTimelineManager {
         useAppStore.getState().setHoveredSegment(segmentIndex, segmentData, position);
       },
     });
+    this._setupEvents();
+    this.stateSynchronizer.restoreMountedState(
+      this.timeline,
+      this.scrubController.lastScrubEndTime
+    );
+    this._syncSelectedSegmentFromStore();
+    return this.timeline;
   }
 
   _setupEvents() {

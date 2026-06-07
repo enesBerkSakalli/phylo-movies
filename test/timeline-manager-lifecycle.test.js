@@ -192,11 +192,11 @@ describe('MovieTimelineManager lifecycle', () => {
     manager.destroy();
   });
 
-  it('mounts into an explicit host and unmounts cleanly', () => {
+  it('mounts into an explicit host and unmounts cleanly', async () => {
     const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
     const host = makeContainer();
 
-    manager.mount(host);
+    await manager.mount(host);
 
     expect(manager.container).to.equal(host);
     expect(manager.timeline).to.exist;
@@ -267,15 +267,15 @@ describe('MovieTimelineManager lifecycle', () => {
     expect(calls).to.deep.equal(['zoomIn', 'zoomOut', 'fit', 'scrollToStart', 'scrollToEnd']);
   });
 
-  it('remounts into a new host without leaving stale DOM behind', () => {
+  it('remounts into a new host without leaving stale DOM behind', async () => {
     const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
     const firstHost = makeContainer(640, 60);
     const secondHost = makeContainer(720, 90);
 
-    manager.mount(firstHost);
+    await manager.mount(firstHost);
     expect(firstHost.children.length).to.equal(1);
 
-    manager.mount(secondHost);
+    await manager.mount(secondHost);
 
     expect(firstHost.children.length).to.equal(0);
     expect(secondHost.children.length).to.equal(1);
@@ -341,7 +341,7 @@ describe('MovieTimelineManager lifecycle', () => {
     );
   });
 
-  it('keeps clicked inspector selection visually pinned while playhead sync changes current position', () => {
+  it('keeps clicked inspector selection visually pinned while playhead sync changes current position', async () => {
     const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
     const host = makeContainer();
 
@@ -355,7 +355,7 @@ describe('MovieTimelineManager lifecycle', () => {
       },
     });
 
-    manager.mount(host);
+    await manager.mount(host);
     manager.updateCurrentPosition();
 
     expect(manager.timeline._selectedSegmentIndex).to.equal(0);
@@ -364,7 +364,7 @@ describe('MovieTimelineManager lifecycle', () => {
     manager.destroy();
   });
 
-  it('restores scrubber position and inspected segment selection on remount from store state', () => {
+  it('restores scrubber position and inspected segment selection on remount from store state', async () => {
     const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
     const firstHost = makeContainer(640, 60);
     const secondHost = makeContainer(640, 60);
@@ -378,7 +378,7 @@ describe('MovieTimelineManager lifecycle', () => {
       selectedTimelineSegmentIndex: 2,
     });
 
-    manager.mount(firstHost);
+    await manager.mount(firstHost);
 
     const firstScrubberMs = manager.timeline._scrubberMs;
     const firstSelectedSegmentIndex = manager.timeline._selectedSegmentIndex;
@@ -387,7 +387,7 @@ describe('MovieTimelineManager lifecycle', () => {
     expect(firstSelectedSegmentIndex).to.equal(2);
 
     manager.unmount();
-    manager.mount(secondHost);
+    await manager.mount(secondHost);
 
     expect(manager.timeline._scrubberMs).to.equal(firstScrubberMs);
     expect(manager.timeline._selectedSegmentIndex).to.equal(firstSelectedSegmentIndex);
@@ -395,12 +395,12 @@ describe('MovieTimelineManager lifecycle', () => {
     manager.destroy();
   });
 
-  it('syncs renderer inspected selection when the store selection is cleared', () => {
+  it('syncs renderer inspected selection when the store selection is cleared', async () => {
     const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
     const host = makeContainer();
 
     useAppStore.setState({ selectedTimelineSegmentIndex: 1 });
-    manager.mount(host);
+    await manager.mount(host);
 
     expect(manager.timeline._selectedSegmentIndex).to.equal(1);
 
@@ -1277,7 +1277,7 @@ describe('MovieTimelineManager lifecycle', () => {
     const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
     const host = makeContainer();
 
-    manager.mount(host);
+    await manager.mount(host);
     expect(manager.timeline.isScrubbing()).to.equal(false);
 
     await manager.scrubController.startScrubbing(0);
