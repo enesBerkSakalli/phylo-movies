@@ -11,6 +11,8 @@ import { getReadableMetricScale } from '../../readableMetricScale.js';
 const _outlineColorOut = [0, 0, 0, 0];
 const _transparentColor = [0, 0, 0, 0];
 const _outlineDashOut = [0, 0];
+const PIVOT_GLOW_MIN_OPACITY = 160;
+const PIVOT_GLOW_OPACITY_RANGE = 80;
 
 export function getLinkOutlineDashArray(link, cached) {
   const { dashingEnabled, upcomingChangesEnabled } = cached;
@@ -82,14 +84,15 @@ export function getLinkOutlineColor(link, cached) {
       const mode = cached.highlightColorMode || 'solid';
       rgb = getSubtreeHighlightRgb(link, cm, mode, cached.subtreeHighlightColor);
 
-      // Apply adjustable opacity from slider
-      const sensitivity = subtreeHighlightOpacity ?? 0.8;
-      glowOpacity = Math.round(baseOpacity * 255 * sensitivity);
+      const sensitivity = subtreeHighlightOpacity ?? 0.5;
+      glowOpacity = Math.round(baseOpacity * 190 * sensitivity);
       hasOutline = true;
     } else if (highlight.role === TREE_HIGHLIGHT_ROLE.PIVOT_EDGE) {
-      // Current Pivot Edge: strong pulsing glow
+      // Current Pivot Edge: keep the pulse visible even at the trough.
       rgb = colorToRgb(cm.getBranchColorWithHighlights(link));
-      glowOpacity = Math.round(baseOpacity * 128 * pulseOpacity);
+      glowOpacity = Math.round(
+        baseOpacity * (PIVOT_GLOW_MIN_OPACITY + PIVOT_GLOW_OPACITY_RANGE * pulseOpacity)
+      );
       hasOutline = true;
     }
   }
@@ -157,7 +160,8 @@ export function getLinkOutlineWidth(link, cached, helpers) {
       highlight.role === TREE_HIGHLIGHT_ROLE.ACTIVE_MOVER
         ? getActiveMoverEmphasis(link, cached, 'link')
         : 1;
-    return (baseWidth * 1.5 + 4) * emphasis * metricScale;
+    const focusedWidth = Math.min(baseWidth + 2.5, baseWidth * 2.5);
+    return focusedWidth * emphasis * metricScale;
   }
 
   // Only show outline for highlighted branches

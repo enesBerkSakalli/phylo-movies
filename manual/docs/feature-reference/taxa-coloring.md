@@ -23,7 +23,7 @@ Phylo-Movies resolves colors in layers:
 
 1. Leaf nodes and leaf branches use the color assigned to their taxon, pattern group, or CSV group.
 2. Unassigned taxa use the default tree color.
-3. Internal branches use group colors only when **Group Branch Colors** is enabled and every descendant taxon has the same non-default color.
+3. Internal branches use group colors only when **Monophyletic Branch Colors** is enabled and every descendant taxon has the same non-default color.
 4. Mixed internal branches, or branches containing unassigned taxa, stay at the default tree color.
 5. Changed-edge and subtree-highlight effects can draw over the base taxa color during transition review.
 
@@ -83,7 +83,7 @@ The sidebar uses taxa coloring together with highlight controls:
 
 | Control                         | Meaning                                                                   |
 | ------------------------------- | ------------------------------------------------------------------------- |
-| **Group Branch Colors**         | Colors monophyletic branch groups according to taxa or group assignments. |
+| **Monophyletic Branch Colors**  | Colors monophyletic branch groups according to taxa or group assignments. |
 | **Subtree Highlighting**        | Highlights moved or selected subtrees.                                    |
 | **Highlight Style: Taxa Color** | Uses taxa/group color assignments for subtree highlighting.               |
 

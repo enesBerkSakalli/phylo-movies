@@ -16,6 +16,8 @@ export function resolveTreeElementHighlight(entity, cached, elementType = 'link'
   const cm = cached?.colorManager ?? null;
   const context = resolveContext(entity, cm);
 
+  // Visual precedence is intentionally narrow: lifecycle animation wins, then
+  // the current active mover, then the active pivot edge, then broader subtree context.
   if (elementType === 'link') {
     const lifecycle = getLifecycleLinkHighlight(entity);
     if (lifecycle) {

@@ -13,6 +13,7 @@ import { useAppStore } from '../../../state/phyloStore/store.js';
 import { selectLeafNamesByIndex } from '../../../state/phyloStore/selectors/treeSelectors.js';
 import { getTaxonColor } from '../../../treeColoring/utils/GroupingUtils.js';
 import { getSplitIndices } from '../../../domain/tree/splits.js';
+import { colorToRgb, rgbToHex } from '../../../services/ui/colorUtils.js';
 
 // =============================================================================
 // RENDER-CYCLE CACHE
@@ -113,6 +114,10 @@ function getEffectiveTaxonColor(taxonName) {
 
   if (taxaGrouping && taxaGrouping.mode) {
     color = getTaxonColor(taxonName, taxaGrouping, null);
+  }
+
+  if (color != null) {
+    color = rgbToHex(colorToRgb(color));
   }
 
   // Store in cache (even null values to avoid re-lookup)

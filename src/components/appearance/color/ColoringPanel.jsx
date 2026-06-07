@@ -26,7 +26,7 @@ import {
 } from '../../../state/phyloStore/store.js';
 import { Switch } from '../../ui/switch';
 import { Input } from '../../ui/input';
-import { Palette, Settings2, RefreshCw } from 'lucide-react';
+import { Crosshair, Highlighter, Palette, RefreshCw, Settings2, X } from 'lucide-react';
 import { SidebarMenuSub, SidebarMenuSubItem } from '../../ui/sidebar';
 import { Slider } from '../../ui/slider';
 import {
@@ -40,7 +40,6 @@ import {
 import { Label } from '../../ui/label';
 import { Button } from '../../ui/button';
 import { Separator } from '../../ui/separator';
-import { Highlighter, X } from 'lucide-react';
 
 export function ColoringPanel({ onOpenTaxaColoring }) {
   const monophyletic = useAppStore(selectMonophyleticColoringEnabled);
@@ -71,36 +70,31 @@ export function ColoringPanel({ onOpenTaxaColoring }) {
   const setHighlightColorMode = useAppStore(selectSetHighlightColorMode);
   const setManuallyMarkedNodes = useAppStore(selectSetManuallyMarkedNodes);
 
-  const rerenderControllers = useCallback(async () => {
-    try {
-      for (const controller of treeControllers) {
-        await controller.renderAllElements();
-      }
-    } catch {}
-  }, [treeControllers]);
-
   const onToggleMonophyletic = useCallback(
-    async (v) => {
+    (v) => {
       setMonophyleticColoring(!!v);
-      await rerenderControllers();
     },
-    [setMonophyleticColoring, rerenderControllers]
+    [setMonophyleticColoring]
   );
 
   const onTogglePivotEdges = useCallback(
-    async (v) => {
+    (v) => {
       setPivotEdgesEnabled(!!v);
     },
     [setPivotEdgesEnabled]
   );
 
   const toggleSubtreeHighlights = useCallback(
-    async (v) => {
+    (v) => {
       setSubtreeHighlightsEnabled(!!v);
-      await rerenderControllers();
     },
-    [setSubtreeHighlightsEnabled, rerenderControllers]
+    [setSubtreeHighlightsEnabled]
   );
+
+  const focusHighlightedSubtree = useCallback(() => {
+    if (!manuallyMarkedNodes?.length) return;
+    treeControllers[0]?.focusOnSubtree?.(manuallyMarkedNodes);
+  }, [manuallyMarkedNodes, treeControllers]);
 
   const openTaxaColoring = useCallback(() => {
     if (!hasTaxa) return;
@@ -136,7 +130,7 @@ export function ColoringPanel({ onOpenTaxaColoring }) {
         <div className="flex items-center justify-between px-2 py-2 w-full">
           <div className="flex items-center gap-2 overflow-hidden">
             <Settings2 className="size-4 text-muted-foreground shrink-0" />
-            <span className="text-xs text-foreground/70 truncate">Group Branch Colors</span>
+            <span className="text-xs text-foreground/70 truncate">Monophyletic Branch Colors</span>
           </div>
           <Switch
             id="monophyletic-coloring"
@@ -157,9 +151,8 @@ export function ColoringPanel({ onOpenTaxaColoring }) {
                 type="color"
                 value={pivotEdgeColor || '#2196f3'}
                 className="size-10 -m-2 p-0 border-none bg-transparent cursor-pointer"
-                onChange={async (e) => {
+                onChange={(e) => {
                   setPivotEdgeColor(e.target.value);
-                  await rerenderControllers();
                 }}
               />
             </div>
@@ -187,29 +180,6 @@ export function ColoringPanel({ onOpenTaxaColoring }) {
 
           {subtreeHighlightsEnabled && (
             <div className="flex flex-col gap-4 mx-2 mb-2 p-2 rounded-md bg-muted/20 border border-border/30">
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <Label
-                    htmlFor="subtree-opacity-slider"
-                    className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/80"
-                  >
-                    Highlight Opacity
-                  </Label>
-                  <span className="text-xs font-medium tabular-nums text-muted-foreground">
-                    {Math.round((subtreeHighlightOpacity ?? 0.8) * 100)}%
-                  </span>
-                </div>
-                <Slider
-                  id="subtree-opacity-slider"
-                  min={0}
-                  max={1}
-                  step={0.05}
-                  value={[subtreeHighlightOpacity ?? 0.8]}
-                  onValueChange={(val) => setSubtreeHighlightOpacity(val[0])}
-                  className="w-full py-1"
-                />
-              </div>
-
               <div className="flex flex-col gap-2">
                 <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/80">
                   Highlight Scope
@@ -254,9 +224,8 @@ export function ColoringPanel({ onOpenTaxaColoring }) {
                         type="color"
                         value={subtreeHighlightColor || '#10b981'}
                         className="size-10 -m-2 p-0 border-none bg-transparent cursor-pointer"
-                        onChange={async (e) => {
+                        onChange={(e) => {
                           setSubtreeHighlightColor(e.target.value);
-                          await rerenderControllers();
                         }}
                       />
                     </div>
@@ -264,16 +233,50 @@ export function ColoringPanel({ onOpenTaxaColoring }) {
                 )}
               </div>
 
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <Label
+                    htmlFor="subtree-opacity-slider"
+                    className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/80"
+                  >
+                    Highlight Opacity
+                  </Label>
+                  <span className="text-xs font-medium tabular-nums text-muted-foreground">
+                    {Math.round((subtreeHighlightOpacity ?? 0.5) * 100)}%
+                  </span>
+                </div>
+                <Slider
+                  id="subtree-opacity-slider"
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  value={[subtreeHighlightOpacity ?? 0.5]}
+                  onValueChange={(val) => setSubtreeHighlightOpacity(val[0])}
+                  className="w-full py-1"
+                />
+              </div>
+
               {manuallyMarkedNodes && manuallyMarkedNodes.length > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setManuallyMarkedNodes([])}
-                  className="w-full mt-1 h-7 text-2xs uppercase font-bold tracking-tight border-muted-foreground/20 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all bg-background/40"
-                >
-                  <X className="mr-2 size-3" />
-                  Clear Highlighted Subtree
-                </Button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={focusHighlightedSubtree}
+                    className="h-7 text-2xs uppercase font-bold tracking-tight border-muted-foreground/20 bg-background/40"
+                  >
+                    <Crosshair className="mr-2 size-3" />
+                    Focus
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setManuallyMarkedNodes([])}
+                    className="h-7 text-2xs uppercase font-bold tracking-tight border-muted-foreground/20 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all bg-background/40"
+                  >
+                    <X className="mr-2 size-3" />
+                    Clear
+                  </Button>
+                </div>
               )}
             </div>
           )}

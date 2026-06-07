@@ -3,6 +3,7 @@
  * Provides color schemes for DNA and protein sequences
  * Ported from react-alignment-viewer and other standard schemes
  */
+import { colorToRgb } from '../../services/ui/colorUtils.js';
 
 /**
  * Creates an RGBA color array
@@ -26,12 +27,8 @@ export function gray(v, a = 255) {
   return [v, v, v, a];
 }
 
-// Helper to convert hex to rgb array
-function hexToRgb(hex) {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16), 255]
-    : [180, 180, 180, 255];
+function toRgba(color) {
+  return [...colorToRgb(color), 255];
 }
 
 // Color definitions
@@ -395,7 +392,7 @@ Object.keys(SCHEMES).forEach((scheme) => {
     // Handle spaces in hex strings from the repo (e.g. " #fff")
     val = val.trim();
 
-    RGBA_MAPS[scheme][key] = hexToRgb(val);
+    RGBA_MAPS[scheme][key] = toRgba(val);
   });
 });
 
