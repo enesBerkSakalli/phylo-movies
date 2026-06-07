@@ -178,4 +178,60 @@ describe('InterpolationRenderer timeline progress', () => {
     expect(controller.treeInterpolator.interpolateTreeData.called).to.equal(false);
     expect(controller._updateLayersEfficiently.called).to.equal(false);
   });
+
+  it('renders progress with trees returned by immutable hydration state updates', async () => {
+    const sourceTree = { id: 'source-tree', split_indices: [0], children: [] };
+    const targetTree = { id: 'target-tree', split_indices: [1], children: [] };
+    const sparseTreeList = [sourceTree, undefined];
+    const ensureTreesHydrated = sinon.spy((indices) => {
+      const nextTreeList = useAppStore.getState().treeList.slice();
+      const hydratedTrees = indices.map((index) => {
+        const tree = index === 0 ? sourceTree : targetTree;
+        nextTreeList[index] = tree;
+        return tree;
+      });
+      useAppStore.setState((state) => ({
+        treeList: nextTreeList,
+        treeHydrationVersion: (state.treeHydrationVersion ?? 0) + 1,
+      }));
+      return hydratedTrees;
+    });
+    useAppStore.setState({
+      treeList: sparseTreeList,
+      treeHydrationVersion: 0,
+      ensureTreesHydrated,
+      movieTimelineManager: null,
+    });
+
+    const layerData = { nodes: [], links: [], labels: [], extensions: [] };
+    const interpolatedData = { nodes: [], links: [], labels: [], extensions: [] };
+    const controller = {
+      ready: true,
+      readyPromise: Promise.resolve(),
+      renderAllElements: sinon.spy(),
+      _getOrCacheInterpolationData: sinon.stub().returns({
+        dataFrom: layerData,
+        dataTo: layerData,
+        transitionChangeModel: null,
+      }),
+      _syncInterpolatorRootAngle: sinon.spy(),
+      _getLinkGeometryMode: () => 'radial-elbow',
+      treeInterpolator: {
+        interpolateTreeData: sinon.stub().returns(interpolatedData),
+      },
+      _updateLayersEfficiently: sinon.spy(),
+    };
+    const renderer = new InterpolationRenderer(controller);
+
+    await renderer.renderProgress(0.5);
+
+    expect(ensureTreesHydrated.calledWithMatch([0, 1])).to.equal(true);
+    expect(controller._getOrCacheInterpolationData.called).to.equal(true);
+    expect(
+      controller._getOrCacheInterpolationData.calledWith(sourceTree, targetTree, 0, 1)
+    ).to.equal(true);
+    expect(controller._getOrCacheInterpolationData.firstCall.args[0]).to.equal(sourceTree);
+    expect(controller._getOrCacheInterpolationData.firstCall.args[1]).to.equal(targetTree);
+    expect(controller._updateLayersEfficiently.calledWith(interpolatedData)).to.equal(true);
+  });
 });

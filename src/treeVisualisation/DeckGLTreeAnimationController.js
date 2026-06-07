@@ -401,25 +401,25 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
   _prefetchFrame(treeIndex) {
     const state = useAppStore.getState();
     const treeList = selectActiveTreeList(state);
-    state.ensureTreeHydrated?.(treeIndex);
+    const treeData =
+      state.ensureTreeHydrated?.(treeIndex) ??
+      useAppStore.getState().treeList?.[treeIndex] ??
+      treeList?.[treeIndex] ??
+      null;
 
     // Bounds check
-    if (!treeList || !treeList[treeIndex]) return;
+    if (!treeData) return;
 
-    const treeData = treeList[treeIndex];
-    const {
-      branchTransformation,
-      layoutAngleDegrees,
-      layoutRotationDegrees,
-      styleConfig,
-    } = state;
+    const latestState = useAppStore.getState();
+    const { branchTransformation, layoutAngleDegrees, layoutRotationDegrees, styleConfig } =
+      latestState;
     const offsets = styleConfig?.labelOffsets || { DEFAULT: 20, EXTENSION: 5 };
-    const linkGeometryMode = this._getLinkGeometryMode(state);
+    const linkGeometryMode = this._getLinkGeometryMode(latestState);
 
     // Ensure uniform scaling is initialized before dispatching to worker
     this.initializeUniformScaling(branchTransformation);
-    const layoutCacheKey = this._createLayoutCacheKey(treeIndex, state);
-    const requestToken = this._createLayoutRequestToken(treeIndex, state, layoutCacheKey);
+    const layoutCacheKey = this._createLayoutCacheKey(treeIndex, latestState);
+    const requestToken = this._createLayoutRequestToken(treeIndex, latestState, layoutCacheKey);
     if (this._layoutPrefetchTokens.get(treeIndex) === requestToken) return;
 
     this._layoutPrefetchTokens.set(treeIndex, requestToken);
@@ -626,12 +626,15 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
       );
 
     if (!dataFrom || !dataTo) {
-      console.warn('[DeckGLTreeAnimationController] Skipping frame with missing layout cache data.', {
-        fromTreeIndex,
-        toTreeIndex,
-        hasSourceLayout: !!dataFrom,
-        hasTargetLayout: !!dataTo,
-      });
+      console.warn(
+        '[DeckGLTreeAnimationController] Skipping frame with missing layout cache data.',
+        {
+          fromTreeIndex,
+          toTreeIndex,
+          hasSourceLayout: !!dataFrom,
+          hasTargetLayout: !!dataTo,
+        }
+      );
       return { dataFrom: null, dataTo: null, transitionChangeModel: null };
     }
 

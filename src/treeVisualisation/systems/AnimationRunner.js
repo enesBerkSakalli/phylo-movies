@@ -352,8 +352,7 @@ function getSemanticTimelinePlaybackState(state, timestamp, treeList) {
   const elapsedMs = Math.max(0, timestamp - animationStartTime) * safeSpeed;
   const rawProgress = elapsedMs / totalDurationMs;
   const timelineProgress = Math.max(0, Math.min(1, rawProgress));
-  const transitionFrame =
-    movieTimelineManager.resolveFrameAtTimelineProgress(timelineProgress);
+  const transitionFrame = movieTimelineManager.resolveFrameAtTimelineProgress(timelineProgress);
 
   if (!transitionFrame) {
     return null;
@@ -388,10 +387,13 @@ function getActiveTreeSequence(state) {
 
 function buildLinearTransitionFrame(state, playback) {
   const { fromIndex, toIndex, localT } = playback;
-  state.ensureTreesHydrated?.([fromIndex, toIndex]);
+  const [hydratedFromTree, hydratedToTree] = state.ensureTreesHydrated?.([fromIndex, toIndex]) ?? [
+    null,
+    null,
+  ];
   const trees = getActiveTreeSequence(state);
-  const fromTree = trees[fromIndex];
-  const toTree = trees[toIndex];
+  const fromTree = hydratedFromTree ?? trees[fromIndex];
+  const toTree = hydratedToTree ?? trees[toIndex];
   if (!fromTree) return null;
 
   return TransitionFrame.from(
@@ -439,8 +441,7 @@ function getComparisonTarget(state, fromIndex, toIndex) {
     inputFrameIndices.find((i) => i > fromIndex) ??
     inputFrameIndices[inputFrameIndices.length - 1] ??
     toIndex;
-  state.ensureTreeHydrated?.(rightIdx);
-  const rightTree = treeList[rightIdx];
+  const rightTree = state.ensureTreeHydrated?.(rightIdx) ?? treeList[rightIdx];
 
   return rightTree ? { rightTree, rightTreeIndex: rightIdx } : null;
 }

@@ -463,8 +463,8 @@ function getCursorAtTimelineProgress(movieTimelineManager, timelineProgress) {
 }
 
 function getCursorForFrame(movieTimelineManager, frameIndex, direction) {
-  const occurrence = direction === 'backward' ? 'last' : 'first';
-  return movieTimelineManager?.getCursorForFrame?.(frameIndex, { occurrence }) ?? null;
+  const options = direction === 'backward' ? { occurrence: 'last' } : {};
+  return movieTimelineManager?.getCursorForFrame?.(frameIndex, options) ?? null;
 }
 
 function getCursorForPlayhead({ movieTimelineManager, frameIndex, timelineProgress, direction }) {

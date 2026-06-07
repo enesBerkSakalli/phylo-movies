@@ -24,6 +24,22 @@ function loadMovieData() {
   return { data: JSON.parse(fs.readFileSync(source, 'utf8')), source };
 }
 
+function loadPaperExampleMovieData() {
+  const source = path.join(
+    __dirname,
+    '..',
+    'publication_data',
+    'precomputed',
+    'paper_example.movie.json'
+  );
+  return { data: JSON.parse(fs.readFileSync(source, 'utf8')), source };
+}
+
+function loadOstrichBugMovieData() {
+  const source = path.join(__dirname, 'data', 'ostrich_bug_response.json');
+  return { data: JSON.parse(fs.readFileSync(source, 'utf8')), source };
+}
+
 function setsToSortedArrays(sets) {
   return sets.map((set) => Array.from(set).sort((a, b) => a - b));
 }
@@ -539,11 +555,38 @@ describe('Timeline construction from normalized backend result', () => {
     expect(missingEdges).to.deep.equal([]);
   });
 
-  it('adds fulfillment motion from the last split-event frame into the target input tree', () => {
+  it('keeps the paper example timeline to its two pivot segments', () => {
+    const { data } = loadPaperExampleMovieData();
+    const segments = TimelineDataProcessor.createSegments(data);
+    const transitionSegments = segments.filter((segment) => !segment.isInputTreeSegment);
+
+    expect(transitionSegments).to.have.length(2);
+    expect(transitionSegments.map((segment) => segment.pivotEdge)).to.deep.equal([
+      [1, 2, 3, 4, 5, 6],
+      [8, 9, 10, 11, 12, 13],
+    ]);
+    expect(
+      transitionSegments[1].interpolationData.map((entry) => entry.originalIndex)
+    ).to.deep.equal([7, 8, 9, 10, 11, 12]);
+    expect(transitionSegments[1].timing.at(-1)).to.deep.include({
+      type: 'motion',
+      fromIndex: 11,
+      toIndex: 12,
+    });
+  });
+
+  it('keeps final fulfillment motion separate after a single split-event segment', () => {
     const movieData = makeSyntheticTimingMovieData();
     const segments = TimelineDataProcessor.createSegments(movieData);
     const motionEdges = collectMotionEdges(segments);
-    const fulfillmentSegment = segments.find(
+    const splitEventSegment = segments.find(
+      (segment) =>
+        segment.pairId === 'opaque-pair' &&
+        !segment.isInputTreeSegment &&
+        segment.globalStart === 1 &&
+        segment.globalEnd === 2
+    );
+    const separateFulfillmentSegment = segments.find(
       (segment) =>
         segment.pairId === 'opaque-pair' &&
         !segment.isInputTreeSegment &&
@@ -552,12 +595,38 @@ describe('Timeline construction from normalized backend result', () => {
     );
 
     expect(motionEdges.has('2->3')).to.equal(true);
-    expect(fulfillmentSegment).to.include({
+    expect(separateFulfillmentSegment).to.include({
       treeName: 'Transition fulfillment opaque-pair',
       subtreeMoveCount: 0,
     });
-    expect(fulfillmentSegment.interpolationData.map((entry) => entry.originalIndex)).to.deep.equal([
-      2, 3,
+    expect(splitEventSegment).to.include({
+      treeName: 'Transition opaque-pair',
+      subtreeMoveCount: 2,
+    });
+    expect(splitEventSegment.interpolationData.map((entry) => entry.originalIndex)).to.deep.equal([
+      0, 1, 2,
+    ]);
+    expect(
+      separateFulfillmentSegment.interpolationData.map((entry) => entry.originalIndex)
+    ).to.deep.equal([2, 3]);
+  });
+
+  it('keeps the ostrich zero-shrink final fulfillment as a separate transition segment', () => {
+    const { data } = loadOstrichBugMovieData();
+    const segments = TimelineDataProcessor.createSegments(data);
+    const transitionSegments = segments.filter((segment) => !segment.isInputTreeSegment);
+
+    expect(
+      transitionSegments.map((segment) =>
+        segment.interpolationData.map((entry) => entry.originalIndex)
+      )
+    ).to.deep.equal([
+      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+      [13, 14],
+    ]);
+    expect(transitionSegments[1].pivotEdge).to.deep.equal([]);
+    expect(transitionSegments[1].timing).to.deep.equal([
+      { type: 'motion', fromIndex: 13, toIndex: 14, durationMs: 1000 },
     ]);
   });
 

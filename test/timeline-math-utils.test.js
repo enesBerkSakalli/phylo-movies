@@ -19,6 +19,15 @@ function loadMovieData() {
   throw new Error('No input JSON found for TimelineMathUtils tests.');
 }
 
+function loadPaperExampleMovieData() {
+  return JSON.parse(
+    fs.readFileSync(
+      path.join(__dirname, '..', 'publication_data', 'precomputed', 'paper_example.movie.json'),
+      'utf8'
+    )
+  );
+}
+
 function makeSemanticTimingFixture() {
   const treeList = Array.from({ length: 4 }, (_, index) => ({ id: `tree-${index}` }));
   const segments = [
@@ -133,6 +142,37 @@ describe('TimelineMathUtils', () => {
 
     expect(resolved.frameIndex).to.equal(entry.originalIndex);
     expect(weightedProgress).to.not.equal(linearProgress);
+  });
+
+  it('maps the paper example final linear progress to the final input-tree hold', () => {
+    const movieData = loadPaperExampleMovieData();
+    const paperSegments = TimelineDataProcessor.createSegments(movieData);
+    const paperTimelineData = TimelineDataProcessor.createTimelineData(paperSegments);
+    const treeCount = movieData.interpolated_trees.length;
+
+    const weightedProgress = TimelineMathUtils.getTimelineProgressForLinearTreeProgress(
+      1,
+      treeCount,
+      paperSegments,
+      paperTimelineData
+    );
+    const currentTime = TimelineMathUtils.progressToTime(
+      weightedProgress,
+      paperTimelineData.totalDuration
+    );
+    const resolved = TimelineMathUtils.getTargetFrameForTime(
+      paperSegments,
+      currentTime,
+      paperTimelineData.segmentDurations,
+      'nearest',
+      paperTimelineData.cumulativeDurations
+    );
+
+    expect(currentTime).to.equal(15900);
+    expect(resolved).to.include({
+      frameIndex: treeCount - 1,
+      segmentIndex: 3,
+    });
   });
 
   it('uses explicit interpolation intervals, not frame count, for transition segment duration', () => {

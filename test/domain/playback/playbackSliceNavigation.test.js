@@ -65,7 +65,7 @@ describe('playback navigation', () => {
       timelineProgress: 0.75,
     });
     expect(state.timelineCursor).toBe(cursor);
-    expect(getCursorForFrame).toHaveBeenCalledWith(2, { occurrence: 'first' });
+    expect(getCursorForFrame).toHaveBeenCalledWith(2, {});
   });
 
   it('refreshes timeline progress when navigation seeks to the current frame with an explicit timeline position', () => {

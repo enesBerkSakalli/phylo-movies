@@ -213,6 +213,21 @@ describe('useTreeController static render scheduling', () => {
     });
   });
 
+  it('clears the single-tree auto-fit sentinel when comparison mode changes', async () => {
+    const { root } = await renderHookHarness();
+    controllerInstance._lastFocusedTreeIndex = 0;
+    controllerInstance.layerManager.comparisonRenderer.resetAutoFit.mockClear();
+
+    updateStore({ comparisonMode: true });
+
+    expect(controllerInstance._lastFocusedTreeIndex).toBeNull();
+    expect(controllerInstance.layerManager.comparisonRenderer.resetAutoFit).toHaveBeenCalledOnce();
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
   it('prefetches the current tree hydration window before rendering', async () => {
     const { root } = await renderHookHarness();
 

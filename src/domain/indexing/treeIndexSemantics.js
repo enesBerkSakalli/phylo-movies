@@ -41,6 +41,16 @@ export function findNextInputTreeSequenceIndex(inputTreeIndices, position) {
   return null;
 }
 
+export function resolveComparisonRightTreeIndex(inputTreeIndices, activeTreeIndex, fallbackIndex) {
+  const nextInputTreeIndex = findNextInputTreeSequenceIndex(inputTreeIndices, activeTreeIndex);
+  if (Number.isInteger(nextInputTreeIndex)) return nextInputTreeIndex;
+
+  const lastInputTreeIndex = inputTreeIndices?.[inputTreeIndices.length - 1];
+  if (Number.isInteger(lastInputTreeIndex)) return lastInputTreeIndex;
+
+  return Number.isInteger(fallbackIndex) ? fallbackIndex : activeTreeIndex;
+}
+
 function resolveMidpointTreeIndex(fromIndex, toIndex, timeFactor) {
   const { from, to, t } = normalizeTransitionIndexInputs(fromIndex, toIndex, timeFactor);
   if (t <= 0) return from;

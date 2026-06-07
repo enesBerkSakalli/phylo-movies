@@ -31,7 +31,20 @@ export const createComparisonViewSlice = (set, get) => ({
     set({ rightTreeOffsetY: clamp(Number(offset), -5000, 5000) });
   },
 
-  setViewsConnected: (enabled) => set({ viewsConnected: !!enabled }),
+  setViewsConnected: (enabled) => {
+    const nextValue = !!enabled;
+    if (get().viewsConnected === nextValue) return;
+
+    set({ viewsConnected: nextValue });
+
+    const state = get();
+    if (!state.comparisonMode) return;
+
+    state.treeControllers.forEach((controller) => {
+      controller.layerManager?.comparisonRenderer?.resetAutoFit?.();
+    });
+    renderTreeControllers(state);
+  },
 
   setConnectorStrokeWidth: (width) => set({ connectorStrokeWidth: Number(width) }),
 

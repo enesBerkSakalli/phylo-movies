@@ -12,6 +12,13 @@ export type NavigationDirection = 'forward' | 'backward' | 'jump';
 export type CameraMode = 'orthographic' | 'orbit';
 export type AnimationStage = 'COLLAPSE' | 'EXPAND' | 'REORDER' | null;
 export type LinkGeometryMode = 'radial-elbow' | 'straight';
+export type TimelineOccurrenceSelector =
+  | 'first'
+  | 'last'
+  | 'semantic'
+  | 'input_tree_hold'
+  | number
+  | null;
 
 export interface FloatingWindowRect {
   x: number;
@@ -40,7 +47,7 @@ export interface MovieTimelineManagerRuntime {
   getCursorAtTimelineProgress?: (timelineProgress: number) => TimelineCursorState | null;
   getCursorForFrame?: (
     frameIndex: number,
-    options?: { occurrence?: number | null }
+    options?: { occurrence?: TimelineOccurrenceSelector }
   ) => TimelineCursorState | null;
   getSegment?: (segmentIndex: number) => unknown;
   getSegmentCount?: () => number;
@@ -48,7 +55,7 @@ export interface MovieTimelineManagerRuntime {
   getTransitionFrameForTimelineProgress?: (timelineProgress: number) => unknown;
   resolveFrameAtIndex?: (
     frameIndex: number,
-    options?: { occurrence?: number | null }
+    options?: { occurrence?: TimelineOccurrenceSelector }
   ) => unknown | null;
   resolveFrameAtTimelineProgress?: (timelineProgress: number) => unknown | null;
   hasTransitionSegments?: () => boolean;
