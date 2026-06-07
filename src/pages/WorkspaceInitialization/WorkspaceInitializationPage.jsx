@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, CheckCircle2, CircleDashed, Database } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, CircleDashed, Database, Film, Upload } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
 import { Badge } from '../../components/ui/badge';
 import { Form } from '../../components/ui/form';
@@ -12,6 +12,7 @@ import { ExampleTab } from './components/ExampleTab.jsx';
 import { ProcessingOverlay } from './components/ProcessingOverlay.jsx';
 import { RecentRunsPanel } from './components/RecentRunsPanel.jsx';
 import { DEMO_EXAMPLE_DATASETS } from './exampleDatasets.js';
+import { APP_PREVIEW_IMAGE_URL } from '../shared/previewAssets.js';
 
 const ENGINE_STATUS = {
   ready: {
@@ -109,6 +110,8 @@ export function WorkspaceInitializationPage({ demoOnly = false }) {
             </Alert>
           )}
 
+          {!demoOnly && <ApplicationPreviewHero />}
+
           {!demoOnly && <RecentRunsPanel />}
 
           {demoOnly ? (
@@ -185,6 +188,40 @@ export function WorkspaceInitializationPage({ demoOnly = false }) {
         </main>
       </div>
     </TooltipProvider>
+  );
+}
+
+function ApplicationPreviewHero() {
+  return (
+    <section className="relative overflow-hidden border-b bg-background">
+      <img
+        src={APP_PREVIEW_IMAGE_URL}
+        alt=""
+        className="absolute inset-0 h-full w-full object-cover object-center opacity-70"
+      />
+      <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-background/20" />
+      <div className="relative px-4 py-8 sm:px-6 lg:px-8 xl:px-10">
+        <div className="max-w-3xl space-y-4">
+          <Badge variant="secondary" className="gap-1">
+            <Film className="size-3.5" aria-hidden />
+            Full application
+          </Badge>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              Start a Phylo-Movies workspace
+            </h2>
+            <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+              Process uploaded tree series, infer sliding-window trees from alignments, or load
+              bundled examples with the BranchArchitect backend.
+            </p>
+          </div>
+          <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            <Upload className="size-4" aria-hidden />
+            Use New Project or Example Library below
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 

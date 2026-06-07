@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from '../../components/ui/card';
+import { APP_PREVIEW_IMAGE_URL } from '../shared/previewAssets.js';
 
 const REPO_URL = 'https://github.com/enesBerkSakalli/phylo-movies';
 const README_URL = `${REPO_URL}#readme`;
@@ -18,8 +19,6 @@ const PREPRINT_DOI_URL = 'https://doi.org/10.64898/2026.04.01.715821';
 const PREPRINT_PDF_URL = 'https://www.biorxiv.org/content/10.64898/2026.04.01.715821v1.full.pdf';
 const SOFTWARE_DOI_URL = 'https://doi.org/10.5281/zenodo.20488924';
 const SOFTWARE_CONCEPT_DOI_URL = 'https://doi.org/10.5281/zenodo.20488923';
-const HERO_IMAGE_URL = `${import.meta.env.BASE_URL}og/phylo-movies-preview.png`;
-
 const USE_CASES = [
   {
     title: 'Recombination Detection',
@@ -139,7 +138,7 @@ export function GitHubPagesInfoPage() {
       <main className="pb-8">
         <section className="relative left-1/2 right-1/2 -mx-[50vw] mb-8 min-h-[min(720px,calc(100vh-32px))] w-screen overflow-hidden border-b bg-background">
           <img
-            src={HERO_IMAGE_URL}
+            src={APP_PREVIEW_IMAGE_URL}
             alt=""
             className="absolute inset-0 h-full w-full object-cover object-center opacity-65"
           />
