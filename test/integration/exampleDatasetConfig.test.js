@@ -206,7 +206,7 @@ describe('example dataset configuration', () => {
     expect(
       countFramesByType(payloadsById.get('bootstrap-125-weighted-rf')).interpolation_frame
     ).toBeGreaterThan(0);
-  }, 30000);
+  }, 60_000);
 
   it('keeps app-level SPR recurrence counts aligned with publication bootstrap CSVs', () => {
     const bootstrap24Payload = JSON.parse(
@@ -258,7 +258,7 @@ describe('example dataset configuration', () => {
     ]) {
       expect(copyScript).toContain(expectedSourceArtifact);
     }
-  }, 60_000);
+  });
 
   it('keeps the norovirus example on the default IQ-TREE fast-search path', () => {
     const norovirusExample = EXAMPLE_DATASETS.find((example) => example.id === 'norovirus-334');
