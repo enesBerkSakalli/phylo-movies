@@ -9,6 +9,12 @@ import {
 } from '../../ui/sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../../ui/collapsible';
 import { ScrollArea } from '../../ui/scroll-area';
+
+const GROUP_NAME_COLLATOR = new Intl.Collator(undefined, {
+  numeric: true,
+  sensitivity: 'base',
+});
+
 /**
  * Taxa groups legend - displays color-coded groups when taxa coloring is applied.
  * Now integrated as a SidebarMenuItem for consistent UI placement.
@@ -29,7 +35,8 @@ export const TaxaGroupsLegend: React.FC = () => {
           typeof group === 'string' ? group : String(group.name ?? '')
         )
         .filter(Boolean)
-    : Object.keys(groupColorMap || {});
+        .sort((a, b) => GROUP_NAME_COLLATOR.compare(a, b))
+    : Object.keys(groupColorMap || {}).sort((a, b) => GROUP_NAME_COLLATOR.compare(a, b));
 
   if (groupNames.length === 0) {
     return null;

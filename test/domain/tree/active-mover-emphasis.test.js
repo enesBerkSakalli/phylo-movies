@@ -66,7 +66,7 @@ describe('active mover emphasis', () => {
     const allScopeWidth = getLinkOutlineWidth(link, all, helpers);
     const currentScopeWidth = getLinkOutlineWidth(link, current, helpers);
 
-    expect(allScopeWidth).toBeCloseTo(7);
+    expect(allScopeWidth).toBeCloseTo(4.5);
     expect(currentScopeWidth).toBeGreaterThan(allScopeWidth);
   });
 

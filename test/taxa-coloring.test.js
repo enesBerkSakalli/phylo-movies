@@ -65,6 +65,16 @@ describe('GroupingUtils', () => {
       expect(result.ungroupedCount).toBe(3);
       expect(result.ungroupedPercent).toBe(100);
     });
+
+    it('orders generated groups by natural group name instead of group size', () => {
+      const result = generateGroups(
+        ['Beta_1', 'Beta_2', 'Alpha_1', 'Group_10', 'Group_2'],
+        ['_'],
+        'prefix'
+      );
+
+      expect(result.groups.map((group) => group.name)).toEqual(['Alpha', 'Beta', 'Group']);
+    });
   });
 
   describe('getGroupForTaxon', () => {

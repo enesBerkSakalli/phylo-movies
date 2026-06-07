@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import Color from 'colorjs.io';
+import { generatePalette } from '../../src/constants/ColorPalettes.js';
 import { ColorSchemeManager } from '../../src/treeColoring/utils/ColorSchemeManager.js';
 
 describe('Color System TDD (Performance & Quality)', () => {
@@ -60,6 +61,69 @@ describe('Color System TDD (Performance & Quality)', () => {
       // We aim for high distinctness for groups, but darkening might reduce it slightly.
       expect(minDistance).to.be.above(5, 'Minimum DeltaE 2000 between group colors should be > 5');
     });
+
+    it('should generate unique high-distance categorical palettes for large tree color sets', () => {
+      const palette = generatePalette(30, 'categorical');
+      const fallbackPalette = generatePalette(30, 'missing-scheme');
+      const colors = palette.map((hex) => new Color(hex));
+      const uniqueColors = new Set(palette);
+
+      let minDistance = Infinity;
+      for (let i = 0; i < colors.length; i++) {
+        for (let j = i + 1; j < colors.length; j++) {
+          const d = colors[i].deltaE(colors[j], '2000');
+          if (d < minDistance) minDistance = d;
+        }
+      }
+
+      expect(uniqueColors.size).to.equal(30, 'Dynamic categorical palettes should not duplicate');
+      expect(new Set(fallbackPalette).size).to.equal(
+        30,
+        'Unknown dynamic palettes should use the categorical fallback'
+      );
+      expect(minDistance).to.be.above(
+        10,
+        'Dynamic categorical colors should remain visibly separated'
+      );
+    });
+
+    it('should use the categorical generator when a selected palette has too few colors', () => {
+      const dummyTargets = Array.from({ length: 30 }, (_, i) => `Taxon ${i}`);
+      colorManager.reset();
+      colorManager.applyColorScheme('Tableau10', dummyTargets, false);
+
+      const colors = Object.values(colorManager.taxaColorMap).map(
+        (rgb) => new Color('srgb', [rgb[0] / 255, rgb[1] / 255, rgb[2] / 255])
+      );
+      const uniqueStrings = new Set(
+        Object.values(colorManager.taxaColorMap).map((c) => c.join(','))
+      );
+
+      let minDistance = Infinity;
+      for (let i = 0; i < colors.length; i++) {
+        for (let j = i + 1; j < colors.length; j++) {
+          const d = colors[i].deltaE(colors[j], '2000');
+          if (d < minDistance) minDistance = d;
+        }
+      }
+
+      expect(uniqueStrings.size).to.equal(30);
+      expect(minDistance).to.be.above(10);
+    });
+
+    it('should keep undersized selected schemes visually distinct when extending them', () => {
+      const targets = Array.from({ length: 12 }, (_, i) => `Taxon ${i}`);
+      const tableauManager = new ColorSchemeManager();
+      const categoryManager = new ColorSchemeManager();
+
+      tableauManager.applyColorScheme('Tableau10', targets, false);
+      categoryManager.applyColorScheme('Category10', targets, false);
+
+      const tableauColors = Object.values(tableauManager.taxaColorMap).map((c) => c.join(','));
+      const categoryColors = Object.values(categoryManager.taxaColorMap).map((c) => c.join(','));
+
+      expect(categoryColors).not.to.deep.equal(tableauColors);
+    });
   });
 
   describe('Palette Preservation (Fix & Keep)', () => {
@@ -88,6 +152,16 @@ describe('Color System TDD (Performance & Quality)', () => {
           `Color ${color.toString()} should meet contrast specs`
         );
       });
+    });
+  });
+
+  describe('Color normalization', () => {
+    it('clamps RGB array inputs when restoring original color maps', () => {
+      const manager = new ColorSchemeManager({
+        TaxonA: [300, -20, 127.5, 64],
+      });
+
+      expect(manager.taxaColorMap.TaxonA).to.deep.equal([255, 0, 128]);
     });
   });
 });

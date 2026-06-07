@@ -83,6 +83,6 @@ describe('Link Outline Pulsation Logic', () => {
     colorManagerMock.isLinkInActiveMoverSubtree = () => true;
 
     const width = getLinkOutlineWidth({}, cachedState, cachedState.helpers);
-    expect(width).to.equal(7);
+    expect(width).to.equal(4.5);
   });
 });

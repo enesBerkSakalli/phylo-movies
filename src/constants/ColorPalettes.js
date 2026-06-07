@@ -5,7 +5,7 @@
  * - D3 (Standard Palettes): Tableau10, Viridis, Turbo, etc.
  * - Custom: PhyloOptimized, HighContrast (Manually defined)
  *
- * All palettes are automatically processed to ensure APCA > 60 contrast against white.
+ * All palettes are automatically processed to ensure APCA >= 45 contrast against white.
  */
 
 import {
@@ -35,6 +35,43 @@ import Color from 'colorjs.io';
 // APCA 60 is recommended for body text, but too aggressive for visualization colors
 const TARGET_LC = 45;
 const WHITE = new Color('white');
+const OKLCH_CATEGORICAL_LIGHTNESSES = [0.42, 0.5, 0.58, 0.66];
+const OKLCH_CATEGORICAL_CHROMAS = [0.14, 0.2, 0.26];
+const OKLCH_CATEGORICAL_HUE_STEP = 8;
+const OKLCH_MIN_CHROMA = 0.08;
+let oklchCategoricalCandidatesCache = null;
+
+function clampByte(value) {
+  return Math.max(0, Math.min(255, Math.round(value)));
+}
+
+function rgbArrayToHex(rgb) {
+  return `#${rgb.map((channel) => clampByte(channel).toString(16).padStart(2, '0')).join('')}`;
+}
+
+function srgbColorToRgbArray(color) {
+  const srgb = color.to('srgb').toGamut({ space: 'srgb' });
+  return srgb.coords.map((coord) => clampByte(coord * 255));
+}
+
+function colorToHex(color) {
+  return rgbArrayToHex(srgbColorToRgbArray(color));
+}
+
+function toAccessibleSrgbColor(color) {
+  let fixed = color.to('oklch');
+  let safety = 0;
+
+  while (
+    Math.abs(WHITE.contrast(fixed.to('srgb').toGamut({ space: 'srgb' }), 'APCA')) < TARGET_LC &&
+    safety < 100
+  ) {
+    fixed.l -= 0.01;
+    safety++;
+  }
+
+  return fixed.to('srgb').toGamut({ space: 'srgb' });
+}
 
 /**
  * Ensures a color meets the minimum APCA contrast against white.
@@ -51,21 +88,11 @@ function fixContrast(hexStr) {
     return '#000000';
   }
 
-  // Check contrast
   if (Math.abs(WHITE.contrast(color, 'APCA')) >= TARGET_LC) {
     return hexStr; // Already valid
   }
 
-  // Fix it
-  color = color.to('oklch');
-  let safety = 0;
-  while (Math.abs(WHITE.contrast(color, 'APCA')) < TARGET_LC && safety < 100) {
-    color.l -= 0.01;
-    safety++;
-  }
-
-  const fixedHex = color.to('srgb').toString({ format: 'hex' });
-  return fixedHex;
+  return colorToHex(toAccessibleSrgbColor(color));
 }
 
 /**
@@ -93,16 +120,119 @@ function sampleInterpolator(interpolator, count) {
   return createAccessiblePalette(palette);
 }
 
-/**
- * Dynamically generates a palette of exactly N colors using D3 interpolators.
- * Uses Sinebow for smooth hue distribution (perceptually good for many categories).
- * @param {number} n - Number of colors needed
- * @param {string} scheme - Optional: 'rainbow', 'sinebow', 'turbo', 'spectral' (default: 'sinebow')
- * @returns {string[]} - Array of N accessible hex colors
- */
-export function generatePalette(n, scheme = 'sinebow') {
+function buildOklchCategoricalCandidates() {
+  if (oklchCategoricalCandidatesCache) {
+    return oklchCategoricalCandidatesCache;
+  }
+
+  const candidatesByHex = new Map();
+
+  for (const l of OKLCH_CATEGORICAL_LIGHTNESSES) {
+    for (const c of OKLCH_CATEGORICAL_CHROMAS) {
+      for (let h = 0; h < 360; h += OKLCH_CATEGORICAL_HUE_STEP) {
+        const srgb = toAccessibleSrgbColor(new Color('oklch', [l, c, h]));
+        const rgb = srgbColorToRgbArray(srgb);
+        const candidate = new Color(
+          'srgb',
+          rgb.map((channel) => channel / 255)
+        );
+        const [, chroma] = candidate.to('oklch').coords;
+
+        if (!Number.isFinite(chroma) || chroma < OKLCH_MIN_CHROMA) {
+          continue;
+        }
+
+        if (Math.abs(WHITE.contrast(candidate, 'APCA')) < TARGET_LC - 0.1) {
+          continue;
+        }
+
+        const hex = rgbArrayToHex(rgb);
+        if (!candidatesByHex.has(hex)) {
+          candidatesByHex.set(hex, { hex, color: candidate });
+        }
+      }
+    }
+  }
+
+  oklchCategoricalCandidatesCache = [...candidatesByHex.values()];
+  return oklchCategoricalCandidatesCache;
+}
+
+function selectMaximinPalette(candidates, count) {
+  if (count <= 0) return [];
+  if (candidates.length === 0) return [];
+
+  const seed = new Color('#E41A1C');
+  let seedIndex = 0;
+  let closestSeedDistance = Infinity;
+
+  for (let i = 0; i < candidates.length; i++) {
+    const distance = candidates[i].color.deltaE(seed, '2000');
+    if (distance < closestSeedDistance) {
+      closestSeedDistance = distance;
+      seedIndex = i;
+    }
+  }
+
+  const chosen = [seedIndex];
+  const remaining = new Set(candidates.map((_, index) => index));
+  remaining.delete(seedIndex);
+
+  while (chosen.length < count && remaining.size > 0) {
+    let bestIndex = null;
+    let bestScore = -Infinity;
+
+    for (const candidateIndex of remaining) {
+      const candidate = candidates[candidateIndex].color;
+      let minPeerDistance = Infinity;
+
+      for (const chosenIndex of chosen) {
+        const distance = candidate.deltaE(candidates[chosenIndex].color, '2000');
+        if (distance < minPeerDistance) {
+          minPeerDistance = distance;
+        }
+      }
+
+      const backgroundDistance = candidate.deltaE(WHITE, '2000');
+      const score = Math.min(minPeerDistance, backgroundDistance * 0.65);
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestIndex = candidateIndex;
+      }
+    }
+
+    if (bestIndex == null) break;
+    chosen.push(bestIndex);
+    remaining.delete(bestIndex);
+  }
+
+  return chosen.map((index) => candidates[index].hex);
+}
+
+function generateOklchCategoricalPalette(n) {
   if (n <= 0) return [];
   if (n === 1) return createAccessiblePalette(['#4E79A7']); // Tableau blue
+
+  return selectMaximinPalette(buildOklchCategoricalCandidates(), n);
+}
+
+/**
+ * Dynamically generates a palette of exactly N colors.
+ * The default categorical generator samples OKLCH candidates and greedily maximizes
+ * CIEDE2000 distance while enforcing contrast on the white tree canvas.
+ * D3 interpolator names are still supported for explicit legacy/sequential use.
+ * @param {number} n - Number of colors needed
+ * @param {string} scheme - Optional: 'categorical', 'oklch', 'rainbow', 'sinebow', 'turbo', 'spectral'
+ * @returns {string[]} - Array of N accessible hex colors
+ */
+export function generatePalette(n, scheme = 'categorical') {
+  if (n <= 0) return [];
+  if (n === 1) return createAccessiblePalette(['#4E79A7']); // Tableau blue
+
+  if (scheme === 'categorical' || scheme === 'oklch') {
+    return generateOklchCategoricalPalette(n);
+  }
 
   const interpolators = {
     sinebow: interpolateSinebow,
@@ -111,7 +241,11 @@ export function generatePalette(n, scheme = 'sinebow') {
     spectral: interpolateSpectral,
   };
 
-  const interpolator = interpolators[scheme] || interpolateSinebow;
+  const interpolator = interpolators[scheme];
+  if (!interpolator) {
+    return generateOklchCategoricalPalette(n);
+  }
+
   const palette = [];
 
   for (let i = 0; i < n; i++) {
@@ -289,44 +423,10 @@ export const BlueShadesWhiteBG = createAccessiblePalette([
 
 /**
  * Extended30 - A large categorical palette with 30 distinct colors
- * Designed for datasets with many groups (e.g., 20+ genotypes)
- * Combines colors from multiple sources for maximum distinctness
+ * Designed for datasets with many taxa or groups (e.g., 20+ genotypes).
+ * Generated in OKLCH and maximin-ordered for contrast on the white tree canvas.
  */
-export const Extended30 = createAccessiblePalette([
-  // Core distinguishable colors
-  '#E41A1C',
-  '#377EB8',
-  '#4DAF4A',
-  '#984EA3',
-  '#FF7F00',
-  '#A65628',
-  '#F781BF',
-  '#999999',
-  '#66C2A5',
-  '#FC8D62',
-  // Extended set
-  '#8DA0CB',
-  '#E78AC3',
-  '#A6D854',
-  '#FFD92F',
-  '#E5C494',
-  '#B3B3B3',
-  '#1B9E77',
-  '#D95F02',
-  '#7570B3',
-  '#E7298A',
-  // Additional distinct colors
-  '#66A61E',
-  '#E6AB02',
-  '#A6761D',
-  '#666666',
-  '#1F78B4',
-  '#33A02C',
-  '#FB9A99',
-  '#B2DF8A',
-  '#FDBF6F',
-  '#CAB2D6',
-]);
+export const Extended30 = generateOklchCategoricalPalette(30);
 
 // ============================================
 // SEQUENTIAL PALETTES (Sourced from D3)

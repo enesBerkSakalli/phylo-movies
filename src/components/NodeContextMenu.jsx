@@ -131,6 +131,7 @@ export function NodeContextMenu() {
 
     if (splitIndices && setManuallyMarkedNodes) {
       setManuallyMarkedNodes(splitIndices);
+      treeControllers[0]?.focusOnSubtree?.(splitIndices);
       toast.success(`Highlighted subtree with ${splitIndices.length} taxa`);
     } else {
       toast.warning('Could not highlight this subtree.', {
@@ -138,7 +139,7 @@ export function NodeContextMenu() {
       });
     }
     hideMenu();
-  }, [node, setManuallyMarkedNodes, hideMenu]);
+  }, [node, setManuallyMarkedNodes, treeControllers, hideMenu]);
 
   const handleFocusOnNode = useCallback(() => {
     if (!node) return;

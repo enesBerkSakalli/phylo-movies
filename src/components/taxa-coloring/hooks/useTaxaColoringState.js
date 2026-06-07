@@ -5,6 +5,19 @@ import { syncGroupColors } from '../utils/colorManagement.js';
 import { useCSVState } from './useCSVState.js';
 import { toHexMap } from '../../../services/ui/colorUtils.js';
 
+const GROUP_NAME_COLLATOR = new Intl.Collator(undefined, {
+  numeric: true,
+  sensitivity: 'base',
+});
+
+function compareGroupedTargets(a, b) {
+  return GROUP_NAME_COLLATOR.compare(String(a?.name ?? ''), String(b?.name ?? ''));
+}
+
+function orderedColorTargets(items, isGrouped) {
+  return isGrouped ? [...items].sort(compareGroupedTargets) : items;
+}
+
 export function useTaxaColoringState(taxaNames, originalColorMap, initialStateParam = {}) {
   const initialState = initialStateParam || {};
 
@@ -114,7 +127,7 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
         csv: { items: csvGroups, isGrouped: true },
       };
       const { items, isGrouped } = itemsMap[targetMode];
-      mgr.applyColorScheme(id, items, isGrouped);
+      mgr.applyColorScheme(id, orderedColorTargets(items, isGrouped), isGrouped);
       forceUpdate();
     },
     [taxaNames, groups, csvGroups, mgr, forceUpdate]

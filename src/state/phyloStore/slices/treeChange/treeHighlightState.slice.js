@@ -3,6 +3,7 @@ import {
   clearEdgePreviews,
   renderTreeControllers,
   toManualMarkedSets,
+  toSubtreeSets,
 } from '../../internal/changeTracking.helpers.js';
 
 export const createTreeHighlightStateSlice = (set, get) => ({
@@ -65,8 +66,6 @@ export const createTreeHighlightStateSlice = (set, get) => ({
       set((s) => ({ [colorType]: newColor, colorVersion: (s.colorVersion ?? 0) + 1 }));
     }
 
-    const { colorManager } = get();
-    colorManager?.refreshColorCategories?.();
     renderTreeControllers(get());
   },
 
@@ -81,21 +80,15 @@ export const createTreeHighlightStateSlice = (set, get) => ({
   },
 
   setSubtreeHighlightsEnabled: (enabled) => {
-    set({ subtreeHighlightsEnabled: enabled });
-    const { colorManager } = get();
-    if (colorManager.setSubtreeHighlightsEnabled) {
-      colorManager.setSubtreeHighlightsEnabled(enabled);
-    }
-    const {
-      updateColorManagerHighlightedSubtrees,
-      getSubtreeHighlightData,
-      manuallyMarkedNodes,
-      updateColorManagerHistorySubtrees,
-      getSubtreeHistoryData,
-    } = get();
+    const { getSubtreeHighlightData, manuallyMarkedNodes, getSubtreeHistoryData, colorManager } =
+      get();
     const manual = toManualMarkedSets(manuallyMarkedNodes);
-    updateColorManagerHighlightedSubtrees([...manual, ...getSubtreeHighlightData()]);
-    updateColorManagerHistorySubtrees(enabled ? getSubtreeHistoryData() : []);
+    colorManager?.setSubtreeHighlightsEnabled?.(enabled);
+    colorManager?.updateHighlightedSubtrees?.(
+      toSubtreeSets([...manual, ...getSubtreeHighlightData()])
+    );
+    colorManager?.updateHistorySubtrees?.(toSubtreeSets(enabled ? getSubtreeHistoryData() : []));
+    set((s) => ({ subtreeHighlightsEnabled: enabled, colorVersion: s.colorVersion + 1 }));
     renderTreeControllers(get());
   },
 

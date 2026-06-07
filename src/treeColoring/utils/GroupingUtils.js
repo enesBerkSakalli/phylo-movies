@@ -1,5 +1,14 @@
 // GroupingUtils.js - Core grouping logic for taxa names
 
+const GROUP_NAME_COLLATOR = new Intl.Collator(undefined, {
+  numeric: true,
+  sensitivity: 'base',
+});
+
+function compareGroupNames(a, b) {
+  return GROUP_NAME_COLLATOR.compare(String(a?.name ?? a ?? ''), String(b?.name ?? b ?? ''));
+}
+
 /**
  * Escape special regex characters in a string
  * @param {string} str - String to escape
@@ -197,7 +206,7 @@ export function generateGroups(taxaNames, separators, strategy, options = {}) {
       count: members.length,
       members,
     }))
-    .sort((a, b) => b.count - a.count); // Sort by count descending
+    .sort(compareGroupNames);
 
   const ungroupedCount = ungrouped.length;
   const ungroupedPercent = (ungroupedCount / taxaNames.length) * 100;

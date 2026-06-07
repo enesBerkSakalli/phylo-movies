@@ -106,4 +106,17 @@ describe('resolveTreeElementHighlight', () => {
     expect(lifecycle.role).toBe('lifecycle');
     expect(lifecycle.lifecycleKind).toBe('expanding');
   });
+
+  it('keeps pivot edge precedence over broader subtree context', () => {
+    const result = resolveTreeElementHighlight(
+      { split_indices: [2] },
+      makeCached({
+        highlightedSubtreeData: [new Set([2])],
+        colorManager: { isPivotEdge: () => true },
+      }),
+      'link'
+    );
+
+    expect(result.role).toBe('pivotEdge');
+  });
 });

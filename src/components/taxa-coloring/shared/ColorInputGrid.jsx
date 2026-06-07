@@ -2,13 +2,18 @@ import React, { useMemo } from 'react';
 import { ColorSwatchInput } from './ColorSwatchInput.jsx';
 import { rgbToHex } from '../../../services/ui/colorUtils.js';
 
+const ITEM_NAME_COLLATOR = new Intl.Collator(undefined, {
+  numeric: true,
+  sensitivity: 'base',
+});
+
 export function ColorInputGrid({ items, isGroup, colorManager, onColorChange }) {
   // Sort items alphabetically by name
   const sortedItems = useMemo(() => {
     return [...items].sort((a, b) => {
       const nameA = isGroup ? a.name : a;
       const nameB = isGroup ? b.name : b;
-      return nameA.localeCompare(nameB);
+      return ITEM_NAME_COLLATOR.compare(String(nameA ?? ''), String(nameB ?? ''));
     });
   }, [items, isGroup]);
 

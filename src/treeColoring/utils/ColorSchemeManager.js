@@ -25,7 +25,7 @@ export class ColorSchemeManager {
    */
   _ensureRgb(color) {
     if (Array.isArray(color) && color.length >= 3) {
-      return color.slice(0, 3); // Strip alpha if present, or keep it? DeckGL usually handles [r,g,b] faster
+      return colorToRgb(color); // Strip alpha and clamp channels for deck.gl RGB accessors.
     }
     return colorToRgb(color);
   }
@@ -35,18 +35,18 @@ export class ColorSchemeManager {
     if (numTargets === 0) return;
 
     // Get base palette
-    let baseScheme = getPalette(schemeName);
+    const baseScheme = getPalette(schemeName);
+    let rgbScheme = baseScheme.map((c) => this._ensureRgb(c));
 
-    // If we have more targets than colors in the palette, dynamically generate exactly enough
-    if (numTargets > baseScheme.length) {
+    // If we have more targets than colors in the selected palette, keep the selected
+    // scheme as the seed and add distinct generated colors. Replacing the whole palette
+    // made different 10-color schemes collapse to the same generated result.
+    if (numTargets > rgbScheme.length) {
       console.log(
-        `[ColorSchemeManager] Palette "${schemeName}" has ${baseScheme.length} colors but need ${numTargets}. Generating dynamic palette.`
+        `[ColorSchemeManager] Palette "${schemeName}" has ${rgbScheme.length} colors but need ${numTargets}. Extending palette.`
       );
-      baseScheme = generatePalette(numTargets, 'sinebow');
+      rgbScheme = this._extendRgbScheme(rgbScheme, numTargets);
     }
-
-    // Convert to RGB arrays
-    const rgbScheme = baseScheme.map((c) => this._ensureRgb(c));
 
     // For groups, maximize perceptual distance between successive colors
     // For taxa, use the palette order directly
@@ -64,9 +64,7 @@ export class ColorSchemeManager {
       console.log(
         `[ColorSchemeManager] Ordered scheme has ${scheme.length} colors but need ${numTargets}. Supplementing.`
       );
-      const supplemental = generatePalette(numTargets - scheme.length, 'sinebow');
-      const supplementalRgb = supplemental.map((c) => this._ensureRgb(c));
-      scheme = [...scheme, ...supplementalRgb];
+      scheme = this._extendRgbScheme(scheme, numTargets);
     }
 
     targets.forEach((target, index) => {
@@ -80,6 +78,54 @@ export class ColorSchemeManager {
   // =====================
   // Palette ordering utils
   // =====================
+  _extendRgbScheme(seedScheme, targetCount) {
+    const extended = seedScheme.slice(0, targetCount).map((color) => this._ensureRgb(color));
+    if (extended.length >= targetCount) return extended;
+
+    const seen = new Set(extended.map((color) => color.join(',')));
+    const selectedColors = extended.map((color) => this._rgbArrayToColor(color));
+    const candidateCount = Math.max(targetCount * 2, targetCount + 20);
+    const candidates = generatePalette(candidateCount, 'categorical')
+      .map((color) => this._ensureRgb(color))
+      .filter((color) => {
+        const key = color.join(',');
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .map((rgb) => ({ rgb, color: this._rgbArrayToColor(rgb) }));
+
+    while (extended.length < targetCount && candidates.length > 0) {
+      let bestIndex = 0;
+      let bestDistance = -Infinity;
+
+      for (let i = 0; i < candidates.length; i++) {
+        const candidateColor = candidates[i].color;
+        let minDistance = Infinity;
+
+        for (const selectedColor of selectedColors) {
+          const distance = candidateColor.deltaE(selectedColor, '2000');
+          if (distance < minDistance) minDistance = distance;
+        }
+
+        if (minDistance > bestDistance) {
+          bestDistance = minDistance;
+          bestIndex = i;
+        }
+      }
+
+      const [nextColor] = candidates.splice(bestIndex, 1);
+      extended.push(nextColor.rgb);
+      selectedColors.push(nextColor.color);
+    }
+
+    return extended;
+  }
+
+  _rgbArrayToColor(rgb) {
+    return new Color('srgb', [rgb[0] / 255, rgb[1] / 255, rgb[2] / 255]);
+  }
+
   _orderPaletteForMaxDistance(palette, k) {
     // Filter duplicates based on string representation
     const uniquePalette = [];
