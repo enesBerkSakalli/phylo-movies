@@ -1,6 +1,9 @@
 import React from 'react';
 import { DistanceChart } from '../../DistanceChart/DistanceChart.jsx';
-import { DISTANCE_CHART_METRIC_OPTIONS } from '../../DistanceChart/distanceChartLanguage.js';
+import {
+  DISTANCE_CHART_METRIC_OPTIONS,
+  getDistanceChartSectionLabel,
+} from '../../DistanceChart/distanceChartLanguage.js';
 import { selectHasMsa, useAppStore } from '../../../state/phyloStore/store.js';
 import {
   Select,
@@ -22,7 +25,7 @@ export function MovieChartSection({ barOptionValue, onBarOptionChange }) {
     >
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
         <div className="min-w-0 truncate text-2xs font-medium uppercase tracking-wider text-muted-foreground">
-          {hasMsa ? 'Genome-window metrics' : 'Input-tree metrics'}
+          {getDistanceChartSectionLabel(barOptionValue, hasMsa)}
         </div>
 
         <div className="shrink-0" role="group" aria-label="Chart controls">

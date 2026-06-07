@@ -26,6 +26,26 @@ export const DISTANCE_CHART_METRIC_OPTIONS = ['rfd', 'w-rfd', 'scale'].map((valu
 export const getDistanceChartMetric = (value) =>
   DISTANCE_CHART_METRICS[value] || DISTANCE_CHART_METRICS.rfd;
 
+export const isDistanceChartPairMetric = (value) => value === 'rfd' || value === 'w-rfd';
+
+export const getDistanceChartSectionLabel = (value, hasMsa) => {
+  if (!hasMsa) return 'Input-tree metrics';
+  if (isDistanceChartPairMetric(value)) return 'Neighboring-window distances';
+  return 'Genome-window metrics';
+};
+
+export const getDistanceChartAriaLabel = (metric, value, hasMsa) => {
+  let context = 'input-tree metric chart';
+
+  if (hasMsa) {
+    context = isDistanceChartPairMetric(value)
+      ? 'neighboring-window distance chart'
+      : 'genome-window metric chart';
+  }
+
+  return `${metric.label} ${context}`;
+};
+
 export const formatMetricValue = (value) => {
   const numberValue = Number(value);
   if (!Number.isFinite(numberValue)) return '0';
