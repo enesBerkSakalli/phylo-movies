@@ -38,13 +38,18 @@ describe('phyloData run history', () => {
       treeCount: 10,
       frameCount: secondRun.frames.length,
       interpolatedTreeCount: secondRun.interpolated_trees.length,
-      payloadSchemaVersion: 1,
+      payloadSchemaVersion: 2,
       windowing: '1500 sites, 1000-site step',
       support: 'SH-aLRT, 1000 replicates',
     });
     expect(runs[0].payloadHash).toMatch(/^[a-f0-9]{64}$/);
 
     await phyloData.openRun(runs[1].id);
+    expect(memoryStore.get('phyloMovieData')).toMatchObject({
+      __phyloRunRef: true,
+      runId: runs[1].id,
+      payloadSchemaVersion: 2,
+    });
     expect((await phyloData.get()).dataset_provenance.source_label).toBe('First run');
   });
 
@@ -58,6 +63,46 @@ describe('phyloData run history', () => {
 
     expect(await phyloData.listRuns()).toEqual([]);
     expect(await phyloData.get()).toBeNull();
+  });
+
+  it('prunes saved runs from older payload schema versions', async () => {
+    const { phyloData } = await import('../../src/services/data/dataService.js');
+    memoryStore.set('phyloMovieRuns', [makeRunRecord('old-run', 1)]);
+    memoryStore.set('phyloMovieRun:old-run', makePayload('Old run'));
+
+    expect(await phyloData.listRuns()).toEqual([]);
+    expect(memoryStore.get('phyloMovieRuns')).toEqual([]);
+    expect(memoryStore.has('phyloMovieRun:old-run')).toBe(false);
+  });
+
+  it('clears stale active run references instead of loading old update-pattern data', async () => {
+    const { phyloData } = await import('../../src/services/data/dataService.js');
+    memoryStore.set('phyloMovieRuns', [makeRunRecord('old-run', 1)]);
+    memoryStore.set('phyloMovieRun:old-run', makePayload('Old run'));
+    memoryStore.set('phyloMovieData', { __phyloRunRef: true, runId: 'old-run' });
+
+    expect(await phyloData.get()).toBeNull();
+    expect(memoryStore.get('phyloMovieRuns')).toEqual([]);
+    expect(memoryStore.has('phyloMovieRun:old-run')).toBe(false);
+    expect(memoryStore.has('phyloMovieData')).toBe(false);
+  });
+
+  it('rejects stale runs when opening from recent history', async () => {
+    const { phyloData } = await import('../../src/services/data/dataService.js');
+    memoryStore.set('phyloMovieRuns', [makeRunRecord('old-run', 1)]);
+    memoryStore.set('phyloMovieRun:old-run', makePayload('Old run'));
+
+    await expect(phyloData.openRun('old-run')).rejects.toThrow(/older movie update pattern/);
+    expect(memoryStore.get('phyloMovieRuns')).toEqual([]);
+    expect(memoryStore.has('phyloMovieRun:old-run')).toBe(false);
+  });
+
+  it('does not load legacy direct payloads without storage compatibility metadata', async () => {
+    const { phyloData } = await import('../../src/services/data/dataService.js');
+    memoryStore.set('phyloMovieData', makePayload('Legacy active payload'));
+
+    expect(await phyloData.get()).toBeNull();
+    expect(memoryStore.has('phyloMovieData')).toBe(false);
   });
 });
 
@@ -73,5 +118,14 @@ function makePayload(label) {
         { label: 'Branch support', value: 'SH-aLRT, 1000 replicates' },
       ],
     },
+  };
+}
+
+function makeRunRecord(id, payloadSchemaVersion) {
+  return {
+    id,
+    label: id,
+    createdAt: '2026-06-05T00:00:00.000Z',
+    payloadSchemaVersion,
   };
 }
