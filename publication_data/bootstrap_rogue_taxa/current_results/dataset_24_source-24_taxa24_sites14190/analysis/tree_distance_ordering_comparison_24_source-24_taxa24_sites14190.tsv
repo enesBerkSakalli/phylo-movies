@@ -1,0 +1,4 @@
+method	tree_count	adjacent_pair_count	total_robinson_foulds	mean_robinson_foulds	max_robinson_foulds	zero_robinson_foulds_pairs	total_weighted_robinson_foulds	mean_weighted_robinson_foulds	max_weighted_robinson_foulds	two_opt_improvements
+composition_ranked	200	199	22.428571429	0.112706389	0.380952381	32	107.61576	0.540782714	1.39794	0
+rf_nearest_neighbor_2opt	200	199	3.571428571	0.017946877	0.19047619	148	62.61363	0.314641357	0.71039	165
+weighted_rf_nearest_neighbor_2opt	200	199	8.857142857	0.044508256	0.238095238	86	56.67906	0.284819397	0.71508	92

@@ -1,0 +1,368 @@
+{
+  "analysis": "bootstrap_tree_distance_ordering",
+  "check_command": "npm run publication:bootstrap-tree-distance:check",
+  "datasets": [
+    {
+      "comparison_table": "publication_data/bootstrap_rogue_taxa/current_results/dataset_24_source-24_taxa24_sites14190/analysis/tree_distance_ordering_comparison_24_source-24_taxa24_sites14190.tsv",
+      "comparison_table_sha256": "04eb5ff1d6d0a8b9b74c333a71f6d02ff077112ae24db6baabefb712914584df",
+      "dataset": "24",
+      "dataset_directory": "publication_data/bootstrap_rogue_taxa/current_results/dataset_24_source-24_taxa24_sites14190",
+      "metrics": {
+        "robinson_foulds": {
+          "normalization": "symmetric_difference_over_split_count_sum",
+          "scope": "adjacent_processed_input_trees",
+          "topology": "unrooted_internal_bipartitions"
+        },
+        "weighted_robinson_foulds": {
+          "includes_branch_lengths": true,
+          "includes_terminal_and_root_splits": true,
+          "scope": "adjacent_processed_input_trees",
+          "topology": "rooted_clades"
+        }
+      },
+      "outputs": [
+        {
+          "method": "rf_nearest_neighbor_2opt",
+          "order_table": "publication_data/bootstrap_rogue_taxa/current_results/dataset_24_source-24_taxa24_sites14190/analysis/rf_nearest_neighbor_order_24_source-24_taxa24_sites14190.tsv",
+          "order_table_sha256": "5174c6452ff4b61fca7fe260ae987972a78b95b9029573b5fac786bf487562c6",
+          "primary_metric": "robinson_foulds",
+          "reordered_trees": "publication_data/bootstrap_rogue_taxa/current_results/dataset_24_source-24_taxa24_sites14190/analysis/rf_nearest_neighbor_all_trees_24_source-24_taxa24_sites14190.nwk",
+          "reordered_trees_sha256": "9854ff69258a68b5ceb029ebd5e3986f589bc38a21ce5e5b7e45215b61a97a23",
+          "secondary_metric": "weighted_robinson_foulds",
+          "summary": {
+            "adjacent_pair_count": 199,
+            "method": "rf_nearest_neighbor_2opt",
+            "method_label": "RF nearest-neighbor plus 2-opt",
+            "robinson_foulds": {
+              "max": 0.19047619047619047,
+              "mean": 0.01794687724335964,
+              "median": 0.0,
+              "min": 0.0,
+              "nonzero_count": 51,
+              "total": 3.571428571428569,
+              "zero_count": 148
+            },
+            "start_matrix_index": 101,
+            "tree_count": 200,
+            "two_opt_improvements": 165,
+            "weighted_robinson_foulds": {
+              "max": 0.7103900000000001,
+              "mean": 0.3146413567839196,
+              "median": 0.2869099999999999,
+              "min": 0.16789999999999994,
+              "nonzero_count": 199,
+              "total": 62.61363,
+              "zero_count": 0
+            }
+          }
+        },
+        {
+          "method": "weighted_rf_nearest_neighbor_2opt",
+          "order_table": "publication_data/bootstrap_rogue_taxa/current_results/dataset_24_source-24_taxa24_sites14190/analysis/weighted_rf_nearest_neighbor_order_24_source-24_taxa24_sites14190.tsv",
+          "order_table_sha256": "3c1bd2a34758aeb258c3a86b940d9ac2e45157d447d1596ae13e5593f1c16492",
+          "primary_metric": "weighted_robinson_foulds",
+          "reordered_trees": "publication_data/bootstrap_rogue_taxa/current_results/dataset_24_source-24_taxa24_sites14190/analysis/weighted_rf_nearest_neighbor_all_trees_24_source-24_taxa24_sites14190.nwk",
+          "reordered_trees_sha256": "14923a06ffb06dfc680590aabf8c5c9126fd2b884bd3ed763dd8bdb09012b655",
+          "secondary_metric": "robinson_foulds",
+          "summary": {
+            "adjacent_pair_count": 199,
+            "method": "weighted_rf_nearest_neighbor_2opt",
+            "method_label": "Weighted RF nearest-neighbor plus 2-opt",
+            "robinson_foulds": {
+              "max": 0.23809523809523808,
+              "mean": 0.04450825556353189,
+              "median": 0.047619047619047616,
+              "min": 0.0,
+              "nonzero_count": 113,
+              "total": 8.857142857142847,
+              "zero_count": 86
+            },
+            "start_matrix_index": 101,
+            "tree_count": 200,
+            "two_opt_improvements": 92,
+            "weighted_robinson_foulds": {
+              "max": 0.71508,
+              "mean": 0.28481939698492476,
+              "median": 0.26903,
+              "min": 0.16789999999999994,
+              "nonzero_count": 199,
+              "total": 56.67906000000003,
+              "zero_count": 0
+            }
+          }
+        }
+      ],
+      "path_construction": {
+        "purpose": "secondary visualization/order analysis for unordered bootstrap replicate trees",
+        "route": "deterministic greedy nearest neighbor followed by deterministic 2-opt improvement",
+        "start": "distance medoid under the primary metric; ties use the secondary metric and composition order"
+      },
+      "path_summaries": [
+        {
+          "adjacent_pair_count": 199,
+          "method": "composition_ranked",
+          "method_label": "Current composition-ranked promoted order",
+          "robinson_foulds": {
+            "max": 0.38095238095238093,
+            "mean": 0.11270638908829837,
+            "median": 0.09523809523809523,
+            "min": 0.0,
+            "nonzero_count": 167,
+            "total": 22.428571428571377,
+            "zero_count": 32
+          },
+          "start_matrix_index": 0,
+          "tree_count": 200,
+          "two_opt_improvements": 0,
+          "weighted_robinson_foulds": {
+            "max": 1.39794,
+            "mean": 0.5407827135678391,
+            "median": 0.5103199999999999,
+            "min": 0.23676999999999998,
+            "nonzero_count": 199,
+            "total": 107.61575999999998,
+            "zero_count": 0
+          }
+        },
+        {
+          "adjacent_pair_count": 199,
+          "method": "rf_nearest_neighbor_2opt",
+          "method_label": "RF nearest-neighbor plus 2-opt",
+          "robinson_foulds": {
+            "max": 0.19047619047619047,
+            "mean": 0.01794687724335964,
+            "median": 0.0,
+            "min": 0.0,
+            "nonzero_count": 51,
+            "total": 3.571428571428569,
+            "zero_count": 148
+          },
+          "start_matrix_index": 101,
+          "tree_count": 200,
+          "two_opt_improvements": 165,
+          "weighted_robinson_foulds": {
+            "max": 0.7103900000000001,
+            "mean": 0.3146413567839196,
+            "median": 0.2869099999999999,
+            "min": 0.16789999999999994,
+            "nonzero_count": 199,
+            "total": 62.61363,
+            "zero_count": 0
+          }
+        },
+        {
+          "adjacent_pair_count": 199,
+          "method": "weighted_rf_nearest_neighbor_2opt",
+          "method_label": "Weighted RF nearest-neighbor plus 2-opt",
+          "robinson_foulds": {
+            "max": 0.23809523809523808,
+            "mean": 0.04450825556353189,
+            "median": 0.047619047619047616,
+            "min": 0.0,
+            "nonzero_count": 113,
+            "total": 8.857142857142847,
+            "zero_count": 86
+          },
+          "start_matrix_index": 101,
+          "tree_count": 200,
+          "two_opt_improvements": 92,
+          "weighted_robinson_foulds": {
+            "max": 0.71508,
+            "mean": 0.28481939698492476,
+            "median": 0.26903,
+            "min": 0.16789999999999994,
+            "nonzero_count": 199,
+            "total": 56.67906000000003,
+            "zero_count": 0
+          }
+        }
+      ],
+      "source_order_table": "publication_data/bootstrap_rogue_taxa/current_results/dataset_24_source-24_taxa24_sites14190/ranked/composition_ranked_bootstrap_replicates_24_source-24_taxa24_sites14190.tsv",
+      "source_ranked_trees": "publication_data/bootstrap_rogue_taxa/current_results/dataset_24_source-24_taxa24_sites14190/ranked/all_trees_24_source-24_taxa24_sites14190.nwk",
+      "tree_count": 200
+    },
+    {
+      "comparison_table": "publication_data/bootstrap_rogue_taxa/current_results/dataset_125_source-125_taxa125_sites29149/analysis/tree_distance_ordering_comparison_125_source-125_taxa125_sites29149.tsv",
+      "comparison_table_sha256": "c320f82aa1d5f3e7aad9434fe0e96f9a2efd0a050bbacd18ef8a836aeb9cca38",
+      "dataset": "125",
+      "dataset_directory": "publication_data/bootstrap_rogue_taxa/current_results/dataset_125_source-125_taxa125_sites29149",
+      "metrics": {
+        "robinson_foulds": {
+          "normalization": "symmetric_difference_over_split_count_sum",
+          "scope": "adjacent_processed_input_trees",
+          "topology": "unrooted_internal_bipartitions"
+        },
+        "weighted_robinson_foulds": {
+          "includes_branch_lengths": true,
+          "includes_terminal_and_root_splits": true,
+          "scope": "adjacent_processed_input_trees",
+          "topology": "rooted_clades"
+        }
+      },
+      "outputs": [
+        {
+          "method": "rf_nearest_neighbor_2opt",
+          "order_table": "publication_data/bootstrap_rogue_taxa/current_results/dataset_125_source-125_taxa125_sites29149/analysis/rf_nearest_neighbor_order_125_source-125_taxa125_sites29149.tsv",
+          "order_table_sha256": "680c0525d74d2f09534909ac9e5629cfcfb47ab44d20a9f6b37a954923c3c750",
+          "primary_metric": "robinson_foulds",
+          "reordered_trees": "publication_data/bootstrap_rogue_taxa/current_results/dataset_125_source-125_taxa125_sites29149/analysis/rf_nearest_neighbor_all_trees_125_source-125_taxa125_sites29149.nwk",
+          "reordered_trees_sha256": "f7e053c87b618a61833198a63573b3c9446babd7fe28be94efae7656ae6c133f",
+          "secondary_metric": "weighted_robinson_foulds",
+          "summary": {
+            "adjacent_pair_count": 199,
+            "method": "rf_nearest_neighbor_2opt",
+            "method_label": "RF nearest-neighbor plus 2-opt",
+            "robinson_foulds": {
+              "max": 0.05737704918032787,
+              "mean": 0.01668176950325392,
+              "median": 0.01639344262295082,
+              "min": 0.0,
+              "nonzero_count": 175,
+              "total": 3.3196721311475303,
+              "zero_count": 24
+            },
+            "start_matrix_index": 34,
+            "tree_count": 200,
+            "two_opt_improvements": 125,
+            "weighted_robinson_foulds": {
+              "max": 1.1741400000000004,
+              "mean": 0.8179297738693463,
+              "median": 0.8042600000000003,
+              "min": 0.6735800000000001,
+              "nonzero_count": 199,
+              "total": 162.7680249999999,
+              "zero_count": 0
+            }
+          }
+        },
+        {
+          "method": "weighted_rf_nearest_neighbor_2opt",
+          "order_table": "publication_data/bootstrap_rogue_taxa/current_results/dataset_125_source-125_taxa125_sites29149/analysis/weighted_rf_nearest_neighbor_order_125_source-125_taxa125_sites29149.tsv",
+          "order_table_sha256": "6ea494807e1c1684e834e0f7c2f5a000288f18f74851465a98ff9a3e56fd8c18",
+          "primary_metric": "weighted_robinson_foulds",
+          "reordered_trees": "publication_data/bootstrap_rogue_taxa/current_results/dataset_125_source-125_taxa125_sites29149/analysis/weighted_rf_nearest_neighbor_all_trees_125_source-125_taxa125_sites29149.nwk",
+          "reordered_trees_sha256": "e2f6df5c6885b34cbba84d7615bc520ea95470de4fcc87be2480a7082df67880",
+          "secondary_metric": "robinson_foulds",
+          "summary": {
+            "adjacent_pair_count": 199,
+            "method": "weighted_rf_nearest_neighbor_2opt",
+            "method_label": "Weighted RF nearest-neighbor plus 2-opt",
+            "robinson_foulds": {
+              "max": 0.06557377049180328,
+              "mean": 0.02813246560672207,
+              "median": 0.02459016393442623,
+              "min": 0.0,
+              "nonzero_count": 196,
+              "total": 5.598360655737692,
+              "zero_count": 3
+            },
+            "start_matrix_index": 90,
+            "tree_count": 200,
+            "two_opt_improvements": 58,
+            "weighted_robinson_foulds": {
+              "max": 0.9512949999999994,
+              "mean": 0.7714791206030154,
+              "median": 0.7624249999999992,
+              "min": 0.653765,
+              "nonzero_count": 199,
+              "total": 153.52434500000007,
+              "zero_count": 0
+            }
+          }
+        }
+      ],
+      "path_construction": {
+        "purpose": "secondary visualization/order analysis for unordered bootstrap replicate trees",
+        "route": "deterministic greedy nearest neighbor followed by deterministic 2-opt improvement",
+        "start": "distance medoid under the primary metric; ties use the secondary metric and composition order"
+      },
+      "path_summaries": [
+        {
+          "adjacent_pair_count": 199,
+          "method": "composition_ranked",
+          "method_label": "Current composition-ranked promoted order",
+          "robinson_foulds": {
+            "max": 0.10655737704918032,
+            "mean": 0.04547326797924045,
+            "median": 0.040983606557377046,
+            "min": 0.01639344262295082,
+            "nonzero_count": 199,
+            "total": 9.04918032786885,
+            "zero_count": 0
+          },
+          "start_matrix_index": 0,
+          "tree_count": 200,
+          "two_opt_improvements": 0,
+          "weighted_robinson_foulds": {
+            "max": 1.301175000000001,
+            "mean": 0.9089010050251258,
+            "median": 0.8997349999999996,
+            "min": 0.6709700000000001,
+            "nonzero_count": 199,
+            "total": 180.87130000000005,
+            "zero_count": 0
+          }
+        },
+        {
+          "adjacent_pair_count": 199,
+          "method": "rf_nearest_neighbor_2opt",
+          "method_label": "RF nearest-neighbor plus 2-opt",
+          "robinson_foulds": {
+            "max": 0.05737704918032787,
+            "mean": 0.01668176950325392,
+            "median": 0.01639344262295082,
+            "min": 0.0,
+            "nonzero_count": 175,
+            "total": 3.3196721311475303,
+            "zero_count": 24
+          },
+          "start_matrix_index": 34,
+          "tree_count": 200,
+          "two_opt_improvements": 125,
+          "weighted_robinson_foulds": {
+            "max": 1.1741400000000004,
+            "mean": 0.8179297738693463,
+            "median": 0.8042600000000003,
+            "min": 0.6735800000000001,
+            "nonzero_count": 199,
+            "total": 162.7680249999999,
+            "zero_count": 0
+          }
+        },
+        {
+          "adjacent_pair_count": 199,
+          "method": "weighted_rf_nearest_neighbor_2opt",
+          "method_label": "Weighted RF nearest-neighbor plus 2-opt",
+          "robinson_foulds": {
+            "max": 0.06557377049180328,
+            "mean": 0.02813246560672207,
+            "median": 0.02459016393442623,
+            "min": 0.0,
+            "nonzero_count": 196,
+            "total": 5.598360655737692,
+            "zero_count": 3
+          },
+          "start_matrix_index": 90,
+          "tree_count": 200,
+          "two_opt_improvements": 58,
+          "weighted_robinson_foulds": {
+            "max": 0.9512949999999994,
+            "mean": 0.7714791206030154,
+            "median": 0.7624249999999992,
+            "min": 0.653765,
+            "nonzero_count": 199,
+            "total": 153.52434500000007,
+            "zero_count": 0
+          }
+        }
+      ],
+      "source_order_table": "publication_data/bootstrap_rogue_taxa/current_results/dataset_125_source-125_taxa125_sites29149/ranked/composition_ranked_bootstrap_replicates_125_source-125_taxa125_sites29149.tsv",
+      "source_ranked_trees": "publication_data/bootstrap_rogue_taxa/current_results/dataset_125_source-125_taxa125_sites29149/ranked/all_trees_125_source-125_taxa125_sites29149.nwk",
+      "tree_count": 200
+    }
+  ],
+  "description": "Secondary additive analysis for the bootstrap examples. The promoted application example remains composition-ranked; these files provide alternate RF and weighted-RF tree-distance orderings for comparison.",
+  "generation_command": "npm run publication:bootstrap-tree-distance",
+  "schema_version": "1.0",
+  "summary_sha256": "9e24ebc35644c254dee5e3d879f85ca64bb2d40400aa8dd3990d34863f8b5108"
+}

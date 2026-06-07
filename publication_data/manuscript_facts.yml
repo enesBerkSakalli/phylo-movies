@@ -48,6 +48,15 @@ bootstrap_rogue_taxa:
       target_spr_moves: 79
       target_percent_of_spr_moves: 19.602978
       target_percentile: 96.296296
+      weighted_rf_order:
+        ordering: Rooted weighted RF nearest-neighbor plus 2-opt
+        total_spr_moves: 166
+        recurrent_moved_subtrees: 22
+        target_taxon: Ostrich
+        target_rank: 1
+        target_spr_moves: 38
+        tree_distance_total_rf: 8.857142857
+        tree_distance_total_weighted_rf: 56.679060
     "125":
       taxa: 125
       sites: 29149
@@ -59,3 +68,12 @@ bootstrap_rogue_taxa:
       target_spr_moves: 91
       target_percent_of_spr_moves: 8.472998
       target_percentile: 90.909091
+      weighted_rf_order:
+        ordering: Rooted weighted RF nearest-neighbor plus 2-opt
+        total_spr_moves: 661
+        recurrent_moved_subtrees: 47
+        target_taxon: Seq112
+        target_rank: 1
+        target_spr_moves: 70
+        tree_distance_total_rf: 5.598360656
+        tree_distance_total_weighted_rf: 153.524345
