@@ -150,8 +150,9 @@ export function App() {
 
 export default App;
 
-export function VisualizationTreeRenderOverlay() {
-  const visible = useAppStore((state) => state.renderInProgress);
+export function VisualizationTreeRenderOverlay({ visible: visibleOverride } = {}) {
+  const storeVisible = useAppStore((state) => state.renderInProgress);
+  const visible = typeof visibleOverride === 'boolean' ? visibleOverride : storeVisible;
 
   if (!visible) return null;
 
