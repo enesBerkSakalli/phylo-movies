@@ -157,14 +157,6 @@ const DEMO_EXAMPLES = [
       'Synthetic MSA-linked demo for checking alignment-window synchronization in the browser.',
     keywords: ['multiple sequence alignment', 'MSA viewer', 'tree synchronization'],
   },
-  {
-    name: 'msprime 1000-Taxa Limit Demo',
-    workflow: 'Generated tree movie',
-    scale: '1000 taxa, 2 trees',
-    description:
-      'Generated scale-limit payload for checking 1000-taxon browser visualization behavior.',
-    keywords: ['1000 taxa', 'scale limit', 'msprime', 'large tree visualization'],
-  },
 ];
 
 const STRUCTURED_DATA = [
