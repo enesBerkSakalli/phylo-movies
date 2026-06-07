@@ -1,5 +1,6 @@
 import { LINK_LIFECYCLES, createLifecycleClocks } from './TransitionChangeModel.js';
 import { polarToPosition, positionFromPolar, positionToPolar } from '../../utils/polarGeometry.js';
+import { measureFrameStep } from '../../performance/frameInstrumentation.js';
 
 const ZERO_LENGTH_EPSILON = 1e-6;
 
@@ -256,24 +257,31 @@ export class PolarLinkInterpolator {
   }
 
   _createLinkDatumFromPositions(link, sourcePosition, targetPosition, options = {}) {
-    const sourcePolar = positionToPolar(sourcePosition);
-    const targetPolar = positionToPolar(targetPosition);
-    const positionedLink = {
-      ...link,
-      radialLength: Math.max(0, targetPolar.radius - sourcePolar.radius),
-      polarData: {
-        ...link.polarData,
-        source: sourcePolar,
-        target: targetPolar,
-      },
-    };
+    // positionedLink is a throwaway used only to feed interpolatePath, which reads
+    // nothing but `.polarData`. Avoid spreading the whole link object here; build
+    // the minimal shape instead to cut per-frame garbage.
+    const positionedLink = measureFrameStep('link.datumAssembly', () => {
+      const sourcePolar = positionToPolar(sourcePosition);
+      const targetPolar = positionToPolar(targetPosition);
+      return {
+        radialLength: Math.max(0, targetPolar.radius - sourcePolar.radius),
+        polarData: {
+          ...link.polarData,
+          source: sourcePolar,
+          target: targetPolar,
+        },
+      };
+    });
 
-    return {
+    const path = this.pathInterpolator.interpolatePath(positionedLink, positionedLink, 1, {
+      velocityEntry: options.velocityEntry ?? null,
+      linkGeometryMode: options.linkGeometryMode,
+      pathPoolKey: link?.id != null ? `link:${link.id}` : null,
+    });
+
+    return measureFrameStep('link.datumSpread', () => ({
       ...link,
-      path: this.pathInterpolator.interpolatePath(positionedLink, positionedLink, 1, {
-        velocityEntry: options.velocityEntry ?? null,
-        linkGeometryMode: options.linkGeometryMode,
-      }),
+      path,
       sourcePosition,
       targetPosition,
       polarData: positionedLink.polarData,
@@ -284,7 +292,7 @@ export class PolarLinkInterpolator {
       targetName: link.targetName,
       lifecycle: options.lifecycle || LINK_LIFECYCLES.UNCHANGED,
       transitionPhase: options.transitionPhase ?? 1,
-    };
+    }));
   }
 
   _attachChildSourcesToRenderedParents(links, options = {}) {

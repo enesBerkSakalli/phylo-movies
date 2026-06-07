@@ -10,6 +10,7 @@ import {
 } from '../../state/phyloStore/selectors/treeSelectors.js';
 import { PlaybackCursor } from '../../timeline/time/PlaybackCursor.js';
 import { TransitionFrame } from '../../timeline/time/TransitionFrame.js';
+import { measureFrameStep } from '../performance/frameInstrumentation.js';
 
 /**
  * AnimationRunner
@@ -387,10 +388,10 @@ function getActiveTreeSequence(state) {
 
 function buildLinearTransitionFrame(state, playback) {
   const { fromIndex, toIndex, localT } = playback;
-  const [hydratedFromTree, hydratedToTree] = state.ensureTreesHydrated?.([fromIndex, toIndex]) ?? [
-    null,
-    null,
-  ];
+  const [hydratedFromTree, hydratedToTree] = measureFrameStep(
+    'animationRunner.ensureTreesHydrated',
+    () => state.ensureTreesHydrated?.([fromIndex, toIndex]) ?? [null, null]
+  );
   const trees = getActiveTreeSequence(state);
   const fromTree = hydratedFromTree ?? trees[fromIndex];
   const toTree = hydratedToTree ?? trees[toIndex];

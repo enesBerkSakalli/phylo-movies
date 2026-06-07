@@ -57,18 +57,7 @@ export function computeAngularDistances(fromMap, toMap, rootAngle = 0) {
   return distances;
 }
 
-/**
- * Build velocity maps for multiple element types using a single global
- * angular maximum across all types.
- *
- * @param {Object} angularDistanceMaps - { nodes: Map, labels: Map, links: Map, extensions: Map }
- * @param {number} t - Global eased time (0-1)
- * @returns {{ velocityMaps: Object, globalMaxAngle: number }}
- *   velocityMaps has the same keys, each a Map<id, { angularT }>.
- */
-export function buildGlobalVelocityMaps(angularDistanceMaps, t) {
-  const MIN_DIST = 1e-8;
-
+export function getGlobalAngularMaxAngle(angularDistanceMaps) {
   let globalMaxAngle = 0;
   for (const type of ANGULAR_DISTANCE_TYPES) {
     const distances = angularDistanceMaps[type];
@@ -77,6 +66,25 @@ export function buildGlobalVelocityMaps(angularDistanceMaps, t) {
       if (dist > globalMaxAngle) globalMaxAngle = dist;
     }
   }
+  return globalMaxAngle;
+}
+
+/**
+ * Build velocity maps for multiple element types using a single global
+ * angular maximum across all types.
+ *
+ * @param {Object} angularDistanceMaps - { nodes: Map, labels: Map, links: Map, extensions: Map }
+ * @param {number} t - Global eased time (0-1)
+ * @param {Object} [options]
+ * @param {number} [options.globalMaxAngle] - Precomputed max angle for stable cached maps.
+ * @returns {{ velocityMaps: Object, globalMaxAngle: number }}
+ *   velocityMaps has the same keys, each a Map<id, { angularT }>.
+ */
+export function buildGlobalVelocityMaps(angularDistanceMaps, t, options = {}) {
+  const MIN_DIST = 1e-8;
+  const globalMaxAngle = Number.isFinite(options.globalMaxAngle)
+    ? options.globalMaxAngle
+    : getGlobalAngularMaxAngle(angularDistanceMaps);
 
   const velocityMaps = {};
 
@@ -90,7 +98,6 @@ export function buildGlobalVelocityMaps(angularDistanceMaps, t) {
     }
 
     for (const [id, aDist = 0] of angularDists) {
-
       const angularT =
         aDist < MIN_DIST || globalMaxAngle < MIN_DIST
           ? t

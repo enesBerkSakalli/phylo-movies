@@ -255,6 +255,24 @@ describe('TreeInterpolator label radius smoothing', () => {
       distances
     );
   });
+
+  it('reuses cached global angular maxima for stable distance maps', () => {
+    const interpolator = new TreeInterpolator();
+    const angularDistanceMaps = {
+      nodes: new Map([['node-1', 0.5]]),
+      labels: new Map([['label-1', 1.25]]),
+      links: new Map([['link-1', 0.75]]),
+      extensions: new Map([['extension-1', 0.25]]),
+    };
+
+    expect(interpolator._getGlobalAngularDistanceMax(angularDistanceMaps)).toBe(1.25);
+    // App-owned distance maps are immutable after creation; this mutation verifies reference caching.
+    angularDistanceMaps.labels.set('label-2', 2);
+    expect(interpolator._getGlobalAngularDistanceMax(angularDistanceMaps)).toBe(1.25);
+
+    interpolator.resetCaches();
+    expect(interpolator._getGlobalAngularDistanceMax(angularDistanceMaps)).toBe(2);
+  });
 });
 
 function treeData(prefix, angle) {

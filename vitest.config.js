@@ -55,6 +55,7 @@ export default defineConfig({
       'test/treeLayerTopology.test.js',
       'test/TreeScalingDiagnostics.test.js',
       'test/TreeInterpolatorLabelRadius.test.js',
+      'test/TreeInterpolatorPathBufferPool.test.js',
       'test/TimelineSegmentTooltip.test.js',
       'test/ViewportManager.test.js',
       'test/ViteConfig.test.ts',
