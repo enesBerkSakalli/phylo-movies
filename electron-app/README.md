@@ -154,6 +154,9 @@ npm run build:linux  # For Linux
 The platform build scripts run `npm run build:backend` automatically. That
 script bundles the Python engine via `build-backend.sh` in a dedicated Python
 3.11 build environment, then packages the frontend and Electron shell.
+macOS builds package the architecture of the current machine by default because
+the bundled PyInstaller backend is architecture-specific. Build Intel and Apple
+Silicon artifacts on matching macOS runners.
 
 Output will be in `electron-app/release/`.
 

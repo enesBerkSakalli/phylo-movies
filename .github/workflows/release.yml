@@ -11,18 +11,22 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-latest
-            platform: darwin
+          - os: macos-15
+            platform: darwin-arm64
             build_target: mac
-          - os: macos-14
+            build_arch: arm64
+          - os: macos-15-intel
             platform: darwin-x64
             build_target: mac
+            build_arch: x64
           - os: windows-latest
             platform: win32
             build_target: win
+            build_arch: x64
           - os: ubuntu-latest
             platform: linux
             build_target: linux
+            build_arch: x64
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -96,7 +100,11 @@ jobs:
         shell: bash
         run: |
           cd electron-app
-          bash build.sh ${{ matrix.build_target }} -p always
+          if [ "${{ matrix.build_target }}" = "mac" ]; then
+            bash build.sh mac --${{ matrix.build_arch }} -p always
+          else
+            bash build.sh ${{ matrix.build_target }} -p always
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # macOS: ad-hoc signing is configured via identity:"-" in package.json.

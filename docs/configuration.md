@@ -22,19 +22,19 @@ Vite dev server defaults:
 
 ## Backend
 
-| Variable             | Used by                 | Default                 | Meaning                                                               |
-| -------------------- | ----------------------- | ----------------------- | --------------------------------------------------------------------- |
-| `SECRET_KEY`         | Flask config            | random token at startup | Flask secret key.                                                     |
-| `FLASK_DEBUG`        | Flask config            | `1`                     | Enables Flask debug mode when equal to `1`.                           |
-| `CORS_ORIGINS`       | Flask config            | `*`                     | CORS origin setting.                                                  |
-| `LOG_LEVEL`          | Flask logging config    | `INFO`                  | Backend logging level.                                                |
-| `LOG_FORMAT`         | Flask logging config    | `text`                  | `text` or `json` backend log records.                                 |
-| `LOG_ACCESS`         | Flask logging config    | `1`                     | Emits request access logs when truthy.                                |
-| `LOG_HEALTHCHECKS`   | Flask logging config    | `0`                     | Includes `/about` and `/health` in access logs when truthy.           |
-| `BACKEND_LOG_FILE`   | Flask logging config    | unset                   | Optional rotating backend log file path.                              |
-| `LOG_FILE`           | Flask logging config    | unset                   | Fallback optional rotating backend log file path.                     |
-| `IQTREE_PATH`        | `msa_to_trees` pipeline | unset                   | Explicit IQ-TREE executable path.                                     |
-| `FASTTREE_PATH`      | `msa_to_trees` pipeline | unset                   | Explicit FastTree executable path.                                    |
+| Variable           | Used by                 | Default                 | Meaning                                                     |
+| ------------------ | ----------------------- | ----------------------- | ----------------------------------------------------------- |
+| `SECRET_KEY`       | Flask config            | random token at startup | Flask secret key.                                           |
+| `FLASK_DEBUG`      | Flask config            | `1`                     | Enables Flask debug mode when equal to `1`.                 |
+| `CORS_ORIGINS`     | Flask config            | `*`                     | CORS origin setting.                                        |
+| `LOG_LEVEL`        | Flask logging config    | `INFO`                  | Backend logging level.                                      |
+| `LOG_FORMAT`       | Flask logging config    | `text`                  | `text` or `json` backend log records.                       |
+| `LOG_ACCESS`       | Flask logging config    | `1`                     | Emits request access logs when truthy.                      |
+| `LOG_HEALTHCHECKS` | Flask logging config    | `0`                     | Includes `/about` and `/health` in access logs when truthy. |
+| `BACKEND_LOG_FILE` | Flask logging config    | unset                   | Optional rotating backend log file path.                    |
+| `LOG_FILE`         | Flask logging config    | unset                   | Fallback optional rotating backend log file path.           |
+| `IQTREE_PATH`      | `msa_to_trees` pipeline | unset                   | Explicit IQ-TREE executable path.                           |
+| `FASTTREE_PATH`    | `msa_to_trees` pipeline | unset                   | Explicit FastTree executable path.                          |
 
 Backend defaults:
 
@@ -52,8 +52,8 @@ Backend defaults:
 
 Docker ports:
 
-- Full-stack container: `8080`
-- Development backend profile: `5002`
+- Full-stack container: `8080`, with backend health proxied at `/health`
+- Development backend service: `5002`
 
 ## Current Limitation
 

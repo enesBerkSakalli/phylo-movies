@@ -51,16 +51,26 @@ Open `http://localhost:8080/`.
 
 The root `Dockerfile` builds the React frontend in a Node stage, installs the BranchArchitect backend in a Python runtime stage, serves static files with nginx, and starts backend/frontend routing through `docker/entrypoint.sh` and `docker/nginx.conf`.
 
+The production Compose service uses a container health check against `http://localhost:8080/health`, `restart: unless-stopped`, and an entrypoint that exits if either nginx or the backend process dies. That keeps the production-style local stack reproducible without requiring Node, Poetry, or Python packages on the host.
+
+Useful checks:
+
+```bash
+docker compose ps
+docker compose logs -f app
+curl http://localhost:8080/health
+```
+
 ## Docker Development Backend
 
 ```bash
-docker compose --profile dev up --build
+docker compose up --build backend-dev
 npm run dev
 ```
 
 Open `http://127.0.0.1:5173/`.
 
-The `backend-dev` service exposes Flask on `5002`; Vite proxies API calls to that port.
+The `backend-dev` service exposes Flask on `5002`; Vite proxies API calls to that port. Target the `backend-dev` service explicitly so Compose does not also start the default production `app` service.
 
 ## Electron Desktop Build
 
