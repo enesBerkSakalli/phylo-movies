@@ -82,6 +82,28 @@ describe('DeckGLContext view state handling', () => {
     expect(listener).toHaveBeenCalledWith(expect.objectContaining({ zoom: 4 }));
   });
 
+  it('cancels pending view state notification when destroyed', () => {
+    const rafCallbacks = [];
+    const cancelAnimationFrame = vi.fn();
+    vi.stubGlobal('requestAnimationFrame', (callback) => {
+      rafCallbacks.push(callback);
+      return rafCallbacks.length;
+    });
+    vi.stubGlobal('cancelAnimationFrame', cancelAnimationFrame);
+
+    const context = createContext();
+    context.deck.finalize = vi.fn();
+    const listener = vi.fn();
+    context.addViewStateListener(listener);
+
+    context._handleViewStateChange({ zoom: 2 }, VIEW_IDS.ORTHO);
+    context.destroy();
+    rafCallbacks[0]();
+
+    expect(cancelAnimationFrame).toHaveBeenCalledWith(1);
+    expect(listener).not.toHaveBeenCalled();
+  });
+
   it('initializes against a native HTMLElement container', () => {
     const container = document.createElement('div');
     const oldChild = document.createElement('span');

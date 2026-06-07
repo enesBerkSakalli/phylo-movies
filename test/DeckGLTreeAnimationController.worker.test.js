@@ -82,6 +82,48 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     expect(setPrecomputedData).not.toHaveBeenCalled();
   });
 
+  it('releases pending readiness waiters when destroyed after unmount', async () => {
+    controller = new ControllerClass(null);
+    controller.unmount();
+    let readySettled = false;
+    controller.readyPromise.then(() => {
+      readySettled = true;
+    });
+
+    controller.destroy();
+    await Promise.resolve();
+
+    expect(readySettled).toBe(true);
+  });
+
+  it('does not post worker prefetch messages after destroy', () => {
+    controller = new ControllerClass(null);
+    const worker = controller.layoutWorker;
+
+    controller.destroy();
+
+    expect(() => controller._prefetchFrame(1)).not.toThrow();
+    expect(worker.messages).toHaveLength(0);
+    expect(worker.terminated).toBe(true);
+  });
+
+  it('ignores layer updates after destroy', () => {
+    controller = new ControllerClass(null);
+    const updateLayersWithData = vi.spyOn(controller.layerManager, 'updateLayersWithData');
+    const setLayers = vi.fn();
+    controller.deckContext = {
+      destroy: vi.fn(),
+      getViewState: vi.fn(() => ({ zoom: 1 })),
+      setLayers,
+    };
+
+    controller.destroy();
+
+    expect(() => controller._updateLayersEfficiently({ nodes: [] })).not.toThrow();
+    expect(updateLayersWithData).not.toHaveBeenCalled();
+    expect(setLayers).not.toHaveBeenCalled();
+  });
+
   it('clears transformed tree datasets when interpolation caches reset', () => {
     controller = new ControllerClass(null);
     controller._transformedCache.set('dataset-a', {
@@ -261,6 +303,74 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     expect(resetCaches).not.toHaveBeenCalled();
     expect(controller.renderAllElements).not.toHaveBeenCalled();
     expect(controller.deckContext.deck.redraw).not.toHaveBeenCalled();
+  });
+
+  it('coalesces scheduled static renders into one animation frame', async () => {
+    const callbacks = [];
+    vi.stubGlobal('requestAnimationFrame', (callback) => {
+      callbacks.push(callback);
+      return callbacks.length;
+    });
+
+    controller = new ControllerClass(null);
+    controller.renderAllElements = vi.fn(() => Promise.resolve());
+
+    controller.scheduleRenderAllElements();
+    controller.scheduleRenderAllElements({ skipAutoFit: true });
+
+    expect(callbacks).toHaveLength(1);
+
+    callbacks.shift()(0);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(controller.renderAllElements).toHaveBeenCalledOnce();
+    expect(controller.renderAllElements).toHaveBeenCalledWith({ skipAutoFit: true });
+  });
+
+  it('queues one follow-up static render when scheduled during an in-flight render', async () => {
+    const callbacks = [];
+    vi.stubGlobal('requestAnimationFrame', (callback) => {
+      callbacks.push(callback);
+      return callbacks.length;
+    });
+
+    let resolveFirstRender;
+    const firstRender = new Promise((resolve) => {
+      resolveFirstRender = resolve;
+    });
+
+    controller = new ControllerClass(null);
+    controller.renderAllElements = vi
+      .fn()
+      .mockImplementationOnce(() => firstRender)
+      .mockResolvedValue(undefined);
+
+    controller.scheduleRenderAllElements({ treeIndex: 1 });
+    callbacks.shift()(0);
+
+    expect(controller.renderAllElements).toHaveBeenCalledWith({ treeIndex: 1 });
+
+    controller.scheduleRenderAllElements({ treeIndex: 2 });
+    controller.scheduleRenderAllElements({ skipAutoFit: true });
+
+    expect(callbacks).toHaveLength(0);
+
+    resolveFirstRender();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(callbacks).toHaveLength(1);
+
+    callbacks.shift()(16);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(controller.renderAllElements).toHaveBeenCalledTimes(2);
+    expect(controller.renderAllElements).toHaveBeenLastCalledWith({
+      treeIndex: 2,
+      skipAutoFit: true,
+    });
   });
 
   it('stores the semantic timeline tree index supplied by the animation runner', () => {

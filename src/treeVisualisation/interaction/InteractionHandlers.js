@@ -76,7 +76,8 @@ export function handleDrag(controller, info) {
   }
 
   // Trigger a render update
-  controller.renderAllElements();
+  const render = controller.scheduleRenderAllElements ?? controller.renderAllElements;
+  render.call(controller);
 
   return true;
 }
@@ -110,6 +111,7 @@ export function handleContainerResize(controller) {
 
   schedule(async () => {
     controller._resizeRenderScheduled = false;
+    if (controller._destroyed) return;
     const { playing } = useAppStore.getState();
     if (playing) return;
     if (!controller._hasUserViewportInteraction) {

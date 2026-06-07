@@ -83,11 +83,12 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     this._lastFocusedTreeIndex = null;
     this._hasUserViewportInteraction = false;
 
-    // --- PERFORMANCE OPTIMIZATION: Throttle & Debounce ---
+    // --- PERFORMANCE OPTIMIZATION: Coalesce static renders ---
     this._lastZoom = null;
     this._pendingRenderRAF = null;
-    this._lastRenderTime = 0;
-    this._renderDebounceMs = 16; // ~60fps max
+    this._pendingRenderOptions = null;
+    this._renderInFlight = false;
+    this._renderQueued = false;
     this._lastLayerData = null;
 
     // Resize clears cache because dimensions affect layout radius/position
@@ -196,29 +197,65 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     this._scheduleRender();
   }
 
+  _scheduleRender(options = {}) {
+    this.scheduleRenderAllElements(options);
+  }
+
   /**
-   * PERFORMANCE: Debounced render scheduling
-   * Batches rapid view state changes into a single render per frame
+   * Batches rapid static render requests into one render per frame.
    */
-  _scheduleRender() {
-    if (this._pendingRenderRAF) return; // Already scheduled
+  scheduleRenderAllElements(options = {}) {
+    if (this._destroyed) return;
 
-    const now = performance.now();
-    const elapsed = now - this._lastRenderTime;
+    this._pendingRenderOptions = mergeRenderOptions(this._pendingRenderOptions, options);
 
-    // If enough time has passed, render immediately
-    if (elapsed >= this._renderDebounceMs) {
-      this._lastRenderTime = now;
-      this.renderAllElements();
+    if (this._renderInFlight) {
+      this._renderQueued = true;
       return;
     }
+    if (this._pendingRenderRAF !== null) return;
 
-    // Otherwise, schedule for next frame
-    this._pendingRenderRAF = requestAnimationFrame(() => {
+    const pendingToken = {};
+    let frameId;
+    this._pendingRenderRAF = pendingToken;
+
+    frameId = scheduleNextFrame(() => {
       this._pendingRenderRAF = null;
-      this._lastRenderTime = performance.now();
-      this.renderAllElements();
+      if (this._destroyed) return;
+      this._flushScheduledRender();
     });
+
+    if (this._pendingRenderRAF === pendingToken) {
+      this._pendingRenderRAF = frameId;
+    }
+  }
+
+  _flushScheduledRender() {
+    if (this._destroyed) return;
+
+    const renderOptions = this._pendingRenderOptions || {};
+    this._pendingRenderOptions = null;
+    this._renderQueued = false;
+    this._renderInFlight = true;
+
+    let renderPromise;
+    try {
+      renderPromise = Promise.resolve(this.renderAllElements(renderOptions));
+    } catch (error) {
+      renderPromise = Promise.reject(error);
+    }
+
+    renderPromise
+      .catch((error) => {
+        console.warn('[DeckGLTreeAnimationController] Scheduled render failed:', error);
+      })
+      .finally(() => {
+        this._renderInFlight = false;
+        if (!this._destroyed && (this._renderQueued || this._pendingRenderOptions)) {
+          this._renderQueued = false;
+          this.scheduleRenderAllElements();
+        }
+      });
   }
 
   _markReady() {
@@ -368,14 +405,18 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
   destroy() {
     if (this._destroyed) return;
     this._destroyed = true;
+    this._markReady();
 
     super.destroy();
     this.animationRunner.stop();
-    // Cancel any pending debounced render
-    if (this._pendingRenderRAF) {
-      cancelAnimationFrame(this._pendingRenderRAF);
+    // Cancel any pending scheduled render
+    if (this._pendingRenderRAF !== null) {
+      cancelScheduledFrame(this._pendingRenderRAF);
       this._pendingRenderRAF = null;
     }
+    this._pendingRenderOptions = null;
+    this._renderQueued = false;
+    this._renderInFlight = false;
     this.deckContext?.destroy();
     this.deckContext = null;
     this.layerManager?.destroy();
@@ -399,6 +440,8 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
   // ==========================================================================
 
   _prefetchFrame(treeIndex) {
+    if (this._destroyed || !this.layoutWorker) return;
+
     const state = useAppStore.getState();
     const treeList = selectActiveTreeList(state);
     const treeData =
@@ -448,6 +491,7 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
       },
     };
 
+    if (this._destroyed || !this.layoutWorker) return;
     this.layoutWorker.postMessage(payload);
   }
 
@@ -481,12 +525,14 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
   // ==========================================================================
 
   async renderAllElements(options = {}) {
+    if (this._destroyed) return;
     return this.staticRenderer.renderAllElements(options);
   }
 
   // ==========================================================================
   // Delegated to InterpolationRenderer
   async renderComparisonAwareScrubFrame(fromTreeData, toTreeData, timeFactor, options = {}) {
+    if (this._destroyed) return;
     return this.interpolationRenderer.renderComparisonAwareScrubFrame(
       fromTreeData,
       toTreeData,
@@ -496,10 +542,12 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
   }
 
   async renderProgress(progress) {
+    if (this._destroyed) return;
     return this.interpolationRenderer.renderProgress(progress);
   }
 
   async renderTimelineProgress(progress) {
+    if (this._destroyed) return;
     return this.interpolationRenderer.renderTimelineProgress(progress);
   }
 
@@ -646,6 +694,8 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
   // ==========================================================================
 
   _updateLayersEfficiently(interpolatedFrameData) {
+    if (this._destroyed || !this.deckContext) return;
+
     // Inject current zoom level for dynamic label halo scaling
     if (interpolatedFrameData) {
       interpolatedFrameData.zoom = this.deckContext?.getViewState()?.zoom;
@@ -660,26 +710,60 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
   }
 
   _handleStyleChange() {
+    if (this._destroyed) return;
     this.resetInterpolationCaches();
-    this.renderAllElements();
+    this.scheduleRenderAllElements();
   }
 
   _handleLayerDataChange() {
+    if (this._destroyed) return;
     if (this.animationRunner?.isRunning) {
       this.deckContext?.deck?.redraw(true);
       return;
     }
-    this.renderAllElements();
+    this.scheduleRenderAllElements();
   }
 
   _handlePaintChange() {
+    if (this._destroyed) return;
     if (this.animationRunner?.isRunning) {
       return;
     }
-    this.renderAllElements();
+    this.scheduleRenderAllElements();
   }
 }
 
 function isRenderCancelled(isCancelled) {
   return typeof isCancelled === 'function' && isCancelled();
+}
+
+function getNow() {
+  return typeof performance !== 'undefined' && typeof performance.now === 'function'
+    ? performance.now()
+    : Date.now();
+}
+
+function scheduleNextFrame(callback) {
+  if (typeof requestAnimationFrame === 'function') {
+    return requestAnimationFrame(callback);
+  }
+  return setTimeout(() => callback(getNow()), 16);
+}
+
+function cancelScheduledFrame(frameId) {
+  if (typeof cancelAnimationFrame === 'function') {
+    cancelAnimationFrame(frameId);
+    return;
+  }
+  clearTimeout(frameId);
+}
+
+function mergeRenderOptions(current, next = {}) {
+  if (!current) return { ...next };
+
+  const merged = { ...current, ...next };
+  if (current.skipAutoFit || next.skipAutoFit) {
+    merged.skipAutoFit = true;
+  }
+  return merged;
 }

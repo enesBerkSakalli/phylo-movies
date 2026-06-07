@@ -179,6 +179,42 @@ describe('InterpolationRenderer timeline progress', () => {
     expect(controller._updateLayersEfficiently.called).to.equal(false);
   });
 
+  it('does not paint a frame destroyed while waiting for controller readiness', async () => {
+    let resolveReady;
+    const controller = {
+      _destroyed: false,
+      ready: false,
+      readyPromise: new Promise((resolve) => {
+        resolveReady = resolve;
+      }),
+      _getOrCacheInterpolationData: sinon.spy(),
+      _syncInterpolatorRootAngle: sinon.spy(),
+      _getLinkGeometryMode: () => 'radial-elbow',
+      treeInterpolator: {
+        interpolateTreeData: sinon.spy(),
+      },
+      _updateLayersEfficiently: sinon.spy(),
+    };
+    const renderer = new InterpolationRenderer(controller);
+    const renderPromise = renderer.renderSingleInterpolatedFrame(
+      { id: 'from' },
+      { id: 'to' },
+      0.5,
+      {
+        fromTreeIndex: 0,
+        toTreeIndex: 1,
+      }
+    );
+
+    controller._destroyed = true;
+    resolveReady();
+    await renderPromise;
+
+    expect(controller._getOrCacheInterpolationData.called).to.equal(false);
+    expect(controller.treeInterpolator.interpolateTreeData.called).to.equal(false);
+    expect(controller._updateLayersEfficiently.called).to.equal(false);
+  });
+
   it('renders progress with trees returned by immutable hydration state updates', async () => {
     const sourceTree = { id: 'source-tree', split_indices: [0], children: [] };
     const targetTree = { id: 'target-tree', split_indices: [1], children: [] };

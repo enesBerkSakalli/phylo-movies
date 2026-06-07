@@ -16,9 +16,11 @@ export class InterpolationRenderer {
    * Renders a single interpolated frame between two trees.
    */
   async renderSingleInterpolatedFrame(fromTreeData, toTreeData, timeFactor, options = {}) {
+    if (isControllerDestroyed(this.controller)) return;
     if (!this.controller.ready) {
       await this.controller.readyPromise;
     }
+    if (isControllerDestroyed(this.controller)) return;
     if (isRenderCancelled(options)) return;
 
     const transitionFrame = createRenderFrame(fromTreeData, toTreeData, timeFactor, options);
@@ -36,6 +38,7 @@ export class InterpolationRenderer {
       transitionFrame.transitionChangeModel || cachedInputs.transitionChangeModel;
 
     if (!dataFrom || !dataTo) return;
+    if (isControllerDestroyed(this.controller)) return;
     if (isRenderCancelled(options)) return;
 
     // Perform Geometry Interpolation
@@ -52,6 +55,7 @@ export class InterpolationRenderer {
       }
     );
     interpolatedData.targetData = dataTo; // Add target data for movement arrow endpoints
+    if (isControllerDestroyed(this.controller)) return;
     if (isRenderCancelled(options)) return;
 
     // Update Visuals
@@ -73,9 +77,11 @@ export class InterpolationRenderer {
    * Handles scrubbing interactions, respecting Comparison Mode if active.
    */
   async renderComparisonAwareScrubFrame(fromTreeData, toTreeData, timeFactor, options = {}) {
+    if (isControllerDestroyed(this.controller)) return;
     if (!this.controller.ready) {
       await this.controller.readyPromise;
     }
+    if (isControllerDestroyed(this.controller)) return;
     if (isRenderCancelled(options)) return;
 
     const { comparisonMode, rightTreeIndex } = options;
@@ -96,6 +102,7 @@ export class InterpolationRenderer {
           transitionFrame.renderProgress,
           transitionFrame.toRenderOptions(options)
         );
+        if (isControllerDestroyed(this.controller)) return;
         if (isRenderCancelled(options)) return;
         await this.controller.layerManager.renderComparisonAnimated({
           interpolatedData,
@@ -122,9 +129,11 @@ export class InterpolationRenderer {
    * Handles tree index calculation, casing, and stage detection.
    */
   async renderProgress(progress) {
+    if (isControllerDestroyed(this.controller)) return;
     if (!this.controller.ready) {
       await this.controller.readyPromise;
     }
+    if (isControllerDestroyed(this.controller)) return;
 
     const state = useAppStore.getState();
     const treeList = selectActiveTreeList(state);
@@ -195,9 +204,11 @@ export class InterpolationRenderer {
    * This keeps scrubbed timeline positions distinct from the linear playback clock.
    */
   async renderTimelineProgress(progress) {
+    if (isControllerDestroyed(this.controller)) return;
     if (!this.controller.ready) {
       await this.controller.readyPromise;
     }
+    if (isControllerDestroyed(this.controller)) return;
 
     const state = useAppStore.getState();
     const transitionFrame = state.movieTimelineManager?.resolveFrameAtTimelineProgress?.(progress);
@@ -220,6 +231,7 @@ export class InterpolationRenderer {
         transitionFrame.sourceTreeIndex,
         transitionFrame.targetTreeIndex
       );
+    if (isControllerDestroyed(this.controller)) return;
     const stage = detectAnimationStage(dataFrom, dataTo, transitionChangeModel);
     const renderFrame = transitionFrame.withRenderState({
       renderProgress: applyRenderProgressEasing(transitionFrame.transitionProgress),
@@ -234,6 +246,10 @@ export class InterpolationRenderer {
       renderFrame.toRenderOptions()
     );
   }
+}
+
+function isControllerDestroyed(controller) {
+  return controller?._destroyed === true;
 }
 
 function isRenderCancelled(options = {}) {
