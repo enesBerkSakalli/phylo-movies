@@ -29,8 +29,9 @@ cp "$SOURCE/recombination_norovirus/source_preparation/augur_subsampling/metadat
    "$DEST/examples/recombination_norovirus/source_preparation/augur_subsampling/metadata/"
 cp "$SOURCE/recombination_norovirus/REGENERATE.md" \
    "$DEST/examples/recombination_norovirus/"
+rm -rf "$DEST/examples/recombination_norovirus/current_results/phylo_movies"
 mkdir -p "$DEST/examples/recombination_norovirus/current_results/phylo_movies"
-cp "$SOURCE/recombination_norovirus/current_results/phylo_movies/"*.nwk \
+cp "$SOURCE/recombination_norovirus/current_results/phylo_movies/norovirus_334_iqtree_fast_sh_alrt_window1000_step500.nwk" \
    "$DEST/examples/recombination_norovirus/current_results/phylo_movies/"
 mkdir -p "$DEST/examples/recombination_norovirus/current_results/window_tables"
 cp "$SOURCE/recombination_norovirus/current_results/window_tables/"*.tsv \

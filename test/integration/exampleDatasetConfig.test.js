@@ -240,7 +240,7 @@ describe('example dataset configuration', () => {
       'subsampled_350_metadata.csv',
       'rename_map.tsv',
       'recombination_norovirus/REGENERATE.md',
-      'current_results/phylo_movies/"*.nwk',
+      'norovirus_334_iqtree_fast_sh_alrt_window1000_step500.nwk',
       'current_results/window_tables/"*.tsv',
       'paper_example.tree',
       '"$SOURCE/precomputed/"*.movie.json',
@@ -254,6 +254,7 @@ describe('example dataset configuration', () => {
     ]) {
       expect(copyScript).toContain(expectedSourceArtifact);
     }
+    expect(copyScript).not.toContain('norovirus_334_iqtree_fast_window750_step500.nwk');
   });
 
   it('keeps the norovirus example on the default IQ-TREE fast-search path', () => {

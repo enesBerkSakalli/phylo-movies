@@ -78,9 +78,6 @@ before interpolation. It contains 17 observed input trees, 16 adjacent tree
 pairs, and 6,408 rendered tree states: 17 input-tree states plus 6,391
 interpolation states.
 
-A previous 750/500 IQ-TREE fast-search tree series remains in `phylo_movies/`
-for traceability, but it is not the current reviewer-facing demo payload.
-
 ## Checksums
 
 ```text
