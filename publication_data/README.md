@@ -28,6 +28,8 @@ not be edited as source data.
   promoted ReCAN validation result set.
 - `topology_search_iqtree/` contains a complete IQ-TREE fast-search
   topology-search trajectory example and its source alignment.
+- `precomputed/` is an ignored local cache of generated browser-demo JSON
+  payloads, not publication source data.
 
 ## Current Top-Level Groups
 
@@ -38,7 +40,8 @@ not be edited as source data.
 | `recombination_norovirus/` | Source alignments, source-preparation files, ReCAN scripts, and promoted ReCAN outputs for the norovirus recombination example. |
 | `topology_search_iqtree/` | Source alignment and promoted complete IQ-TREE 3 fast-search topology-search trajectory for the tree-search example. |
 | `quick_msa_demo/` | Synthetic lightweight MSA demo. |
-| `figure_example/` | Small figure/demo tree input. |
+| `figure_example/` | Small figure/demo tree input and notes about local figure QA crop folders. |
+| `precomputed/` | Ignored generated browser-demo payload cache produced by `npm run fixtures:generate:ci`; excluded from the source archive. |
 
 ## Reader Rule
 

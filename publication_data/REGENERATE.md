@@ -164,8 +164,8 @@ For copy-only checks:
 npm run copy-examples
 ```
 
-To regenerate the static browser-demo payloads and check that committed JSON is
-current:
+To regenerate the ignored static browser-demo payload cache and check the
+generated JSON against current source inputs:
 
 ```bash
 npm run fixtures:generate
