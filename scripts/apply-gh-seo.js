@@ -12,6 +12,7 @@ const IS_DOCS_ONLY = process.env.VITE_DOCS_ONLY === 'true';
 const SITE_ROOT = 'https://enesberksakalli.github.io/phylo-movies';
 const SOCIAL_IMAGE_REL_PATH = 'og/phylo-movies-preview.png';
 const SOCIAL_IMAGE_URL = `${SITE_ROOT}/${SOCIAL_IMAGE_REL_PATH}`;
+const HERO_IMAGE_URL = SOCIAL_IMAGE_URL;
 const REPOSITORY_URL = 'https://github.com/enesBerkSakalli/phylo-movies';
 const README_URL = `${REPOSITORY_URL}#readme`;
 const RELEASES_URL = `${REPOSITORY_URL}/releases`;
@@ -117,12 +118,28 @@ const DEMO_EXAMPLES = [
     keywords: ['bootstrap trees', 'rogue taxa', 'IQ-TREE', 'SPR moves'],
   },
   {
+    name: 'IQ-TREE Bootstrap Trees (24 taxa, weighted-RF ordered)',
+    workflow: 'Bootstrap tree series',
+    scale: '24 taxa, 200 weighted-RF ordered bootstrap trees',
+    description:
+      'Secondary weighted-RF ordered bootstrap payload where Ostrich remains the rank-1 recurrent mover with 38 SPR moves and total movie complexity drops to 166 SPR moves.',
+    keywords: ['bootstrap trees', 'weighted RF', 'rogue taxa', 'Ostrich', 'SPR moves'],
+  },
+  {
     name: 'IQ-TREE Bootstrap Trees (125 taxa)',
     workflow: 'Bootstrap tree series',
     scale: '125 taxa, 200 composition-ranked bootstrap trees',
     description:
       'Larger generated bootstrap tree-series payload for topology-change and rogue-taxon exploration.',
     keywords: ['bootstrap trees', 'rogue taxa', 'large phylogenetic trees'],
+  },
+  {
+    name: 'IQ-TREE Bootstrap Trees (125 taxa, weighted-RF ordered)',
+    workflow: 'Bootstrap tree series',
+    scale: '125 taxa, 200 weighted-RF ordered bootstrap trees',
+    description:
+      'Secondary weighted-RF ordered bootstrap payload where Seq112 remains the rank-1 recurrent mover with 70 SPR moves and total movie complexity drops to 661 SPR moves.',
+    keywords: ['bootstrap trees', 'weighted RF', 'rogue taxa', 'Seq112', 'SPR moves'],
   },
   {
     name: 'IQ-TREE Search Trajectory (500 taxa)',
@@ -347,16 +364,22 @@ function injectStaticDemoHtml(html) {
 
 function renderStaticLandingHtml() {
   return `      <main data-prerendered-landing="true" style="font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111827; background: #ffffff; min-height: 100vh;">
-        <section style="max-width: 960px; margin: 0 auto; padding: 48px 24px 32px; text-align: center;">
-          <img src="/phylo-movies/icons/phylo-tree-icon.svg" alt="" width="64" height="64" style="margin: 0 auto 16px; display: block;">
-          <h1 style="margin: 0 auto 16px; max-width: 780px; font-size: 36px; line-height: 1.12; font-weight: 760;">Phylo-Movies: Desktop App and Web Tool for Phylogenetic Tree Interpolation</h1>
-          <p style="margin: 0 auto; max-width: 780px; color: #4b5563; font-size: 18px; line-height: 1.65;">Phylo-Movies is available both as a desktop app and as a browser-based phylogenetic tree visualization and interpolation tool for sliding-window analyses, recombination detection, and rogue taxa exploration. This static page provides publication details, citation metadata, downloads, generated browser examples, and setup paths. Uploads and local example processing require the desktop app, Docker, or a source checkout.</p>
-          <nav aria-label="Primary links" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 24px;">
+        <section style="position: relative; min-height: min(720px, calc(100vh - 32px)); overflow: hidden; border-bottom: 1px solid #e5e7eb; background: #ffffff;">
+          <img src="${HERO_IMAGE_URL}" alt="" width="1914" height="930" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; opacity: 0.65;">
+          <div style="position: absolute; inset: 0; background: linear-gradient(90deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.90) 52%, rgba(255,255,255,0.30) 100%);"></div>
+          <div style="position: relative; max-width: 960px; min-height: min(720px, calc(100vh - 32px)); margin: 0 auto; padding: 64px 24px; display: flex; align-items: center;">
+            <div style="max-width: 720px;">
+              <img src="/phylo-movies/icons/phylo-tree-icon.svg" alt="" width="56" height="56" style="margin: 0 0 20px; display: block;">
+              <h1 style="margin: 0 0 18px; max-width: 720px; font-size: 48px; line-height: 1.08; font-weight: 760;">Phylo-Movies: Desktop App and Web Tool for Phylogenetic Tree Interpolation</h1>
+              <p style="margin: 0; max-width: 720px; color: #4b5563; font-size: 18px; line-height: 1.65;">Phylo-Movies is available both as a desktop app and as a browser-based phylogenetic tree visualization and interpolation tool for sliding-window analyses, recombination detection, and rogue taxa exploration. This static page provides publication details, citation metadata, downloads, generated browser examples, and setup paths. Uploads and local example processing require the desktop app, Docker, or a source checkout.</p>
+              <nav aria-label="Primary links" style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px;">
             <a href="${PUBLICATION_URL}" style="${primaryLinkStyle()}">Read Publication</a>
             <a href="${DEMO_URL}" style="${secondaryLinkStyle()}">Open Browser Demo</a>
             <a href="${RELEASES_URL}" style="${secondaryLinkStyle()}">Download Desktop App</a>
             <a href="${README_URL}" style="${secondaryLinkStyle()}">Full README</a>
-          </nav>
+              </nav>
+            </div>
+          </div>
         </section>
 
         <section style="${sectionStyle()}">
@@ -649,6 +672,7 @@ function writeDemoIndexHtml(indexHtml) {
 
 function copySocialPreviewImage() {
   const sourceImageCandidates = [
+    path.join(PROJECT_ROOT, 'src', 'public', SOCIAL_IMAGE_REL_PATH),
     path.join(PROJECT_ROOT, 'docs', 'screenshot.png'),
     path.join(PROJECT_ROOT, 'assets', 'screenshot.png'),
   ];
@@ -660,7 +684,7 @@ function copySocialPreviewImage() {
   }
   const outputDir = path.join(DIST_DIR, 'og');
   ensureDir(outputDir);
-  const outputImage = path.join(outputDir, 'phylo-movies-preview.png');
+  const outputImage = path.join(DIST_DIR, SOCIAL_IMAGE_REL_PATH);
   fs.copyFileSync(sourceImage, outputImage);
 }
 
