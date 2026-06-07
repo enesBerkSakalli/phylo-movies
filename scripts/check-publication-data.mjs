@@ -8,49 +8,6 @@ import yaml from 'js-yaml';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PUBLICATION_ROOT = path.join(ROOT, 'publication_data');
-const MSPRIME_PERFORMANCE_FIXTURES = [
-  {
-    dataset: 'msprime-performance-250',
-    fileName: 'msprime_250taxa_50trees_seed25050.nwk',
-    metadataName: 'msprime_250taxa_50trees_seed25050.metadata.tsv',
-    taxa: 250,
-    trees: 50,
-    seed: 25050,
-  },
-  {
-    dataset: 'msprime-performance-500',
-    fileName: 'msprime_500taxa_25trees_seed50025.nwk',
-    metadataName: 'msprime_500taxa_25trees_seed50025.metadata.tsv',
-    taxa: 500,
-    trees: 25,
-    seed: 50025,
-  },
-  {
-    dataset: 'msprime-performance-500-short',
-    fileName: 'msprime_500taxa_5trees_seed50005.nwk',
-    metadataName: 'msprime_500taxa_5trees_seed50005.metadata.tsv',
-    taxa: 500,
-    trees: 5,
-    seed: 50005,
-  },
-  {
-    dataset: 'msprime-performance-1000',
-    fileName: 'msprime_1000taxa_10trees_seed100010.nwk',
-    metadataName: 'msprime_1000taxa_10trees_seed100010.metadata.tsv',
-    taxa: 1000,
-    trees: 10,
-    seed: 100010,
-  },
-  {
-    dataset: 'msprime-performance-1000-short',
-    fileName: 'msprime_1000taxa_5trees_seed100005.nwk',
-    metadataName: 'msprime_1000taxa_5trees_seed100005.metadata.tsv',
-    taxa: 1000,
-    trees: 5,
-    seed: 100005,
-  },
-];
-
 export const TAXA_SCALE_TIERS = [
   {
     label: 'committed-small',
@@ -63,11 +20,6 @@ export const TAXA_SCALE_TIERS = [
     source: 'RogueNaRok/Aberer publication bootstrap result',
   },
   {
-    label: 'synthetic-performance-baseline',
-    taxa: 250,
-    source: 'msprime committed performance fixture',
-  },
-  {
     label: 'committed-msa',
     taxa: 334,
     source: 'Norovirus publication MSA',
@@ -76,16 +28,6 @@ export const TAXA_SCALE_TIERS = [
     label: 'committed-tree-search',
     taxa: 500,
     source: 'IQ-TREE topology-search trajectory example',
-  },
-  {
-    label: 'synthetic-performance-large',
-    taxa: 500,
-    source: 'msprime committed performance fixture',
-  },
-  {
-    label: 'synthetic-performance-stress',
-    taxa: 1000,
-    source: 'msprime committed performance fixture',
   },
 ];
 
@@ -104,15 +46,13 @@ export function auditPublicationData(root = ROOT) {
     manuscriptFacts.norovirus_publication_demo
   );
   const topologySearch = auditTopologySearch(publicationRoot, errors);
-  const msprimePerformance = auditMsprimePerformanceFixtures(publicationRoot, errors);
   const manuscriptFactsReport = auditManuscriptFacts(root, manuscriptFacts, errors);
   const maxPublicationTaxa = Math.max(
     ...bootstrap.currentResults.map((entry) => entry.taxa),
     topologySearch.currentResult.taxa,
     ...norovirus.alignments
       .filter((entry) => entry.format === 'fasta_msa')
-      .map((entry) => entry.sequences),
-    ...msprimePerformance.map((entry) => entry.taxa)
+      .map((entry) => entry.sequences)
   );
 
   return {
@@ -124,7 +64,6 @@ export function auditPublicationData(root = ROOT) {
     bootstrap,
     norovirus,
     topologySearch,
-    msprimePerformance,
   };
 }
 
@@ -775,88 +714,6 @@ function summarizeNorovirusMetadata(rows) {
 
 function factNumber(facts, key, fallback) {
   return Number(facts?.[key] ?? fallback);
-}
-
-function auditMsprimePerformanceFixtures(publicationRoot, errors) {
-  const fixtureRoot = path.join(publicationRoot, 'scale_fixtures', 'msprime_performance');
-  const manifestPath = path.join(fixtureRoot, 'MANIFEST.tsv');
-  requireFile(manifestPath, errors);
-  const manifest = fs.existsSync(manifestPath) ? readTsv(manifestPath) : [];
-  expectNumber(
-    manifest.length,
-    MSPRIME_PERFORMANCE_FIXTURES.length,
-    'msprime performance manifest row count',
-    errors
-  );
-
-  return MSPRIME_PERFORMANCE_FIXTURES.map((fixture) => {
-    const treePath = path.join(fixtureRoot, fixture.fileName);
-    const metadataPath = path.join(fixtureRoot, fixture.metadataName);
-    for (const filePath of [treePath, metadataPath]) {
-      requireFile(filePath, errors);
-    }
-
-    const manifestRow = manifest.find((entry) => entry.dataset === fixture.dataset);
-    if (!manifestRow) {
-      errors.push(`msprime performance manifest is missing ${fixture.dataset}`);
-    } else {
-      expectMetadataValue(manifestRow, 'tree_file', fixture.fileName, 'MANIFEST.tsv', errors);
-      expectMetadataValue(
-        manifestRow,
-        'metadata_file',
-        fixture.metadataName,
-        'MANIFEST.tsv',
-        errors
-      );
-      expectMetadataValue(manifestRow, 'taxa', String(fixture.taxa), 'MANIFEST.tsv', errors);
-      expectMetadataValue(manifestRow, 'trees', String(fixture.trees), 'MANIFEST.tsv', errors);
-      expectMetadataValue(manifestRow, 'seed', String(fixture.seed), 'MANIFEST.tsv', errors);
-      expectMetadataValue(
-        manifestRow,
-        'mode',
-        'independent_single_tree_replicates',
-        'MANIFEST.tsv',
-        errors
-      );
-      checkSha(treePath, manifestRow.tree_sha256, errors);
-      checkSha(metadataPath, manifestRow.metadata_sha256, errors);
-    }
-
-    const trees = fs.existsSync(treePath) ? readNonEmptyLines(treePath) : [];
-    expectNumber(trees.length, fixture.trees, `${fixture.fileName} tree count`, errors);
-    for (const [index, tree] of trees.entries()) {
-      expectNumber(
-        countNewickLeafLabels(tree),
-        fixture.taxa,
-        `${fixture.fileName} tree ${index + 1} taxa`,
-        errors
-      );
-    }
-
-    const metadata = fs.existsSync(metadataPath)
-      ? Object.fromEntries(readTsv(metadataPath).map((entry) => [entry.key, entry.value]))
-      : {};
-    expectMetadataValue(metadata, 'generator', 'msprime', fixture.metadataName, errors);
-    expectMetadataValue(
-      metadata,
-      'mode',
-      'independent_single_tree_replicates',
-      fixture.metadataName,
-      errors
-    );
-    expectMetadataValue(metadata, 'taxa', String(fixture.taxa), fixture.metadataName, errors);
-    expectMetadataValue(metadata, 'trees', String(fixture.trees), fixture.metadataName, errors);
-    expectMetadataValue(metadata, 'seed', String(fixture.seed), fixture.metadataName, errors);
-    expectMetadataValue(metadata, 'independent_trees', 'True', fixture.metadataName, errors);
-    expectMetadataValue(metadata, 'tree_file', fixture.fileName, fixture.metadataName, errors);
-
-    return {
-      filename: fixture.fileName,
-      taxa: fixture.taxa,
-      treeCount: trees.length,
-      seed: fixture.seed,
-    };
-  });
 }
 
 function readTsv(filePath) {

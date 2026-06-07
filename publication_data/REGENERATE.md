@@ -174,22 +174,6 @@ npm run fixtures:check
 The norovirus demo fixtures infer IQ-TREE window trees from the committed
 334-taxon MSA before writing the generated tree series and browser JSON.
 
-## Generate Local Large-Scale Fixtures
-
-Use the publication venv and msprime for larger local taxa-limit probes without
-committing generated stress data:
-
-```bash
-PATH="$PWD/.venv-publication/bin:$PATH" npm run fixtures:msprime-scale -- --taxa 500 --trees 25
-PATH="$PWD/.venv-publication/bin:$PATH" npm run fixtures:msprime-scale -- --taxa 1000 --trees 10
-```
-
-The generated files are written under:
-
-```text
-publication_data/scale_fixtures/generated/
-```
-
 ## Archive Boundary
 
 The public publication-data archive is defined in:

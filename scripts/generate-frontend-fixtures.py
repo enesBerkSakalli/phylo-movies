@@ -194,21 +194,6 @@ FIXTURES: tuple[FixtureSpec, ...] = (
         / "iqtree500_fast_search_trajectory.movie.json",
         filename="iqtree500_fast_search_trajectory.nwk",
     ),
-    FixtureSpec(
-        name="demo-msprime-1000-limit",
-        source=ROOT
-        / "publication_data"
-        / "scale_fixtures"
-        / "msprime_performance"
-        / "msprime_1000taxa_5trees_seed100005.nwk",
-        output=ROOT
-        / "publication_data"
-        / "precomputed"
-        / "msprime_1000taxa_2trees_seed100005.movie.json",
-        filename="msprime_1000taxa_2trees_seed100005.nwk",
-        tree_limit=2,
-        input_only=True,
-    ),
 )
 
 
@@ -554,19 +539,6 @@ def _build_dataset_provenance(fixture: FixtureSpec) -> dict | None:
                 "Aberer, A. J., Krompass, D., and Stamatakis, A. (2013). "
                 "Pruning rogue taxa improves phylogenetic accuracy."
             ),
-        }
-
-    if fixture.name == "demo-msprime-1000-limit":
-        return {
-            "source_type": "Generated browser demo",
-            "source_label": "publication_data/scale_fixtures/msprime_performance",
-            "tree_source": "First two trees from the deterministic 1000-taxon msprime fixture.",
-            "settings": [
-                {"label": "Simulator", "value": "msprime"},
-                {"label": "Mode", "value": "1000 taxa, two independent trees"},
-                {"label": "Rooting", "value": "Input rooting preserved"},
-            ],
-            "citation": "Synthetic msprime performance fixture generated locally for Phylo-Movies.",
         }
 
     return None

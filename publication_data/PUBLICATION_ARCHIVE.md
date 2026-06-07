@@ -42,7 +42,6 @@ git archive --format=tar.gz \
 | `recombination_norovirus/source_preparation/` | yes | Retained preprocessing inputs, metadata, and source-preparation scripts. |
 | `recombination_norovirus/scripts/recan_recombination_analysis/` | yes | ReCAN validation workflow scripts. |
 | `recombination_norovirus/current_results/` | yes | Promoted ReCAN validation outputs and manifest. |
-| `scale_fixtures/msprime_performance/` | yes | Deterministic synthetic tree-only fixtures for visualization scale checks. |
 | `quick_msa_demo/` | yes | Lightweight app/demo input used for smoke tests and examples. |
 | `figure_example/` | yes | Small figure/demo tree input. |
 

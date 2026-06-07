@@ -51,7 +51,7 @@ conda run -n phylomovies-publication python -m venv .venv-publication
 .venv-publication/bin/python -m pip install \
   nextstrain-augur==24.4.0 recan==0.5 nextstrain-cli==10.3.0 \
   jsonschema==3.2.0 snakemake==7.32.4 pulp==2.7.0 boto3==1.42.90 \
-  msprime==1.3.4 biopython==1.85 pandas==1.5.3 matplotlib==3.10.9
+  biopython==1.85 pandas==1.5.3 matplotlib==3.10.9
 conda install -n phylomovies-publication -c conda-forge -c bioconda \
   ncbi-datasets-cli csvtk tsv-utils nextclade mafft trimal
 npm install --prefix .venv-publication/auspice-node auspice@2.71.0

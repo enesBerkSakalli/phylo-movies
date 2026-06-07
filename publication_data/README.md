@@ -9,8 +9,7 @@ not be edited as source data.
 
 - `PUBLICATION_ARCHIVE.md` defines the public archive boundary and release
   verification checks.
-- `SCALE_LIMITS.md` records the committed taxa scale tiers and the local
-  msprime stress-fixture workflow.
+- `SCALE_LIMITS.md` records the committed app-facing taxa scale tiers.
 - `REGENERATE.md` is the top-level regeneration and verification entry point.
 - `publication_data.env` defines shared workflow constants consumed by shell
   entry points and Python scripts.
@@ -25,8 +24,6 @@ not be edited as source data.
   alignment files for the recombination example.
 - `recombination_norovirus/current_results/` contains the
   promoted ReCAN validation result set.
-- `scale_fixtures/msprime_performance/` contains deterministic synthetic
-  msprime tree-only fixtures for app visualization performance checks.
 - `topology_search_iqtree/` contains a complete IQ-TREE fast-search
   topology-search trajectory example and its source alignment.
 
@@ -36,7 +33,6 @@ not be edited as source data.
 | --- | --- |
 | `bootstrap_rogue_taxa/` | Source alignments, regeneration scripts, and promoted IQ-TREE bootstrap outputs for the Aberer/RogueNaRok-derived rogue-taxon example. |
 | `recombination_norovirus/` | Source alignments, source-preparation files, ReCAN scripts, and promoted ReCAN outputs for the norovirus recombination example. |
-| `scale_fixtures/msprime_performance/` | Deterministic synthetic msprime tree-only fixtures for visualization performance checks at 250, 500, and 1000 taxa, including short 5-tree variants at 500 and 1000 taxa. |
 | `topology_search_iqtree/` | Source alignment and promoted complete IQ-TREE 3 fast-search topology-search trajectory for the tree-search example. |
 | `quick_msa_demo/` | Synthetic lightweight MSA demo. |
 | `figure_example/` | Small figure/demo tree input. |

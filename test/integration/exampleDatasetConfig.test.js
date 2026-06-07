@@ -59,7 +59,7 @@ describe('example dataset configuration', () => {
     expect(fixtureGenerator).toContain('demo-bootstrap-125');
     expect(fixtureGenerator).toContain('demo-bootstrap-125-weighted-rf');
     expect(fixtureGenerator).toContain('demo-iqtree-search-500');
-    expect(fixtureGenerator).toContain('demo-msprime-1000-limit');
+    expect(fixtureGenerator).not.toContain('demo-msprime-1000-limit');
   });
 
   it('keeps the browser demo library limited to generated payloads', () => {
@@ -72,7 +72,6 @@ describe('example dataset configuration', () => {
       'bootstrap-125-weighted-rf',
       'iqtree-search-500',
       'quick-msa-demo',
-      'msprime-1000-two-tree-limit',
     ]);
     const generatedDemoExamples = DEMO_EXAMPLE_DATASETS.filter(
       (example) => example.precomputedPayloadPath
@@ -86,7 +85,6 @@ describe('example dataset configuration', () => {
       'bootstrap-125-weighted-rf',
       'iqtree-search-500',
       'quick-msa-demo',
-      'msprime-1000-two-tree-limit',
     ]);
 
     for (const example of generatedDemoExamples) {
@@ -94,11 +92,7 @@ describe('example dataset configuration', () => {
       expect(example.precomputedPayloadPath).toMatch(/\.movie\.json$/);
     }
 
-    const limitDemo = DEMO_EXAMPLE_DATASETS.find(
-      (example) => example.id === 'msprime-1000-two-tree-limit'
-    );
-    expect(limitDemo.scale).toBe('1000 taxa / 2 trees');
-    expect(limitDemo.badge).toBe('Limit');
+    expect(DEMO_EXAMPLE_DATASETS.some((example) => example.id.includes('msprime'))).toBe(false);
   });
 
   it('does not keep the legacy single-payload GitHub Pages demo loader', () => {
@@ -127,7 +121,7 @@ describe('example dataset configuration', () => {
     expect(seoSource).toContain('Norovirus Polymerase-Capsid Recombination');
     expect(seoSource).toContain('IQ-TREE Bootstrap Trees (125 taxa)');
     expect(seoSource).toContain('IQ-TREE Search Trajectory (500 taxa)');
-    expect(seoSource).toContain('msprime 1000-Taxa Limit Demo');
+    expect(seoSource).not.toContain('msprime 1000-Taxa Limit Demo');
     expect(seoSource).toContain('writeDemoIndexHtml(indexHtml)');
     expect(seoSource).not.toContain('writeDemoIndexHtml(updatedIndexHtml)');
   });
@@ -137,7 +131,6 @@ describe('example dataset configuration', () => {
       'all_trees_125_source-125_taxa125_sites29149.movie.json',
       'all_trees_24_source-24_taxa24_sites14190.movie.json',
       'iqtree500_fast_search_trajectory.movie.json',
-      'msprime_1000taxa_2trees_seed100005.movie.json',
       'norovirus_334_iqtree_fast_sh_alrt_window1000_step500.movie.json',
       'paper_example.movie.json',
       'quick_msa_demo_30taxa_10trees.movie.json',
@@ -587,49 +580,7 @@ describe('example dataset configuration', () => {
     }
   });
 
-  it('keeps msprime performance examples aligned with their committed fixtures', () => {
-    const msprimeExamples = EXAMPLE_DATASETS.filter((example) =>
-      example.id.startsWith('msprime-performance-')
-    );
-    const expectedById = new Map([
-      ['msprime-performance-250', { taxa: 250, trees: 50 }],
-      ['msprime-performance-500', { taxa: 500, trees: 25 }],
-      ['msprime-performance-500-short', { taxa: 500, trees: 5 }],
-      ['msprime-performance-1000', { taxa: 1000, trees: 10 }],
-      ['msprime-performance-1000-short', { taxa: 1000, trees: 5 }],
-    ]);
-
-    expect(msprimeExamples.map((example) => example.id)).toEqual([
-      'msprime-performance-250',
-      'msprime-performance-500',
-      'msprime-performance-1000',
-      'msprime-performance-500-short',
-      'msprime-performance-1000-short',
-    ]);
-
-    for (const example of msprimeExamples) {
-      const expected = expectedById.get(example.id);
-      const publicationRelativePath = example.filePath.replace(
-        /^.*examples\//,
-        'publication_data/'
-      );
-      const treeFile = path.join(process.cwd(), publicationRelativePath);
-      const treeLines = fs.readFileSync(treeFile, 'utf8').trim().split(/\r?\n/).filter(Boolean);
-      const firstTreeTaxa = new Set(
-        Array.from(treeLines[0].matchAll(/(?<=[(,])([^(),:;]+):/g), (match) => match[1])
-      );
-
-      expect(treeLines).toHaveLength(expected.trees);
-      expect(firstTreeTaxa.size).toBe(expected.taxa);
-      expect(example.description).toContain(`${expected.taxa} taxa`);
-      expect(example.description).toContain(`${expected.trees} independent trees`);
-      expect(example.scale).toBe(`${expected.taxa} taxa / ${expected.trees} trees`);
-      expect(example.filePath).toContain('scale_fixtures/msprime_performance');
-      expect(example.provenance.sourceType).toBe('Synthetic performance fixture');
-      expect(example.provenance.settings).toContainEqual({
-        label: 'Simulator',
-        value: 'msprime',
-      });
-    }
+  it('does not expose msprime performance fixtures as retained examples', () => {
+    expect(EXAMPLE_DATASETS.some((example) => example.id.includes('msprime'))).toBe(false);
   });
 });

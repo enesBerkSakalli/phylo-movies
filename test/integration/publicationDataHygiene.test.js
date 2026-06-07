@@ -35,39 +35,8 @@ describe('publication data hygiene', () => {
         missingFromFinal: 0,
       },
     ]);
-    expect(report.msprimePerformance).toEqual([
-      {
-        filename: 'msprime_250taxa_50trees_seed25050.nwk',
-        taxa: 250,
-        treeCount: 50,
-        seed: 25050,
-      },
-      {
-        filename: 'msprime_500taxa_25trees_seed50025.nwk',
-        taxa: 500,
-        treeCount: 25,
-        seed: 50025,
-      },
-      {
-        filename: 'msprime_500taxa_5trees_seed50005.nwk',
-        taxa: 500,
-        treeCount: 5,
-        seed: 50005,
-      },
-      {
-        filename: 'msprime_1000taxa_10trees_seed100010.nwk',
-        taxa: 1000,
-        treeCount: 10,
-        seed: 100010,
-      },
-      {
-        filename: 'msprime_1000taxa_5trees_seed100005.nwk',
-        taxa: 1000,
-        treeCount: 5,
-        seed: 100005,
-      },
-    ]);
-    expect(report.maxPublicationTaxa).toBe(1000);
+    expect(report).not.toHaveProperty('msprimePerformance');
+    expect(report.maxPublicationTaxa).toBe(500);
   }, 30_000);
 
   it('documents the committed and generated taxa scale boundaries', () => {
@@ -83,11 +52,6 @@ describe('publication data hygiene', () => {
         source: 'RogueNaRok/Aberer publication bootstrap result',
       },
       {
-        label: 'synthetic-performance-baseline',
-        taxa: 250,
-        source: 'msprime committed performance fixture',
-      },
-      {
         label: 'committed-msa',
         taxa: 334,
         source: 'Norovirus publication MSA',
@@ -97,27 +61,7 @@ describe('publication data hygiene', () => {
         taxa: 500,
         source: 'IQ-TREE topology-search trajectory example',
       },
-      {
-        label: 'synthetic-performance-large',
-        taxa: 500,
-        source: 'msprime committed performance fixture',
-      },
-      {
-        label: 'synthetic-performance-stress',
-        taxa: 1000,
-        source: 'msprime committed performance fixture',
-      },
     ]);
-  });
-
-  it('keeps the large-scale fixture generator tied to msprime', () => {
-    const generatorPath = path.join(process.cwd(), 'scripts', 'generate-msprime-scale-dataset.py');
-    const generator = fs.readFileSync(generatorPath, 'utf8');
-
-    expect(generator).toContain('import msprime');
-    expect(generator).toContain('--taxa');
-    expect(generator).toContain('--output-dir');
-    expect(generator).toContain('--independent-trees');
   });
 
   it('pins the norovirus upstream workflow and exact accession-version snapshot', () => {

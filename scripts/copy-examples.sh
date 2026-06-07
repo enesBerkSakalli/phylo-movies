@@ -76,10 +76,4 @@ cp "$SOURCE/topology_search_iqtree/source_alignments/aberer_roguenarok_dataset_5
 cp "$SOURCE/topology_search_iqtree/README.md" \
    "$DEST/examples/topology_search_iqtree/"
 
-# Deterministic msprime performance fixtures
-mkdir -p "$DEST/examples/scale_fixtures"
-rm -rf "$DEST/examples/scale_fixtures/msprime_performance"
-cp -R "$SOURCE/scale_fixtures/msprime_performance" \
-   "$DEST/examples/scale_fixtures/"
-
 echo "Done. Copied example datasets and generated precomputed demo payloads."
