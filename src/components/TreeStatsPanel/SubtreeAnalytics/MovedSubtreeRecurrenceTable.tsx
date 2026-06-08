@@ -27,6 +27,33 @@ const getSignature = (indices?: number[]): string => {
 const formatMedian = (value?: number | null): string =>
   typeof value === 'number' && Number.isFinite(value) ? value.toFixed(1) : '-';
 
+const formatParentBranchValueHeader = (recurrences: SprMovedSubtreeRecurrence[]): string => {
+  const labels = new Set(
+    recurrences
+      .map((item) => item.parentBranchValueLabel)
+      .filter((label): label is string => typeof label === 'string' && label.trim().length > 0)
+  );
+  if (labels.size === 1) return `Parent ${Array.from(labels)[0]}`;
+  return 'Parent Branch Value';
+};
+
+const formatCompactSubtreeLabel = (
+  splitIndices: number[],
+  leafNamesByIndex: string[],
+  maxNames = 3
+): string => {
+  if (!Array.isArray(splitIndices) || splitIndices.length === 0) return '-';
+  if (splitIndices.length <= maxNames) return formatSubtreeLabel(splitIndices, leafNamesByIndex);
+
+  const names = splitIndices
+    .slice(0, maxNames)
+    .map((idx) => leafNamesByIndex[idx])
+    .filter(Boolean);
+  const prefix =
+    names.length > 0 ? names.join(', ') : `Nodes ${splitIndices.slice(0, maxNames).join(', ')}`;
+  return `${prefix} +${splitIndices.length - maxNames} more`;
+};
+
 const sumSprMoveCounts = (recurrences: SprMovedSubtreeRecurrence[]): number =>
   recurrences.reduce((sum, item) => sum + (Number.isFinite(item.count) ? item.count : 0), 0);
 
@@ -39,6 +66,10 @@ export const MovedSubtreeRecurrenceTable = ({
   const goToPosition = useAppStore(selectGoToPosition);
   const currentSignature = getSignature(markedNodes);
   const totalSprMoveCount = React.useMemo(() => sumSprMoveCounts(recurrences), [recurrences]);
+  const parentBranchValueHeader = React.useMemo(
+    () => formatParentBranchValueHeader(recurrences),
+    [recurrences]
+  );
 
   const handleSubtreeClick = (splitIndices: number[]) => {
     const signature = getSignature(splitIndices);
@@ -99,7 +130,7 @@ export const MovedSubtreeRecurrenceTable = ({
             </Tooltip>
           </th>
           <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">
-            Parent Branch Support
+            {parentBranchValueHeader}
           </th>
         </tr>
       </thead>
@@ -107,6 +138,10 @@ export const MovedSubtreeRecurrenceTable = ({
         {recurrences.map((item, idx) => {
           const isActive = getSignature(item.splitIndices) === currentSignature;
           const subtreeLabel = formatSubtreeLabel(item.splitIndices, leafNamesByIndex);
+          const compactSubtreeLabel = formatCompactSubtreeLabel(
+            item.splitIndices,
+            leafNamesByIndex
+          );
           const jumpFrame = getRecurrenceJumpFrame(item);
           const jumpPairLabel = formatInputTreePair(
             item.representativeSourceInputTreeIndex,
@@ -137,8 +172,8 @@ export const MovedSubtreeRecurrenceTable = ({
               <td className="px-4 py-2 font-medium text-muted-foreground/60 tabular-nums text-right">
                 {idx + 1}
               </td>
-              <td className="px-4 py-2 font-semibold">
-                {subtreeLabel}
+              <td className="px-4 py-2 font-semibold" title={subtreeLabel}>
+                <div className="max-w-64 truncate">{compactSubtreeLabel}</div>
                 <div className="text-2xs font-normal text-muted-foreground/70 mt-1">
                   {item.splitIndices.length} taxa
                 </div>
@@ -219,7 +254,10 @@ export const MovedSubtreeRecurrenceTable = ({
                   {formatMedian(item.sourceParentBranchValueMedian)} →{' '}
                   {formatMedian(item.destinationParentBranchValueMedian)}
                 </div>
-                <div className="text-2xs text-muted-foreground/60">median source → target</div>
+                <div className="text-2xs text-muted-foreground/60">
+                  median source → target
+                  {item.parentBranchValueLabel ? ` (${item.parentBranchValueLabel})` : ''}
+                </div>
               </td>
             </tr>
           );

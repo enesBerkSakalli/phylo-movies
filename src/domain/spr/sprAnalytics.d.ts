@@ -49,6 +49,7 @@ export interface SprMovedSubtreeRecurrence {
   topologyVariantCount: number;
   sourceParentBranchValueMedian: number | null;
   destinationParentBranchValueMedian: number | null;
+  parentBranchValueLabel: string;
   lowParentBranchValueCount: number;
   missingParentBranchValueCount: number;
   representativeSourceInputTreeIndex: number | null;

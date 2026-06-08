@@ -137,4 +137,32 @@ describe('tree highlight state', () => {
       layerStyles.unsubscribe?.();
     }
   });
+
+  it('preserves taxon index 0 when manually marking moved subtrees', () => {
+    const previousState = useAppStore.getState();
+    const previousMarkedNodes = previousState.manuallyMarkedNodes;
+    const previousColorManager = previousState.colorManager;
+    const previousTreeControllers = previousState.treeControllers;
+    const colorManager = {
+      updateHighlightedSubtrees: vi.fn(),
+    };
+
+    try {
+      useAppStore.setState({ colorManager, treeControllers: [] });
+
+      useAppStore.getState().setManuallyMarkedNodes([0, 2]);
+
+      expect(useAppStore.getState().manuallyMarkedNodes).toEqual([0, 2]);
+      expect(colorManager.updateHighlightedSubtrees).toHaveBeenCalled();
+      expect(Array.from(colorManager.updateHighlightedSubtrees.mock.calls.at(-1)[0][0])).toEqual([
+        0, 2,
+      ]);
+    } finally {
+      useAppStore.setState({
+        manuallyMarkedNodes: previousMarkedNodes,
+        colorManager: previousColorManager,
+        treeControllers: previousTreeControllers,
+      });
+    }
+  });
 });

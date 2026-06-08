@@ -529,6 +529,35 @@ describe('SPR analytics model', () => {
     });
   });
 
+  it('carries the resolved parent branch value label into recurrence rows', () => {
+    const branchSupportIndex = {
+      getSupport: () => null,
+      getBranchValue: () => null,
+      getNearestParentBranchValue(inputTreeIndex, splitIndices) {
+        if (inputTreeIndex !== 0 || splitIndices.join(',') !== '1') return null;
+        return {
+          key: 'support.bootstrap.value',
+          label: 'Bootstrap',
+          value: 72.5,
+          displayValue: '72.5',
+          role: 'branch_support',
+        };
+      },
+    };
+
+    const recurrences = calculateSprMovedSubtreeRecurrences([pairs[0]], {
+      temporalEvents: [temporalEvents[3]],
+      pairMetrics: { rows: [pairMetrics.rows[0]], semantics: {} },
+      branchSupportIndex,
+    });
+
+    expect(recurrences[0]).toMatchObject({
+      signature: '1',
+      parentBranchValueLabel: 'Bootstrap',
+      sourceParentBranchValueMedian: 72.5,
+    });
+  });
+
   it('reports malformed SPR events without a pivot edge before resolving attachments', () => {
     const malformedEvents = [
       {

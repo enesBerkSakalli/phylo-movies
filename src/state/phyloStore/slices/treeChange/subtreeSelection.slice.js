@@ -65,7 +65,7 @@ export const createSubtreeSelectionSlice = (set, get) => ({
   },
 
   setManuallyMarkedNodes: (nodeIds = []) => {
-    const nodes = Array.isArray(nodeIds) ? nodeIds.filter(Boolean) : [];
+    const nodes = Array.isArray(nodeIds) ? nodeIds.filter(Number.isFinite) : [];
     set({ manuallyMarkedNodes: nodes });
     const { getSubtreeHighlightData, updateColorManagerHighlightedSubtrees } = get();
     const manual = toManualMarkedSets(nodes);
