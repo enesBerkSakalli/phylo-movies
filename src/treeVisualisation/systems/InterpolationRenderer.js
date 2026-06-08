@@ -217,7 +217,7 @@ export class InterpolationRenderer {
       return;
     }
 
-    if (transitionFrame.transitionProgress <= 0.001 || transitionFrame.isStatic) {
+    if (transitionFrame.isStatic) {
       return this.controller.renderAllElements({
         treeIndex: transitionFrame.sourceTreeIndex,
         skipAutoFit: true,
@@ -233,6 +233,16 @@ export class InterpolationRenderer {
       );
     if (isControllerDestroyed(this.controller)) return;
     const stage = detectAnimationStage(dataFrom, dataTo, transitionChangeModel);
+
+    if (transitionFrame.transitionProgress <= 0.001) {
+      return this.controller.renderAllElements({
+        treeIndex: transitionFrame.sourceTreeIndex,
+        skipAutoFit: true,
+        motionStage: stage,
+      });
+    }
+
+    useAppStore.getState().setAnimationStage?.(stage);
     const renderFrame = transitionFrame.withRenderState({
       renderProgress: applyRenderProgressEasing(transitionFrame.transitionProgress),
       stage,

@@ -169,6 +169,130 @@ describe('tree viewport behavior', () => {
     expect(controller._lastFocusedTreeIndex).toBe(1);
   });
 
+  it('clears stale animation stage before static rendering', async () => {
+    useAppStore.setState({
+      currentAnimationStage: 'COLLAPSE',
+      comparisonMode: true,
+      frameIndex: 0,
+      treeList: [{ id: 'tree-0' }, { id: 'tree-1' }],
+      timelineFrames: [
+        { frameIndex: 0, isObservedInput: true },
+        { frameIndex: 1, isObservedInput: true },
+      ],
+    });
+
+    const controller = {
+      _destroyed: false,
+      ready: true,
+      deckContext: { deck: {} },
+      layerManager: {
+        renderComparisonStatic: vi.fn(),
+      },
+    };
+
+    try {
+      await new StaticRenderer(controller).renderAllElements({
+        comparisonMode: true,
+        leftIndex: 0,
+        rightIndex: 1,
+      });
+
+      expect(useAppStore.getState().currentAnimationStage).toBe(null);
+      expect(controller.layerManager.renderComparisonStatic).toHaveBeenCalledWith(0, 1);
+    } finally {
+      useAppStore.getState().reset();
+    }
+  });
+
+  it('applies explicit motion stage while statically rendering a generated frame', async () => {
+    useAppStore.setState({
+      currentAnimationStage: null,
+      comparisonMode: true,
+      frameIndex: 0,
+      treeList: [{ id: 'tree-0' }, { id: 'tree-1' }],
+      timelineFrames: [
+        { frameIndex: 0, isObservedInput: true },
+        { frameIndex: 1, isObservedInput: true },
+      ],
+    });
+
+    const controller = {
+      _destroyed: false,
+      ready: true,
+      deckContext: { deck: {} },
+      layerManager: {
+        renderComparisonStatic: vi.fn(),
+      },
+    };
+
+    try {
+      await new StaticRenderer(controller).renderAllElements({
+        comparisonMode: true,
+        leftIndex: 0,
+        rightIndex: 1,
+        motionStage: 'REORDER',
+      });
+
+      expect(useAppStore.getState().currentAnimationStage).toBe('REORDER');
+      expect(controller.layerManager.renderComparisonStatic).toHaveBeenCalledWith(0, 1);
+    } finally {
+      useAppStore.getState().reset();
+    }
+  });
+
+  it('infers motion stage from the selected generated-frame cursor during static rendering', async () => {
+    const sourceTree = { id: 'tree-0' };
+    const targetTree = { id: 'tree-1' };
+    useAppStore.setState({
+      currentAnimationStage: null,
+      comparisonMode: true,
+      frameIndex: 1,
+      treeList: [sourceTree, targetTree],
+      timelineFrames: [
+        { frameIndex: 0, isObservedInput: true },
+        { frameIndex: 1, isObservedInput: false },
+      ],
+      timelineCursor: {
+        frameIndex: 1,
+        occurrenceRole: 'motion_target',
+        motionSourceFrameIndex: 0,
+        motionTargetFrameIndex: 1,
+      },
+    });
+
+    const controller = {
+      _destroyed: false,
+      ready: true,
+      deckContext: { deck: {} },
+      _getOrCacheInterpolationData: vi.fn(() => ({
+        dataFrom: { nodes: [{ id: 'node-a' }] },
+        dataTo: { nodes: [{ id: 'node-a' }] },
+        transitionChangeModel: null,
+      })),
+      layerManager: {
+        renderComparisonStatic: vi.fn(),
+      },
+    };
+
+    try {
+      await new StaticRenderer(controller).renderAllElements({
+        comparisonMode: true,
+        leftIndex: 1,
+        rightIndex: 1,
+      });
+
+      expect(useAppStore.getState().currentAnimationStage).toBe('REORDER');
+      expect(controller._getOrCacheInterpolationData).toHaveBeenCalledWith(
+        sourceTree,
+        targetTree,
+        0,
+        1
+      );
+    } finally {
+      useAppStore.getState().reset();
+    }
+  });
+
   it('manual fit includes labels by default', () => {
     const controller = Object.create(ControllerClass.prototype);
     const node = { id: 'node-1', position: [0, 0, 0] };

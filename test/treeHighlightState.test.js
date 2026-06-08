@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { useAppStore } from '../src/state/phyloStore/store.js';
 import {
   getLinkOutlineColor,
@@ -71,6 +71,52 @@ describe('tree highlight state', () => {
     };
 
     expect(getLinkOutlineColor(link, cached)[3]).toBeGreaterThanOrEqual(190);
+  });
+
+  it('stops the pivot pulse when only subtree highlights remain', () => {
+    const previousState = useAppStore.getState();
+    const previousColorManager = previousState.colorManager;
+    const previousPulseEnabled = previousState.changePulseEnabled;
+    const previousPulsePhase = previousState.changePulsePhase;
+
+    let hasPivotEdge = true;
+    const colorManager = {
+      highlightedSubtreeSets: [new Set([1])],
+      hasPivotEdges: () => hasPivotEdge,
+      updatePivotEdge: (edge) => {
+        const size = edge instanceof Set ? edge.size : Array.isArray(edge) ? edge.length : 0;
+        hasPivotEdge = size > 0;
+      },
+    };
+
+    const requestAnimationFrame = vi.fn(() => 42);
+    const cancelAnimationFrame = vi.fn();
+    vi.stubGlobal('requestAnimationFrame', requestAnimationFrame);
+    vi.stubGlobal('cancelAnimationFrame', cancelAnimationFrame);
+
+    try {
+      previousState.stopPulseAnimation?.();
+      useAppStore.setState({
+        colorManager,
+        changePulseEnabled: true,
+        changePulsePhase: 0,
+      });
+
+      useAppStore.getState().startPulseAnimation();
+      expect(requestAnimationFrame).toHaveBeenCalledOnce();
+
+      useAppStore.getState().updateColorManagerPivotEdge([]);
+
+      expect(cancelAnimationFrame).toHaveBeenCalledWith(42);
+    } finally {
+      useAppStore.getState().stopPulseAnimation?.();
+      useAppStore.setState({
+        colorManager: previousColorManager,
+        changePulseEnabled: previousPulseEnabled,
+        changePulsePhase: previousPulsePhase,
+      });
+      vi.unstubAllGlobals();
+    }
   });
 
   it('aligns layer-style fallbacks with the store subtree highlight defaults', () => {

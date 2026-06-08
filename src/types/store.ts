@@ -19,6 +19,11 @@ export type TimelineOccurrenceSelector =
   | 'input_tree_hold'
   | number
   | null;
+export type TimelineCursorTimeAnchor = 'start' | 'end' | 'semantic';
+export interface TimelineCursorFrameOptions {
+  occurrence?: TimelineOccurrenceSelector;
+  timeAnchor?: TimelineCursorTimeAnchor;
+}
 
 export interface FloatingWindowRect {
   x: number;
@@ -47,7 +52,7 @@ export interface MovieTimelineManagerRuntime {
   getCursorAtTimelineProgress?: (timelineProgress: number) => TimelineCursorState | null;
   getCursorForFrame?: (
     frameIndex: number,
-    options?: { occurrence?: TimelineOccurrenceSelector }
+    options?: TimelineCursorFrameOptions
   ) => TimelineCursorState | null;
   getSegment?: (segmentIndex: number) => unknown;
   getSegmentCount?: () => number;
@@ -55,7 +60,7 @@ export interface MovieTimelineManagerRuntime {
   getTransitionFrameForTimelineProgress?: (timelineProgress: number) => unknown;
   resolveFrameAtIndex?: (
     frameIndex: number,
-    options?: { occurrence?: TimelineOccurrenceSelector }
+    options?: TimelineCursorFrameOptions
   ) => unknown | null;
   resolveFrameAtTimelineProgress?: (timelineProgress: number) => unknown | null;
   hasTransitionSegments?: () => boolean;
@@ -125,6 +130,8 @@ export interface TimelineCursorState {
   occurrenceInFrameIndex: number | null;
   occurrenceRole: string | null;
   holdKind: string | null;
+  motionSourceFrameIndex?: number | null;
+  motionTargetFrameIndex?: number | null;
 }
 
 export interface TimelineStateUpdate {

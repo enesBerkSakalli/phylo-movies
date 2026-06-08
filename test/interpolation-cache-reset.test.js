@@ -6,6 +6,7 @@ const {
 const {
   InterpolationRenderer,
 } = require('../src/treeVisualisation/systems/InterpolationRenderer.js');
+const { TransitionFrame } = require('../src/timeline/time/TransitionFrame.js');
 const { useAppStore } = require('../src/state/phyloStore/store.js');
 
 describe('Interpolation cache reset', () => {
@@ -140,6 +141,46 @@ describe('InterpolationRenderer timeline progress', () => {
 
     expect(renderProgress.called).to.equal(false);
     expect(controller.renderAllElements.called).to.equal(false);
+  });
+
+  it('passes the transition stage through static renders at generated-frame boundaries', async () => {
+    const sourceTree = { id: 'source-tree' };
+    const targetTree = { id: 'target-tree' };
+
+    useAppStore.setState({
+      movieTimelineManager: {
+        destroy: () => {},
+        resolveFrameAtTimelineProgress: () =>
+          TransitionFrame.from({
+            sourceTree,
+            targetTree,
+            sourceTreeIndex: 1,
+            targetTreeIndex: 2,
+            transitionProgress: 0,
+          }),
+      },
+    });
+
+    const controller = {
+      ready: true,
+      readyPromise: Promise.resolve(),
+      renderAllElements: sinon.spy(),
+      _getOrCacheInterpolationData: sinon.stub().returns({
+        dataFrom: { nodes: [{ id: 'node-a' }] },
+        dataTo: { nodes: [{ id: 'node-a' }] },
+        transitionChangeModel: null,
+      }),
+    };
+    const renderer = new InterpolationRenderer(controller);
+
+    await renderer.renderTimelineProgress(0.5);
+
+    expect(controller.renderAllElements.calledOnce).to.equal(true);
+    expect(controller.renderAllElements.firstCall.args[0]).to.deep.include({
+      treeIndex: 1,
+      skipAutoFit: true,
+      motionStage: 'REORDER',
+    });
   });
 
   it('does not paint a frame cancelled while waiting for controller readiness', async () => {

@@ -12,6 +12,23 @@ import {
 
 let pulseController = null;
 
+function getEdgeCount(edge) {
+  if (edge instanceof Set) return edge.size;
+  if (Array.isArray(edge)) return edge.length;
+  return 0;
+}
+
+function syncPivotPulseAnimation(get, hasPivotEdge) {
+  const { changePulseEnabled, startPulseAnimation, stopPulseAnimation } = get();
+  if (!changePulseEnabled) return;
+
+  if (hasPivotEdge) {
+    startPulseAnimation();
+  } else {
+    stopPulseAnimation();
+  }
+}
+
 export const createTreeRuntimeSyncSlice = (set, get) => ({
   // ==========================================================================
   // STATE
@@ -76,15 +93,7 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
     colorManager.updatePivotEdge(normalized);
     set((s) => ({ colorVersion: s.colorVersion + 1 }));
 
-    const { changePulseEnabled, startPulseAnimation, stopPulseAnimation } = get();
-    if (changePulseEnabled) {
-      const hasChanges = normalized.length > 0 || colorManager.highlightedSubtreeSets?.length > 0;
-      if (hasChanges) {
-        startPulseAnimation();
-      } else {
-        stopPulseAnimation();
-      }
-    }
+    syncPivotPulseAnimation(get, getEdgeCount(normalized) > 0);
   },
 
   updateColorManagerHighlightedSubtrees: (subtrees) => {
@@ -157,16 +166,8 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
       set((s) => ({ colorVersion: s.colorVersion + 1 }));
     }
 
-    const { changePulseEnabled, startPulseAnimation, stopPulseAnimation } = get();
-    if (changePulseEnabled && colorManager) {
-      const pivotEdgeCount =
-        normalizedPivotEdge instanceof Set ? normalizedPivotEdge.size : normalizedPivotEdge.length;
-      const hasChanges = pivotEdgeCount > 0 || colorManager.highlightedSubtreeSets?.length > 0;
-      if (hasChanges) {
-        startPulseAnimation();
-      } else {
-        stopPulseAnimation();
-      }
+    if (colorManager) {
+      syncPivotPulseAnimation(get, getEdgeCount(normalizedPivotEdge) > 0);
     }
 
     renderTreeControllers(get());
@@ -185,9 +186,8 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
     const { changePulseEnabled, colorManager } = get();
     if (!changePulseEnabled) return;
 
-    const hasChanges =
-      colorManager?.hasPivotEdges?.() || colorManager?.highlightedSubtreeSets?.length > 0;
-    if (!hasChanges || pulseController?.isRunning) return;
+    const hasPivotEdge = colorManager?.hasPivotEdges?.() === true;
+    if (!hasPivotEdge || pulseController?.isRunning) return;
 
     if (!pulseController) {
       pulseController = new PulseAnimationController({
@@ -195,10 +195,7 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
         shouldContinue: () => {
           const s = get();
           const cm = s.colorManager;
-          return (
-            s.changePulseEnabled &&
-            (cm?.hasPivotEdges?.() || cm?.highlightedSubtreeSets?.length > 0)
-          );
+          return s.changePulseEnabled && cm?.hasPivotEdges?.() === true;
         },
       });
     }
