@@ -269,9 +269,16 @@ function partitionTreeLayerData(data, cached = {}) {
 
 function classifyNodeLike(datum, cached) {
   const cm = cached?.colorManager;
+  if (isExpandingLifecycleNode(datum)) return 'marked';
   if (cm?.isNodeInHighlightedSubtreeFast?.(datum)) return 'marked';
   if (cm?.isNodeHistorySubtree?.(datum)) return 'history';
   return 'base';
+}
+
+function isExpandingLifecycleNode(datum) {
+  return (
+    datum?.isEntering === true || datum?.lifecycle === 'entering' || datum?.lifecycle === 'reviving'
+  );
 }
 
 function classifyLink(link, cached) {

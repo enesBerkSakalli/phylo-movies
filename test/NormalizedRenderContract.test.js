@@ -10,6 +10,10 @@ import {
 } from '../src/treeVisualisation/systems/tree_color/monophyleticColoring.js';
 import { getConnectorsLayerProps } from '../src/treeVisualisation/deckgl/layers/factory/connectors/ConnectorLayers.js';
 import { getExtensionsLayerProps } from '../src/treeVisualisation/deckgl/layers/factory/extensions/ExtensionLayers.js';
+import {
+  getLinkOutlinesLayerProps,
+  getLinksLayerProps,
+} from '../src/treeVisualisation/deckgl/layers/factory/links/LinkLayers.js';
 import { NodeDataBuilder } from '../src/treeVisualisation/deckgl/builders/data/nodes/NodeDataBuilder.js';
 import { LinkDataBuilder } from '../src/treeVisualisation/deckgl/builders/data/links/LinkDataBuilder.js';
 import { LabelDataBuilder } from '../src/treeVisualisation/deckgl/builders/data/labels/LabelDataBuilder.js';
@@ -103,6 +107,35 @@ describe('normalized render contract', () => {
     expect(LAYER_CONFIGS.connectors.defaultProps._pathType).toBe('open');
   });
 
+  it('returns empty paths for malformed path layer data', () => {
+    const malformedPath = new Float32Array([0, 0, 0, Number.NaN, 1, 0]);
+    const pathDatum = { path: malformedPath };
+    const layerStyles = {
+      getCachedState: () => ({}),
+      getLinkOutlineColor: () => [0, 0, 0, 0],
+      getLinkOutlineWidth: () => 1,
+      getLinkOutlineDashArray: () => null,
+      getLinkColor: () => [0, 0, 0, 255],
+      getLinkWidth: () => 1,
+      getLinkDashArray: () => null,
+      getExtensionColor: () => [0, 0, 0, 255],
+      getExtensionWidth: () => 1,
+    };
+
+    expect(getLinkOutlinesLayerProps([pathDatum], {}, layerStyles).getPath(pathDatum)).toEqual(
+      new Float32Array(0)
+    );
+    expect(getLinksLayerProps([pathDatum], {}, layerStyles).getPath(pathDatum)).toEqual(
+      new Float32Array(0)
+    );
+    expect(getExtensionsLayerProps([pathDatum], {}, layerStyles).getPath(pathDatum)).toEqual(
+      new Float32Array(0)
+    );
+    expect(getConnectorsLayerProps([pathDatum], {}).getPath(pathDatum)).toEqual(
+      new Float32Array(0)
+    );
+  });
+
   it('uses deck.gl screen-space floors for small rendered tree elements', () => {
     expect(LAYER_CONFIGS.links.defaultProps).toMatchObject({
       widthUnits: 'common',
@@ -142,6 +175,13 @@ describe('normalized render contract', () => {
 
     expect(props.getColor(activeConnector)).toEqual([255, 0, 0, 255]);
     expect(props.getColor(passiveConnector)).toEqual([0, 0, 255, 64]);
+  });
+
+  it('tracks connector path data identity for PathLayer updates', () => {
+    const connectors = [{ path: new Float32Array([0, 0, 0, 1, 1, 0]) }];
+    const props = getConnectorsLayerProps(connectors, {});
+
+    expect(props.updateTriggers.getPath).toEqual([connectors]);
   });
 
   it('prepares render ids explicitly on layout nodes', () => {
@@ -459,6 +499,47 @@ describe('normalized render contract', () => {
       dotSize: expect.any(Number),
     });
     expect(links[0].targetId).toBe('node-upstream-leaf');
+  });
+
+  it('preserves node lifecycle render flags through layer data conversion', () => {
+    const root = hierarchy({
+      name: 'root',
+      length: 0,
+      split_indices: [0, 1],
+      children: [{ name: 'Taxon_A', split_indices: [0], children: [] }],
+    });
+    root.each((node) => {
+      node.x = node.depth;
+      node.y = node.depth + 1;
+      node.radius = node.depth;
+      node.angle = node.depth;
+    });
+    assignLayoutNodeIds(root);
+
+    const layout = createLayoutResult(root, {
+      max_radius: 1,
+      width: 100,
+      height: 100,
+      margin: 0,
+      scale: 1,
+    });
+    const leafNode = layout.nodes.find((node) => node.name === 'Taxon_A');
+    leafNode.opacity = 0.5;
+    leafNode.isEntering = true;
+    leafNode.lifecycle = 'entering';
+    leafNode.transitionPhase = 0.75;
+
+    const nodes = new NodeDataBuilder().convertNodes(layout.nodes, {
+      canvasWidth: layout.width,
+      canvasHeight: layout.height,
+    });
+
+    expect(nodes.find((node) => node.name === 'Taxon_A')).toMatchObject({
+      opacity: 0.5,
+      isEntering: true,
+      lifecycle: 'entering',
+      transitionPhase: 0.75,
+    });
   });
 
   it('keeps data builders on normalized layout arrays', () => {

@@ -57,11 +57,9 @@ export function buildTransitionChangeModel(dataFrom, dataTo, options = {}) {
 export function createLifecycleClocks(timeFactor) {
   const t = clamp01(timeFactor);
   return {
-    focusT: phase(t, 0.0, 0.15),
     collapseT: phase(t, 0.15, 0.4),
     moveT: phase(t, 0.3, 0.75),
     expandT: phase(t, 0.55, 0.9),
-    settleT: phase(t, 0.85, 1.0),
   };
 }
 
@@ -90,7 +88,6 @@ export function summarizeTransitionLifecycles(transitionChangeModel) {
     hasCollapseChanges,
     hasExpandChanges,
     hasStructuralChanges: hasCollapseChanges || hasExpandChanges,
-    hasLengthChanges: counts[LINK_LIFECYCLES.LENGTH_CHANGING] > 0,
   };
 }
 
@@ -116,11 +113,7 @@ export function getVisibleBranchLength(link) {
 
 function iterateLinkChanges(transitionChangeModel) {
   const changes = transitionChangeModel?.linkChanges;
-  if (!changes) return [];
-  if (changes instanceof Map) return changes.values();
-  if (Array.isArray(changes)) return changes;
-  if (typeof changes.values === 'function') return changes.values();
-  return [];
+  return changes instanceof Map ? changes.values() : [];
 }
 
 function createLinkMap(links) {

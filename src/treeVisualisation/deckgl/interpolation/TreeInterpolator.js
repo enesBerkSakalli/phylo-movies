@@ -11,6 +11,7 @@ import {
   getGlobalAngularMaxAngle,
 } from './VelocityNormalizer.js';
 import { ANIMATION_STAGES } from './stages/animationStageDetector.js';
+import { LINK_LIFECYCLES } from './TransitionChangeModel.js';
 import { measureFrameStep } from '../../performance/frameInstrumentation.js';
 import { Z_NODE } from '../constants/zOffsets.js';
 
@@ -108,6 +109,14 @@ export class TreeInterpolator {
       });
     }
 
+    const maxRadius = this.outerRadiusInterpolator.interpolateMaxRadius(dataFrom, dataTo, t);
+    const { labelRadius, extensionRadius } = this.outerRadiusInterpolator.interpolateRadii(
+      dataFrom,
+      dataTo,
+      t,
+      maxRadius
+    );
+
     // Interpolate each element type
     const interpolatedNodes = measureFrameStep('treeInterpolator.nodes', () =>
       this._interpolateNodes(dataFrom.nodes, dataTo.nodes, t, {
@@ -136,6 +145,7 @@ export class TreeInterpolator {
         fromMap: labelFromMap,
         toMap: labelToMap,
         velocityMap: velocityMaps?.labels ?? null,
+        labelRadius: Number.isFinite(labelRadius) ? labelRadius : null,
         ...structuralOpacity,
       })
     );
@@ -144,34 +154,25 @@ export class TreeInterpolator {
         fromMap: extFromMap,
         toMap: extToMap,
         velocityMap: velocityMaps?.extensions ?? null,
+        extensionRadius: Number.isFinite(extensionRadius) ? extensionRadius : null,
         ...structuralOpacity,
       })
     );
-    const maxRadius = this.outerRadiusInterpolator.interpolateMaxRadius(dataFrom, dataTo, t);
-    const { labelRadius, extensionRadius } = this.outerRadiusInterpolator.interpolateRadii(
-      dataFrom,
-      dataTo,
-      t,
-      maxRadius
-    );
 
+    const lifecycleAnnotatedNodes = annotateEnteringLinkTargetNodes(
+      interpolatedNodes,
+      interpolatedLinks
+    );
     const endpointAlignedNodes = measureFrameStep('treeInterpolator.endpointAlign', () =>
-      alignNodesToRenderedLinkTargets(interpolatedNodes, interpolatedLinks)
+      alignNodesToRenderedLinkTargets(lifecycleAnnotatedNodes, interpolatedLinks)
     );
 
     return {
       max_radius: maxRadius,
       nodes: endpointAlignedNodes,
       links: interpolatedLinks,
-      labels: Number.isFinite(labelRadius)
-        ? this.outerRadiusInterpolator.applyLabelRadius(interpolatedLabels, labelRadius)
-        : interpolatedLabels,
-      extensions: Number.isFinite(extensionRadius)
-        ? this.outerRadiusInterpolator.applyExtensionTargetRadius(
-            interpolatedExtensions,
-            extensionRadius
-          )
-        : interpolatedExtensions,
+      labels: interpolatedLabels,
+      extensions: interpolatedExtensions,
     };
   }
 
@@ -268,7 +269,7 @@ export class TreeInterpolator {
       fromNodes,
       toNodes,
       timeFactor,
-      (from, to, t, fromNode, toNode, velocityEntry) =>
+      (fromNode, toNode, t, velocityEntry) =>
         this.nodeInterpolator.interpolateNode(fromNode, toNode, t, velocityEntry),
       options
     );
@@ -283,8 +284,11 @@ export class TreeInterpolator {
       fromLabels,
       toLabels,
       timeFactor,
-      (from, to, t, fromLabel, toLabel, velocityEntry) =>
-        this.labelInterpolator.interpolateLabel(fromLabel, toLabel, t, velocityEntry),
+      (fromLabel, toLabel, t, velocityEntry) =>
+        this.labelInterpolator.interpolateLabel(fromLabel, toLabel, t, {
+          velocityEntry,
+          radiusOverride: options?.labelRadius,
+        }),
       options
     );
   }
@@ -298,8 +302,11 @@ export class TreeInterpolator {
       fromExtensions,
       toExtensions,
       timeFactor,
-      (from, to, t, fromExt, toExt, velocityEntry) =>
-        this.extensionInterpolator.interpolateExtension(fromExt, toExt, t, velocityEntry),
+      (fromExt, toExt, t, velocityEntry) =>
+        this.extensionInterpolator.interpolateExtension(fromExt, toExt, t, {
+          velocityEntry,
+          targetRadiusOverride: options?.extensionRadius,
+        }),
       options
     );
   }
@@ -308,9 +315,7 @@ export class TreeInterpolator {
    * Clear all interpolator caches (call when switching tree pairs)
    */
   resetCaches() {
-    this.pathInterpolator?.resetCaches?.();
     this.pathInterpolator?.resetPathBufferPool?.();
-    this.nodeInterpolator?.resetCache?.();
     this.labelInterpolator?.resetCache?.();
     this.extensionInterpolator?.resetCache?.();
     this._elementMapCache = new WeakMap();
@@ -353,6 +358,47 @@ function structuralOpacityOptions(options) {
   }
 
   return result;
+}
+
+function annotateEnteringLinkTargetNodes(nodes, links) {
+  if (!Array.isArray(nodes) || nodes.length === 0 || !Array.isArray(links) || links.length === 0) {
+    return nodes;
+  }
+
+  let enteringLinkByTargetId = null;
+  for (const link of links) {
+    if (!link?.targetId || !isExpandingLifecycleLink(link)) continue;
+    enteringLinkByTargetId ??= new Map();
+    enteringLinkByTargetId.set(link.targetId, link);
+  }
+
+  if (!enteringLinkByTargetId) return nodes;
+
+  let changed = false;
+  const annotated = nodes.map((node) => {
+    const enteringLink = enteringLinkByTargetId.get(node?.id);
+    if (!enteringLink) return node;
+
+    changed = true;
+    return {
+      ...node,
+      isEntering: true,
+      lifecycle: enteringLink.lifecycle || node.lifecycle || LINK_LIFECYCLES.ENTERING,
+      transitionPhase: Number.isFinite(enteringLink.transitionPhase)
+        ? enteringLink.transitionPhase
+        : node.transitionPhase,
+    };
+  });
+
+  return changed ? annotated : nodes;
+}
+
+function isExpandingLifecycleLink(link) {
+  return (
+    link?.isEntering === true ||
+    link?.lifecycle === LINK_LIFECYCLES.ENTERING ||
+    link?.lifecycle === LINK_LIFECYCLES.REVIVING
+  );
 }
 
 function alignNodesToRenderedLinkTargets(nodes, links) {

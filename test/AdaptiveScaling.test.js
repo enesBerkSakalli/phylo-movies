@@ -231,6 +231,47 @@ describe('Adaptive Visual Scaling', () => {
       expect(radius).toBeCloseTo(3.75);
     });
 
+    it('should highlight entering nodes without shrinking them', () => {
+      const cached = {
+        colorManager: mockColorManager,
+        metricScale: 1,
+      };
+      const node = {
+        isEntering: true,
+        isLeaf: true,
+        radius: 5,
+        opacity: 1,
+        split_indices: [3],
+      };
+
+      const radius = getNodeRadius(node, 3, cached, helpers);
+      const fillColor = [...getNodeColor(node, cached, helpers)];
+      const borderColor = [...getNodeBorderColor(node, cached, helpers)];
+
+      expect(radius).toBeCloseTo(6.75);
+      expect(fillColor).toEqual([34, 197, 94, 255]);
+      expect(borderColor).toEqual([24, 138, 66, 255]);
+    });
+
+    it('should let entering node highlight override explicit black node color', () => {
+      const cached = {
+        colorManager: mockColorManager,
+        metricScale: 1,
+      };
+      const node = {
+        color: [0, 0, 0],
+        isEntering: true,
+        isLeaf: true,
+        radius: 5,
+        opacity: 1,
+        split_indices: [3],
+      };
+
+      const fillColor = [...getNodeColor(node, cached, helpers)];
+
+      expect(fillColor).toEqual([34, 197, 94, 255]);
+    });
+
     it('should apply adaptive visual scale before metric scale', () => {
       const cached = {
         colorManager: mockColorManager,

@@ -60,7 +60,14 @@ export function buildBundledBezierPath(
   samples = 24,
   options = {}
 ) {
-  if (!from || !to) return new Float32Array(0);
+  if (
+    !hasFinitePoint(from) ||
+    !hasFinitePoint(to) ||
+    !hasFinitePoint(srcBundlePoint) ||
+    !hasFinitePoint(dstBundlePoint)
+  ) {
+    return new Float32Array(0);
+  }
 
   // Bundling strength - allow override for active edges
   // Default to 0.65 for looser bundles (readability), use lower for active edges
@@ -75,6 +82,9 @@ export function buildBundledBezierPath(
   if (options.sourceCenter && options.targetCenter) {
     const sc = options.sourceCenter;
     const tc = options.targetCenter;
+    if (!hasFinitePoint(sc) || !hasFinitePoint(tc)) {
+      return new Float32Array(0);
+    }
 
     // Radial vector from source center to start point
     let dx1 = p0[0] - sc[0];
@@ -122,4 +132,10 @@ export function buildBundledBezierPath(
   const curve = new Bezier(p0[0], p0[1], p1[0], p1[1], p2[0], p2[1], p3[0], p3[1]);
   const lut = curve.getLUT(samples);
   return pointsToFloat32Path(lut);
+}
+
+function hasFinitePoint(point) {
+  return (
+    Number.isFinite(point?.[0]) && Number.isFinite(point?.[1]) && Number.isFinite(point?.[2] ?? 0)
+  );
 }

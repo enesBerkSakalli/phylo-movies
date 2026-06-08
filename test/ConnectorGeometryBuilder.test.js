@@ -66,6 +66,15 @@ describe('ConnectorGeometryBuilder', () => {
       expect(buildBundledBezierPath([0, 0], null, [0, 0], [0, 0])).toEqual(new Float32Array(0));
     });
 
+    it('returns an empty Float32Array when Bezier endpoints are not finite', () => {
+      expect(buildBundledBezierPath([Number.NaN, 0], [100, 0], [10, 10], [90, 10])).toEqual(
+        new Float32Array(0)
+      );
+      expect(
+        buildBundledBezierPath([0, 0], [100, 0], [Number.POSITIVE_INFINITY, 10], [90, 10])
+      ).toEqual(new Float32Array(0));
+    });
+
     it('should generate a path with the specified number of samples', () => {
       const from = [0, 0];
       const to = [100, 0];

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { TreeInterpolator } from '../src/treeVisualisation/deckgl/interpolation/TreeInterpolator.js';
+import { buildTransitionChangeModel } from '../src/treeVisualisation/deckgl/interpolation/TransitionChangeModel.js';
 
 describe('TreeInterpolator label radius smoothing', () => {
   it('uses the interpolation time for generic entering and exiting opacity', () => {
@@ -25,6 +26,58 @@ describe('TreeInterpolator label radius smoothing', () => {
     const byId = new Map(result.nodes.map((item) => [item.id, item]));
     expect(byId.get('node-enter-2').opacity).toBeCloseTo(0.25);
     expect(byId.get('node-exit-1').opacity).toBeCloseTo(0.75);
+  });
+
+  it('matches nodes by normalized id rather than legacy names', () => {
+    const interpolator = new TreeInterpolator();
+    const result = interpolator.interpolateTreeData(
+      {
+        max_radius: 40,
+        nodes: [{ ...node('node-old', 30, 0, [1]), name: 'same-name' }],
+        links: [],
+        labels: [],
+        extensions: [],
+      },
+      {
+        max_radius: 40,
+        nodes: [{ ...node('node-new', 30, 0, [2]), name: 'same-name' }],
+        links: [],
+        labels: [],
+        extensions: [],
+      },
+      0.5
+    );
+
+    const byId = new Map(result.nodes.map((item) => [item.id, item]));
+    expect(result.nodes).toHaveLength(2);
+    expect(byId.get('node-old').isExiting).toBe(true);
+    expect(byId.get('node-new').isEntering).toBe(true);
+  });
+
+  it('marks target nodes of entering lifecycle links as entering for rendering', () => {
+    const fromData = {
+      max_radius: 40,
+      nodes: [node('parent', 20, 0), node('child', 30, 0)],
+      links: [],
+      labels: [],
+      extensions: [],
+    };
+    const toData = {
+      max_radius: 40,
+      nodes: [node('parent', 20, 0), node('child', 30, 0)],
+      links: [link('parent-child', 20, 30, 0, 0, 'parent', 'child')],
+      labels: [],
+      extensions: [],
+    };
+    const transitionChangeModel = buildTransitionChangeModel(fromData, toData);
+
+    const result = new TreeInterpolator().interpolateTreeData(fromData, toData, 0.5, {
+      transitionChangeModel,
+    });
+
+    const child = result.nodes.find((item) => item.id === 'child');
+    expect(child.isEntering).toBe(true);
+    expect(child.lifecycle).toBe('entering');
   });
 
   it('uses straight direct paths during interpolation when straight link geometry is selected', () => {
@@ -251,9 +304,7 @@ describe('TreeInterpolator label radius smoothing', () => {
     const toAngles = interpolator._polarAngleMap(toMap);
     const distances = interpolator._getAngularDistances(fromAngles, toAngles, 0);
     expect(interpolator._getAngularDistances(fromAngles, toAngles, 0)).toBe(distances);
-    expect(interpolator._getAngularDistances(fromAngles, toAngles, 1)).not.toBe(
-      distances
-    );
+    expect(interpolator._getAngularDistances(fromAngles, toAngles, 1)).not.toBe(distances);
   });
 
   it('reuses cached global angular maxima for stable distance maps', () => {

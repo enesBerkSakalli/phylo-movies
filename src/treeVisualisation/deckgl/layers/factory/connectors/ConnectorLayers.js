@@ -1,6 +1,7 @@
 /**
  * Factory for connectors layer (lines between trees in comparison mode)
  */
+import { safeDeckPath } from '../../../utils/pathFormat.js';
 
 // Reusable output buffer to avoid per-call array allocations
 const _connColorOut = [0, 0, 0, 0];
@@ -17,7 +18,7 @@ export function getConnectorsLayerProps(connectors, state) {
 
   return {
     data: connectors,
-    getPath: (d) => d.path,
+    getPath: (d) => safeDeckPath(d.path),
     widthUnits: 'pixels',
     widthMinPixels: 1,
     getWidth: (d) => {
@@ -40,7 +41,7 @@ export function getConnectorsLayerProps(connectors, state) {
       return _connColorOut;
     },
     updateTriggers: {
-      getPath: connectors.length,
+      getPath: [connectors],
       getWidth: [connectors.length, connectorStrokeWidth],
       getColor: [connectors.length, linkConnectionOpacity, colorVersion],
     },

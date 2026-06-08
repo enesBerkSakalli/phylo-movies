@@ -6,6 +6,7 @@
  */
 import { hasLifecycleHighlightedLinks } from '../../styles/links/linkUtils.js';
 import { selectLeafNamesByIndex } from '../../../../../state/phyloStore/selectors/treeSelectors.js';
+import { safeDeckPath } from '../../../utils/pathFormat.js';
 
 // ============================================================================
 // HELPERS
@@ -51,7 +52,7 @@ export function getLinkOutlinesLayerProps(links, state, layerStyles) {
     data: links,
     visible: hasHighlights,
     pickable: false,
-    getPath: (d) => d.path,
+    getPath: (d) => safeDeckPath(d.path),
     getColor: (d) => layerStyles.getLinkOutlineColor(d, cached),
     getWidth: (d) => layerStyles.getLinkOutlineWidth(d, cached),
     getDashArray: (d) => layerStyles.getLinkOutlineDashArray(d, cached),
@@ -112,7 +113,7 @@ export function getLinksLayerProps(links, state, layerStyles) {
   return {
     data: links,
     pickable: false,
-    getPath: (d) => d.path,
+    getPath: (d) => safeDeckPath(d.path),
     getColor: (d) => layerStyles.getLinkColor(d, cached),
     getWidth: (d) => layerStyles.getLinkWidth(d, cached),
     getDashArray: (d) => layerStyles.getLinkDashArray(d, cached),

@@ -1,8 +1,8 @@
 import { colorToRgb, getContrastingHighlightColor } from '../../../../../services/ui/colorUtils.js';
 import { SYSTEM_TREE_COLORS } from '../../../../../constants/TreeColors.js';
 
-const EXPANDING_LIFECYCLE_COLOR = [34, 197, 94];
-const COLLAPSING_LIFECYCLE_COLOR = [245, 158, 11];
+export const EXPANDING_LIFECYCLE_COLOR = [34, 197, 94];
+export const COLLAPSING_LIFECYCLE_COLOR = [245, 158, 11];
 
 export const getLifecycleLinkHighlight = (link) => {
   switch (link?.lifecycle) {

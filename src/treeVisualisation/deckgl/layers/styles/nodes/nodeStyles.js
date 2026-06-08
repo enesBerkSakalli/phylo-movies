@@ -4,6 +4,7 @@ import { applyDimmingWithCache } from '../dimmingUtils.js';
 import { getHighlightColor, getPivotEdgeColor } from './nodeUtils.js';
 import { resolveTreeElementHighlight, TREE_HIGHLIGHT_ROLE } from '../highlightResolver.js';
 import { applyDenseInternalNodeOpacity } from '../denseVisualDeclutter.js';
+import { EXPANDING_LIFECYCLE_COLOR } from '../links/linkUtils.js';
 // Re-export from dedicated file
 export { getNodeRadius } from './nodeRadiusStyles.js';
 export { getNodeLineWidth } from './nodeWidthStyles.js';
@@ -13,6 +14,9 @@ const _historyColorOut = [0, 0, 0, 0];
 const _nodeColorOut = [0, 0, 0, 0];
 const _borderColorOut = [0, 0, 0, 0];
 const _nodeBasedOut = [0, 0, 0, 0];
+const ENTERING_NODE_BORDER_COLOR = EXPANDING_LIFECYCLE_COLOR.map((channel) =>
+  Math.round(channel * 0.7)
+);
 
 /**
  * Checks for history and upcoming change states and returns the appropriate color.
@@ -73,6 +77,17 @@ export function getNodeColor(node, cached, helpers) {
     subtreeDimmingOpacity,
   } = cached;
 
+  const nodeData = node;
+  const baseOpacity = helpers.getBaseOpacity(node.opacity);
+
+  if (node.isEntering) {
+    _nodeColorOut[0] = EXPANDING_LIFECYCLE_COLOR[0];
+    _nodeColorOut[1] = EXPANDING_LIFECYCLE_COLOR[1];
+    _nodeColorOut[2] = EXPANDING_LIFECYCLE_COLOR[2];
+    _nodeColorOut[3] = baseOpacity;
+    return _nodeColorOut;
+  }
+
   // 0. Explicit Color Override (ConnectorLayers pattern)
   // Check raw node first (deck.gl datum)
   if (node.color) {
@@ -84,8 +99,6 @@ export function getNodeColor(node, cached, helpers) {
     return _nodeColorOut;
   }
 
-  const nodeData = node;
-  const baseOpacity = helpers.getBaseOpacity(node.opacity);
   const highlight = resolveTreeElementHighlight(nodeData, cached, 'node');
 
   // 1. History & Change Management State
@@ -147,6 +160,14 @@ export function getNodeBorderColor(node, cached, helpers) {
 
   const baseOpacity = helpers.getBaseOpacity(node.opacity);
   const highlight = resolveTreeElementHighlight(nodeData, cached, 'node');
+
+  if (node.isEntering) {
+    _borderColorOut[0] = ENTERING_NODE_BORDER_COLOR[0];
+    _borderColorOut[1] = ENTERING_NODE_BORDER_COLOR[1];
+    _borderColorOut[2] = ENTERING_NODE_BORDER_COLOR[2];
+    _borderColorOut[3] = baseOpacity;
+    return _borderColorOut;
+  }
 
   // 1. History Borders
   const historyColor = resolveHistoryNodeColor(cached, baseOpacity, highlight);

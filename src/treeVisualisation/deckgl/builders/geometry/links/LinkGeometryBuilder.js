@@ -45,6 +45,10 @@ export class LinkGeometryBuilder {
       return this._createDirectPath(linkData);
     }
 
+    if (!hasFinitePolarEndpoint(linkData.source) || !hasFinitePolarEndpoint(linkData.target)) {
+      return new Float32Array(0);
+    }
+
     const branchCoords = calculateBranchCoordinates(linkData);
 
     if (branchCoords.arcProperties === null) {
@@ -123,4 +127,8 @@ export class LinkGeometryBuilder {
 
 function finiteCoordinate(value, fallback = 0) {
   return Number.isFinite(value) ? value : Number.isFinite(fallback) ? fallback : 0;
+}
+
+function hasFinitePolarEndpoint(endpoint) {
+  return Number.isFinite(endpoint?.angle) && Number.isFinite(endpoint?.radius);
 }

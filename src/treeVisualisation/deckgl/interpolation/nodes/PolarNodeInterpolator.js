@@ -7,7 +7,6 @@ import { interpolatePolarPosition, interpolateScalar } from '../../../utils/pola
 
 export class PolarNodeInterpolator {
   constructor() {
-    this._angleCache = new Map();
     // Root angle (where tree root is positioned) - default 0
     this._rootAngle = 0;
   }
@@ -55,12 +54,5 @@ export class PolarNodeInterpolator {
       velocityEntry,
       rootAngle: this._rootAngle,
     });
-  }
-
-  /**
-   * Clear angle cache (call when switching tree pairs)
-   */
-  resetCache() {
-    this._angleCache.clear();
   }
 }

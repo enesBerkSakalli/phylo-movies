@@ -100,5 +100,16 @@ describe('RadialTreeGeometry', () => {
       expect(path).toHaveLength(6);
       expect(path).toEqual([10, 0, 0, 0, 20, 0]);
     });
+
+    it('does not emit non-finite radial path coordinates for invalid polar endpoints', () => {
+      const builder = new LinkGeometryBuilder();
+      const path = builder.createLinkPath({
+        source: { radius: 10, angle: Number.NaN, x: 10, y: 0 },
+        target: { radius: 20, angle: 0, x: 20, y: 0 },
+      });
+
+      expect(path).toBeInstanceOf(Float32Array);
+      expect(path).toHaveLength(0);
+    });
   });
 });
