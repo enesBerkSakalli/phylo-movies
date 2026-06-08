@@ -300,7 +300,8 @@ export function GitHubPagesInfoPage() {
               </p>
               <div className="rounded-lg border bg-muted p-4 text-xs leading-relaxed text-foreground">
                 Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026).{' '}
-                <em>Animating Phylogenetic Trees from Sliding-Window Analyses</em>. bioRxiv.
+                <em>Phylo-Movies: Animating Phylogenetic Trees from Sliding-Window Analyses</em>.
+                bioRxiv.
                 doi:10.64898/2026.04.01.715821
               </div>
               <div className="rounded-lg border bg-muted p-4 text-xs leading-relaxed text-foreground">
