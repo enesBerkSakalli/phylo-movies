@@ -52,7 +52,7 @@ preferred-citation:
       given-names: "Arndt"
     - family-names: "Schmidt"
       given-names: "Heiko A."
-  title: "Animating Phylogenetic Trees from Sliding-Window Analyses"
+  title: "Phylo-Movies: Animating Phylogenetic Trees from Sliding-Window Analyses"
   journal: "bioRxiv"
   year: 2026
   doi: "10.64898/2026.04.01.715821"
