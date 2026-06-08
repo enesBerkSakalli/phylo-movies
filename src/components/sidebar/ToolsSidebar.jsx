@@ -1,7 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Activity, ChevronDown, FileText } from 'lucide-react';
-import phyloTreeIcon from '/icons/phylo-tree-icon.svg';
 import { MsaSidebarSection } from './MsaSidebarSection.jsx';
 import { TreeStructureGroup } from '../appearance/layout/TreeStructureGroup.jsx';
 import {
@@ -32,6 +31,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/colla
 import { TOOLS_SIDEBAR_GROUP_LABELS } from './ToolsSidebar.contract.js';
 import { SPR_ANALYTICS_COPY } from '../TreeStatsPanel/AnalyticsDashboard.contract.ts';
 import { selectTreeHydrationStats, useAppStore } from '../../state/phyloStore/store.js';
+
+const phyloTreeIcon = '/icons/phylo-tree-icon.svg';
 
 export function ToolsSidebar({
   fileName,

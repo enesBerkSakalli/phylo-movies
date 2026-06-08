@@ -59,7 +59,7 @@ describe('tools sidebar structure', () => {
   it('uses the canonical Phylo-Movies app icon in the sidebar header', () => {
     const sidebarSource = source('src/components/sidebar/ToolsSidebar.jsx');
 
-    expect(sidebarSource).toContain("import phyloTreeIcon from '/icons/phylo-tree-icon.svg'");
+    expect(sidebarSource).toContain("const phyloTreeIcon = '/icons/phylo-tree-icon.svg'");
     expect(sidebarSource).toContain('src={phyloTreeIcon}');
     expect(sidebarSource).toContain('aria-label="Phylo-Movies"');
     expect(sidebarSource).not.toContain('Film');
