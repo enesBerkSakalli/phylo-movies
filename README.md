@@ -18,6 +18,24 @@ Phylo-Movies is a React and Flask web tool for inspecting ordered phylogenetic t
 
 The project information page at [enesberksakalli.github.io/phylo-movies](https://enesberksakalli.github.io/phylo-movies/) includes documentation and a precomputed browser demo. Dataset loading, interpolation, and MSA-driven workflows require the full-stack app from source or Docker. Desktop release artifacts are provided as convenience builds; macOS artifacts are unsigned because the project does not currently use a paid Apple Developer ID for notarization, so Gatekeeper may block them or report them as damaged.
 
+## Quick Path
+
+For revision review, use the current `main` branch unless the submission system points to the new `0.98.0` tagged release. A new GitHub/Zenodo release should be minted from the final reviewer-facing state before submission archival.
+
+1. Browser-only demo: open <https://enesberksakalli.github.io/phylo-movies/demo/>.
+2. Full local run:
+
+   ```bash
+   git clone --recurse-submodules https://github.com/enesBerkSakalli/phylo-movies.git
+   cd phylo-movies
+   npm ci
+   ./start.sh
+   ```
+
+3. Open the printed local URL, usually <http://127.0.0.1:5173/>.
+4. Smoke test: **Example Library** -> **Paper Figure Example** -> **Load**.
+5. Manuscript examples: open the generated Norovirus, Bootstrap 24, Bootstrap 125, and weighted-RF sensitivity examples from the browser demo or local Example Library.
+
 ## Choose the Right Entry Point
 
 | Entry point       | Use it for                                                                                      | Backend-dependent actions                                                                                                      |
@@ -119,7 +137,7 @@ Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). P
 
 For the archived software release, cite:
 
-Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). Phylo-Movies: Interactive Phylogenetic Tree Interpolation and Visualization, version 0.92.0. Zenodo. <https://doi.org/10.5281/zenodo.20488924>
+Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). Phylo-Movies: Interactive Phylogenetic Tree Interpolation and Visualization, version 0.98.0. Zenodo. <https://doi.org/10.5281/zenodo.20488924>
 
 Software citation metadata is in [CITATION.cff](CITATION.cff).
 

@@ -2,7 +2,7 @@
 
 All notable changes to Phylo-Movies are documented in this file.
 
-## [0.92.0] — Unreleased (dev)
+## [0.98.0] — Unreleased (dev)
 
 ### Added
 

@@ -56,6 +56,16 @@ describe('tools sidebar structure', () => {
     );
   });
 
+  it('uses the canonical Phylo-Movies app icon in the sidebar header', () => {
+    const sidebarSource = source('src/components/sidebar/ToolsSidebar.jsx');
+
+    expect(sidebarSource).toContain("import phyloTreeIcon from '/icons/phylo-tree-icon.svg'");
+    expect(sidebarSource).toContain('src={phyloTreeIcon}');
+    expect(sidebarSource).toContain('aria-label="Phylo-Movies"');
+    expect(sidebarSource).not.toContain('Film');
+    expect(sidebarSource).not.toContain('bg-primary text-primary-foreground');
+  });
+
   it('keeps camera controls grouped with view effects rather than tree layout controls', () => {
     const sidebarSource = source('src/components/sidebar/ToolsSidebar.jsx');
     const layoutGroupStart = sidebarSource.indexOf('TOOLS_SIDEBAR_GROUP_LABELS[1]');
