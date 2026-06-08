@@ -97,6 +97,52 @@ describe('tree deck.gl layer topology', () => {
     ]);
   });
 
+  it('puts entering lifecycle nodes in the marked node layer once', () => {
+    const layerStyles = makeLayerStyles({
+      colorManager: null,
+      highlightedSubtreeData: [],
+      subtreeHighlightsEnabled: true,
+    });
+    const baseNode = {
+      id: 'base-node',
+      split_indices: [1],
+      position: [1, 1, 0],
+      renderPosition: [1, 1, 0],
+    };
+    const enteringNode = {
+      id: 'entering-node',
+      split_indices: [2],
+      position: [2, 2, 0],
+      renderPosition: [2, 2, 0],
+      isEntering: true,
+      lifecycle: 'entering',
+    };
+    const data = {
+      connectors: [],
+      links: [],
+      extensions: [],
+      nodes: [baseNode, enteringNode],
+      labels: [],
+    };
+
+    const layers = createTreeLayerSet({
+      data,
+      state: { labelsVisible: true, leafNamesByIndex: [] },
+      layerStyles,
+      skipEmpty: true,
+    });
+
+    const nodeLayers = layers.filter((layer) => layer.id.startsWith('phylo-nodes-'));
+    const nodeLayerIds = nodeLayers.map((layer) => layer.id);
+    const renderedNodeIds = nodeLayers.flatMap((layer) => layer.props.data.map((node) => node.id));
+
+    expect(nodeLayerIds).toEqual(['phylo-nodes-base', 'phylo-nodes-marked']);
+    expect(renderedNodeIds).toEqual(['base-node', 'entering-node']);
+    expect(nodeLayerIds.indexOf('phylo-nodes-marked')).toBeGreaterThan(
+      nodeLayerIds.indexOf('phylo-nodes-base')
+    );
+  });
+
   it('keeps every visible taxon label in deck.gl label layers', () => {
     const labelCount = 160;
     const layerStyles = makeLayerStyles({ colorManager: null });

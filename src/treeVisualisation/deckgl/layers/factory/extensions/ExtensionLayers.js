@@ -4,6 +4,7 @@
  */
 import { addZOffsetToPath, getNodeHistoryZOffset } from '../../../utils/GeometryUtils.js';
 import { selectLeafNamesByIndex } from '../../../../../state/phyloStore/selectors/treeSelectors.js';
+import { safeDeckPath } from '../../../utils/pathFormat.js';
 
 // ============================================================================
 // HELPERS
@@ -22,7 +23,7 @@ export function getExtensionsLayerProps(extensions, state, layerStyles) {
   return {
     data: extensions,
     pickable: false,
-    getPath: (d) => addZOffsetToPath(d.path, getNodeHistoryZOffset(cached, d)),
+    getPath: (d) => safeDeckPath(addZOffsetToPath(d.path, getNodeHistoryZOffset(cached, d))),
     getColor: (d) => layerStyles.getExtensionColor(d, cached),
     getWidth: (d) => layerStyles.getExtensionWidth(d, cached),
     getDashArray: [2, 3], // Dotted line

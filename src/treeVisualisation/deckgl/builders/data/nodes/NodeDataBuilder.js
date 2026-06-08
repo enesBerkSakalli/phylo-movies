@@ -42,7 +42,7 @@ export class NodeDataBuilder {
       return null;
     }
     const dotSize = nodeDotSizes.get(nodeKey);
-    const splitKey = getSplitKey({ split_indices: splitIndices });
+    const splitKey = node.splitKey || getSplitKey({ split_indices: splitIndices });
 
     const isLeaf = node.isLeaf === true;
 
@@ -59,6 +59,11 @@ export class NodeDataBuilder {
       metricBranchLength: node.metricBranchLength,
       visualBranchLength: node.visualBranchLength,
       annotations: node.annotations ?? null,
+      ...(Number.isFinite(node.opacity) ? { opacity: node.opacity } : {}),
+      ...(node.isEntering === true ? { isEntering: true } : {}),
+      ...(node.isExiting === true ? { isExiting: true } : {}),
+      ...(node.lifecycle ? { lifecycle: node.lifecycle } : {}),
+      ...(Number.isFinite(node.transitionPhase) ? { transitionPhase: node.transitionPhase } : {}),
       depth: node.depth,
       height: node.height,
       angle: node.angle,

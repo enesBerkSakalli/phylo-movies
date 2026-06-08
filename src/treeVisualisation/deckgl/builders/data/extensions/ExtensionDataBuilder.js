@@ -44,7 +44,7 @@ export class ExtensionDataBuilder {
     const sourceX = leaf.x;
     const sourceY = leaf.y;
     const splitIndices = leaf.split_indices;
-    const splitKey = getSplitKey({ split_indices: splitIndices });
+    const splitKey = leaf.splitKey || getSplitKey({ split_indices: splitIndices });
     const extensionKey = splitKey ? `ext-${splitKey}` : null;
     if (!extensionKey) {
       console.warn('[ExtensionDataBuilder] Skipping extension without split_indices:', leaf.name);

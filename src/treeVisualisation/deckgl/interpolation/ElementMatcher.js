@@ -34,13 +34,11 @@ export class ElementMatcher {
         const velocityEntry = velocityMap?.get(id) ?? null;
 
         // Keep the base eased time unchanged and pass angular remapping separately.
-        result.push(
-          interpolateFn(fromElement, toElement, timeFactor, fromElement, toElement, velocityEntry)
-        );
+        result.push(interpolateFn(fromElement, toElement, timeFactor, velocityEntry));
       } else {
         // Element is entering - use target state
         // We interpolate(to, to, 1.0) to ensure derived properties (like paths) are calculated
-        const computed = interpolateFn(toElement, toElement, 1.0, toElement, toElement);
+        const computed = interpolateFn(toElement, toElement, 1.0, null);
         result.push(
           this._createEnteringElement(computed, options?.enterTimeFactor ?? timeFactor, toElement)
         );
@@ -52,7 +50,7 @@ export class ElementMatcher {
       if (!toMap.has(id)) {
         // Element is exiting - use source state
         // We interpolate(from, from, 0.0) to ensure derived properties are calculated
-        const computed = interpolateFn(fromElement, fromElement, 0.0, fromElement, fromElement);
+        const computed = interpolateFn(fromElement, fromElement, 0.0, null);
         result.push(
           this._createExitingElement(computed, options?.exitTimeFactor ?? timeFactor, fromElement)
         );

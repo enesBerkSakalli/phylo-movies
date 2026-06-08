@@ -77,6 +77,18 @@ describe('TreeInterpolator path buffer pool correctness', () => {
     expect(lateSnapshot).not.toEqual(earlySnapshot);
     expect(lateSnapshot).toHaveLength(earlySnapshot.length);
   });
+
+  it('does not emit non-finite animated path coordinates for invalid polar endpoints', () => {
+    const interpolator = new PolarPathInterpolator();
+
+    const path = interpolator.createPathFromPolarData({
+      source: { angle: Number.NaN, radius: 10 },
+      target: { angle: 0, radius: 20 },
+    });
+
+    expect(path).toBeInstanceOf(Float32Array);
+    expect(path).toHaveLength(0);
+  });
 });
 
 function curvedPathLink() {

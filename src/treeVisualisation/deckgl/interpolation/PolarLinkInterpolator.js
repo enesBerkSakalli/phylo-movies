@@ -20,7 +20,7 @@ export class PolarLinkInterpolator {
       fromLinks,
       toLinks,
       timeFactor,
-      (from, to, t, fromLink, toLink, velocityEntry) =>
+      (fromLink, toLink, t, velocityEntry) =>
         this._interpolateLinkDatum(fromLink, toLink, t, {
           ...options,
           velocityEntry,
@@ -273,8 +273,7 @@ export class PolarLinkInterpolator {
       };
     });
 
-    const path = this.pathInterpolator.interpolatePath(positionedLink, positionedLink, 1, {
-      velocityEntry: options.velocityEntry ?? null,
+    const path = this.pathInterpolator.createPathFromPolarData(positionedLink.polarData, {
       linkGeometryMode: options.linkGeometryMode,
       pathPoolKey: link?.id != null ? `link:${link.id}` : null,
     });

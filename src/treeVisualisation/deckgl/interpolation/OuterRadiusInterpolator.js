@@ -1,15 +1,4 @@
-import {
-  angleFromPosition,
-  firstPathPoint,
-  interpolateOptionalScalar,
-  labelRotation,
-  labelTextAnchor,
-  lastPathPoint,
-  positionFromPolar,
-  positionToPolar,
-  replaceLastPathPoint,
-  shouldFlipLabel,
-} from '../../utils/polarGeometry.js';
+import { interpolateOptionalScalar, lastPathPoint } from '../../utils/polarGeometry.js';
 
 export class OuterRadiusInterpolator {
   interpolateMaxRadius(dataFrom, dataTo, t) {
@@ -26,62 +15,6 @@ export class OuterRadiusInterpolator {
       labelRadius
     );
     return { labelRadius, extensionRadius };
-  }
-
-  applyLabelRadius(labels, radius) {
-    return labels.map((label) => {
-      const angle = angleFromPosition(label.position, label.angle);
-      const z =
-        Array.isArray(label.position) && Number.isFinite(label.position[2]) ? label.position[2] : 0;
-      const needsFlip = shouldFlipLabel(angle);
-
-      return {
-        ...label,
-        angle,
-        polarPosition: radius,
-        distance: radius,
-        rotation: labelRotation(angle, needsFlip),
-        textAnchor: labelTextAnchor(needsFlip),
-        position: positionFromPolar(radius, angle, z),
-      };
-    });
-  }
-
-  applyExtensionTargetRadius(extensions, radius) {
-    return extensions.map((extension) => {
-      const path = extension.path;
-      const sourcePoint = firstPathPoint(path) || extension.sourcePosition;
-      const targetPoint = lastPathPoint(path);
-      const angle = angleFromPosition(targetPoint, extension.polarData?.target?.angle);
-      const pathSourcePosition = Array.isArray(sourcePoint) ? sourcePoint : null;
-      const targetPosition = positionFromPolar(radius, angle, targetPoint?.[2] ?? 0);
-      const adjustedPath = replaceLastPathPoint(path, targetPosition);
-      const adjustedTargetPosition = lastPathPoint(adjustedPath) || targetPosition;
-      const sourcePolar = pathSourcePosition
-        ? positionToPolar(pathSourcePosition)
-        : extension.polarData?.source;
-
-      return {
-        ...extension,
-        path: adjustedPath,
-        ...(pathSourcePosition ? { sourcePosition: pathSourcePosition } : {}),
-        targetPosition: adjustedTargetPosition,
-        polarData: {
-          ...extension.polarData,
-          source: sourcePolar
-            ? {
-                ...extension.polarData?.source,
-                ...sourcePolar,
-              }
-            : extension.polarData?.source,
-          target: {
-            ...extension.polarData?.target,
-            angle,
-            radius,
-          },
-        },
-      };
-    });
   }
 
   _interpolateLabelRadius(dataFrom, dataTo, t, maxRadius) {

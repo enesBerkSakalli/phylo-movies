@@ -35,7 +35,10 @@ export class LinkDataBuilder {
     const linkPath = this.geometryBuilder.createLinkPath(linkData, {
       geometryMode: options.linkGeometryMode,
     });
-    const splitKey = getSplitKey({ split_indices: link.targetSplitIndices });
+    const splitKey =
+      link.splitKey ||
+      link.targetSplitKey ||
+      getSplitKey({ split_indices: link.targetSplitIndices });
     const linkKey = splitKey ? `link-${splitKey}` : null;
     const sourceId = link.sourceId;
     const targetId = link.targetId;

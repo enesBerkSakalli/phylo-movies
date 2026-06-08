@@ -2,22 +2,20 @@
  * PolarPathInterpolator - Interpolates paths using polar coordinates
  * Used for animating tree branches and extensions in radial layouts
  */
-import { calculateInterpolatedBranchCoordinates } from '../../../layout/RadialTreeGeometry.js';
-import { shortestAngle, crossesAngle, longArcDelta } from '../../../../domain/math/mathUtils.js';
+import { crossesAngle, longArcDelta } from '../../../../domain/math/mathUtils.js';
 import {
   LINK_GEOMETRY_MODES,
   normalizeLinkGeometryMode,
 } from '../../builders/geometry/links/LinkGeometryBuilder.js';
 import { rootAwareAngleDelta } from '../../../utils/polarGeometry.js';
-import { twoPointFloat32Path } from '../../utils/pathFormat.js';
 import { measureFrameStep } from '../../../performance/frameInstrumentation.js';
 
 const ANIMATED_ARC_SEGMENT_COUNT = 10;
+const ANGLE_TOLERANCE = 0.001; // ~0.06 degrees
 
 export class PolarPathInterpolator {
   constructor() {
     this.segmentCount = ANIMATED_ARC_SEGMENT_COUNT;
-    this._angleCache = new Map();
     // Root angle (where tree root is positioned) - default 0
     this._rootAngle = 0;
     // Optional per-key Float32Array pool. When a caller passes a stable
@@ -71,21 +69,28 @@ export class PolarPathInterpolator {
    * @throws {Error} If polarData is missing
    */
   interpolatePath(fromLink, toLink, timeFactor, options = {}) {
-    const pathOptions =
-      options &&
-      (Object.prototype.hasOwnProperty.call(options, 'velocityEntry') ||
-        Object.prototype.hasOwnProperty.call(options, 'linkGeometryMode') ||
-        Object.prototype.hasOwnProperty.call(options, 'pathPoolKey'))
-        ? options
-        : { velocityEntry: options };
+    return this.createPathFromPolarData(
+      this.interpolatePolarData(fromLink, toLink, timeFactor, options),
+      options
+    );
+  }
 
+  /**
+   * Interpolate endpoint polar metadata without writing path geometry.
+   * @param {Object} fromLink - Source link data with polarData
+   * @param {Object} toLink - Target link data with polarData
+   * @param {number} timeFactor - Interpolation factor (0-1)
+   * @param {Object} options - { velocityEntry, targetRadiusOverride }
+   * @returns {{source: {angle: number, radius: number}, target: {angle: number, radius: number}}}
+   */
+  interpolatePolarData(fromLink, toLink, timeFactor, options = {}) {
     // Fail-fast: polar data is required
     if (!fromLink?.polarData || !toLink?.polarData) {
       throw new Error(`Missing polarData for link interpolation: ${toLink?.id ?? fromLink?.id}`);
     }
 
     const t = Math.max(0, Math.min(1, timeFactor));
-    const velocityEntry = pathOptions?.velocityEntry ?? null;
+    const velocityEntry = options?.velocityEntry ?? null;
     const angularT = velocityEntry?.angularT ?? t;
 
     // Get source angles
@@ -112,132 +117,142 @@ export class PolarPathInterpolator {
       fromLink.polarData.target.radius +
       (toLink.polarData.target.radius - fromLink.polarData.target.radius) * t;
 
-    // Build link data for geometry calculation with interpolated values
-    const linkData = {
+    return {
       source: {
         angle: interpSourceAngle,
         radius: interpSourceRadius,
-        x: interpSourceRadius * Math.cos(interpSourceAngle),
-        y: interpSourceRadius * Math.sin(interpSourceAngle),
       },
       target: {
         angle: interpTargetAngle,
-        radius: interpTargetRadius,
-        x: interpTargetRadius * Math.cos(interpTargetAngle),
-        y: interpTargetRadius * Math.sin(interpTargetAngle),
+        radius: Number.isFinite(options?.targetRadiusOverride)
+          ? options.targetRadiusOverride
+          : interpTargetRadius,
       },
     };
+  }
 
-    const pathPoolKey = pathOptions.pathPoolKey ?? null;
+  /**
+   * Create a path from already-resolved polar endpoints.
+   * Use this when the caller has already interpolated source/target positions,
+   * avoiding the full from/to interpolation setup in interpolatePath().
+   *
+   * @param {Object} polarData - { source: {angle, radius}, target: {angle, radius} }
+   * @param {Object} options - { linkGeometryMode, pathPoolKey }
+   * @returns {Float32Array} Flat XYZ path points
+   */
+  createPathFromPolarData(polarData, options = {}) {
+    if (!polarData?.source || !polarData?.target) {
+      throw new Error('Missing polarData for resolved path creation');
+    }
 
-    if (normalizeLinkGeometryMode(pathOptions.linkGeometryMode) === LINK_GEOMETRY_MODES.STRAIGHT) {
-      const straight = this._acquirePathBuffer(pathPoolKey, 6);
-      if (straight) {
-        straight[0] = linkData.source.x;
-        straight[1] = linkData.source.y;
-        straight[2] = 0;
-        straight[3] = linkData.target.x;
-        straight[4] = linkData.target.y;
-        straight[5] = 0;
-        return straight;
-      }
-      return twoPointFloat32Path(
-        [linkData.source.x, linkData.source.y, 0],
-        [linkData.target.x, linkData.target.y, 0]
+    const pathPoolKey = options.pathPoolKey ?? null;
+    const sourceAngle = polarData.source.angle;
+    const sourceRadius = polarData.source.radius;
+    const targetAngle = polarData.target.angle;
+    const targetRadius = polarData.target.radius;
+
+    if (normalizeLinkGeometryMode(options.linkGeometryMode) === LINK_GEOMETRY_MODES.STRAIGHT) {
+      return this._writePolarStraightPath(
+        pathPoolKey,
+        sourceAngle,
+        sourceRadius,
+        targetAngle,
+        targetRadius
       );
     }
 
-    // Use static branch coordinates calculation (t=1, no further interpolation needed)
-    const coordinates = measureFrameStep('path.coordinateCalc', () =>
-      calculateInterpolatedBranchCoordinates(
-        linkData,
-        1.0, // Already interpolated
-        interpSourceAngle,
-        interpSourceRadius,
-        interpTargetAngle,
-        interpTargetRadius,
-        undefined,
-        { useShortestAngle: true } // OK to use shortest for arc within branch
-      )
-    );
-
-    // Apply strict root crossing check on the generated geometry
-    if (coordinates.arcProperties) {
-      const { startAngle, angleDiff } = coordinates.arcProperties;
-      const endAngle = startAngle + angleDiff;
-
-      // If the generated arc cuts through the root gap, invert it to go the long way
-      if (crossesAngle(startAngle, endAngle, this._rootAngle)) {
-        coordinates.arcProperties.angleDiff = longArcDelta(angleDiff);
-      }
-    }
-
     return measureFrameStep('path.coordinatesToPath', () =>
-      this._coordinatesToPath(coordinates, pathPoolKey)
+      this._writeRadialElbowPath(pathPoolKey, sourceAngle, sourceRadius, targetAngle, targetRadius)
     );
   }
 
   /**
-   * Convert branch coordinates to flat path array
+   * Write a direct source-target line into a flat path array.
    * @private
    */
-  _coordinatesToPath(coordinates, pathPoolKey = null) {
-    const { movePoint, arcEndPoint, lineEndPoint, arcProperties } = coordinates;
-
-    // Straight line (no arc)
-    if (!arcProperties) {
-      const result = this._acquirePathBuffer(pathPoolKey, 6) ?? new Float32Array(6);
-      result[0] = movePoint.x;
-      result[1] = movePoint.y;
-      result[2] = 0;
-      result[3] = lineEndPoint.x;
-      result[4] = lineEndPoint.y;
-      result[5] = 0;
-      return result;
+  _writeStraightPath(pathPoolKey, sourceX, sourceY, targetX, targetY) {
+    if (!hasFinitePoint(sourceX, sourceY) || !hasFinitePoint(targetX, targetY)) {
+      return emptyPath();
     }
 
-    // Arc + radial line
-    const { radius, startAngle, center, angleDiff: arcAngleDiff } = arcProperties;
-    const angleDiff = Number.isFinite(arcAngleDiff)
-      ? arcAngleDiff
-      : shortestAngle(startAngle, arcProperties.endAngle);
+    const result = this._acquirePathBuffer(pathPoolKey, 6) ?? new Float32Array(6);
+    result[0] = sourceX;
+    result[1] = sourceY;
+    result[2] = 0;
+    result[3] = targetX;
+    result[4] = targetY;
+    result[5] = 0;
+    return result;
+  }
 
-    // Keep animated path complexity stable across the transition.
-    // Dynamic arc-length sampling makes long/growing branches allocate and draw
-    // progressively more vertices per frame, which makes branch growth appear
-    // to slow the animation down.
+  /**
+   * Write a direct source-target line from polar endpoints.
+   * @private
+   */
+  _writePolarStraightPath(pathPoolKey, sourceAngle, sourceRadius, targetAngle, targetRadius) {
+    return this._writeStraightPath(
+      pathPoolKey,
+      sourceRadius * Math.cos(sourceAngle),
+      sourceRadius * Math.sin(sourceAngle),
+      targetRadius * Math.cos(targetAngle),
+      targetRadius * Math.sin(targetAngle)
+    );
+  }
+
+  /**
+   * Write the radial-elbow branch geometry directly into a flat path array.
+   * The path shape is: source point, fixed-count angular arc at source radius,
+   * then radial target point.
+   * @private
+   */
+  _writeRadialElbowPath(pathPoolKey, sourceAngle, sourceRadius, targetAngle, targetRadius) {
+    if (
+      !hasFinitePolarEndpoint(sourceAngle, sourceRadius) ||
+      !hasFinitePolarEndpoint(targetAngle, targetRadius)
+    ) {
+      return emptyPath();
+    }
+
+    const sourceX = sourceRadius * Math.cos(sourceAngle);
+    const sourceY = sourceRadius * Math.sin(sourceAngle);
+    const targetX = targetRadius * Math.cos(targetAngle);
+    const targetY = targetRadius * Math.sin(targetAngle);
+    let angleDiff = signedShortestAngle(sourceAngle, targetAngle);
+
+    if (Math.abs(angleDiff) < ANGLE_TOLERANCE) {
+      return this._writeStraightPath(pathPoolKey, sourceX, sourceY, targetX, targetY);
+    }
+
+    // If the generated elbow would cut through the root gap, take the long arc.
+    if (crossesAngle(sourceAngle, sourceAngle + angleDiff, this._rootAngle)) {
+      angleDiff = longArcDelta(angleDiff);
+    }
+
     const segmentCount = this.segmentCount;
-
     const totalPoints = segmentCount + 2;
     const result =
       this._acquirePathBuffer(pathPoolKey, totalPoints * 3) ?? new Float32Array(totalPoints * 3);
 
-    // Move point
-    result[0] = movePoint.x;
-    result[1] = movePoint.y;
+    result[0] = sourceX;
+    result[1] = sourceY;
     result[2] = 0;
 
-    // Arc segments
     for (let i = 1; i <= segmentCount; i++) {
       const t = i / segmentCount;
-      const angle = startAngle + angleDiff * t;
+      const angle = sourceAngle + angleDiff * t;
       const idx = i * 3;
-      result[idx] = center.x + radius * Math.cos(angle);
-      result[idx + 1] = center.y + radius * Math.sin(angle);
+      result[idx] = sourceRadius * Math.cos(angle);
+      result[idx + 1] = sourceRadius * Math.sin(angle);
       result[idx + 2] = 0;
     }
 
-    // Snap last arc point to exact end
-    if (arcEndPoint) {
-      const idx = segmentCount * 3;
-      result[idx] = arcEndPoint.x;
-      result[idx + 1] = arcEndPoint.y;
-    }
+    const arcEndIdx = segmentCount * 3;
+    result[arcEndIdx] = sourceRadius * Math.cos(targetAngle);
+    result[arcEndIdx + 1] = sourceRadius * Math.sin(targetAngle);
 
-    // Final line endpoint
     const lastIdx = (totalPoints - 1) * 3;
-    result[lastIdx] = lineEndPoint.x;
-    result[lastIdx + 1] = lineEndPoint.y;
+    result[lastIdx] = targetX;
+    result[lastIdx + 1] = targetY;
     result[lastIdx + 2] = 0;
 
     return result;
@@ -249,11 +264,24 @@ export class PolarPathInterpolator {
   setSegmentCount(count) {
     this.segmentCount = Math.max(4, Math.floor(count) || ANIMATED_ARC_SEGMENT_COUNT);
   }
+}
 
-  /**
-   * Clear angle cache (call when switching tree pairs)
-   */
-  resetCaches() {
-    this._angleCache.clear();
-  }
+function signedShortestAngle(from, to) {
+  const tau = Math.PI * 2;
+  let delta = (to - from) % tau;
+  if (delta > Math.PI) delta -= tau;
+  if (delta <= -Math.PI) delta += tau;
+  return delta;
+}
+
+function hasFinitePolarEndpoint(angle, radius) {
+  return Number.isFinite(angle) && Number.isFinite(radius);
+}
+
+function hasFinitePoint(x, y) {
+  return Number.isFinite(x) && Number.isFinite(y);
+}
+
+function emptyPath() {
+  return new Float32Array(0);
 }

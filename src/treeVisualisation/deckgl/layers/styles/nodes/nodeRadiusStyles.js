@@ -13,7 +13,9 @@ export function getNodeRadius(node, minRadius = 1, cached, helpers) {
 
   let radius = baseRadius;
 
-  if (node.isEntering || node.isExiting) {
+  if (node.isEntering) {
+    radius *= 1.35;
+  } else if (node.isExiting) {
     radius *= 0.7;
   } else if (cm) {
     const scale = densityScale !== undefined ? densityScale : 1.0;

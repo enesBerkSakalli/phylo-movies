@@ -49,7 +49,7 @@ export class LabelDataBuilder {
     const rotation = labelRotation(angleRad, needsFlip);
     const position = positionFromPolar(labelRadius, angleRad);
     const splitIndices = leaf.split_indices;
-    const splitKey = getSplitKey({ split_indices: splitIndices });
+    const splitKey = leaf.splitKey || getSplitKey({ split_indices: splitIndices });
     const labelKey = splitKey ? `label-${splitKey}` : null;
     if (!labelKey) {
       console.warn('[LabelDataBuilder] Skipping label without split_indices:', leaf.name);
