@@ -67,7 +67,7 @@ export function WorkspaceInitializationPage({ demoOnly = false }) {
   return (
     <TooltipProvider>
       <div className="fixed inset-0 overflow-y-auto overflow-x-hidden bg-background">
-        <main className="flex min-h-full w-full flex-col">
+        <main className="flex min-h-full w-full flex-col pb-8">
           <section className="border-b bg-card/70 px-4 py-4 sm:px-6 lg:px-8 xl:px-10">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex min-w-0 flex-wrap items-center gap-3">
@@ -138,7 +138,7 @@ export function WorkspaceInitializationPage({ demoOnly = false }) {
             <Tabs
               value={activeTab}
               onValueChange={setActiveTab}
-              className="flex min-w-0 flex-1 flex-col gap-0"
+              className="flex min-w-0 flex-col gap-0"
             >
               <section className="border-b border-border/60 px-4 py-3 sm:px-6 lg:px-8 xl:px-10">
                 <div className="flex min-w-0 justify-start">
@@ -149,7 +149,7 @@ export function WorkspaceInitializationPage({ demoOnly = false }) {
                 </div>
               </section>
 
-              <section className="min-w-0 flex-1 px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6 xl:px-10">
+              <section className="min-w-0 px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6 xl:px-10">
                 {alert && (
                   <Alert variant="destructive" className="mb-5">
                     <AlertTriangle />
@@ -160,13 +160,13 @@ export function WorkspaceInitializationPage({ demoOnly = false }) {
 
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(handleSubmit)}>
-                    <TabsContent value="upload" className="m-0">
+                    <TabsContent value="upload" className="m-0 flex-none">
                       <NewProjectTab disabled={disabled} reset={reset} />
                     </TabsContent>
                   </form>
                 </Form>
 
-                <TabsContent value="example" className="m-0">
+                <TabsContent value="example" className="m-0 flex-none">
                   <ExampleTab
                     loadingExample={loadingExample}
                     loadingExampleId={loadingExampleId}

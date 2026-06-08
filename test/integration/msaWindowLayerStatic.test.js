@@ -97,6 +97,52 @@ describe('MSA window layering', () => {
     expect(source).toContain('inline-flex w-[7.5rem] shrink-0');
   });
 
+  it('docks the MSA viewer status away from the top-left taxa labels', () => {
+    const source = fs.readFileSync(
+      path.join(process.cwd(), 'src/components/msa/MSAViewer.jsx'),
+      'utf8'
+    );
+
+    expect(source).toContain('absolute inset-x-3 top-3 z-10 flex justify-end');
+    expect(source).toContain('pointer-events-none');
+    expect(source).not.toContain('absolute left-3 top-3');
+  });
+
+  it('keeps the MSA viewer status overlay clippable', () => {
+    const source = fs.readFileSync(
+      path.join(process.cwd(), 'src/components/msa/MSAViewer.jsx'),
+      'utf8'
+    );
+
+    expect(source).toContain('statusClipped');
+    expect(source).toContain('Clip alignment status overlay');
+    expect(source).toContain('Show alignment status overlay');
+    expect(source).toContain('aria-pressed={clipped}');
+  });
+
+  it('renders MSA region as read-only toolbar context', () => {
+    const source = fs.readFileSync(
+      path.join(process.cwd(), 'src/components/msa/controls/MSARegionOverrides.jsx'),
+      'utf8'
+    );
+
+    expect(source).toContain('aria-label="Alignment region"');
+    expect(source).toContain('aria-live="polite"');
+    expect(source).not.toContain('Input');
+    expect(source).not.toContain('setMsaRegion');
+    expect(source).not.toContain('clearMsaRegion');
+  });
+
+  it('keeps shared tooltips above floating window UI', () => {
+    const source = fs.readFileSync(
+      path.join(process.cwd(), 'src/components/ui/tooltip.tsx'),
+      'utf8'
+    );
+
+    expect(source).toContain('z-[2200]');
+    expect(source).not.toContain('z-50 w-fit');
+  });
+
   it('shows source-target MSA window overlap as separated source and target lanes', () => {
     const source = fs.readFileSync(
       path.join(process.cwd(), 'src/components/msa/MSAViewer.jsx'),

@@ -62,10 +62,13 @@ describe('movie timeline player bar semantics', () => {
       playerBarSource.indexOf('className="interpolation-timeline-container"')
     );
     expect(playerBarSource).toContain('<TimelineScrollControls />');
-    expect(toolbarSource).toContain('opacity-45');
-    expect(toolbarSource).toContain('hover:opacity-100');
-    expect(toolbarSource).toContain('focus-within:opacity-100');
-    expect(toolbarSource).not.toContain('bg-muted/40');
+    expect(toolbarSource).toContain('TIMELINE_ZOOM_BUTTON_CLASS');
+    expect(toolbarSource).toContain('bg-background/85');
+    expect(toolbarSource).toContain('border border-border/50');
+    expect(toolbarSource).toContain('hover:bg-primary/10');
+    expect(toolbarSource).not.toContain('opacity-45');
+    expect(toolbarSource).not.toContain('hover:opacity-100');
+    expect(toolbarSource).not.toContain('focus-within:opacity-100');
   });
 
   it('renders timeline status in the movie player instead of the floating HUD', () => {
@@ -86,9 +89,7 @@ describe('movie timeline player bar semantics', () => {
     expect(playerBarSource).toContain('TimelineStatusStrip');
     expect(playerBarSource).toContain('selectOpenMsaViewer');
     expect(playerBarSource).toContain('Open alignment viewer');
-    expect(playerBarSource).toContain(
-      'grid-cols-[minmax(0,1fr)_auto] items-center gap-2'
-    );
+    expect(playerBarSource).toContain('grid-cols-[minmax(0,1fr)_auto] items-center gap-2');
     expect(playerBarSource).toContain('lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]');
     expect(playerBarSource).toContain('col-span-2 flex min-w-0 flex-wrap');
     expect(playerBarSource).toContain('lg:col-span-1');
