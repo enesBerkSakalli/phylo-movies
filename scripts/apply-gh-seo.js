@@ -25,7 +25,7 @@ const SOFTWARE_DOI = '10.5281/zenodo.20488924';
 const SOFTWARE_CONCEPT_DOI = '10.5281/zenodo.20488923';
 const SOFTWARE_DOI_URL = `https://doi.org/${SOFTWARE_DOI}`;
 const SOFTWARE_CONCEPT_DOI_URL = `https://doi.org/${SOFTWARE_CONCEPT_DOI}`;
-const PUBLICATION_TITLE = 'Animating Phylogenetic Trees from Sliding-Window Analyses';
+const PUBLICATION_TITLE = 'Phylo-Movies: Animating Phylogenetic Trees from Sliding-Window Analyses';
 const PUBLICATION_DATE = '2026-04-01';
 const PUBLICATION_JOURNAL = 'bioRxiv';
 const PUBLICATION_AUTHORS = [
@@ -398,7 +398,7 @@ function renderStaticLandingHtml() {
           <p style="${bodyStyle()}">Authors: ${PUBLICATION_AUTHORS.join(', ')}.</p>
           <p style="${bodyStyle()}">Publication DOI: <a href="${PUBLICATION_DOI_URL}">${PUBLICATION_DOI}</a></p>
           <p style="${bodyStyle()}">Software DOI: <a href="${SOFTWARE_DOI_URL}">${SOFTWARE_DOI}</a> (concept DOI: <a href="${SOFTWARE_CONCEPT_DOI_URL}">${SOFTWARE_CONCEPT_DOI}</a>)</p>
-          <pre style="white-space: pre-wrap; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb; padding: 16px; color: #111827; font-size: 13px; line-height: 1.55;">Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). Animating Phylogenetic Trees from Sliding-Window Analyses. bioRxiv. doi:10.64898/2026.04.01.715821</pre>
+          <pre style="white-space: pre-wrap; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb; padding: 16px; color: #111827; font-size: 13px; line-height: 1.55;">Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). Phylo-Movies: Animating Phylogenetic Trees from Sliding-Window Analyses. bioRxiv. doi:10.64898/2026.04.01.715821</pre>
           <pre style="white-space: pre-wrap; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb; padding: 16px; color: #111827; font-size: 13px; line-height: 1.55;">Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). Phylo-Movies: Interactive Phylogenetic Tree Interpolation and Visualization, version 0.92.0. Zenodo. doi:10.5281/zenodo.20488924</pre>
         </section>
 
