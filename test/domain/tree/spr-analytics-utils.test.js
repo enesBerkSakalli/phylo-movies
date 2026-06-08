@@ -489,12 +489,24 @@ describe('SPR analytics model', () => {
     expect(model.eventRows).toHaveLength(4);
     expect(model.movedSubtreeRecurrences[0]).toMatchObject({
       signature: '1',
+      rank: 1,
       count: 2,
       percentage: 50,
       representativeSourceInputTreeIndex: 0,
       representativeTargetInputTreeIndex: 1,
       representativeFrameRange: [1, 5],
     });
+    expect(
+      model.movedSubtreeRecurrences.map(({ signature, count, rank }) => ({
+        signature,
+        count,
+        rank,
+      }))
+    ).toEqual([
+      { signature: '1', count: 2, rank: 1 },
+      { signature: '2,3', count: 1, rank: 2 },
+      { signature: '4,5,6', count: 1, rank: 2 },
+    ]);
     expect(model.pairActivityRows[0].events[0]).toBe(model.eventRows[0]);
     expect(model.summary).toMatchObject({
       pairCount: 2,
@@ -667,6 +679,7 @@ describe('SPR analytics model', () => {
 
     expect(recurrences[0]).toMatchObject({
       signature: '1',
+      rank: 1,
       count: 2,
       totalPathHops: 5,
       averagePathHops: 2.5,

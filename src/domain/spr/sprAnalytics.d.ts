@@ -31,6 +31,7 @@ export interface SprMovedSubtreeRecurrence {
   contextSplitIndices: number[];
   highlightGroup: number[][];
   groupSize: number;
+  rank: number;
   count: number;
   totalPathHops: number;
   averagePathHops: number;

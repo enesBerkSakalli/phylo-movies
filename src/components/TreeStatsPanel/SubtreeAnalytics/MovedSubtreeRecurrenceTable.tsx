@@ -170,7 +170,7 @@ export const MovedSubtreeRecurrenceTable = ({
               ].join(' ')}
             >
               <td className="px-4 py-2 font-medium text-muted-foreground/60 tabular-nums text-right">
-                {idx + 1}
+                {item.rank ?? idx + 1}
               </td>
               <td className="px-4 py-2 font-semibold" title={subtreeLabel}>
                 <div className="max-w-64 truncate">{compactSubtreeLabel}</div>

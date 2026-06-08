@@ -62,7 +62,7 @@ export const createSprMovedSubtreeRecurrenceCsv = (
   const rows = recurrences.map((item, idx) => {
     const label = formatSubtreeLabel(item.splitIndices, leafNamesByIndex);
     return [
-      idx + 1,
+      item.rank ?? idx + 1,
       label,
       item.splitIndices.length,
       item.count,

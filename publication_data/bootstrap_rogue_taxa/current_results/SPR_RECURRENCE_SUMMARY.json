@@ -9,7 +9,7 @@
       "source_tree_file": "publication_data/bootstrap_rogue_taxa/current_results/dataset_24_source-24_taxa24_sites14190/ranked/all_trees_24_source-24_taxa24_sites14190.nwk",
       "generated_payload_file": "publication_data/precomputed/all_trees_24_source-24_taxa24_sites14190.movie.json",
       "recurrence_table": "publication_data/bootstrap_rogue_taxa/current_results/dataset_24_source-24_taxa24_sites14190/analysis/moved_subtree_recurrence_24_source-24_taxa24_sites14190.csv",
-      "recurrence_table_sha256": "923a9aef94c9619de084a8ce31b5d2a225cfc8877bf0113de688d692960392cf",
+      "recurrence_table_sha256": "f87b52d543f274459639274192907e1caf3bd7a30bedb78f479de9bc81c7b64c",
       "input_trees": 200,
       "tree_pairs": 199,
       "total_spr_moves": 403,
@@ -49,7 +49,7 @@
               "spr_move_count": 6,
               "percent_of_spr_moves": 1.488834,
               "tree_pair_count": 6,
-              "higher_than_percent_of_recurrent_rows": 37.037037,
+              "higher_than_percent_of_recurrent_rows": 33.333333,
               "split_indices": [
                 0,
                 1,
@@ -68,7 +68,7 @@
               "spr_move_count": 3,
               "percent_of_spr_moves": 0.744417,
               "tree_pair_count": 3,
-              "higher_than_percent_of_recurrent_rows": 25.925926,
+              "higher_than_percent_of_recurrent_rows": 14.814815,
               "split_indices": [
                 0,
                 1,
@@ -93,7 +93,7 @@
               "spr_move_count": 2,
               "percent_of_spr_moves": 0.496278,
               "tree_pair_count": 2,
-              "higher_than_percent_of_recurrent_rows": 11.111111,
+              "higher_than_percent_of_recurrent_rows": 3.703704,
               "split_indices": [
                 0,
                 1,
@@ -112,7 +112,7 @@
       "source_tree_file": "publication_data/bootstrap_rogue_taxa/current_results/dataset_125_source-125_taxa125_sites29149/ranked/all_trees_125_source-125_taxa125_sites29149.nwk",
       "generated_payload_file": "publication_data/precomputed/all_trees_125_source-125_taxa125_sites29149.movie.json",
       "recurrence_table": "publication_data/bootstrap_rogue_taxa/current_results/dataset_125_source-125_taxa125_sites29149/analysis/moved_subtree_recurrence_125_source-125_taxa125_sites29149.csv",
-      "recurrence_table_sha256": "fd3c28e64eb2cc365ec83b6751fa4c7ac5d7e2c645dfcb16a790a9c8f90d62de",
+      "recurrence_table_sha256": "808bf81d6236c84f8874b3b00a9553ca370a7b578a2eb56e0bd1afaad74fa7d4",
       "input_trees": 200,
       "tree_pairs": 199,
       "total_spr_moves": 1074,
@@ -121,7 +121,7 @@
         {
           "taxon": "Seq112",
           "top_match": {
-            "rank": 4,
+            "rank": 2,
             "moved_subtree": "Seq112",
             "taxa_count": 1,
             "spr_move_count": 91,
@@ -134,7 +134,7 @@
           },
           "matches": [
             {
-              "rank": 4,
+              "rank": 2,
               "moved_subtree": "Seq112",
               "taxa_count": 1,
               "spr_move_count": 91,
@@ -146,7 +146,7 @@
               ]
             },
             {
-              "rank": 26,
+              "rank": 24,
               "moved_subtree": "Seq104, Seq107, Seq109, Seq121, Seq122, Seq108, Seq123, Seq110, Seq111, Seq119, Seq112, Seq113, Seq118, Seq114, Seq115, Seq116, Seq117, Seq120",
               "taxa_count": 18,
               "spr_move_count": 8,
