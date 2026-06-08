@@ -19,6 +19,28 @@ const tree0 = {
 };
 const tree1 = tree0;
 const tree2 = tree0;
+const hydratedCompactTree = {
+  name: '',
+  length: 0,
+  split_indices: [0, 1],
+  splitKey: '095c976331251ba7',
+  children: [
+    {
+      name: 'taxon-a',
+      length: 0,
+      split_indices: [0],
+      splitKey: '0762ccdd00000000',
+      children: [],
+    },
+    {
+      name: 'taxon-b',
+      length: 0,
+      split_indices: [1],
+      splitKey: '0e3e5bbe31251ba7',
+      children: [],
+    },
+  ],
+};
 const compactTree = [
   0,
   0,
@@ -214,7 +236,7 @@ describe('phylo store dataset normalization', () => {
     const state = useAppStore.getState();
     expect(state.treePayloadList).toBe(movieData.interpolated_trees);
     expect(state.treeList).toHaveLength(movieData.interpolated_trees.length);
-    expect(state.treeList[0]).toEqual(movieData.interpolated_trees[0]);
+    expect(state.treeList[0]).toEqual(hydratedCompactTree);
     expect(state.timelineFrames).toBe(movieData.frames);
     expect(state.leafNamesByIndex).toEqual(['taxon-a', 'taxon-b']);
     expect(movieData).not.toHaveProperty(['sorted', 'leaves'].join('_'));
@@ -255,7 +277,7 @@ describe('phylo store dataset normalization', () => {
 
     const state = useAppStore.getState();
     expect(state.treeList).toHaveLength(3);
-    expect(state.treeList[0]).toEqual(tree0);
+    expect(state.treeList[0]).toEqual(hydratedCompactTree);
     expect(state.treeList[1]).toBeUndefined();
     expect(state.treePayloadList[1]).toBe(compactTree);
     expect(state.leafNamesByIndex).toEqual(['taxon-a', 'taxon-b']);
@@ -271,8 +293,8 @@ describe('phylo store dataset normalization', () => {
 
     const hydratedTree = state.ensureTreeHydrated(1);
 
-    expect(hydratedTree).toEqual(tree0);
-    expect(useAppStore.getState().treeList[1]).toEqual(tree0);
+    expect(hydratedTree).toEqual(hydratedCompactTree);
+    expect(useAppStore.getState().treeList[1]).toEqual(hydratedCompactTree);
     expect(useAppStore.getState().treeList).not.toBe(state.treeList);
     expect(phyloStoreModule.selectTreeHydrationStats(useAppStore.getState())).toMatchObject({
       totalTrees: 3,
@@ -343,13 +365,13 @@ describe('phylo store dataset normalization', () => {
     useAppStore.getState().prefetchTreeHydrationWindow(3, 1);
 
     const state = useAppStore.getState();
-    expect(state.treeList[0]).toEqual(tree0);
+    expect(state.treeList[0]).toEqual(hydratedCompactTree);
     expect(state.treeList[1]).toBeUndefined();
-    expect(state.treeList[2]).toEqual(tree0);
-    expect(state.treeList[3]).toEqual(tree0);
-    expect(state.treeList[4]).toEqual(tree0);
+    expect(state.treeList[2]).toEqual(hydratedCompactTree);
+    expect(state.treeList[3]).toEqual(hydratedCompactTree);
+    expect(state.treeList[4]).toEqual(hydratedCompactTree);
     expect(state.treeList[5]).toBeUndefined();
-    expect(state.treeList[6]).toEqual(tree0);
+    expect(state.treeList[6]).toEqual(hydratedCompactTree);
   });
 
   it('coalesces batch tree hydration into one treeList reference update', () => {
@@ -421,7 +443,11 @@ describe('phylo store dataset normalization', () => {
     const hydratedTrees = useAppStore.getState().ensureTreesHydrated([2, 3, 4]);
 
     unsubscribe();
-    expect(hydratedTrees).toEqual([tree0, tree0, tree0]);
+    expect(hydratedTrees).toEqual([
+      hydratedCompactTree,
+      hydratedCompactTree,
+      hydratedCompactTree,
+    ]);
     expect(treeListUpdates).toHaveLength(1);
     expect(treeListUpdates[0]).not.toBe(initialTreeList);
     expect(useAppStore.getState().treeHydrationVersion).toBe(1);
