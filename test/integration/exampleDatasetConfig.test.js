@@ -37,10 +37,10 @@ describe('example dataset configuration', () => {
       fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8')
     );
 
-    expect(packageJson.scripts.build).toContain('./scripts/copy-examples.sh dist');
+    expect(packageJson.scripts.build).toContain('node scripts/copy-examples.mjs dist');
     expect(packageJson.scripts['build:gh']).toContain('npm run fixtures:generate:ci');
     expect(packageJson.scripts['build:gh']).toContain('npm run build:gh:ci');
-    expect(packageJson.scripts['build:gh:ci']).toContain('./scripts/copy-examples.sh dist');
+    expect(packageJson.scripts['build:gh:ci']).toContain('node scripts/copy-examples.mjs dist');
     expect(packageJson.scripts['build:gh:ci']).not.toContain('fixtures:generate');
     expect(packageJson.scripts['fixtures:generate']).toContain('poetry run python');
     expect(packageJson.scripts['fixtures:check']).toContain('poetry run python');
@@ -230,7 +230,7 @@ describe('example dataset configuration', () => {
 
   it('keeps publication source artifacts copied into production builds', () => {
     const copyScript = fs.readFileSync(
-      path.join(process.cwd(), 'scripts/copy-examples.sh'),
+      path.join(process.cwd(), 'scripts/copy-examples.mjs'),
       'utf8'
     );
 
@@ -241,15 +241,15 @@ describe('example dataset configuration', () => {
       'rename_map.tsv',
       'recombination_norovirus/REGENERATE.md',
       'norovirus_334_iqtree_fast_sh_alrt_window1000_step500.nwk',
-      'current_results/window_tables/"*.tsv',
+      'current_results/window_tables',
       'paper_example.tree',
-      '"$SOURCE/precomputed/"*.movie.json',
+      "entry.endsWith('.movie.json')",
       'source_alignments/MANIFEST.tsv',
       'aberer_roguenarok_dataset_24_taxa24_sites14190.phy',
       'aberer_roguenarok_dataset_125_taxa125_sites29149.phy',
       'bootstrap_rogue_taxa/REGENERATE.md',
-      'topology_search_iqtree/current_results/"*.nwk',
-      'topology_search_iqtree/current_results/"*.tsv',
+      "entry.endsWith('.nwk')",
+      "entry.endsWith('.tsv')",
       'aberer_roguenarok_dataset_500_taxa500_sites1398.phy',
     ]) {
       expect(copyScript).toContain(expectedSourceArtifact);
