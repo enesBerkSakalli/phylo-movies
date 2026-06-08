@@ -59,9 +59,9 @@ jobs:
           path: |
             engine/BranchArchitect/.venv
             ~/.cache/pypoetry
-          key: ${{ runner.os }}-poetry-${{ hashFiles('engine/BranchArchitect/poetry.lock') }}
+          key: ${{ runner.os }}-${{ matrix.platform }}-poetry-${{ hashFiles('engine/BranchArchitect/poetry.lock') }}
           restore-keys: |
-            ${{ runner.os }}-poetry-
+            ${{ runner.os }}-${{ matrix.platform }}-poetry-
 
       - name: Install C compiler (Linux)
         if: matrix.os == 'ubuntu-latest'
