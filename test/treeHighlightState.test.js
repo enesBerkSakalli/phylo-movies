@@ -33,7 +33,9 @@ describe('tree highlight state', () => {
       ],
     };
     const cached = {
-      colorManager: {},
+      colorManager: {
+        getBranchColor: () => '#000000',
+      },
       highlightedSubtreeData: [[1, 2]],
       subtreeHighlightsEnabled: true,
       subtreeHighlightOpacity: undefined,
@@ -61,7 +63,6 @@ describe('tree highlight state', () => {
         isCompletedChangeEdge: () => false,
         isUpcomingChangeEdge: () => false,
         isLinkInActiveMoverSubtree: () => false,
-        getBranchColorWithHighlights: () => '#2196f3',
       },
       highlightedSubtreeData: [],
       subtreeHighlightsEnabled: true,

@@ -20,7 +20,9 @@ const clampValue = (value, fallback) => {
 const MIN_NODE_SIZE = 0.01;
 
 function getBranchAnnotationHelpText(option) {
-  if (!option || option.value === 'none') return 'Internal branch annotations are hidden.';
+  if (!option || option.value === 'none') {
+    return 'Tree labels are hidden; SPR analytics auto-select primary support: UFBoot, then SH-aLRT, then bootstrap.';
+  }
 
   const path = Array.isArray(option.path) ? option.path.join('.') : option.value;
   if (path === 'label.raw_internal') {
@@ -30,12 +32,12 @@ function getBranchAnnotationHelpText(option) {
     return 'Parsed numeric IQ-TREE SH-aLRT support. It can match Raw internal label when that source label contains only SH-aLRT.';
   }
   if (option.role === 'branch_support') {
-    return 'Parsed numeric branch-support value from the source tree annotations.';
+    return 'Parsed numeric branch-support value used for internal branch labels and SPR analytics.';
   }
   if (option.role === 'branch_support_context') {
     return 'Support metadata such as replicate counts, not a branch-support score.';
   }
-  return 'Dataset-provided annotation value for internal branches.';
+  return 'Dataset-provided annotation value used for internal branch labels and SPR analytics.';
 }
 
 export function GeometryDimensions({
@@ -170,11 +172,8 @@ export function GeometryDimensions({
               <Switch id="labels-toggle" checked={labelsVisible} onCheckedChange={onToggleLabels} />
             </div>
             <div className="flex flex-col gap-2">
-              <Label
-                htmlFor="branch-support-label-key"
-                className="text-xs font-medium text-foreground/80"
-              >
-                Branch Annotation
+              <Label htmlFor="branch-value-key" className="text-xs font-medium text-foreground/80">
+                Branch Value for Labels & SPR Analytics
               </Label>
               <Select
                 value={branchAnnotationLabelKey || 'none'}
@@ -184,20 +183,25 @@ export function GeometryDimensions({
                 }
               >
                 <SelectTrigger
-                  id="branch-support-label-key"
+                  id="branch-value-key"
                   className="h-8 text-xs bg-background/50 border-border/40"
                 >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    {(branchAnnotationOptions || [{ value: 'none', label: 'None' }]).map(
-                      (option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      )
-                    )}
+                    {(
+                      branchAnnotationOptions || [
+                        {
+                          value: 'none',
+                          label: 'Hide labels; analytics auto-selects primary support',
+                        },
+                      ]
+                    ).map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
                   </SelectGroup>
                 </SelectContent>
               </Select>

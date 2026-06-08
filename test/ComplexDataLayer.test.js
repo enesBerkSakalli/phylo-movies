@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { SYSTEM_TREE_COLORS } from '../src/constants/TreeColors.js';
+import { colorToRgb } from '../src/services/ui/colorUtils.js';
 import createTidyTreeLayout from '../src/treeVisualisation/layout/TidyTreeLayout.js';
 import { buildSubtreeConnectors } from '../src/treeVisualisation/deckgl/data/transforms/SubtreeConnectorBuilder.js';
 
@@ -244,11 +246,11 @@ describe('Complex Data Layer Integration', () => {
       expect(firstPt[2]).toBe(0);
       expect(midPt[2]).toBe(0);
 
-      // Check color alpha
-      // Active edges should usually be opaque or highlighted
-      // The builder assigns color via colorManager.
-      // Our mock returns [100,100,100,255].
-      expect(activeConns[0].color).toEqual([100, 100, 100, 255]);
+      // Active moving connectors use the configured solid subtree highlight by default.
+      expect(activeConns[0].color).toEqual([
+        ...colorToRgb(SYSTEM_TREE_COLORS.subtreeHighlightColor),
+        255,
+      ]);
     });
   });
 });

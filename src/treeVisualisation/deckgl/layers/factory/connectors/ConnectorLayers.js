@@ -14,7 +14,8 @@ const _connColorOut = [0, 0, 0, 0];
  * @returns {Layer|null} deck.gl PathLayer or null if no connectors
  */
 export function getConnectorsLayerProps(connectors, state) {
-  const { linkConnectionOpacity, colorVersion, connectorStrokeWidth } = state || {};
+  const { linkConnectionOpacity, colorVersion, taxaColorVersion, connectorStrokeWidth } =
+    state || {};
 
   return {
     data: connectors,
@@ -43,7 +44,7 @@ export function getConnectorsLayerProps(connectors, state) {
     updateTriggers: {
       getPath: [connectors],
       getWidth: [connectors.length, connectorStrokeWidth],
-      getColor: [connectors.length, linkConnectionOpacity, colorVersion],
+      getColor: [connectors.length, linkConnectionOpacity, colorVersion, taxaColorVersion],
     },
   };
 }

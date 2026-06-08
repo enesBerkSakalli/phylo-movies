@@ -64,7 +64,7 @@ function resolveBaseNodeColor(nodeData, cached, cm, highlight = null) {
   if (isHighlighted) {
     return getHighlightColor(nodeData, cached);
   }
-  return colorToRgb(cm?.getNodeColor?.(nodeData) || '#000000');
+  return colorToRgb(cm?.getNodeColor?.(nodeData) || SYSTEM_TREE_COLORS.defaultColor);
 }
 
 export function getNodeColor(node, cached, helpers) {
@@ -194,7 +194,7 @@ export function getNodeBorderColor(node, cached, helpers) {
   } else {
     // Standard Base Color (usually black stroke)
     // "Visually Highlighted" checks are implicitly covered by isActive/isHighlighted above
-    rgb = colorToRgb(SYSTEM_TREE_COLORS.strokeColor || '#000000');
+    rgb = colorToRgb(SYSTEM_TREE_COLORS.strokeColor || SYSTEM_TREE_COLORS.defaultColor);
   }
 
   // 3. Opacity Calculation
@@ -269,9 +269,9 @@ export function getNodeBasedRgba(entity, baseEntityOpacity, cached, helpers) {
   if (isActive) {
     rgb = getPivotEdgeColor();
   } else if (isHighlighted) {
-    rgb = colorToRgb(getHighlightColor(node, cached) || '#000000');
+    rgb = colorToRgb(getHighlightColor(node, cached) || SYSTEM_TREE_COLORS.defaultColor);
   } else {
-    rgb = colorToRgb(cm?.getNodeColor?.(node) || '#000000');
+    rgb = colorToRgb(cm?.getNodeColor?.(node) || SYSTEM_TREE_COLORS.defaultColor);
   }
 
   let opacity = helpers.getBaseOpacity(baseEntityOpacity);

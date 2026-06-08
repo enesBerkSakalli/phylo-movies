@@ -1,10 +1,10 @@
 /**
  * TreeColorManager - Centralized color management system for phylogenetic tree visualization
  *
- * Handles threetypes of coloring:
+ * Handles two types of color source plus highlight membership:
  * 1. Base coloring (monophyletic groups, taxa colors)
  * 2. Pivot edge highlighting (blue) - edges from lattice tracking
- * 3. Subtree highlighting - from computed subtrees
+ * 3. Subtree membership/dimming sets; display color is resolved by layer styles
  *
  * Used by LayerStyles.js to provide colors for DeckGL layers
  */
@@ -59,25 +59,6 @@ export class TreeColorManager {
   // ===========================
 
   /**
-   * Get branch color with highlighting logic
-   * Priority: subtree highlight > pivot edge > base color
-   * @param {Object} linkData - Normalized link data
-   * @returns {string} Hex color code
-   */
-  getBranchColorWithHighlights(linkData) {
-    const isHighlightedSubtree = this.isLinkInHighlightedSubtreeFast(linkData);
-    const isPivotEdge = isLinkPivotEdge(linkData, this.currentPivotEdges);
-
-    if (isHighlightedSubtree) {
-      return SYSTEM_TREE_COLORS.subtreeHighlightColor;
-    } else if (isPivotEdge) {
-      return SYSTEM_TREE_COLORS.pivotEdgeColor;
-    } else {
-      return getBaseBranchColor(linkData, this.monophyleticColoringEnabled);
-    }
-  }
-
-  /**
    * Get branch color for the inner/main line
    * Pivot edges get highlight color, highlighted branches keep base color
    * @param {Object} linkData - Normalized link data
@@ -108,23 +89,21 @@ export class TreeColorManager {
   // ========================
 
   /**
-   * Get node color with highlighting logic
+   * Get node color with pivot-edge precedence.
+   * Subtree highlight display colors are resolved by deck.gl layer styles.
    * @param {Object} nodeData - Node data
    * @param {Array} pivotEdges - Pivot edges (optional)
    * @returns {string} Hex color code
    */
   getNodeColor(nodeData, pivotEdges = []) {
     const edgeSet = toSplitSet(pivotEdges, this.currentPivotEdges);
-    const isHighlightedSubtree = this.isNodeInHighlightedSubtreeFast(nodeData);
     const isPivotEdgeNode = nodeOrParentMatchesPivotEdge(nodeData, edgeSet);
 
-    if (isHighlightedSubtree) {
-      return SYSTEM_TREE_COLORS.subtreeHighlightColor;
-    } else if (isPivotEdgeNode) {
+    if (isPivotEdgeNode) {
       return SYSTEM_TREE_COLORS.pivotEdgeColor;
-    } else {
-      return getBaseNodeColor(nodeData, this.monophyleticColoringEnabled);
     }
+
+    return getBaseNodeColor(nodeData, this.monophyleticColoringEnabled);
   }
 
   /**

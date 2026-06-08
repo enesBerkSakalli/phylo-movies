@@ -1,5 +1,6 @@
 import { useAppStore } from '../../../state/phyloStore/store.js';
 import { selectLeafNamesByIndex } from '../../../state/phyloStore/selectors/treeSelectors.js';
+import { SYSTEM_TREE_COLORS } from '../../../constants/TreeColors.js';
 import { calculateTaxaVisualScale } from '../../utils/visualScale.js';
 import { resetTaxonColorCache } from '../../systems/tree_color/monophyleticColoring.js';
 import {
@@ -101,7 +102,8 @@ export class LayerStyles {
         dashingEnabled: state.pivotEdgeDashingEnabled ?? true,
         upcomingChangesEnabled: state.upcomingChangesEnabled ?? false,
         highlightColorMode: state.highlightColorMode ?? 'solid',
-        subtreeHighlightColor: state.subtreeHighlightColor ?? '#10b981',
+        subtreeHighlightColor:
+          state.subtreeHighlightColor ?? SYSTEM_TREE_COLORS.subtreeHighlightColor,
         linkConnectionOpacity: state.linkConnectionOpacity ?? 0.6,
         metricScale,
         readableMetricScale,

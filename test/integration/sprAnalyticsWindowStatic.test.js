@@ -38,7 +38,7 @@ describe('SPR analytics window shell', () => {
     );
 
     expect(ANALYTICS_WINDOW_BOUNDS.minWidth).toBeGreaterThanOrEqual(620);
-    expect(SPR_MOVE_EVENT_TABLE_COPY.minWidthClassName).toBe('min-w-[1040px]');
+    expect(SPR_MOVE_EVENT_TABLE_COPY.minWidthClassName).toBe('min-w-[1120px]');
     expect(SPR_MOVE_EVENT_TABLE_COPY.metrics.rfDistance).toBe('RF Distance');
     expect(SPR_MOVE_EVENT_TABLE_COPY.metrics.weightedRf).toBe('Weighted RF');
     expect(tableSource).toContain('VIRTUAL_ROW_HEIGHT');
@@ -51,8 +51,12 @@ describe('SPR analytics window shell', () => {
     expect(tableSource).toContain('SelectTrigger');
     expect(tableSource).toContain('branchValueThresholdInput');
     expect(tableSource).toContain('onBranchValueThresholdChange');
+    expect(tableSource).toContain('selectedBranchValueLabel');
+    expect(tableSource).toContain('onSelectedBranchValueChange');
     expect(tableSource).toContain('sourceMovedSubtreeBranchValue');
+    expect(tableSource).toContain('sourceAttachmentSupport');
     expect(tableSource).toContain('sourceParentBranchValue');
+    expect(tableSource).toContain('branchValueRows.attachmentSupport');
     expect(tableSource).toContain('branchValueRows.parentBranch');
     expect(tableSource).not.toContain('bg-muted/40 text-muted-foreground font-bold sticky');
   });
@@ -74,18 +78,22 @@ describe('SPR analytics window shell', () => {
     expect(tableSource).toContain('queryTerms.every((term) => searchText.includes(term))');
     expect(SPR_MOVE_EVENT_TABLE_COPY.searchLabel).toBe('Search SPR moves');
     expect(SPR_MOVE_EVENT_TABLE_COPY.noSearchResults).toBe('No SPR moves match these filters.');
-    expect(SPR_MOVE_EVENT_TABLE_COPY.branchValueThresholdLabel).toBe('Value threshold');
+    expect(SPR_MOVE_EVENT_TABLE_COPY.selectedValueLabel).toBe('Value shown');
+    expect(SPR_MOVE_EVENT_TABLE_COPY.selectedValueChangePath).toBe(
+      'Change in Geometry & Labels > Branch Value for Labels & SPR Analytics'
+    );
+    expect(SPR_MOVE_EVENT_TABLE_COPY.branchValueThresholdLabel).toBe('Selected-value threshold');
     expect(SPR_MOVE_EVENT_TABLE_COPY.subtreeValueFilterLabel).toBe(
-      'Filter SPR moves by moved-subtree branch value category'
+      'Filter SPR moves by moved-split selected-value category'
     );
     expect(SPR_MOVE_EVENT_TABLE_COPY.contextValueFilterLabel).toBe(
-      'Filter SPR moves by parent-branch value category'
+      'Filter SPR moves by nearest-parent selected-value category'
     );
     expect(SPR_MOVE_EVENT_TABLE_COPY.branchValueFilters.bothHigh).toBe(
-      '{target} both >= {threshold}'
+      '{target}: source and target >= {threshold}'
     );
     expect(SPR_MOVE_EVENT_TABLE_COPY.branchValueClasses.bothHigh).toBe(
-      'moved subtree values both >= {threshold}'
+      'moved-split values both >= {threshold}'
     );
   });
 

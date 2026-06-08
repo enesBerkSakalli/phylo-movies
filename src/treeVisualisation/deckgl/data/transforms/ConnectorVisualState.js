@@ -13,6 +13,8 @@ export function resolveConnectorVisualState(params) {
     colorManager,
     subtreeHighlightsEnabled,
     linkConnectionOpacity,
+    highlightColorMode,
+    subtreeHighlightColor,
   } = params;
 
   const colorEntry = resolveConnectorColorEntry(
@@ -32,7 +34,9 @@ export function resolveConnectorVisualState(params) {
     movementState.isMoving,
     colorManager,
     subtreeHighlightsEnabled,
-    linkConnectionOpacity
+    linkConnectionOpacity,
+    highlightColorMode,
+    subtreeHighlightColor
   );
 
   return {

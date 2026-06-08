@@ -8,6 +8,7 @@ import {
   getBaseBranchColor,
   getBaseNodeColor,
 } from '../src/treeVisualisation/systems/tree_color/monophyleticColoring.js';
+import { TreeColorManager } from '../src/treeVisualisation/systems/TreeColorManager.js';
 import { getConnectorsLayerProps } from '../src/treeVisualisation/deckgl/layers/factory/connectors/ConnectorLayers.js';
 import { getExtensionsLayerProps } from '../src/treeVisualisation/deckgl/layers/factory/extensions/ExtensionLayers.js';
 import {
@@ -70,6 +71,20 @@ describe('normalized render contract', () => {
     expect(getBaseBranchColor(monophyleticBranch, true)).toBe('#ff0000');
     expect(getBaseBranchColor(mixedBranch, true)).not.toBe('#ff0000');
     expect(getBaseNodeColor(monophyleticBranch, true)).toBe('#ff0000');
+  });
+
+  it('keeps subtree highlight display color out of the color manager base API', () => {
+    const manager = new TreeColorManager();
+    manager.updateHighlightedSubtrees([new Set([0])]);
+
+    const highlightedLeaf = {
+      split_indices: [0],
+      name: 'Taxon_A',
+      isLeaf: true,
+    };
+
+    expect(manager.getNodeColor(highlightedLeaf)).toBe('#ff0000');
+    expect(manager.getBranchColor(highlightedLeaf)).toBe('#ff0000');
   });
 
   it('passes normalized extension data to style accessors', () => {
@@ -175,6 +190,17 @@ describe('normalized render contract', () => {
 
     expect(props.getColor(activeConnector)).toEqual([255, 0, 0, 255]);
     expect(props.getColor(passiveConnector)).toEqual([0, 0, 255, 64]);
+  });
+
+  it('invalidates comparison connector colors when taxa colors change', () => {
+    const connectors = [{ path: new Float32Array([0, 0, 0, 1, 1, 0]), color: [255, 0, 0, 255] }];
+    const props = getConnectorsLayerProps(connectors, {
+      colorVersion: 3,
+      taxaColorVersion: 7,
+      linkConnectionOpacity: 0.6,
+    });
+
+    expect(props.updateTriggers.getColor).toEqual([connectors.length, 0.6, 3, 7]);
   });
 
   it('tracks connector path data identity for PathLayer updates', () => {

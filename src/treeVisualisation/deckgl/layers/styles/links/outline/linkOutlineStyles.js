@@ -89,7 +89,7 @@ export function getLinkOutlineColor(link, cached) {
       hasOutline = true;
     } else if (highlight.role === TREE_HIGHLIGHT_ROLE.PIVOT_EDGE) {
       // Current Pivot Edge: keep the pulse visible even at the trough.
-      rgb = colorToRgb(cm.getBranchColorWithHighlights(link));
+      rgb = colorToRgb(SYSTEM_TREE_COLORS.pivotEdgeColor);
       glowOpacity = Math.round(
         baseOpacity * (PIVOT_GLOW_MIN_OPACITY + PIVOT_GLOW_OPACITY_RANGE * pulseOpacity)
       );

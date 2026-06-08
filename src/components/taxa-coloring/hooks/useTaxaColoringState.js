@@ -111,13 +111,15 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
     forceUpdate();
   }, []); // Run once on mount
 
-  // Sync CSV group colors when csvGroups change (new file loaded or column changed)
+  // Sync CSV group colors only while CSV assignments are active. Pattern and CSV
+  // modes share the group color map, so hidden CSV state must not overwrite the
+  // active pattern assignment.
   useEffect(() => {
-    if (csvGroups.length > 0) {
+    if (mode === 'csv' && csvGroups.length > 0) {
       syncGroupColors(mgr, csvGroups);
       forceUpdate();
     }
-  }, [csvGroups, mgr, forceUpdate]);
+  }, [mode, csvGroups, mgr, forceUpdate]);
 
   const applyScheme = useCallback(
     (id, targetMode) => {

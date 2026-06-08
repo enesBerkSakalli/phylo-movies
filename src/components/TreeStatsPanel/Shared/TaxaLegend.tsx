@@ -1,6 +1,7 @@
 import React from 'react';
 import { Palette, ChevronDown } from 'lucide-react';
 import { selectTaxaGrouping, useAppStore } from '../../../state/phyloStore/store.js';
+import { SYSTEM_TREE_COLORS } from '../../../constants/TreeColors.js';
 import {
   SidebarMenuItem,
   SidebarMenuButton,
@@ -62,7 +63,8 @@ export const TaxaGroupsLegend: React.FC = () => {
                   aria-label="Taxa color groups list"
                 >
                   {groupNames.map((name) => {
-                    const color = (groupColorMap && groupColorMap[name]) || '#666';
+                    const color =
+                      (groupColorMap && groupColorMap[name]) || SYSTEM_TREE_COLORS.defaultColor;
                     return (
                       <div
                         key={name}

@@ -28,6 +28,8 @@ export function buildSubtreeConnectors(options) {
     frameIndex,
     subtreeHighlightsEnabled = true,
     linkConnectionOpacity = 0.6,
+    highlightColorMode = 'solid',
+    subtreeHighlightColor,
     leftCenter = DEFAULT_CENTER,
     rightCenter = DEFAULT_CENTER,
     leftRadius,
@@ -52,6 +54,8 @@ export function buildSubtreeConnectors(options) {
     colorManager,
     subtreeHighlightsEnabled,
     linkConnectionOpacity,
+    highlightColorMode,
+    subtreeHighlightColor,
   });
   if (!rawConnections.length) {
     return [];

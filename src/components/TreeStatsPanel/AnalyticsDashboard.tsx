@@ -29,13 +29,19 @@ import {
   selectMsaWindowSize,
   selectPairMetrics,
   selectPairs,
+  selectSetBranchAnnotationLabelKey,
   selectTemporalEvents,
   selectTimelineFrames,
+  selectTreeControllers,
   useAppStore,
 } from '../../state/phyloStore/store.js';
 import { buildSprAnalyticsModel } from '../../domain/spr/sprAnalytics';
 import type { SprAnalyticsModel } from '../../domain/spr/sprAnalytics';
-import { buildBranchSupportIndex } from '../../domain/tree/branchSupportIndex';
+import {
+  buildBranchSupportIndex,
+  getAvailableBranchAnnotationOptions,
+  PRIMARY_BRANCH_SUPPORT_PATHS,
+} from '../../domain/tree/branchSupportIndex';
 import { Button } from '../ui/button';
 import {
   fitFloatingWindowRect,
@@ -69,6 +75,48 @@ const fitAnalyticsWindowRect = (rect: { x: number; y: number; width: number; hei
 const getInitialWindowRect = () =>
   toFloatingWindowRect(fitAnalyticsWindowRect({ x: 280, y: 40, width: 900, height: 720 }));
 const DEFAULT_BRANCH_VALUE_THRESHOLD = 70;
+
+const getOptionPathKey = (option: { path?: string[]; value: string }) =>
+  Array.isArray(option.path) && option.path.length > 0 ? option.path.join('.') : option.value;
+
+const resolveSelectedBranchValueOption = <
+  T extends { value: string; label: string; role?: string; path?: string[] },
+>(
+  options: T[],
+  valueKey?: string
+): T | { value: string; label: string; role: string; path: string[] } | undefined => {
+  if (valueKey && valueKey !== 'none') {
+    return options.find((option) => option.value === valueKey) ?? options[0];
+  }
+
+  const supportOptions = options.filter((option) => option.role === 'branch_support');
+  for (const supportPath of PRIMARY_BRANCH_SUPPORT_PATHS) {
+    const supportOption = supportOptions.find((option) => getOptionPathKey(option) === supportPath);
+    if (supportOption) {
+      return {
+        ...supportOption,
+        value: 'none',
+        label: `Auto primary support: ${supportOption.label}`,
+      };
+    }
+  }
+
+  const firstSupportOption = supportOptions[0];
+  if (firstSupportOption) {
+    return {
+      ...firstSupportOption,
+      value: 'none',
+      label: `Auto primary support: ${firstSupportOption.label}`,
+    };
+  }
+
+  return {
+    value: 'none',
+    label: 'Auto primary support: no support field detected',
+    role: 'control',
+    path: [],
+  };
+};
 
 export const AnalyticsDashboard = ({
   isOpen = false,
@@ -196,6 +244,8 @@ const AnalyticsDashboardBody = () => {
     msaColumnCount,
     selectedMovedSubtreeIndices,
     branchAnnotationValueKey,
+    setBranchAnnotationLabelKey,
+    treeControllers,
   } = useAppStore(
     useShallow((state) => ({
       pairs: selectPairs(state),
@@ -211,6 +261,8 @@ const AnalyticsDashboardBody = () => {
       msaColumnCount: selectMsaColumnCount(state),
       selectedMovedSubtreeIndices: selectMarkedNodes(state),
       branchAnnotationValueKey: selectBranchAnnotationLabelKey(state),
+      setBranchAnnotationLabelKey: selectSetBranchAnnotationLabelKey(state),
+      treeControllers: selectTreeControllers(state),
     }))
   );
   const windowRangeOptions = useMemo(
@@ -221,6 +273,14 @@ const AnalyticsDashboardBody = () => {
       msaColumnCount,
     }),
     [hasMsa, msaColumnCount, msaStepSize, msaWindowSize]
+  );
+  const branchAnnotationOptions = useMemo(
+    () => getAvailableBranchAnnotationOptions(interpolatedTrees),
+    [interpolatedTrees]
+  );
+  const selectedBranchValueOption = useMemo(
+    () => resolveSelectedBranchValueOption(branchAnnotationOptions, branchAnnotationValueKey),
+    [branchAnnotationOptions, branchAnnotationValueKey]
   );
 
   const branchSupportIndex = useMemo(
@@ -256,6 +316,16 @@ const AnalyticsDashboardBody = () => {
   }, [pairs, sprOptions]);
 
   const { eventRows: sprMoveEvents, movedSubtreeRecurrences, summary: sprSummary } = analyticsModel;
+
+  const handleBranchValueSelectionChange = React.useCallback(
+    async (valueKey: string) => {
+      setBranchAnnotationLabelKey(valueKey);
+      for (const controller of treeControllers) {
+        await controller.renderAllElements();
+      }
+    },
+    [setBranchAnnotationLabelKey, treeControllers]
+  );
 
   const handleExportRecurrenceCsv = () => {
     const recurrenceCsvContent = createSprMovedSubtreeRecurrenceCsv(
@@ -347,6 +417,10 @@ const AnalyticsDashboardBody = () => {
                 branchValueThreshold={branchValueThreshold}
                 onBranchValueThresholdChange={setBranchValueThreshold}
                 windowRangeOptions={windowRangeOptions}
+                branchValueOptions={branchAnnotationOptions}
+                selectedBranchValueKey={branchAnnotationValueKey || 'none'}
+                selectedBranchValueOption={selectedBranchValueOption}
+                onSelectedBranchValueChange={handleBranchValueSelectionChange}
               />
             </div>
           </AnalyticsSectionCard>
@@ -380,6 +454,10 @@ const AnalyticsDashboardBody = () => {
             <MovedSubtreeRecurrenceTable
               recurrences={movedSubtreeRecurrences}
               leafNamesByIndex={leafNamesByIndex}
+              branchValueOptions={branchAnnotationOptions}
+              selectedBranchValueKey={branchAnnotationValueKey || 'none'}
+              selectedBranchValueLabel={selectedBranchValueOption?.label}
+              onSelectedBranchValueChange={handleBranchValueSelectionChange}
             />
           </AnalyticsSectionCard>
         </TabsContent>
