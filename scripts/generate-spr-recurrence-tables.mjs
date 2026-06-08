@@ -153,7 +153,7 @@ function aggregateRecurrences(payload) {
   const total = rows.reduce((sum, row) => sum + row.spr_move_count, 0);
   const nRows = rows.length;
 
-  return rows.map((row, index) => {
+  return rows.map((row) => {
     const rank = 1 + rows.filter((other) => other.spr_move_count > row.spr_move_count).length;
     return {
       rank,
