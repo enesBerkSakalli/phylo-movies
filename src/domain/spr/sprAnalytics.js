@@ -132,6 +132,17 @@ function buildSprMoveEventRowsFromContext(pairs, options, context) {
     interpolatedTrees,
   } = options;
   const { metricByPairId, eventIndex } = context;
+  const topologySnapshotCache = new Map();
+
+  const getMovedSubtreeTopologySnapshot = (frameIndex, splitIndices) => {
+    const tree = interpolatedTrees?.[frameIndex];
+    const splitSignature = getSubtreeSignature(splitIndices) ?? '';
+    const cacheKey = `${frameIndex}:${splitSignature}`;
+    if (!topologySnapshotCache.has(cacheKey)) {
+      topologySnapshotCache.set(cacheKey, buildMovedSubtreeTopologySnapshot(tree, splitIndices));
+    }
+    return topologySnapshotCache.get(cacheKey);
+  };
 
   return pairs
     .flatMap((pair, entryIndex) => {
@@ -217,12 +228,12 @@ function buildSprMoveEventRowsFromContext(pairs, options, context) {
               splitIndices,
               branchAnnotationValueKey
             ) ?? null;
-          const sourceMovedSubtreeTopology = buildMovedSubtreeTopologySnapshot(
-            interpolatedTrees?.[pair.source_frame_index],
+          const sourceMovedSubtreeTopology = getMovedSubtreeTopologySnapshot(
+            pair.source_frame_index,
             splitIndices
           );
-          const destinationMovedSubtreeTopology = buildMovedSubtreeTopologySnapshot(
-            interpolatedTrees?.[pair.target_frame_index],
+          const destinationMovedSubtreeTopology = getMovedSubtreeTopologySnapshot(
+            pair.target_frame_index,
             splitIndices
           );
 
@@ -328,6 +339,7 @@ function aggregateMovedSubtreeRows(eventRows) {
         destinationMovedSubtreeNewick: '',
         sourceParentBranchValues: [],
         destinationParentBranchValues: [],
+        parentBranchValueLabel: '',
         lowParentBranchValueCount: 0,
         missingParentBranchValueCount: 0,
         representativeSourceInputTreeIndex: event.sourceInputTreeIndex,
@@ -362,6 +374,10 @@ function aggregateMovedSubtreeRows(eventRows) {
     if (sourceParentValue !== null) movedSubtree.sourceParentBranchValues.push(sourceParentValue);
     if (destinationParentValue !== null) {
       movedSubtree.destinationParentBranchValues.push(destinationParentValue);
+    }
+    if (!movedSubtree.parentBranchValueLabel) {
+      movedSubtree.parentBranchValueLabel =
+        event.sourceParentBranchValue?.label ?? event.destinationParentBranchValue?.label ?? '';
     }
     if (event.contextBranchValueClass === 'low_value') {
       movedSubtree.lowParentBranchValueCount++;

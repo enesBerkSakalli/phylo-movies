@@ -73,8 +73,6 @@ export function buildSprMoveEventSearchText(
     event.destinationParentBranchValue?.displayValue ?? '',
     event.sourceParentBranchValue?.label ?? '',
     event.destinationParentBranchValue?.label ?? '',
-    event.sourceMovedSubtreeNewick ?? '',
-    event.destinationMovedSubtreeNewick ?? '',
     ...(event.highlightGroup ?? []).map((group) =>
       formatCompactSubtreeSearchLabel(group, leafNamesByIndex)
     ),

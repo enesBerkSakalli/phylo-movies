@@ -24,30 +24,35 @@ const baseEvent: SprMoveEventRow = {
   totalPathLength: 0.42,
   rfDistance: 0.75,
   weightedRfDistance: 1.25,
+  sourceMovedSubtreeNewick: '(UNSEARCHABLE_SOURCE_NEWICK:1);',
+  destinationMovedSubtreeNewick: '(UNSEARCHABLE_TARGET_NEWICK:1);',
 };
 
 describe('SPR move event search text', () => {
   it('indexes event identifiers, taxa names, attachments, and metrics', () => {
-    const text = buildSprMoveEventSearchText(baseEvent, [
-      'Root',
-      'Anchor',
-      'Ostrich',
-      'Tinamous',
-      'Moa',
-      'Kiwi',
-      'Rhea',
-      'ContextTaxon',
-      'SourceA',
-      'SourceB',
-      'DestinationA',
-      'DestinationB',
-    ],
-    {
-      hasMsa: true,
-      msaStepSize: 50,
-      msaWindowSize: 100,
-      msaColumnCount: 1000,
-    });
+    const text = buildSprMoveEventSearchText(
+      baseEvent,
+      [
+        'Root',
+        'Anchor',
+        'Ostrich',
+        'Tinamous',
+        'Moa',
+        'Kiwi',
+        'Rhea',
+        'ContextTaxon',
+        'SourceA',
+        'SourceB',
+        'DestinationA',
+        'DestinationB',
+      ],
+      {
+        hasMsa: true,
+        msaStepSize: 50,
+        msaWindowSize: 100,
+        msaColumnCount: 1000,
+      }
+    );
 
     expect(text).toContain('spr-12');
     expect(text).toContain('pair_2_3');
@@ -60,6 +65,8 @@ describe('SPR move event search text', () => {
     expect(text).toContain('4-8');
     expect(text).toContain('0.75');
     expect(text).toContain('1.25');
+    expect(text).not.toContain('unsearchable_source_newick');
+    expect(text).not.toContain('unsearchable_target_newick');
     expect(text).not.toContain('measured');
     expect(text).not.toContain('inferred');
   });
