@@ -401,10 +401,22 @@ function aggregateMovedSubtreeRows(eventRows) {
 
   const totalMoveEvents = Array.from(freqMap.values()).reduce((sum, item) => sum + item.count, 0);
 
-  return Array.from(freqMap.values())
-    .sort((a, b) => b.count - a.count)
-    .map((item) => ({
+  const sortedMovedSubtrees = Array.from(freqMap.values()).sort((a, b) => {
+    if (b.count !== a.count) return b.count - a.count;
+    return a.signature.localeCompare(b.signature, 'en', { numeric: true });
+  });
+  let previousCount = null;
+  let currentRank = 0;
+
+  return sortedMovedSubtrees.map((item, index) => {
+    if (item.count !== previousCount) {
+      currentRank = index + 1;
+      previousCount = item.count;
+    }
+
+    return {
       ...item,
+      rank: currentRank,
       percentage: totalMoveEvents > 0 ? (item.count / totalMoveEvents) * 100 : 0,
       averagePathHops: item.count > 0 ? item.totalPathHops / item.count : 0,
       averagePathLength: item.count > 0 ? item.totalPathLength / item.count : 0,
@@ -418,7 +430,8 @@ function aggregateMovedSubtreeRows(eventRows) {
       ]).size,
       sourceParentBranchValueMedian: medianNumber(item.sourceParentBranchValues),
       destinationParentBranchValueMedian: medianNumber(item.destinationParentBranchValues),
-    }));
+    };
+  });
 }
 
 /**

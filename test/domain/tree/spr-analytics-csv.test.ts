@@ -44,6 +44,7 @@ describe('createSprMovedSubtreeRecurrenceCsv', () => {
       [
         {
           signature: '1,2',
+          rank: 2,
           splitIndices: [1, 2],
           count: 3,
           percentage: 50,
@@ -66,7 +67,7 @@ describe('createSprMovedSubtreeRecurrenceCsv', () => {
     );
     const row = csv.split('\n')[1];
 
-    expect(row).toContain('2');
+    expect(row.split(',')[0]).toBe('2');
     expect(row).toContain('Bootstrap');
     expect(row).toContain('52.500000');
     expect(row).toContain('84.000000');

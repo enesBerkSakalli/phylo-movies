@@ -14,8 +14,7 @@ const DATASETS = [
     fixture: 'demo-bootstrap-24',
     sourceTree:
       'publication_data/bootstrap_rogue_taxa/current_results/dataset_24_source-24_taxa24_sites14190/ranked/all_trees_24_source-24_taxa24_sites14190.nwk',
-    payload:
-      'publication_data/precomputed/all_trees_24_source-24_taxa24_sites14190.movie.json',
+    payload: 'publication_data/precomputed/all_trees_24_source-24_taxa24_sites14190.movie.json',
     output:
       'publication_data/bootstrap_rogue_taxa/current_results/dataset_24_source-24_taxa24_sites14190/analysis/moved_subtree_recurrence_24_source-24_taxa24_sites14190.csv',
     targets: ['Ostrich'],
@@ -25,8 +24,7 @@ const DATASETS = [
     fixture: 'demo-bootstrap-125',
     sourceTree:
       'publication_data/bootstrap_rogue_taxa/current_results/dataset_125_source-125_taxa125_sites29149/ranked/all_trees_125_source-125_taxa125_sites29149.nwk',
-    payload:
-      'publication_data/precomputed/all_trees_125_source-125_taxa125_sites29149.movie.json',
+    payload: 'publication_data/precomputed/all_trees_125_source-125_taxa125_sites29149.movie.json',
     output:
       'publication_data/bootstrap_rogue_taxa/current_results/dataset_125_source-125_taxa125_sites29149/analysis/moved_subtree_recurrence_125_source-125_taxa125_sites29149.csv',
     targets: ['Seq112'],
@@ -67,7 +65,9 @@ function ensurePayloads() {
   ];
   const result = spawnSync(npm, args, { cwd: ROOT, stdio: 'inherit' });
   if (result.status !== 0) {
-    throw new Error(`failed to generate missing fixture payloads for ${missing.map((d) => d.dataset).join(', ')}`);
+    throw new Error(
+      `failed to generate missing fixture payloads for ${missing.map((d) => d.dataset).join(', ')}`
+    );
   }
 }
 
@@ -154,7 +154,7 @@ function aggregateRecurrences(payload) {
   const nRows = rows.length;
 
   return rows.map((row, index) => {
-    const rank = index + 1;
+    const rank = 1 + rows.filter((other) => other.spr_move_count > row.spr_move_count).length;
     return {
       rank,
       moved_subtree: row.taxa.length > 0 ? row.taxa.join(', ') : `Nodes: ${row.signature}`,
@@ -168,7 +168,9 @@ function aggregateRecurrences(payload) {
       total_path_length: row.total_path_length,
       avg_path_length: row.spr_move_count > 0 ? row.total_path_length / row.spr_move_count : 0,
       higher_than_percent_of_recurrent_rows:
-        nRows > 0 ? ((nRows - rank) / nRows) * 100 : 0,
+        nRows > 0
+          ? (rows.filter((other) => other.spr_move_count < row.spr_move_count).length / nRows) * 100
+          : 0,
       split_indices: row.split_indices,
       signature: row.signature,
     };

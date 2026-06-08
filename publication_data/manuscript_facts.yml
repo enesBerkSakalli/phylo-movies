@@ -84,7 +84,7 @@ bootstrap_rogue_taxa:
       roguenarok_target_taxon: Seq112
       roguenarok_rbic_before: 0.958484
       roguenarok_rbic_after: 0.958549
-      target_rank: 4
+      target_rank: 2
       target_spr_moves: 91
       target_percent_of_spr_moves: 8.472998
       target_percentile: 90.909091
