@@ -67,7 +67,7 @@ export class TreeNodeInteractionHandler {
     const allNodes = currentLayout?.nodes;
     if (!Array.isArray(allNodes)) return null;
 
-    const layoutNode = allNodes.find((node) => getSplitKey(node?.split_indices) === targetSplitKey);
+    const layoutNode = allNodes.find((node) => getSplitKey(node) === targetSplitKey);
     return layoutNode
       ? toContextMenuNode(layoutNode, null, {
           splitKey: layerData?.splitKey || targetSplitKey,

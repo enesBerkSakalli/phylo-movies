@@ -1,3 +1,7 @@
+import { toSubtreeKey } from '../tree/splits.js';
+
+const splitKeyDefinitionsCache = new WeakMap();
+
 export function hydrateMovieTreeAtIndex(movieData, treeIndex) {
   if (
     !Number.isInteger(treeIndex) ||
@@ -15,6 +19,7 @@ export function hydrateMovieTreeAtIndex(movieData, treeIndex) {
     {
       treeNameDefinitions: movieData.tree_name_definitions ?? [],
       splitDefinitions: movieData.split_definitions ?? [],
+      splitKeyDefinitions: getSplitKeyDefinitions(movieData.split_definitions),
     }
   );
 }
@@ -31,6 +36,12 @@ export function hydrateTreePayloadNode(
     return hydrateTupleTreePayloadNode(value, annotationDefinitions, treeDictionaries);
   }
 
+  const splitIndices = resolveSplitIndices(
+    value.split_indices,
+    value.split_ref,
+    treeDictionaries.splitDefinitions
+  );
+  const splitKey = resolveSplitKey(value.splitKey, value.split_ref, splitIndices, treeDictionaries);
   const annotations =
     value.annotations ??
     (value.annotation_values === undefined
@@ -40,11 +51,8 @@ export function hydrateTreePayloadNode(
   return {
     name: resolveTreeName(value.name, value.name_ref, treeDictionaries.treeNameDefinitions),
     length: value.length,
-    split_indices: resolveSplitIndices(
-      value.split_indices,
-      value.split_ref,
-      treeDictionaries.splitDefinitions
-    ),
+    split_indices: splitIndices,
+    ...(splitKey === null ? {} : { splitKey }),
     ...(annotations === undefined ? {} : { annotations }),
     children: value.children.map((child) =>
       hydrateTreePayloadNode(child, annotationDefinitions, treeDictionaries)
@@ -55,11 +63,14 @@ export function hydrateTreePayloadNode(
 function hydrateTupleTreePayloadNode(value, annotationDefinitions, treeDictionaries) {
   const annotations =
     value[3] === null ? undefined : hydrateAnnotationValues(value[3], annotationDefinitions);
+  const splitIndices = resolveSplitIndices(undefined, value[2], treeDictionaries.splitDefinitions);
+  const splitKey = resolveSplitKey(undefined, value[2], splitIndices, treeDictionaries);
 
   return {
     name: resolveTreeName(undefined, value[1], treeDictionaries.treeNameDefinitions),
     length: value[0],
-    split_indices: resolveSplitIndices(undefined, value[2], treeDictionaries.splitDefinitions),
+    split_indices: splitIndices,
+    ...(splitKey === null ? {} : { splitKey }),
     ...(annotations === undefined ? {} : { annotations }),
     children: value[4].map((child) =>
       hydrateTreePayloadNode(child, annotationDefinitions, treeDictionaries)
@@ -75,6 +86,27 @@ function resolveTreeName(name, nameRef, treeNameDefinitions) {
 function resolveSplitIndices(splitIndices, splitRef, splitDefinitions) {
   if (splitIndices !== undefined) return splitIndices;
   return splitDefinitions[splitRef];
+}
+
+function resolveSplitKey(splitKey, splitRef, splitIndices, treeDictionaries) {
+  if (typeof splitKey === 'string' && splitKey.length > 0) return splitKey;
+  if (Number.isInteger(splitRef)) {
+    return treeDictionaries.splitKeyDefinitions?.[splitRef] ?? null;
+  }
+  return Array.isArray(splitIndices) && splitIndices.length > 0 ? toSubtreeKey(splitIndices) : null;
+}
+
+function getSplitKeyDefinitions(splitDefinitions) {
+  if (!Array.isArray(splitDefinitions)) return [];
+
+  const cached = splitKeyDefinitionsCache.get(splitDefinitions);
+  if (cached) return cached;
+
+  const splitKeyDefinitions = splitDefinitions.map((split) =>
+    Array.isArray(split) && split.length > 0 ? toSubtreeKey(split) : null
+  );
+  splitKeyDefinitionsCache.set(splitDefinitions, splitKeyDefinitions);
+  return splitKeyDefinitions;
 }
 
 function hydrateAnnotationValues(annotationValues, annotationDefinitions) {

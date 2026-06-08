@@ -23,7 +23,7 @@ export function initializeLayoutState(layout) {
 
 export function assignLayoutNodeIds(root) {
   root.each((node) => {
-    node.id = getNodeKey({ split_indices: node.data.split_indices });
+    node.id = getNodeKey(node.data);
   });
   return root;
 }

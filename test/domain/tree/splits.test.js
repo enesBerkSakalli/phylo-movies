@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import * as splitPrimitives from '../../../src/domain/tree/splits.js';
 
-const { flattenSplitSets, getSplitIndices, toSubtreeKey } = splitPrimitives;
+const { flattenSplitSets, getSplitKey, getSplitIndices, toSubtreeKey } = splitPrimitives;
 
 describe('domain tree split primitives', () => {
   it('flattens nested backend split sets while preserving leaf arrays', () => {
@@ -17,6 +17,10 @@ describe('domain tree split primitives', () => {
 
   it('generates order-independent subtree keys', () => {
     expect(toSubtreeKey([3, 1, 2])).toBe(toSubtreeKey([2, 3, 1]));
+  });
+
+  it('prefers precomputed split keys on normalized elements', () => {
+    expect(getSplitKey({ splitKey: 'cached-key', split_indices: [3, 2, 1] })).toBe('cached-key');
   });
 
   it('exports backend split-key helpers without legacy helper names', () => {

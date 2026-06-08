@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   getLinkSplitIndices,
   getNodeKey,
+  getSplitKey,
   getSplitIndices,
   toSubtreeKey,
 } from '../src/domain/tree/splits.js';
@@ -31,6 +32,16 @@ describe('split identity contract', () => {
     const d3Node = { data: { split_indices: [7] } };
 
     expect(getNodeKey(normalized)).toBe(`node-${splitKey}`);
+    expect(getNodeKey(d3Node)).toBeNull();
+  });
+
+  it('uses cached split keys from normalized elements only', () => {
+    const normalized = { splitKey: 'cached-key', split_indices: [7] };
+    const d3Node = { data: normalized };
+
+    expect(getSplitKey(normalized)).toBe('cached-key');
+    expect(getNodeKey(normalized)).toBe('node-cached-key');
+    expect(getSplitKey(d3Node)).toBeNull();
     expect(getNodeKey(d3Node)).toBeNull();
   });
 });
