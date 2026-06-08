@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowRight, Columns, GitBranch } from 'lucide-react';
+import { ArrowRight, Columns, GitBranch, Maximize2, Minimize2 } from 'lucide-react';
 import {
   selectMsaColumnCount,
   selectMsaStepSize,
@@ -9,6 +9,7 @@ import {
   useAppStore,
 } from '../../state/phyloStore/store.js';
 import { AppTooltip } from '../ui/app-tooltip';
+import { Button } from '../ui/button';
 import { MSADeckGLViewer } from '../../msaViewer/MSADeckGLViewer';
 import { useMSA } from './useMSA.js';
 import { MSAScrollbars } from './MSAScrollbars';
@@ -56,6 +57,7 @@ export function MSAViewer() {
   );
   const treeStatus = buildMsaTreeStatus(timelineCursor);
   const [layoutMetrics, setLayoutMetrics] = useState(null);
+  const [statusClipped, setStatusClipped] = useState(false);
   const containerRef = useRef(null);
   const viewerRef = useRef(null);
   const pendingRangeRef = useRef(null);
@@ -254,29 +256,39 @@ export function MSAViewer() {
   return (
     <div className="msa-rnd-body relative flex-1 min-h-0 bg-background" ref={containerRef}>
       {visibleRange && Number.isFinite(visibleRange.r0) && Number.isFinite(visibleRange.c0) && (
-        <div className="absolute left-3 top-3 z-10 space-y-1 rounded-md border border-border/60 bg-background/85 px-3 py-2 text-[11px] text-foreground shadow-md backdrop-blur-sm tabular-nums">
-          <div className="flex items-center gap-2">
-            <span>
-              Rows: {visibleRange.r0 + 1}-{visibleRange.r1 + 1}
-            </span>
-            <span className="text-muted-foreground/60">|</span>
-            <span>
-              Cols: {visibleRange.c0 + 1}-{visibleRange.c1 + 1}
-            </span>
-            {windowStatus && (
-              <>
-                <span className="text-muted-foreground/60">|</span>
-                <MSAWindowStatus status={windowStatus} />
-              </>
-            )}
-            {treeStatus && (
-              <>
-                <span className="text-muted-foreground/60">|</span>
-                <MSATreeStatus status={treeStatus} />
-              </>
-            )}
-          </div>
-          {overlapStatus && <MSAWindowOverlapStatus status={overlapStatus} />}
+        <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex justify-end">
+          {statusClipped ? (
+            <MSAStatusClipButton clipped onToggle={() => setStatusClipped(false)} />
+          ) : (
+            <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-end gap-1.5 rounded-md border border-border/60 bg-background/85 px-2 py-1.5 text-[11px] text-foreground shadow-md backdrop-blur-sm tabular-nums">
+              <span>
+                Rows: {visibleRange.r0 + 1}-{visibleRange.r1 + 1}
+              </span>
+              <span className="text-muted-foreground/60">|</span>
+              <span>
+                Cols: {visibleRange.c0 + 1}-{visibleRange.c1 + 1}
+              </span>
+              {windowStatus && (
+                <>
+                  <span className="text-muted-foreground/60">|</span>
+                  <MSAWindowStatus status={windowStatus} />
+                </>
+              )}
+              {treeStatus && (
+                <>
+                  <span className="text-muted-foreground/60">|</span>
+                  <MSATreeStatus status={treeStatus} />
+                </>
+              )}
+              {overlapStatus && (
+                <>
+                  <span className="text-muted-foreground/60">|</span>
+                  <MSAWindowOverlapStatus status={overlapStatus} />
+                </>
+              )}
+              <MSAStatusClipButton clipped={false} onToggle={() => setStatusClipped(true)} />
+            </div>
+          )}
         </div>
       )}
       <MSAScrollbars layoutMetrics={layoutMetrics} />
@@ -284,31 +296,64 @@ export function MSAViewer() {
   );
 }
 
+function MSAStatusClipButton({ clipped, onToggle }) {
+  const Icon = clipped ? Maximize2 : Minimize2;
+  const label = clipped ? 'Show alignment status overlay' : 'Clip alignment status overlay';
+
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-xs"
+      onClick={onToggle}
+      aria-label={label}
+      aria-pressed={clipped}
+      title={label}
+      className="pointer-events-auto size-6 border border-border/50 bg-background/85 text-muted-foreground shadow-sm backdrop-blur-sm hover:bg-background hover:text-foreground"
+    >
+      <Icon className="size-3.5" aria-hidden />
+    </Button>
+  );
+}
+
 function MSAWindowOverlapStatus({ status }) {
   const tooltip = formatMsaWindowOverlapTooltip(status);
   const label = formatMsaWindowOverlapLabel(status);
+  const tooltipContent = (
+    <div className="flex flex-col gap-2 text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span className="font-medium text-foreground">{label}</span>
+        <span>
+          source W{status.sourceWindowIndex + 1} {status.source.startPosition}-
+          {status.source.endPosition}
+        </span>
+        <span>
+          target W{status.targetWindowIndex + 1} {status.target.startPosition}-
+          {status.target.endPosition}
+        </span>
+      </div>
+      <MSAWindowOverlapTrack status={status} />
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px]">
+        <OverlapLegendItem className="bg-amber-500/45" label="leaving" />
+        <OverlapLegendItem className="bg-primary/35" label="shared" />
+        <OverlapLegendItem className="bg-emerald-500/45" label="entering" />
+      </div>
+    </div>
+  );
 
   return (
-    <AppTooltip content={tooltip} contentClassName="text-2xs">
-      <div className="flex flex-col gap-1 text-muted-foreground" aria-label={tooltip}>
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <span className="font-medium text-foreground">{label}</span>
-          <span>
-            source W{status.sourceWindowIndex + 1} {status.source.startPosition}-
-            {status.source.endPosition}
-          </span>
-          <span>
-            target W{status.targetWindowIndex + 1} {status.target.startPosition}-
-            {status.target.endPosition}
-          </span>
-        </div>
-        <MSAWindowOverlapTrack status={status} />
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px]">
-          <OverlapLegendItem className="bg-amber-500/45" label="leaving" />
-          <OverlapLegendItem className="bg-primary/35" label="shared" />
-          <OverlapLegendItem className="bg-emerald-500/45" label="entering" />
-        </div>
-      </div>
+    <AppTooltip
+      content={tooltipContent}
+      side="bottom"
+      contentClassName="border border-border/60 bg-popover p-2 text-2xs text-popover-foreground shadow-lg"
+    >
+      <span
+        className="inline-flex shrink-0 items-center rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 font-semibold leading-none text-primary"
+        aria-label={`${tooltip}; ${label}`}
+        tabIndex={0}
+      >
+        {label}
+      </span>
     </AppTooltip>
   );
 }

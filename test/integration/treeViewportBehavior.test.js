@@ -332,6 +332,22 @@ describe('tree viewport behavior', () => {
     expect(source).not.toContain('Fit tree to viewport');
   });
 
+  it('places the workspace tour launcher inside the canvas export controls', () => {
+    const source = readFileSync(
+      join(process.cwd(), 'src/components/deckgl/TreeCanvasControls.jsx'),
+      'utf8'
+    );
+
+    expect(source).not.toContain('aria-label="Workspace help"');
+    expect(source).toContain('aria-label="Canvas export controls"');
+    expect(source.indexOf('<TourLauncher />')).toBeGreaterThan(
+      source.indexOf('aria-label="Canvas export controls"')
+    );
+    expect(source.indexOf('<TourLauncher />')).toBeLessThan(
+      source.indexOf('<RecordingControls disabled={captureDisabled} />')
+    );
+  });
+
   it('label visibility changes redraw without resetting the camera', () => {
     const source = readFileSync(
       join(process.cwd(), 'src/components/appearance/controls/VisualStyle/VisualStyle.jsx'),

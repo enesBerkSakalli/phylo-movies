@@ -44,10 +44,6 @@ export function TreeCanvasControls() {
       role="toolbar"
       aria-label="Tree canvas controls"
     >
-      <div className={TOOL_GROUP_CLASS} role="group" aria-label="Workspace help">
-        <TourLauncher />
-      </div>
-
       <div
         className={TOOL_GROUP_CLASS}
         role="group"
@@ -113,6 +109,8 @@ export function TreeCanvasControls() {
         aria-label="Canvas export controls"
         data-tour-id="workspace-export-controls"
       >
+        <TourLauncher />
+        <Separator orientation="vertical" className="h-5" />
         <RecordingControls disabled={captureDisabled} />
         <Separator orientation="vertical" className="h-5" />
         <CopyImageButton disabled={captureDisabled} />

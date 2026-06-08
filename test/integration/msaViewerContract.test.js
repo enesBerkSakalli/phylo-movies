@@ -215,6 +215,34 @@ describe('MSA viewer contract', () => {
     }
   });
 
+  it('lets users clip and restore the alignment status overlay', async () => {
+    const { MSAViewer } = await import('../../src/components/msa/MSAViewer.jsx');
+
+    msaContext = createContext();
+    const { container, root } = await renderReact(React.createElement(MSAViewer));
+
+    const clipButton = container.querySelector(
+      'button[aria-label="Clip alignment status overlay"]'
+    );
+    expect(clipButton).not.toBeNull();
+
+    await act(async () => {
+      clipButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(
+      container.querySelector('button[aria-label="Clip alignment status overlay"]')
+    ).toBeNull();
+    expect(
+      container.querySelector('button[aria-label="Show alignment status overlay"]')
+    ).not.toBeNull();
+    expect(container.textContent).not.toContain('Rows: 1-2');
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
   it('positions custom scrollbars from viewer layout metrics', async () => {
     const { MSAScrollbars } = await import('../../src/components/msa/MSAScrollbars.jsx');
 
