@@ -4,7 +4,7 @@ authors:
   - family-names: "Sakalli"
     given-names: "Enes Berk"
     affiliation: "Ludwig Boltzmann Institute for Network Medicine, University of Vienna"
-    email: "enes.sakalli@univie.ac.at"
+    email: "enes@lbi-netmed.at"
   - family-names: "Haendeler"
     given-names: "Simon E."
     affiliation: "Digital R&D IST, Sanofi"
@@ -15,7 +15,7 @@ authors:
     given-names: "Heiko A."
     affiliation: "Max Perutz Labs, University of Vienna"
 title: "Phylo-Movies: Interactive Phylogenetic Tree Interpolation and Visualization"
-version: 0.92.0
+version: 0.98.0
 date-released: 2026-05-27
 doi: "10.5281/zenodo.20488924"
 url: "https://enesberksakalli.github.io/phylo-movies/"

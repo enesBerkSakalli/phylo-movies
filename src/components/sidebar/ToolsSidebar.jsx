@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Film, ArrowLeft, Activity, ChevronDown, FileText } from 'lucide-react';
+import { ArrowLeft, Activity, ChevronDown, FileText } from 'lucide-react';
+import phyloTreeIcon from '/icons/phylo-tree-icon.svg';
 import { MsaSidebarSection } from './MsaSidebarSection.jsx';
 import { TreeStructureGroup } from '../appearance/layout/TreeStructureGroup.jsx';
 import {
@@ -55,10 +56,13 @@ export function ToolsSidebar({
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton size="lg" asChild className="md:h-12">
-                <div className="flex items-center gap-3 w-full">
-                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shrink-0">
-                    <Film className="size-5" />
-                  </div>
+                <div className="flex items-center gap-3 w-full" aria-label="Phylo-Movies">
+                  <img
+                    src={phyloTreeIcon}
+                    alt=""
+                    aria-hidden="true"
+                    className="size-8 shrink-0 rounded-lg"
+                  />
                   <div className="flex flex-col gap-1 leading-none group-data-[collapsible=icon]:hidden overflow-hidden">
                     <span className="font-semibold truncate">Phylo-Movies</span>
                     <span className="text-2xs text-muted-foreground truncate">
