@@ -203,7 +203,7 @@ export class TimelineDataset {
     );
     return this.buildCursor({
       frameIndex,
-      movieTimeMs: occurrence.movieTimeStartMs,
+      movieTimeMs: getCursorMovieTimeForOccurrence(occurrence, options.timeAnchor),
       segmentIndex: occurrence.segmentIndex,
       occurrence,
     });
@@ -247,6 +247,8 @@ export class TimelineDataset {
       occurrenceInFrameIndex: occurrence?.occurrenceInFrameIndex ?? null,
       occurrenceRole: occurrence?.role ?? null,
       holdKind: occurrence?.holdKind ?? null,
+      motionSourceFrameIndex: getMotionSourceFrameIndex(occurrence, frameIndex),
+      motionTargetFrameIndex: getMotionTargetFrameIndex(occurrence, frameIndex),
     };
   }
 }
@@ -270,6 +272,50 @@ function selectOccurrence(occurrences, occurrenceSelector = 'semantic', frameVie
     return occurrences[Math.max(0, Math.min(selector, occurrences.length - 1))];
   }
   return occurrences[0];
+}
+
+function getCursorMovieTimeForOccurrence(occurrence, timeAnchor = 'semantic') {
+  if (timeAnchor === 'start') {
+    return occurrence?.movieTimeStartMs ?? 0;
+  }
+
+  if (timeAnchor === 'end' && Number.isFinite(occurrence?.movieTimeEndMs)) {
+    return occurrence.movieTimeEndMs;
+  }
+
+  if (occurrence?.role === 'motion_target' && Number.isFinite(occurrence.movieTimeEndMs)) {
+    return occurrence.movieTimeEndMs;
+  }
+
+  return occurrence?.movieTimeStartMs ?? 0;
+}
+
+function getMotionSourceFrameIndex(occurrence, frameIndex) {
+  if (occurrence?.role === 'motion_source') {
+    return frameIndex;
+  }
+
+  if (occurrence?.role === 'motion_target') {
+    return toIntegerOrNull(occurrence.sourceMotionFrameIndex ?? occurrence.peerFrameIndex);
+  }
+
+  return null;
+}
+
+function getMotionTargetFrameIndex(occurrence, frameIndex) {
+  if (occurrence?.role === 'motion_target') {
+    return frameIndex;
+  }
+
+  if (occurrence?.role === 'motion_source') {
+    return toIntegerOrNull(occurrence.targetFrameIndex ?? occurrence.peerFrameIndex);
+  }
+
+  return null;
+}
+
+function toIntegerOrNull(value) {
+  return Number.isInteger(value) ? value : null;
 }
 
 function findInputTreeHold(occurrences) {

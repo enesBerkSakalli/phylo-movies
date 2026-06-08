@@ -10,6 +10,7 @@ import {
   VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO,
   VIEWPORT_FIT_MODES,
 } from '../viewport/viewportFit.js';
+import { detectAnimationStage } from '../deckgl/interpolation/stages/animationStageDetector.js';
 
 /**
  * Handles the static rendering of trees (non-animated states).
@@ -33,11 +34,25 @@ export class StaticRenderer {
 
     if (!this.controller.deckContext?.deck) return;
 
-    const { treeIndex, leftIndex, rightIndex, comparisonMode, skipAutoFit = false } = options;
+    const {
+      treeIndex,
+      leftIndex,
+      rightIndex,
+      comparisonMode,
+      skipAutoFit = false,
+      motionStage = null,
+    } = options;
     const state = useAppStore.getState();
     const { frameIndex, comparisonMode: comparisonModeFromStore } = state;
     const treeList = selectActiveTreeList(state);
     const linkGeometryMode = this.controller._getLinkGeometryMode?.(state) ?? 'radial-elbow';
+    const staticMotionStage = resolveStaticMotionStage({
+      controller: this.controller,
+      explicitStage: motionStage,
+      hasExplicitStage: hasOwn(options, 'motionStage'),
+      state,
+    });
+    state.setAnimationStage?.(staticMotionStage);
 
     // Handle comparison mode (explicit or inferred from store)
     const useComparison = comparisonMode ?? comparisonModeFromStore;
@@ -127,4 +142,59 @@ export class StaticRenderer {
 
     this.controller._lastFocusedTreeIndex = targetIndex;
   }
+}
+
+function resolveStaticMotionStage({ controller, explicitStage, hasExplicitStage, state }) {
+  if (hasExplicitStage) {
+    return explicitStage ?? null;
+  }
+
+  const cursorStage = inferCursorMotionStage(state, controller);
+  return cursorStage ?? null;
+}
+
+function inferCursorMotionStage(state, controller) {
+  const cursor = state?.timelineCursor;
+  const role = cursor?.occurrenceRole;
+  if (role !== 'motion_source' && role !== 'motion_target') {
+    return null;
+  }
+
+  const fromIndex = toIntegerOrNull(cursor.motionSourceFrameIndex);
+  const toIndex = toIntegerOrNull(cursor.motionTargetFrameIndex);
+
+  if (!Number.isInteger(fromIndex) || !Number.isInteger(toIndex) || fromIndex === toIndex) {
+    return null;
+  }
+
+  const treeList = selectActiveTreeList(state);
+  const [hydratedFromTree, hydratedToTree] =
+    state.ensureTreesHydrated?.([fromIndex, toIndex]) ?? [];
+  const sourceTree = hydratedFromTree ?? treeList?.[fromIndex] ?? null;
+  const targetTree = hydratedToTree ?? treeList?.[toIndex] ?? null;
+  if (
+    !sourceTree ||
+    !targetTree ||
+    typeof controller?._getOrCacheInterpolationData !== 'function'
+  ) {
+    return null;
+  }
+
+  const { dataFrom, dataTo, transitionChangeModel } = controller._getOrCacheInterpolationData(
+    sourceTree,
+    targetTree,
+    fromIndex,
+    toIndex
+  );
+  if (!dataFrom || !dataTo) return null;
+
+  return detectAnimationStage(dataFrom, dataTo, transitionChangeModel);
+}
+
+function toIntegerOrNull(value) {
+  return Number.isInteger(value) ? value : null;
+}
+
+function hasOwn(object, key) {
+  return Object.prototype.hasOwnProperty.call(object, key);
 }

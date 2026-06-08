@@ -309,7 +309,7 @@ describe('useTreeController static render scheduling', () => {
     });
   });
 
-  it('does not schedule a second hook render when navigation changes frame index and playhead together', async () => {
+  it('schedules a hook render when navigation changes frame index and playhead together', async () => {
     const { root } = await renderHookHarness();
 
     await flushNextRaf();
@@ -321,7 +321,8 @@ describe('useTreeController static render scheduling', () => {
     });
     await flushNextRaf();
 
-    expect(controllerInstance.renderTimelineProgress).toHaveBeenCalledTimes(1);
+    expect(controllerInstance.renderTimelineProgress).toHaveBeenCalledTimes(2);
+    expect(controllerInstance.renderTimelineProgress).toHaveBeenLastCalledWith(0.5);
 
     await act(async () => {
       root.unmount();

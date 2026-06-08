@@ -362,7 +362,11 @@ export class MovieTimelineManager {
   }
 
   resolveFrameAtIndex(frameIndex, options = {}) {
-    const cursor = this.timelineDataset?.getCursorForFrame(frameIndex, options);
+    const cursor = this.timelineDataset?.getCursorForFrame(frameIndex, {
+      occurrence: 'first',
+      timeAnchor: 'start',
+      ...options,
+    });
     if (!cursor) return null;
     return this.resolveFrameAtTimelineProgress(cursor.timelineProgress);
   }
@@ -382,10 +386,11 @@ export class MovieTimelineManager {
 
     if (!transitionFrame.sourceTree || !transitionFrame.targetTree) {
       const state = useAppStore.getState();
-      const [hydratedSource, hydratedTarget] = state.ensureTreesHydrated?.([
-        transitionFrame.sourceTreeIndex,
-        transitionFrame.targetTreeIndex,
-      ]) ?? [];
+      const [hydratedSource, hydratedTarget] =
+        state.ensureTreesHydrated?.([
+          transitionFrame.sourceTreeIndex,
+          transitionFrame.targetTreeIndex,
+        ]) ?? [];
       const sourceTree = transitionFrame.sourceTree ?? hydratedSource;
       const targetTree = transitionFrame.targetTree ?? hydratedTarget;
       if (!sourceTree || !targetTree) return null;

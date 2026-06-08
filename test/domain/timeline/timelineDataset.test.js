@@ -64,7 +64,29 @@ describe('TimelineDataset', () => {
     expect(semantic.movieTimeMs).toBe(inputHold.movieTimeStartMs);
     expect(semantic.occurrenceRole).toBe('hold');
     expect(semantic.holdKind).toBe('input_tree');
-    expect(last.movieTimeMs).toBeGreaterThan(first.movieTimeMs);
+    expect(last.movieTimeMs).toBeGreaterThanOrEqual(first.movieTimeMs);
+  });
+
+  it('seeks motion-target frame cursors to the completed motion time', () => {
+    const dataset = TimelineDataset.fromMovieData(smallExampleMovieData);
+    const motionTarget = dataset.occurrences.find(
+      (occurrence) => occurrence.role === 'motion_target'
+    );
+
+    const cursor = dataset.getCursorForFrame(motionTarget.frameIndex, {
+      occurrence: motionTarget.occurrenceInFrameIndex,
+    });
+    const startCursor = dataset.getCursorForFrame(motionTarget.frameIndex, {
+      occurrence: motionTarget.occurrenceInFrameIndex,
+      timeAnchor: 'start',
+    });
+
+    expect(cursor.movieTimeMs).toBe(motionTarget.movieTimeEndMs);
+    expect(cursor.timelineProgress).toBe(motionTarget.timelineProgressEnd);
+    expect(startCursor.movieTimeMs).toBe(motionTarget.movieTimeStartMs);
+    expect(startCursor.timelineProgress).toBe(motionTarget.timelineProgressStart);
+    expect(cursor.motionSourceFrameIndex).toBe(motionTarget.sourceMotionFrameIndex);
+    expect(cursor.motionTargetFrameIndex).toBe(motionTarget.frameIndex);
   });
 
   it('anchors the paper example final input cursor on the input-tree hold', () => {

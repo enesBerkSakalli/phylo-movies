@@ -180,6 +180,9 @@ export function useTreeController() {
 
       if (frameIndexChanged || timelineCursorChanged) {
         syncMsaRegion();
+        if (!isTimelineScrubbing) {
+          scheduleRender();
+        }
       }
 
       if (state.playhead !== prevState.playhead && !frameIndexChanged && !timelineCursorChanged) {
