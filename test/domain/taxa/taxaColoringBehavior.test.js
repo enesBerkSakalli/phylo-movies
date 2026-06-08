@@ -288,6 +288,64 @@ describe('TaxaColoringWindow palette application', () => {
     expect(firstPaletteMap).not.toEqual(defaultMap);
     expect(secondPaletteMap).not.toEqual(firstPaletteMap);
   });
+
+  it('keeps restored pattern assignments active when CSV metadata is also cached', async () => {
+    const onApply = vi.fn();
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    roots.push(root);
+
+    await act(async () => {
+      root.render(
+        React.createElement(
+          TooltipProvider,
+          null,
+          React.createElement(TaxaColoringWindow, {
+            taxaNames: ['Species_A', 'Species_B'],
+            originalColorMap: {
+              Species_A: '#000000',
+              Species_B: '#000000',
+            },
+            initialState: {
+              mode: 'groups',
+              separators: ['_'],
+              strategyType: 'prefix',
+              groupColorMap: {
+                Species: '#123456',
+              },
+              csvGroups: [
+                { name: 'Alpha', count: 1, members: ['Species_A'] },
+                { name: 'Beta', count: 1, members: ['Species_B'] },
+              ],
+              csvTaxaMap: {
+                Species_A: 'Alpha',
+                Species_B: 'Beta',
+              },
+              csvColumn: 'clade',
+              csvData: {
+                allGroupings: {
+                  clade: {
+                    Species_A: 'Alpha',
+                    Species_B: 'Beta',
+                  },
+                },
+                groupingColumns: [{ name: 'clade', displayName: 'Clade' }],
+              },
+            },
+            onApply,
+          })
+        )
+      );
+    });
+
+    const latestResult = onApply.mock.calls.at(-1)?.[0];
+
+    expect(latestResult.mode).toBe('groups');
+    expect(latestResult.groupColorMap).toEqual({
+      Species: '#123456',
+    });
+  });
 });
 
 describe('TaxaColoringRndWindow palette application', () => {

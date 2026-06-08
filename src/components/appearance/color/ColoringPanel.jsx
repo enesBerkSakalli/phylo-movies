@@ -40,6 +40,7 @@ import {
 import { Label } from '../../ui/label';
 import { Button } from '../../ui/button';
 import { Separator } from '../../ui/separator';
+import { SYSTEM_TREE_COLORS } from '../../../constants/TreeColors.js';
 
 export function ColoringPanel({ onOpenTaxaColoring }) {
   const monophyletic = useAppStore(selectMonophyleticColoringEnabled);
@@ -149,7 +150,7 @@ export function ColoringPanel({ onOpenTaxaColoring }) {
             <div className="size-5 rounded-md border border-border/60 overflow-hidden shrink-0 group-hover:border-primary/40 transition-colors">
               <Input
                 type="color"
-                value={pivotEdgeColor || '#2196f3'}
+                value={pivotEdgeColor || SYSTEM_TREE_COLORS.pivotEdgeColor}
                 className="size-10 -m-2 p-0 border-none bg-transparent cursor-pointer"
                 onChange={(e) => {
                   setPivotEdgeColor(e.target.value);
@@ -222,7 +223,7 @@ export function ColoringPanel({ onOpenTaxaColoring }) {
                     <div className="size-5 rounded-md border border-border/60 overflow-hidden shrink-0">
                       <Input
                         type="color"
-                        value={subtreeHighlightColor || '#10b981'}
+                        value={subtreeHighlightColor || SYSTEM_TREE_COLORS.subtreeHighlightColor}
                         className="size-10 -m-2 p-0 border-none bg-transparent cursor-pointer"
                         onChange={(e) => {
                           setSubtreeHighlightColor(e.target.value);

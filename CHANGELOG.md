@@ -2,7 +2,24 @@
 
 All notable changes to Phylo-Movies are documented in this file.
 
-## [0.98.0] — Unreleased (dev)
+## [0.98.1] — 2026-06-08
+
+### Added
+
+- Added selected branch-value controls to SPR analytics movement and recurrence tables
+- Added shared subtree highlight color resolution for solid, contrast, and taxa-based modes
+
+### Fixed
+
+- Kept restored pattern taxa-color assignments from being overwritten by cached CSV groups
+- Invalidated comparison connector colors when taxa color assignments change
+- Kept subtree highlight display colors out of base taxa/monophyletic color APIs
+
+### Changed
+
+- Updated reviewer-facing citation/version metadata for the next release integration
+
+## [0.98.0] — 2026-06-08
 
 ### Added
 

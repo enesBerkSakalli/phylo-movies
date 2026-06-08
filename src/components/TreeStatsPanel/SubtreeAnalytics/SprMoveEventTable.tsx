@@ -33,12 +33,23 @@ interface SprMoveEventTableProps {
   branchValueThreshold: number;
   onBranchValueThresholdChange: (threshold: number) => void;
   windowRangeOptions?: SprMoveWindowRangeOptions;
+  branchValueOptions?: BranchValueOption[];
+  selectedBranchValueKey?: string;
+  selectedBranchValueOption?: BranchValueOption;
+  onSelectedBranchValueChange?: (valueKey: string) => void;
+}
+
+interface BranchValueOption {
+  value: string;
+  label: string;
+  role?: string;
+  path?: string[];
 }
 
 const TABLE_HEADER_CELL_CLASS = 'px-3 py-2 font-bold uppercase tracking-wider text-2xs';
 const ROW_CELL_CLASS = 'px-3 py-2';
 const MOVEMENT_EVENT_COLUMN_COUNT = 8;
-const VIRTUAL_ROW_HEIGHT = 96;
+const VIRTUAL_ROW_HEIGHT = 112;
 const VIRTUAL_ROW_OVERSCAN = 8;
 const EMPTY_WINDOW_RANGE_OPTIONS = Object.freeze({});
 const BRANCH_VALUE_FILTER_ALL = 'all';
@@ -197,6 +208,29 @@ const formatBranchValue = (
   return typeof value === 'string' && value.length > 0 ? value : '-';
 };
 
+const formatSupport = (support: SprMoveEventRow['sourceAttachmentSupport']): string => {
+  const value = Number(support?.primary);
+  if (!Number.isFinite(value)) return '-';
+  const displayValue = support?.displayValue;
+  if (typeof displayValue === 'string' && displayValue.length > 0) return displayValue;
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+};
+
+const resolveSelectedBranchValueLabel = (option?: BranchValueOption): string => {
+  if (!option) return 'Auto primary support: no support field detected';
+  return option.label;
+};
+
+const resolveRowBranchValueLabel = (
+  selectedLabel: string,
+  ...values: Array<
+    | SprMoveEventRow['sourceMovedSubtreeBranchValue']
+    | SprMoveEventRow['sourceParentBranchValue']
+    | null
+    | undefined
+  >
+): string => values.find((value) => value?.label)?.label ?? selectedLabel;
+
 const formatBranchValueTitlePart = (
   label: string,
   value:
@@ -212,12 +246,15 @@ const formatBranchValueTitlePart = (
 const formatBranchValueTitle = (
   sourceMovedSubtreeValue: SprMoveEventRow['sourceMovedSubtreeBranchValue'],
   destinationMovedSubtreeValue: SprMoveEventRow['destinationMovedSubtreeBranchValue'],
+  sourceAttachmentSupport: SprMoveEventRow['sourceAttachmentSupport'],
+  destinationAttachmentSupport: SprMoveEventRow['destinationAttachmentSupport'],
   sourceParentValue: SprMoveEventRow['sourceParentBranchValue'],
   destinationParentValue: SprMoveEventRow['destinationParentBranchValue']
 ): string => {
   return [
-    `Moved subtree value: ${formatBranchValueTitlePart('source', sourceMovedSubtreeValue)} -> ${formatBranchValueTitlePart('target', destinationMovedSubtreeValue)}`,
-    `Parent branch value: ${formatBranchValueTitlePart('source', sourceParentValue)} -> ${formatBranchValueTitlePart('target', destinationParentValue)}`,
+    `Moved split selected value: ${formatBranchValueTitlePart('source', sourceMovedSubtreeValue)} -> ${formatBranchValueTitlePart('target', destinationMovedSubtreeValue)}`,
+    `Attachment support: source ${formatSupport(sourceAttachmentSupport)} -> target ${formatSupport(destinationAttachmentSupport)}`,
+    `Nearest parent selected value: ${formatBranchValueTitlePart('source', sourceParentValue)} -> ${formatBranchValueTitlePart('target', destinationParentValue)}`,
   ].join('; ');
 };
 
@@ -250,6 +287,10 @@ export const SprMoveEventTable = ({
   branchValueThreshold,
   onBranchValueThresholdChange,
   windowRangeOptions = EMPTY_WINDOW_RANGE_OPTIONS,
+  branchValueOptions = [],
+  selectedBranchValueKey = 'none',
+  selectedBranchValueOption,
+  onSelectedBranchValueChange,
 }: SprMoveEventTableProps) => {
   const [globalFilter, setGlobalFilter] = React.useState('');
   const goToPosition = useAppStore(selectGoToPosition);
@@ -265,6 +306,7 @@ export const SprMoveEventTable = ({
   const scrollContainerRef = React.useRef<HTMLDivElement | null>(null);
   const [scrollMetrics, setScrollMetrics] = React.useState({ scrollTop: 0, viewportHeight: 0 });
   const selectedMovedSubtreeSignature = getSignature(selectedMovedSubtreeIndices);
+  const selectedBranchValueLabel = resolveSelectedBranchValueLabel(selectedBranchValueOption);
   const queryTerms = React.useMemo(
     () => globalFilter.trim().toLowerCase().split(/\s+/).filter(Boolean),
     [globalFilter]
@@ -293,7 +335,7 @@ export const SprMoveEventTable = ({
     () =>
       getBranchValueFilterOptions(
         normalizedBranchValueThreshold,
-        'Subtree value',
+        'Moved split selected value',
         SPR_MOVE_EVENT_TABLE_COPY.branchValueFilters.allSubtree
       ),
     [normalizedBranchValueThreshold]
@@ -302,7 +344,7 @@ export const SprMoveEventTable = ({
     () =>
       getBranchValueFilterOptions(
         normalizedBranchValueThreshold,
-        'Parent branch value',
+        'Nearest parent selected value',
         SPR_MOVE_EVENT_TABLE_COPY.branchValueFilters.allContext
       ),
     [normalizedBranchValueThreshold]
@@ -429,6 +471,45 @@ export const SprMoveEventTable = ({
             {movementCountLabel}
           </div>
         </div>
+        <div
+          className="flex min-w-0 items-center justify-between gap-3 rounded border border-border/50 bg-muted/30 px-2 py-1.5 text-2xs"
+          title={`${SPR_MOVE_EVENT_TABLE_COPY.selectedValueLabel}: ${selectedBranchValueLabel}. ${SPR_MOVE_EVENT_TABLE_COPY.selectedValueChangePath}.`}
+        >
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <Label
+              htmlFor="spr-analytics-branch-value"
+              className="shrink-0 text-2xs font-semibold text-foreground"
+            >
+              {SPR_MOVE_EVENT_TABLE_COPY.selectedValueLabel}
+            </Label>
+            <Select
+              value={selectedBranchValueKey || 'none'}
+              onValueChange={(value) => onSelectedBranchValueChange?.(value)}
+              disabled={!onSelectedBranchValueChange || branchValueOptions.length === 0}
+            >
+              <SelectTrigger
+                id="spr-analytics-branch-value"
+                size="sm"
+                className="h-7 min-w-0 flex-1 bg-background text-xs"
+                title={selectedBranchValueLabel}
+              >
+                <span className="truncate">{selectedBranchValueLabel}</span>
+              </SelectTrigger>
+              <SelectContent className="z-[1300]">
+                <SelectGroup>
+                  {branchValueOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value} className="text-xs">
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="hidden min-w-0 flex-1 truncate text-right text-muted-foreground md:block">
+            Using: <span className="font-medium text-foreground">{selectedBranchValueLabel}</span>
+          </div>
+        </div>
         <div className="flex items-center gap-2">
           <div className="flex shrink-0 items-center gap-1.5">
             <Label
@@ -532,7 +613,17 @@ export const SprMoveEventTable = ({
                 {SPR_MOVE_EVENT_TABLE_COPY.columns.to}
               </th>
               <th scope="col" className={cn(TABLE_HEADER_CELL_CLASS, 'w-44 text-right')}>
-                {SPR_MOVE_EVENT_TABLE_COPY.columns.branchValue}
+                <span
+                  title={`Selected value: ${selectedBranchValueLabel}`}
+                  className="inline-flex max-w-full flex-col items-end normal-case tracking-normal"
+                >
+                  <span className="font-bold uppercase tracking-wider">
+                    {SPR_MOVE_EVENT_TABLE_COPY.columns.branchValue}
+                  </span>
+                  <span className="max-w-full truncate font-normal text-muted-foreground/80">
+                    {selectedBranchValueLabel}
+                  </span>
+                </span>
               </th>
               <th scope="col" className={cn(TABLE_HEADER_CELL_CLASS, 'w-14 text-right')}>
                 {SPR_MOVE_EVENT_TABLE_COPY.columns.steps}
@@ -562,6 +653,7 @@ export const SprMoveEventTable = ({
                 isSelected={selectedMovedSubtreeSignature === event.signature}
                 branchValueThreshold={normalizedBranchValueThreshold}
                 windowRangeOptions={windowRangeOptions}
+                selectedBranchValueLabel={selectedBranchValueLabel}
                 onJumpToMove={handleJumpToMove}
               />
             ))}
@@ -599,6 +691,7 @@ interface MovementEventRowProps {
   isSelected: boolean;
   branchValueThreshold: number;
   windowRangeOptions: SprMoveWindowRangeOptions;
+  selectedBranchValueLabel: string;
   onJumpToMove: (event: SprMoveEventRow) => void;
 }
 
@@ -610,6 +703,7 @@ function MovementEventRow({
   isSelected,
   branchValueThreshold,
   windowRangeOptions,
+  selectedBranchValueLabel,
   onJumpToMove,
 }: MovementEventRowProps) {
   const movementLabel = formatMovementLabel(eventOrdinal);
@@ -619,12 +713,22 @@ function MovementEventRow({
   const jumpFrame = getSprMoveJumpFrame(event);
   const treePairLabel = formatInputTreePair(event.sourceInputTreeIndex, event.targetInputTreeIndex);
   const jumpLabel = `Jump to ${movementLabel} in ${treePairLabel}`;
+  const movedSplitValueLabel = resolveRowBranchValueLabel(
+    selectedBranchValueLabel,
+    event.sourceMovedSubtreeBranchValue,
+    event.destinationMovedSubtreeBranchValue
+  );
+  const parentBranchValueLabel = resolveRowBranchValueLabel(
+    selectedBranchValueLabel,
+    event.sourceParentBranchValue,
+    event.destinationParentBranchValue
+  );
 
   return (
     <tr
       aria-rowindex={rowIndex + 1}
       className={cn(
-        'h-24 border-b border-border/10 align-top transition-colors',
+        'h-28 border-b border-border/10 align-top transition-colors',
         isSelected ? 'bg-primary/10 hover:bg-primary/15' : 'hover:bg-primary/5'
       )}
     >
@@ -708,12 +812,17 @@ function MovementEventRow({
         title={formatBranchValueTitle(
           event.sourceMovedSubtreeBranchValue,
           event.destinationMovedSubtreeBranchValue,
+          event.sourceAttachmentSupport,
+          event.destinationAttachmentSupport,
           event.sourceParentBranchValue,
           event.destinationParentBranchValue
         )}
       >
         <div className="flex items-baseline justify-between gap-2 whitespace-nowrap">
-          <span className="min-w-0 truncate text-left font-sans text-muted-foreground/70">
+          <span
+            className="min-w-0 truncate text-left font-sans text-muted-foreground/70"
+            title={movedSplitValueLabel}
+          >
             {SPR_MOVE_EVENT_TABLE_COPY.branchValueRows.movedSubtree}
           </span>{' '}
           <span>
@@ -723,6 +832,18 @@ function MovementEventRow({
         </div>
         <div className="flex items-baseline justify-between gap-2 whitespace-nowrap">
           <span className="min-w-0 truncate text-left font-sans text-muted-foreground/70">
+            {SPR_MOVE_EVENT_TABLE_COPY.branchValueRows.attachmentSupport}
+          </span>{' '}
+          <span>
+            {formatSupport(event.sourceAttachmentSupport)} →{' '}
+            {formatSupport(event.destinationAttachmentSupport)}
+          </span>
+        </div>
+        <div className="flex items-baseline justify-between gap-2 whitespace-nowrap">
+          <span
+            className="min-w-0 truncate text-left font-sans text-muted-foreground/70"
+            title={parentBranchValueLabel}
+          >
             {SPR_MOVE_EVENT_TABLE_COPY.branchValueRows.parentBranch}
           </span>{' '}
           <span>

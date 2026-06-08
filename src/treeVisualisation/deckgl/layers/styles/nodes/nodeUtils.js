@@ -1,5 +1,6 @@
-import { colorToRgb, getContrastingHighlightColor } from '../../../../../services/ui/colorUtils.js';
+import { colorToRgb } from '../../../../../services/ui/colorUtils.js';
 import { SYSTEM_TREE_COLORS } from '../../../../../constants/TreeColors.js';
+import { resolveSubtreeHighlightRgb } from '../highlightColorResolver.js';
 
 /**
  * Gets the pivot edge color (blue) for nodes.
@@ -17,17 +18,11 @@ export function getPivotEdgeColor() {
 export function getHighlightColor(nodeData, cached) {
   const { highlightColorMode, colorManager: cm, subtreeHighlightColor } = cached;
   const mode = highlightColorMode || 'solid';
+  const baseHex = cm?.getNodeBaseColor?.(nodeData) || SYSTEM_TREE_COLORS.defaultColor;
 
-  if (mode === 'contrast') {
-    const baseHex = cm?.getNodeBaseColor?.(nodeData) || '#000000';
-    return getContrastingHighlightColor(colorToRgb(baseHex));
-  }
-
-  if (mode === 'taxa') {
-    const baseHex = cm?.getNodeBaseColor?.(nodeData) || '#000000';
-    return colorToRgb(baseHex);
-  }
-
-  // 'solid' mode or default
-  return colorToRgb(subtreeHighlightColor || SYSTEM_TREE_COLORS.subtreeHighlightColor);
+  return resolveSubtreeHighlightRgb({
+    baseColor: baseHex,
+    mode,
+    subtreeHighlightColor,
+  });
 }

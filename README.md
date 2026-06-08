@@ -10,7 +10,7 @@
 [Browser demo](https://enesberksakalli.github.io/phylo-movies/demo/) ·
 [Source code](https://github.com/enesBerkSakalli/phylo-movies) ·
 [Publication](https://doi.org/10.64898/2026.04.01.715821) ·
-[Software archive](https://doi.org/10.5281/zenodo.20488924)
+[Software archive](https://doi.org/10.5281/zenodo.20488923)
 
 Phylo-Movies is a React and Flask web tool for inspecting ordered phylogenetic tree series. It uses the BranchArchitect backend to compute subtree-prune-and-regraft transition frames between input trees, then renders the resulting movie in a WebGL tree viewer with timeline, comparison, MSA, coloring, analytics, image, and recording tools. It is intended for computational biologists, phylogenetics method developers, and instructors who need to see which taxa or subtrees move between neighboring trees.
 
@@ -20,7 +20,7 @@ The project information page at [enesberksakalli.github.io/phylo-movies](https:/
 
 ## Quick Path
 
-For revision review, use the current `main` branch unless the submission system points to the new `0.98.0` tagged release. A new GitHub/Zenodo release should be minted from the final reviewer-facing state before submission archival.
+For revision review, use the current `main` branch unless the submission system points to the new `0.98.1` tagged release. A new GitHub/Zenodo release should be minted from the final reviewer-facing state before submission archival.
 
 1. Browser-only demo: open <https://enesberksakalli.github.io/phylo-movies/demo/>.
 2. Full local run:
@@ -137,7 +137,7 @@ Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). P
 
 For the archived software release, cite:
 
-Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). Phylo-Movies: Interactive Phylogenetic Tree Interpolation and Visualization, version 0.98.0. Zenodo. <https://doi.org/10.5281/zenodo.20488924>
+Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). Phylo-Movies: Interactive Phylogenetic Tree Interpolation and Visualization, version 0.98.1. Zenodo. <https://doi.org/10.5281/zenodo.20488923>
 
 Software citation metadata is in [CITATION.cff](CITATION.cff).
 

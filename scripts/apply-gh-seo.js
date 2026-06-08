@@ -21,7 +21,7 @@ const PUBLICATION_URL = 'https://www.biorxiv.org/content/10.64898/2026.04.01.715
 const PUBLICATION_PDF_URL = 'https://www.biorxiv.org/content/10.64898/2026.04.01.715821v1.full.pdf';
 const PUBLICATION_DOI = '10.64898/2026.04.01.715821';
 const PUBLICATION_DOI_URL = `https://doi.org/${PUBLICATION_DOI}`;
-const SOFTWARE_DOI = '10.5281/zenodo.20488924';
+const SOFTWARE_DOI = '10.5281/zenodo.20488923';
 const SOFTWARE_CONCEPT_DOI = '10.5281/zenodo.20488923';
 const SOFTWARE_DOI_URL = `https://doi.org/${SOFTWARE_DOI}`;
 const SOFTWARE_CONCEPT_DOI_URL = `https://doi.org/${SOFTWARE_CONCEPT_DOI}`;
@@ -210,7 +210,7 @@ const STRUCTURED_DATA = [
     description: DESCRIPTION,
     applicationCategory: 'ScientificApplication',
     operatingSystem: 'macOS, Windows, Linux, Web',
-    softwareVersion: '0.98.0',
+    softwareVersion: '0.98.1',
     downloadUrl: RELEASES_URL,
     codeRepository: REPOSITORY_URL,
     screenshot: SOCIAL_IMAGE_URL,
@@ -397,9 +397,9 @@ function renderStaticLandingHtml() {
           <p style="${bodyStyle()}"><strong>${PUBLICATION_TITLE}</strong> presents the Phylo-Movies workflow for recombination-focused sliding-window phylogenetics and rogue-taxon exploration across bootstrap tree sets.</p>
           <p style="${bodyStyle()}">Authors: ${PUBLICATION_AUTHORS.join(', ')}.</p>
           <p style="${bodyStyle()}">Publication DOI: <a href="${PUBLICATION_DOI_URL}">${PUBLICATION_DOI}</a></p>
-          <p style="${bodyStyle()}">Software DOI: <a href="${SOFTWARE_DOI_URL}">${SOFTWARE_DOI}</a> (concept DOI: <a href="${SOFTWARE_CONCEPT_DOI_URL}">${SOFTWARE_CONCEPT_DOI}</a>)</p>
+          <p style="${bodyStyle()}">Software DOI: <a href="${SOFTWARE_DOI_URL}">${SOFTWARE_DOI}</a></p>
           <pre style="white-space: pre-wrap; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb; padding: 16px; color: #111827; font-size: 13px; line-height: 1.55;">Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). Phylo-Movies: Animating Phylogenetic Trees from Sliding-Window Analyses. bioRxiv. doi:10.64898/2026.04.01.715821</pre>
-          <pre style="white-space: pre-wrap; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb; padding: 16px; color: #111827; font-size: 13px; line-height: 1.55;">Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). Phylo-Movies: Interactive Phylogenetic Tree Interpolation and Visualization, version 0.98.0. Zenodo. doi:10.5281/zenodo.20488924</pre>
+          <pre style="white-space: pre-wrap; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb; padding: 16px; color: #111827; font-size: 13px; line-height: 1.55;">Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). Phylo-Movies: Interactive Phylogenetic Tree Interpolation and Visualization, version 0.98.1. Zenodo. doi:10.5281/zenodo.20488923</pre>
         </section>
 
         <section style="${sectionStyle()}">

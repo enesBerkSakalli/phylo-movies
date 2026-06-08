@@ -5,6 +5,12 @@ function normalizeIndices(indices) {
 }
 
 export const BRANCH_ANNOTATION_NONE = 'none';
+export const PRIMARY_BRANCH_SUPPORT_PATHS = [
+  'support.iqtree.ufboot',
+  'support.iqtree.sh_alrt',
+  'support.bootstrap.value',
+  'support.bootstrap_rogue.frequency',
+];
 
 function compareIndexLists(left, right) {
   const length = Math.min(left.length, right.length);
@@ -139,7 +145,12 @@ export function getAvailableBranchAnnotationOptions(trees = []) {
   treeList.forEach((tree) => collectAnnotationOptionKeys(tree, optionsByKey));
 
   return [
-    { value: BRANCH_ANNOTATION_NONE, label: 'None', path: [], role: 'control' },
+    {
+      value: BRANCH_ANNOTATION_NONE,
+      label: 'Hide labels; analytics auto-selects primary support',
+      path: [],
+      role: 'control',
+    },
     ...Array.from(optionsByKey.values()).sort(compareAnnotationOptions),
   ];
 }
@@ -160,13 +171,7 @@ function supportSummaryKey(field) {
 }
 
 function selectPrimarySupportField(fields) {
-  const preferredPaths = [
-    'support.iqtree.ufboot',
-    'support.iqtree.sh_alrt',
-    'support.bootstrap.value',
-    'support.bootstrap_rogue.frequency',
-  ];
-  for (const preferredPath of preferredPaths) {
+  for (const preferredPath of PRIMARY_BRANCH_SUPPORT_PATHS) {
     const field = fields.find((candidate) => getFieldPathKey(candidate) === preferredPath);
     if (field) return field;
   }

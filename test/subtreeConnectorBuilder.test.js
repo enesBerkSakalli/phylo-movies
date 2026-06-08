@@ -633,7 +633,8 @@ describe('SubtreeConnectorBuilder', function () {
     const leafInfo = makeLeaf(10, 'A', [-30, -20, 0]);
     const subtreeInfo = { id: 'subtree-10-11', split_indices: [10, 11] };
     const leftPositions = new Map([[toSubtreeKey([10, 11]), subtreeInfo]]);
-    const getNodeColor = vi.fn(() => '#ff0000');
+    const getNodeColor = vi.fn(() => '#10b981');
+    const getNodeBaseColor = vi.fn(() => '#ff0000');
 
     expect(
       visualState.resolveConnectorVisualState({
@@ -642,9 +643,10 @@ describe('SubtreeConnectorBuilder', function () {
         jumpingSubtreeSets: [new Set([10, 11])],
         leftPositions,
         currentSubtreeSets: [new Set([10, 11])],
-        colorManager: makeColorManager({ getNodeColor }),
+        colorManager: makeColorManager({ getNodeColor, getNodeBaseColor }),
         subtreeHighlightsEnabled: true,
         linkConnectionOpacity: 0.6,
+        highlightColorMode: 'taxa',
       })
     ).toEqual({
       colorEntry: subtreeInfo,
@@ -658,7 +660,8 @@ describe('SubtreeConnectorBuilder', function () {
       isMoving: true,
       bundleGroupKey: toSubtreeKey([10, 11]),
     });
-    expect(getNodeColor).toHaveBeenCalledWith(subtreeInfo);
+    expect(getNodeBaseColor).toHaveBeenCalledWith(subtreeInfo);
+    expect(getNodeColor).not.toHaveBeenCalled();
 
     const rawSource = readFileSync(rawConnectionsSourcePath, 'utf8');
     const visualStateSource = readFileSync(visualStateSourcePath, 'utf8');

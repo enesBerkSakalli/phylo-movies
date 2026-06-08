@@ -1,6 +1,6 @@
 {
   "name": "phylo-movies-frontend",
-  "version": "0.98.0",
+  "version": "0.98.1",
   "description": "PhyloMovies is a browser-based phylogenetic tree viewer with morphing animations for computational biologists.",
   "author": "Enes Berk Sakalli <enes@lbi-netmed.at>",
   "license": "MIT",

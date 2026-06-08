@@ -342,6 +342,8 @@ export class ComparisonModeRenderer {
       frameIndex,
       subtreeHighlightsEnabled: state.subtreeHighlightsEnabled,
       linkConnectionOpacity: state.linkConnectionOpacity,
+      highlightColorMode: state.highlightColorMode,
+      subtreeHighlightColor: state.subtreeHighlightColor,
       leftCenter,
       rightCenter,
       leftRadius,
