@@ -27,6 +27,7 @@ function normalizeLayoutNode(node, parent = null, path = []) {
   const data = node?.data || {};
   const splitIndices = copySplitIndices(data.split_indices);
   const id = node.id;
+  const splitKey = resolveSplitKey(data, id);
   const parentId = parent?.id ?? null;
   const name = data.name || data.id || '';
   const currentPath = [...path, name || `depth_${node?.depth ?? 0}`];
@@ -53,6 +54,7 @@ function normalizeLayoutNode(node, parent = null, path = []) {
     visualBranchLength,
     annotations: data.annotations ?? null,
     split_indices: splitIndices,
+    ...(splitKey === null ? {} : { splitKey }),
     depth: node?.depth ?? 0,
     height: node?.height ?? 0,
     x,
@@ -95,7 +97,10 @@ function collectLayoutData(node, nodes, leaves, links) {
       targetPosition: child.position,
       sourceSplitIndices: node.split_indices,
       targetSplitIndices: child.split_indices,
+      sourceSplitKey: node.splitKey,
+      targetSplitKey: child.splitKey,
       split_indices: child.split_indices,
+      splitKey: child.splitKey,
       length: child.length,
       metricBranchLength: child.metricBranchLength,
       visualBranchLength: child.visualBranchLength,
@@ -123,12 +128,19 @@ function toLinkEndpoint(node) {
     metricBranchLength: node.metricBranchLength,
     visualBranchLength: node.visualBranchLength,
     split_indices: node.split_indices,
+    splitKey: node.splitKey,
     annotations: node.annotations ?? null,
   };
 }
 
 function copySplitIndices(splitIndices) {
   return Array.isArray(splitIndices) ? [...splitIndices] : [];
+}
+
+function resolveSplitKey(data, nodeId) {
+  if (typeof data.splitKey === 'string' && data.splitKey.length > 0) return data.splitKey;
+  if (typeof nodeId === 'string' && nodeId.startsWith('node-')) return nodeId.slice(5);
+  return null;
 }
 
 function getMaxRadius(nodes) {

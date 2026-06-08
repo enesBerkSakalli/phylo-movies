@@ -99,10 +99,12 @@ export function TaxaColoringRndWindow({ isActive = false, onFocus } = {}) {
   }, [taxaNames, taxaGrouping]);
 
   const metadataSources = useMemo(() => {
-    const sourceLabel = datasetProvenance?.sourceLabel || '';
+    const sourceLabel = datasetProvenance?.source_label || '';
     const isNorovirusDataset =
       sourceLabel.includes('recombination_norovirus') ||
-      String(fileName || '').toLowerCase().includes('norovirus') ||
+      String(fileName || '')
+        .toLowerCase()
+        .includes('norovirus') ||
       taxaNames.some((taxon) => /^[A-Z]{1,3}\d+_/.test(taxon));
 
     return isNorovirusDataset ? [NOROVIRUS_SELECTED_METADATA_SOURCE] : [];

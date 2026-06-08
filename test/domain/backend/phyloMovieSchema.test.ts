@@ -3,6 +3,7 @@ import {
   hydrateMovieTreeAtIndex,
   validatePhyloMovieData,
 } from '../../../src/domain/backend/phyloMovieSchema';
+import { toSubtreeKey } from '../../../src/domain/tree/splits';
 import { phyloData } from '../../../src/services/data/dataService.js';
 
 const tree = {
@@ -248,7 +249,9 @@ describe('validatePhyloMovieData', () => {
     expect(Array.isArray(result.interpolated_trees[0])).toBe(true);
 
     const hydratedTree = hydrateMovieTreeAtIndex(result, 0);
-    expect(hydratedTree).toEqual(tree);
+    expect(hydratedTree).toMatchObject(tree);
+    expect(hydratedTree.splitKey).toBe(toSubtreeKey([0, 1, 2]));
+    expect(hydratedTree.children[0].splitKey).toBe(toSubtreeKey([0]));
   });
 
   it('accepts structured branch annotation fields on tree nodes', () => {

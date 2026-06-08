@@ -40,6 +40,7 @@ export interface TreeNode {
   name: string;
   length: number;
   split_indices: number[];
+  splitKey?: string;
   annotations?: TreeNodeAnnotations;
   children: TreeNode[];
 }

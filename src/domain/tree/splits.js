@@ -156,6 +156,16 @@ function normalizeNumericSplit(split) {
 }
 
 export function getSplitKey(elementOrSplits) {
+  if (
+    elementOrSplits &&
+    !Array.isArray(elementOrSplits) &&
+    !(elementOrSplits instanceof Set) &&
+    typeof elementOrSplits.splitKey === 'string' &&
+    elementOrSplits.splitKey.length > 0
+  ) {
+    return elementOrSplits.splitKey;
+  }
+
   const indices = resolveSplitCollection(elementOrSplits);
   if (indices instanceof Set) {
     return indices.size > 0 ? toSubtreeKey(indices) : null;
