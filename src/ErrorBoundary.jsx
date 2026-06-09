@@ -1,4 +1,5 @@
 import React from 'react';
+import { isDynamicImportFailure } from './lib/lazyRouteRecovery.js';
 
 export class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -20,14 +21,23 @@ export class ErrorBoundary extends React.Component {
 
   render() {
     if (this.state.hasError) {
+      const isStaleChunkError = isDynamicImportFailure(this.state.error);
+
       return (
         <div className="mx-auto mt-10 max-w-2xl rounded-lg border border-destructive/30 bg-destructive/10 p-8 shadow-lg text-destructive">
           <h1 className="mb-3 text-2xl font-bold">Phylo-Movies could not render this view</h1>
           <div className="mb-4 space-y-2 text-sm text-destructive/90">
-            <p>
-              The app hit an unexpected UI error. Reload the page first; if it happens again, copy
-              the technical details below when reporting the issue.
-            </p>
+            {isStaleChunkError ? (
+              <p>
+                The deployed app was updated while this browser still had an older page shell open.
+                Reload the page to fetch the current Phylo-Movies assets.
+              </p>
+            ) : (
+              <p>
+                The app hit an unexpected UI error. Reload the page first; if it happens again, copy
+                the technical details below when reporting the issue.
+              </p>
+            )}
             <button
               type="button"
               className="rounded-md border border-destructive/40 bg-background px-3 py-1.5 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"

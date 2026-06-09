@@ -3,14 +3,15 @@ import { BrowserRouter, HashRouter, Routes, Route, Navigate } from 'react-router
 import { WorkspaceInitializationPage } from './pages/WorkspaceInitialization/WorkspaceInitializationPage.jsx';
 import { ErrorBoundary } from './ErrorBoundary.jsx';
 import { isElectron } from './services/data/apiConfig.js';
+import { lazyRoute } from './lib/lazyRouteRecovery.js';
 
-const VisualizationApp = React.lazy(() => import('./App.jsx'));
-const GitHubPagesInfoPage = React.lazy(() =>
+const VisualizationApp = lazyRoute(() => import('./App.jsx'));
+const GitHubPagesInfoPage = lazyRoute(() =>
   import('./pages/GitHubPages/GitHubPagesInfoPage.jsx').then((module) => ({
     default: module.GitHubPagesInfoPage,
   }))
 );
-const UsageExamplesPage = React.lazy(() =>
+const UsageExamplesPage = lazyRoute(() =>
   import('./pages/UsageExamples/UsageExamplesPage.jsx').then((module) => ({
     default: module.UsageExamplesPage,
   }))
