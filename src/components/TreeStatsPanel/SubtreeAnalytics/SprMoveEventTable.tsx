@@ -25,6 +25,7 @@ import {
   useAppStore,
 } from '../../../state/phyloStore/store.js';
 import { formatInputTreePair, getSprMoveJumpFrame } from './sprMoveJumpTarget';
+import { BranchValueSelector, type BranchValueOption } from './BranchValueSelector';
 
 interface SprMoveEventTableProps {
   events: SprMoveEventRow[];
@@ -37,13 +38,6 @@ interface SprMoveEventTableProps {
   selectedBranchValueKey?: string;
   selectedBranchValueOption?: BranchValueOption;
   onSelectedBranchValueChange?: (valueKey: string) => void;
-}
-
-interface BranchValueOption {
-  value: string;
-  label: string;
-  role?: string;
-  path?: string[];
 }
 
 const TABLE_HEADER_CELL_CLASS = 'px-3 py-2 font-bold uppercase tracking-wider text-2xs';
@@ -252,9 +246,9 @@ const formatBranchValueTitle = (
   destinationParentValue: SprMoveEventRow['destinationParentBranchValue']
 ): string => {
   return [
-    `Moved split selected value: ${formatBranchValueTitlePart('source', sourceMovedSubtreeValue)} -> ${formatBranchValueTitlePart('target', destinationMovedSubtreeValue)}`,
-    `Attachment support: source ${formatSupport(sourceAttachmentSupport)} -> target ${formatSupport(destinationAttachmentSupport)}`,
-    `Nearest parent selected value: ${formatBranchValueTitlePart('source', sourceParentValue)} -> ${formatBranchValueTitlePart('target', destinationParentValue)}`,
+    `Moved split selected value: ${formatBranchValueTitlePart('Source', sourceMovedSubtreeValue)} -> ${formatBranchValueTitlePart('Target', destinationMovedSubtreeValue)}`,
+    `Attachment support: Source ${formatSupport(sourceAttachmentSupport)} -> Target ${formatSupport(destinationAttachmentSupport)}`,
+    `Nearest parent selected value: ${formatBranchValueTitlePart('Source', sourceParentValue)} -> ${formatBranchValueTitlePart('Target', destinationParentValue)}`,
   ].join('; ');
 };
 
@@ -472,43 +466,18 @@ export const SprMoveEventTable = ({
           </div>
         </div>
         <div
-          className="flex min-w-0 items-center justify-between gap-3 rounded border border-border/50 bg-muted/30 px-2 py-1.5 text-2xs"
+          className="rounded border border-border/50 bg-muted/30 px-2 py-1.5"
           title={`${SPR_MOVE_EVENT_TABLE_COPY.selectedValueLabel}: ${selectedBranchValueLabel}. ${SPR_MOVE_EVENT_TABLE_COPY.selectedValueChangePath}.`}
         >
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            <Label
-              htmlFor="spr-analytics-branch-value"
-              className="shrink-0 text-2xs font-semibold text-foreground"
-            >
-              {SPR_MOVE_EVENT_TABLE_COPY.selectedValueLabel}
-            </Label>
-            <Select
-              value={selectedBranchValueKey || 'none'}
-              onValueChange={(value) => onSelectedBranchValueChange?.(value)}
-              disabled={!onSelectedBranchValueChange || branchValueOptions.length === 0}
-            >
-              <SelectTrigger
-                id="spr-analytics-branch-value"
-                size="sm"
-                className="h-7 min-w-0 flex-1 bg-background text-xs"
-                title={selectedBranchValueLabel}
-              >
-                <span className="truncate">{selectedBranchValueLabel}</span>
-              </SelectTrigger>
-              <SelectContent className="z-[1300]">
-                <SelectGroup>
-                  {branchValueOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value} className="text-xs">
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="hidden min-w-0 flex-1 truncate text-right text-muted-foreground md:block">
-            Using: <span className="font-medium text-foreground">{selectedBranchValueLabel}</span>
-          </div>
+          <BranchValueSelector
+            id="spr-analytics-branch-value"
+            branchValueOptions={branchValueOptions}
+            selectedBranchValueKey={selectedBranchValueKey}
+            selectedBranchValueLabel={selectedBranchValueLabel}
+            onSelectedBranchValueChange={onSelectedBranchValueChange}
+            titleDetail={SPR_MOVE_EVENT_TABLE_COPY.selectedValueChangePath}
+            trailingText={`Using: ${selectedBranchValueLabel}`}
+          />
         </div>
         <div className="flex items-center gap-2">
           <div className="flex shrink-0 items-center gap-1.5">
@@ -607,10 +576,10 @@ export const SprMoveEventTable = ({
                 {SPR_MOVE_EVENT_TABLE_COPY.columns.pivot}
               </th>
               <th scope="col" className={cn(TABLE_HEADER_CELL_CLASS, 'w-28 text-left')}>
-                {SPR_MOVE_EVENT_TABLE_COPY.columns.from}
+                {SPR_MOVE_EVENT_TABLE_COPY.columns.sourceAttachment}
               </th>
               <th scope="col" className={cn(TABLE_HEADER_CELL_CLASS, 'w-28 text-left')}>
-                {SPR_MOVE_EVENT_TABLE_COPY.columns.to}
+                {SPR_MOVE_EVENT_TABLE_COPY.columns.targetAttachment}
               </th>
               <th scope="col" className={cn(TABLE_HEADER_CELL_CLASS, 'w-44 text-right')}>
                 <span

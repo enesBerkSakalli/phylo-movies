@@ -25,6 +25,28 @@ const SOFTWARE_DOI = '10.5281/zenodo.20488923';
 const SOFTWARE_CONCEPT_DOI = '10.5281/zenodo.20488923';
 const SOFTWARE_DOI_URL = `https://doi.org/${SOFTWARE_DOI}`;
 const SOFTWARE_CONCEPT_DOI_URL = `https://doi.org/${SOFTWARE_CONCEPT_DOI}`;
+const DEMONSTRATION_VIDEOS = [
+  {
+    title: 'Installation and small example',
+    url: 'https://vimeo.com/1199476378',
+  },
+  {
+    title: 'Synced MSA Example',
+    url: 'https://vimeo.com/1199476382',
+  },
+  {
+    title: 'Norovirus Example',
+    url: 'https://vimeo.com/1199476534',
+  },
+  {
+    title: 'Phylo-Movies 125 Seq Example',
+    url: 'https://vimeo.com/1199487394',
+  },
+  {
+    title: '24 Taxa Rogue Taxon Example',
+    url: 'https://vimeo.com/1199495473',
+  },
+];
 const PUBLICATION_TITLE = 'Phylo-Movies: Animating Phylogenetic Trees from Sliding-Window Analyses';
 const PUBLICATION_DATE = '2026-04-01';
 const PUBLICATION_JOURNAL = 'bioRxiv';
@@ -39,10 +61,10 @@ const PAGE_TITLE = IS_DOCS_ONLY
   ? 'Phylo-Movies | Desktop App, Phylogenetic Tree Interpolation, and Publication'
   : 'Phylo-Movies | Interactive Phylogenetic Tree Visualization';
 const DESCRIPTION = IS_DOCS_ONLY
-  ? 'Phylo-Movies is a desktop app and browser-based phylogenetic tree interpolation and visualization tool for sliding-window analyses, recombination detection, and rogue taxa exploration. This static site provides publication details, generated demos, desktop downloads, and setup guidance.'
+  ? 'Phylo-Movies is a desktop app and browser-based phylogenetic tree interpolation and visualization tool for sliding-window analyses, recombination detection, and rogue taxa exploration. This static site provides publication details, generated demos, demonstration videos, desktop downloads, and setup guidance.'
   : 'Interactive phylogenetic tree visualization and tree-morphing tool for sliding-window MSA analysis, recombination detection, and rogue taxa exploration.';
 const OG_DESCRIPTION = IS_DOCS_ONLY
-  ? 'Landing page for the Phylo-Movies desktop app and web tool, with publication links, citation metadata, example use cases, datasets, and full-stack setup instructions.'
+  ? 'Landing page for the Phylo-Movies desktop app and web tool, with publication links, citation metadata, demonstration videos, example use cases, datasets, and full-stack setup instructions.'
   : 'Visualize topological transitions between phylogenetic trees through smooth morphing animations, MSA-linked exploration, and lineage-aware analysis tools.';
 const DEMO_PAGE_TITLE = 'Phylo-Movies Browser Demo | Generated Phylogenetic Examples';
 const DEMO_DESCRIPTION =
@@ -198,6 +220,7 @@ const STRUCTURED_DATA = [
       PUBLICATION_DOI_URL,
       SOFTWARE_DOI_URL,
       SOFTWARE_CONCEPT_DOI_URL,
+      ...DEMONSTRATION_VIDEOS.map((video) => video.url),
     ],
     subjectOf: PUBLICATION_URL,
     keywords: KEYWORDS.split(',').map((keyword) => keyword.trim()),
@@ -216,7 +239,13 @@ const STRUCTURED_DATA = [
     screenshot: SOCIAL_IMAGE_URL,
     citation: SOFTWARE_DOI_URL,
     identifier: SOFTWARE_DOI,
-    sameAs: [REPOSITORY_URL, RELEASES_URL, SOFTWARE_DOI_URL, SOFTWARE_CONCEPT_DOI_URL],
+    sameAs: [
+      REPOSITORY_URL,
+      RELEASES_URL,
+      SOFTWARE_DOI_URL,
+      SOFTWARE_CONCEPT_DOI_URL,
+      ...DEMONSTRATION_VIDEOS.map((video) => video.url),
+    ],
     keywords: KEYWORDS.split(',').map((keyword) => keyword.trim()),
   },
   {
@@ -355,6 +384,8 @@ function injectStaticDemoHtml(html) {
 }
 
 function renderStaticLandingHtml() {
+  const videoLinks = renderVideoLinksHtml();
+
   return `      <main data-prerendered-landing="true" style="font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111827; background: #ffffff; min-height: 100vh;">
         <section style="position: relative; min-height: min(720px, calc(100vh - 32px)); overflow: hidden; border-bottom: 1px solid #e5e7eb; background: #ffffff;">
           <img src="${HERO_IMAGE_URL}" alt="" width="1914" height="930" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; opacity: 0.65;">
@@ -403,6 +434,14 @@ function renderStaticLandingHtml() {
         </section>
 
         <section style="${sectionStyle()}">
+          <h2 style="${headingStyle()}">Demonstration Videos</h2>
+          <p style="${bodyStyle()}">The manuscript videos show installation, MSA synchronisation, norovirus, and bootstrap rogue-taxon workflows.</p>
+          <div style="${gridStyle()}">
+${videoLinks}
+          </div>
+        </section>
+
+        <section style="${sectionStyle()}">
           <h2 style="${headingStyle()}">Run the Full Application</h2>
           <p style="${bodyStyle()}">The complete local or deployed app combines the React frontend with the BranchArchitect backend for uploaded trees, interpolation, and MSA-based processing.</p>
           <pre style="overflow-x: auto; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb; padding: 16px; color: #111827; font-size: 13px; line-height: 1.55;"><code>git clone --recurse-submodules https://github.com/enesBerkSakalli/phylo-movies.git
@@ -422,6 +461,7 @@ docker compose up --build</code></pre>
 }
 
 function renderStaticDemoHtml() {
+  const videoLinks = renderVideoLinksHtml();
   const exampleRows = DEMO_EXAMPLES.map(
     (example) => `            <article style="${cardStyle()}">
               <h3 style="${subheadingStyle()}">${example.name}</h3>
@@ -468,7 +508,22 @@ ${exampleRows}
           <p style="${bodyStyle()}">Publication DOI: <a href="${PUBLICATION_DOI_URL}">${PUBLICATION_DOI}</a></p>
           <p style="${bodyStyle()}">Software DOI: <a href="${SOFTWARE_DOI_URL}">${SOFTWARE_DOI}</a></p>
         </section>
+
+        <section style="${sectionStyle()}">
+          <h2 style="${headingStyle()}">Demonstration Videos</h2>
+          <p style="${bodyStyle()}">The manuscript videos show installation, MSA synchronisation, norovirus, and bootstrap rogue-taxon workflows.</p>
+          <div style="${gridStyle()}">
+${videoLinks}
+          </div>
+        </section>
       </main>`;
+}
+
+function renderVideoLinksHtml() {
+  return DEMONSTRATION_VIDEOS.map(
+    (video) =>
+      `            <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">${video.title}</h3><p style="${bodyStyle()}"><a href="${video.url}">${video.url}</a></p></article>`
+  ).join('\n');
 }
 
 function primaryLinkStyle() {

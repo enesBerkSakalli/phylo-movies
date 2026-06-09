@@ -3,7 +3,7 @@
 [![CI](https://github.com/enesBerkSakalli/phylo-movies/actions/workflows/ci.yml/badge.svg)](https://github.com/enesBerkSakalli/phylo-movies/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![bioRxiv](https://img.shields.io/badge/bioRxiv-10.64898%2F2026.04.01.715821-B31B1B.svg)](https://doi.org/10.64898/2026.04.01.715821)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20488923.svg)](https://doi.org/10.5281/zenodo.20488923)
+[![Zenodo DOI](https://img.shields.io/badge/Zenodo-10.5281%2Fzenodo.20488923-1682D4?logo=zenodo&logoColor=white)](https://doi.org/10.5281/zenodo.20488923)
 
 [Website](https://enesberksakalli.github.io/phylo-movies/) ·
 [Manual](https://enesberksakalli.github.io/phylo-movies/manual/) ·
@@ -78,6 +78,16 @@ Open <http://127.0.0.1:5173/>. The startup script runs the BranchArchitect Flask
 5. Wait for processing to finish and the app to open `/visualization`.
 6. Use the bottom transport controls to step through generated frames.
 7. Use the top-right canvas buttons, mouse wheel, or two-finger trackpad gesture to fit and zoom the tree; the same toolbar exports PNG images and records the canvas.
+
+## Demonstration Videos
+
+The manuscript demonstration videos are available on Vimeo:
+
+- [Installation and small example](https://vimeo.com/1199476378)
+- [Synced MSA Example](https://vimeo.com/1199476382)
+- [Norovirus Example](https://vimeo.com/1199476534)
+- [Phylo-Movies 125 Seq Example](https://vimeo.com/1199487394)
+- [24 Taxa Rogue Taxon Example](https://vimeo.com/1199495473)
 
 ## Documentation
 
