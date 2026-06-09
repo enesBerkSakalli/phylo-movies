@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { buildSprMoveEventSearchText } from '../../../src/components/TreeStatsPanel/SubtreeAnalytics/sprMoveEventSearch';
+import {
+  buildSprMoveEventSearchText,
+  tokenizeSprMoveSearchQuery,
+} from '../../../src/components/TreeStatsPanel/SubtreeAnalytics/sprMoveEventSearch';
 import type { SprMoveEventRow } from '../../../src/components/TreeStatsPanel/SubtreeAnalytics/types';
 
 const baseEvent: SprMoveEventRow = {
@@ -90,5 +93,44 @@ describe('SPR move event search text', () => {
     expect(text).toContain('+2 more');
     expect(text).toContain('4');
     expect(text).toContain('hiddenmoa');
+  });
+
+  it('indexes punctuation-insensitive taxon aliases', () => {
+    const text = buildSprMoveEventSearchText(
+      {
+        ...baseEvent,
+        splitIndices: [2],
+        driverSplitIndices: [2],
+      },
+      ['Root', 'Anchor', 'AB933743_P4_GII-4']
+    );
+
+    expect(text).toContain('ab933743 p4 gii 4');
+    expect(text).toContain('ab933743p4gii4');
+  });
+
+  it('tokenizes punctuation-insensitive taxon queries', () => {
+    expect(tokenizeSprMoveSearchQuery('AB933743-P4 GII_4')).toEqual([
+      'ab933743',
+      'p4',
+      'gii',
+      '4',
+    ]);
+    expect(tokenizeSprMoveSearchQuery('GII4')).toEqual(['gii4']);
+  });
+
+  it('does not index missing numeric values as null', () => {
+    const text = buildSprMoveEventSearchText(
+      {
+        ...baseEvent,
+        sourceAttachmentSupport: null,
+        destinationAttachmentSupport: null,
+        rfDistance: null,
+        weightedRfDistance: null,
+      },
+      ['Root', 'Anchor', 'Ostrich', 'Tinamous', 'Moa', 'Kiwi']
+    );
+
+    expect(text).not.toContain('null');
   });
 });
