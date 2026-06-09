@@ -187,6 +187,8 @@ function resolveEdgeMappings(subtreeList, attachmentEdgesForPivot, movingSet) {
 
   for (const subtree of subtreeList) {
     const attachmentEdges = getBackendSplitMapValue(attachmentEdgesForPivot, subtree);
+    if (!attachmentEdges) continue;
+
     const sourceEdge = attachmentEdges.source;
     const destEdge = attachmentEdges.destination;
 

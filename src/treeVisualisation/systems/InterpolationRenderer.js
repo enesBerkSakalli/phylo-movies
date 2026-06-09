@@ -26,13 +26,15 @@ export class InterpolationRenderer {
     const transitionFrame = createRenderFrame(fromTreeData, toTreeData, timeFactor, options);
     const t = transitionFrame.isStatic ? 0 : transitionFrame.renderProgress;
 
-    // Delegate to controller to fetch cached Layout Data
-    const cachedInputs = this.controller._getOrCacheInterpolationData(
-      transitionFrame.sourceTree,
-      transitionFrame.targetTree,
-      transitionFrame.sourceTreeIndex,
-      transitionFrame.targetTreeIndex
-    );
+    const cachedInputs =
+      hasInterpolationInputs(options.cachedInputs) && !isRenderCancelled(options)
+        ? options.cachedInputs
+        : this.controller._getOrCacheInterpolationData(
+            transitionFrame.sourceTree,
+            transitionFrame.targetTree,
+            transitionFrame.sourceTreeIndex,
+            transitionFrame.targetTreeIndex
+          );
     const { dataFrom, dataTo } = cachedInputs;
     const transitionChangeModel =
       transitionFrame.transitionChangeModel || cachedInputs.transitionChangeModel;
@@ -264,6 +266,10 @@ function isControllerDestroyed(controller) {
 
 function isRenderCancelled(options = {}) {
   return typeof options.isCancelled === 'function' && options.isCancelled();
+}
+
+function hasInterpolationInputs(value) {
+  return Boolean(value?.dataFrom && value?.dataTo);
 }
 
 function createRenderFrame(fromTreeData, toTreeData, timeFactor, options = {}) {

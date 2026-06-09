@@ -90,7 +90,7 @@ describe('SPR analytics window shell', () => {
       'Filter SPR moves by nearest-parent selected-value category'
     );
     expect(SPR_MOVE_EVENT_TABLE_COPY.branchValueFilters.bothHigh).toBe(
-      '{target}: source and target >= {threshold}'
+      '{target}: Source and target >= {threshold}'
     );
     expect(SPR_MOVE_EVENT_TABLE_COPY.branchValueClasses.bothHigh).toBe(
       'moved-split values both >= {threshold}'

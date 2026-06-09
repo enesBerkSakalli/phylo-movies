@@ -191,7 +191,7 @@ export function SubtreeTopologyPopover({
         ? '1 topology'
         : 'Topology';
   const triggerLabel = compact ? 'Topology' : variantLabel;
-  const triggerDescription = `Compare source and target moved subtree topology for ${taxaCount} taxa`;
+  const triggerDescription = `Compare Source and Target moved subtree topology for ${taxaCount} taxa`;
 
   return (
     <div

@@ -44,7 +44,9 @@ const createSprMoveEvent = (overrides: Partial<SprMoveEventRow> = {}): SprMoveEv
   ...overrides,
 });
 
-async function renderTable(events: SprMoveEventRow[]) {
+type RenderTableProps = Partial<React.ComponentProps<typeof SprMoveEventTable>>;
+
+async function renderTable(events: SprMoveEventRow[], props: RenderTableProps = {}) {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
@@ -56,6 +58,7 @@ async function renderTable(events: SprMoveEventRow[]) {
         leafNamesByIndex,
         branchValueThreshold: 70,
         onBranchValueThresholdChange: vi.fn(),
+        ...props,
       })
     );
   });
@@ -69,6 +72,36 @@ afterEach(() => {
 });
 
 describe('SPR move event table rendering', () => {
+  it('shows that the demo has no branch values instead of implying support auto-selection', async () => {
+    const { container, root } = await renderTable([createSprMoveEvent()], {
+      branchValueOptions: [
+        {
+          value: 'none',
+          label: 'Hide labels; analytics auto-selects primary support',
+          role: 'control',
+          path: [],
+        },
+      ],
+      selectedBranchValueKey: 'none',
+      selectedBranchValueOption: {
+        value: 'none',
+        label: 'Auto primary support: no support field detected',
+        role: 'control',
+        path: [],
+      },
+      onSelectedBranchValueChange: vi.fn(),
+    });
+
+    expect(container.textContent).toContain('Auto primary support: no support field detected');
+    expect(container.textContent).not.toContain(
+      'Hide labels; analytics auto-selects primary support'
+    );
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
   it('renders missing RF metrics as missing values, not zero distances', async () => {
     const { container, root } = await renderTable([createSprMoveEvent()]);
 
@@ -111,7 +144,7 @@ describe('SPR move event table rendering', () => {
     await act(async () => {
       container
         .querySelector<HTMLButtonElement>(
-          'button[aria-label^="Compare source and target moved subtree topology"]'
+          'button[aria-label^="Compare Source and Target moved subtree topology"]'
         )
         ?.click();
     });

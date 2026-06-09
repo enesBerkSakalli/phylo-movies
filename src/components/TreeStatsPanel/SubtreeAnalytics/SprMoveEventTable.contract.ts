@@ -13,9 +13,9 @@ export const SPR_MOVE_EVENT_TABLE_COPY = {
   branchValueFilters: {
     allSubtree: 'All moved-split values',
     allContext: 'All nearest-parent values',
-    bothHigh: '{target}: source and target >= {threshold}',
+    bothHigh: '{target}: Source and target >= {threshold}',
     mixed: '{target}: one side >= {threshold}',
-    low: '{target}: source and target < {threshold}',
+    low: '{target}: Source and target < {threshold}',
     missing: '{target}: missing',
   },
   branchValueClasses: {
@@ -33,8 +33,8 @@ export const SPR_MOVE_EVENT_TABLE_COPY = {
     movement: 'SPR Move',
     movedSubtree: 'Moved Subtree',
     pivot: 'Pivot edge',
-    from: 'Source attachment',
-    to: 'Target attachment',
+    sourceAttachment: 'Source attachment',
+    targetAttachment: 'Target attachment',
     branchValue: 'Selected Value',
     steps: 'Steps',
     metrics: 'Pair Distance',

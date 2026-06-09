@@ -158,6 +158,9 @@ export class LayerStyles {
         this._cache.nodeSize = state.nodeSize;
         layerDataChanged = true;
       }
+      if (state.branchAnnotationLabelKey !== prevState.branchAnnotationLabelKey) {
+        layerDataChanged = true;
+      }
 
       if (
         state.dimmingEnabled !== prevState.dimmingEnabled ||

@@ -5,6 +5,7 @@ import {
   getLinkOutlineWidth,
 } from '../src/treeVisualisation/deckgl/layers/styles/links/outline/linkOutlineStyles.js';
 import { LayerStyles } from '../src/treeVisualisation/deckgl/layers/LayerStyles.js';
+import { getSourceDestinationEdgesAtIndex } from '../src/state/phyloStore/internal/changeTracking.helpers.js';
 
 describe('tree highlight state', () => {
   it('bumps colorVersion when subtree highlight color changes so deck.gl color accessors invalidate', () => {
@@ -165,5 +166,68 @@ describe('tree highlight state', () => {
         treeControllers: previousTreeControllers,
       });
     }
+  });
+
+  it('invalidates layer data when the branch value label field changes', () => {
+    const previousKey = useAppStore.getState().branchAnnotationLabelKey;
+    const nextKey =
+      previousKey === 'support.bootstrap.value'
+        ? 'support.ufboot.value'
+        : 'support.bootstrap.value';
+    const layerStyles = new LayerStyles();
+    const onLayerDataChange = vi.fn();
+
+    try {
+      layerStyles.setStyleChangeCallback({ onLayerDataChange });
+
+      useAppStore.getState().setBranchAnnotationLabelKey(nextKey);
+
+      expect(onLayerDataChange).toHaveBeenCalledOnce();
+    } finally {
+      layerStyles.destroy();
+      useAppStore.setState({ branchAnnotationLabelKey: previousKey });
+    }
+  });
+
+  it('skips missing attachment edge mappings while resolving source and destination colors', () => {
+    const result = getSourceDestinationEdgesAtIndex(
+      {
+        subtreeHighlightTracking: [[[1], [2]]],
+        temporalEvents: [
+          {
+            event_type: 'split_change',
+            pair_id: 'pair_0',
+            frame_range: [0, 0],
+            split: [1, 2],
+          },
+        ],
+        timelineFrames: [
+          {
+            frame_index: 0,
+            frame_type: 'interpolation_frame',
+            is_observed_input: false,
+            pair_id: 'pair_0',
+          },
+        ],
+        pairs: [
+          {
+            pair_id: 'pair_0',
+            solution: {
+              attachment_edges_by_split: {
+                '[1, 2]': {
+                  '[1]': {
+                    source: [1, 5],
+                    destination: [1, 6],
+                  },
+                },
+              },
+            },
+          },
+        ],
+      },
+      0
+    );
+
+    expect(result).toEqual({ source: [[5]], dest: [[6]] });
   });
 });

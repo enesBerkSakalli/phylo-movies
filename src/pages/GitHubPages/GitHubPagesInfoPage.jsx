@@ -18,6 +18,28 @@ const PREPRINT_URL = 'https://www.biorxiv.org/content/10.64898/2026.04.01.715821
 const PREPRINT_DOI_URL = 'https://doi.org/10.64898/2026.04.01.715821';
 const PREPRINT_PDF_URL = 'https://www.biorxiv.org/content/10.64898/2026.04.01.715821v1.full.pdf';
 const SOFTWARE_DOI_URL = 'https://doi.org/10.5281/zenodo.20488923';
+const DEMONSTRATION_VIDEOS = [
+  {
+    title: 'Installation and small example',
+    href: 'https://vimeo.com/1199476378',
+  },
+  {
+    title: 'Synced MSA Example',
+    href: 'https://vimeo.com/1199476382',
+  },
+  {
+    title: 'Norovirus Example',
+    href: 'https://vimeo.com/1199476534',
+  },
+  {
+    title: 'Phylo-Movies 125 Seq Example',
+    href: 'https://vimeo.com/1199487394',
+  },
+  {
+    title: '24 Taxa Rogue Taxon Example',
+    href: 'https://vimeo.com/1199495473',
+  },
+];
 const USE_CASES = [
   {
     title: 'Recombination Detection',
@@ -318,6 +340,29 @@ export function GitHubPagesInfoPage() {
                   </a>
                 </Button>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg border-muted">
+            <CardHeader>
+              <CardTitle>Demonstration Videos</CardTitle>
+              <CardDescription>
+                The manuscript videos show installation, MSA synchronisation, norovirus, and
+                bootstrap rogue-taxon workflows.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3 sm:grid-cols-2">
+              {DEMONSTRATION_VIDEOS.map((video) => (
+                <a
+                  key={video.href}
+                  href={video.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg border bg-muted/30 p-4 text-sm font-medium text-foreground underline-offset-4 hover:underline"
+                >
+                  {video.title}
+                </a>
+              ))}
             </CardContent>
           </Card>
 

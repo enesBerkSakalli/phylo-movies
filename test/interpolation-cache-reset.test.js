@@ -256,6 +256,40 @@ describe('InterpolationRenderer timeline progress', () => {
     expect(controller._updateLayersEfficiently.called).to.equal(false);
   });
 
+  it('uses supplied cached interpolation inputs without refetching layout data', async () => {
+    const dataFrom = { nodes: [{ id: 'node-a' }], links: [], labels: [], extensions: [] };
+    const dataTo = { nodes: [{ id: 'node-a' }], links: [], labels: [], extensions: [] };
+    const interpolatedData = { nodes: [], links: [], labels: [], extensions: [] };
+    const controller = {
+      ready: true,
+      readyPromise: Promise.resolve(),
+      _getOrCacheInterpolationData: sinon.spy(),
+      _syncInterpolatorRootAngle: sinon.spy(),
+      _getLinkGeometryMode: () => 'radial-elbow',
+      treeInterpolator: {
+        interpolateTreeData: sinon.stub().returns(interpolatedData),
+      },
+      _updateLayersEfficiently: sinon.spy(),
+    };
+    const renderer = new InterpolationRenderer(controller);
+
+    await renderer.renderSingleInterpolatedFrame({ id: 'from' }, { id: 'to' }, 0.5, {
+      fromTreeIndex: 0,
+      toTreeIndex: 1,
+      cachedInputs: {
+        dataFrom,
+        dataTo,
+        transitionChangeModel: { hasLifecycleChanges: true },
+      },
+    });
+
+    expect(controller._getOrCacheInterpolationData.called).to.equal(false);
+    expect(controller.treeInterpolator.interpolateTreeData.calledOnce).to.equal(true);
+    expect(controller.treeInterpolator.interpolateTreeData.firstCall.args[0]).to.equal(dataFrom);
+    expect(controller.treeInterpolator.interpolateTreeData.firstCall.args[1]).to.equal(dataTo);
+    expect(controller._updateLayersEfficiently.calledWith(interpolatedData)).to.equal(true);
+  });
+
   it('renders progress with trees returned by immutable hydration state updates', async () => {
     const sourceTree = { id: 'source-tree', split_indices: [0], children: [] };
     const targetTree = { id: 'target-tree', split_indices: [1], children: [] };

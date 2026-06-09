@@ -2,8 +2,6 @@ import React from 'react';
 import { LocateFixed } from 'lucide-react';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
-import { Label } from '../../ui/label';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger } from '../../ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../../ui/tooltip';
 import { formatSubtreeLabel } from '../../../domain/spr/sprAnalytics';
 import { SubtreeTopologyPopover } from './SubtreeTopologyPopover';
@@ -15,7 +13,7 @@ import {
 } from '../../../state/phyloStore/store.js';
 import type { SprMovedSubtreeRecurrence } from './types';
 import { formatInputTreePair, getRecurrenceJumpFrame } from './sprMoveJumpTarget';
-import { SPR_MOVE_EVENT_TABLE_COPY } from './SprMoveEventTable.contract';
+import { BranchValueSelector, type BranchValueOption } from './BranchValueSelector';
 
 interface MovedSubtreeRecurrenceTableProps {
   recurrences: SprMovedSubtreeRecurrence[];
@@ -24,13 +22,6 @@ interface MovedSubtreeRecurrenceTableProps {
   selectedBranchValueKey?: string;
   selectedBranchValueLabel?: string;
   onSelectedBranchValueChange?: (valueKey: string) => void;
-}
-
-interface BranchValueOption {
-  value: string;
-  label: string;
-  role?: string;
-  path?: string[];
 }
 
 const getSignature = (indices?: number[]): string => {
@@ -106,43 +97,18 @@ export const MovedSubtreeRecurrenceTable = ({
   return (
     <div className="min-w-full">
       <div
-        className="flex min-w-0 items-center justify-between gap-3 border-b border-border/30 bg-card px-3 py-2 text-2xs"
-        title={`${SPR_MOVE_EVENT_TABLE_COPY.selectedValueLabel}: ${resolvedBranchValueLabel}. Recurrent rows use the median nearest-parent value for the selected branch field.`}
+        className="border-b border-border/30 bg-card px-3 py-2"
+        title={`Value shown: ${resolvedBranchValueLabel}. Recurrent rows use the median nearest-parent value for the selected branch field.`}
       >
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <Label
-            htmlFor="spr-recurrence-branch-value"
-            className="shrink-0 text-2xs font-semibold text-foreground"
-          >
-            {SPR_MOVE_EVENT_TABLE_COPY.selectedValueLabel}
-          </Label>
-          <Select
-            value={selectedBranchValueKey || 'none'}
-            onValueChange={(value) => onSelectedBranchValueChange?.(value)}
-            disabled={!onSelectedBranchValueChange || branchValueOptions.length === 0}
-          >
-            <SelectTrigger
-              id="spr-recurrence-branch-value"
-              size="sm"
-              className="h-7 min-w-0 flex-1 bg-background text-xs"
-              title={resolvedBranchValueLabel}
-            >
-              <span className="truncate">{resolvedBranchValueLabel}</span>
-            </SelectTrigger>
-            <SelectContent className="z-[1300]">
-              <SelectGroup>
-                {branchValueOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value} className="text-xs">
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="hidden min-w-0 flex-1 truncate text-right text-muted-foreground md:block">
-          Recurrent values are nearest-parent medians.
-        </div>
+        <BranchValueSelector
+          id="spr-recurrence-branch-value"
+          branchValueOptions={branchValueOptions}
+          selectedBranchValueKey={selectedBranchValueKey}
+          selectedBranchValueLabel={resolvedBranchValueLabel}
+          onSelectedBranchValueChange={onSelectedBranchValueChange}
+          titleDetail="Recurrent rows use the median nearest-parent value for the selected branch field."
+          trailingText="Recurrent values are nearest-parent medians."
+        />
       </div>
       <table className="w-full text-xs">
         <thead className="bg-muted/40 text-muted-foreground font-bold sticky top-0 z-10">
@@ -192,7 +158,7 @@ export const MovedSubtreeRecurrenceTable = ({
                   side="left"
                   className="max-w-72 border-border bg-popover text-2xs font-normal normal-case tracking-normal"
                 >
-                  Median source-to-target value on the nearest enclosing parent branch, using{' '}
+                  Median Source → Target value on the nearest enclosing parent branch, using{' '}
                   {resolvedBranchValueLabel}.
                 </TooltipContent>
               </Tooltip>
@@ -257,7 +223,7 @@ export const MovedSubtreeRecurrenceTable = ({
                   <div className="mt-1 text-2xs text-muted-foreground/70">
                     {item.topologyVariantCount && item.topologyVariantCount > 1
                       ? `${item.topologyVariantCount} variants`
-                      : 'source / target'}
+                      : 'Source / Target'}
                   </div>
                 </td>
                 <td className="px-4 py-2 text-right">

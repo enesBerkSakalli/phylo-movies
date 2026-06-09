@@ -28,9 +28,9 @@ describe('createSprMovedSubtreeRecurrenceCsv', () => {
     expect(header).toContain('Example Source -> Target');
     expect(header).toContain('Example Frame Range');
     expect(header).toContain('Topology Variant Count');
-    expect(header).toContain('Parent Branch Value Label');
-    expect(header).toContain('Source Parent Branch Value Median');
-    expect(header).toContain('Target Parent Branch Value Median');
+    expect(header).toContain('Nearest Parent Selected Value Label');
+    expect(header).toContain('Source Nearest Parent Selected Value Median');
+    expect(header).toContain('Target Nearest Parent Selected Value Median');
     expect(header).toContain('Source Moved Subtree Newick');
     expect(header).not.toContain('Total Path Hops');
     expect(header).not.toContain('Total Path Length');
@@ -128,9 +128,9 @@ describe('createSprMoveEventCsv', () => {
     expect(header).toContain('Source Attachment');
     expect(header).toContain('Target Attachment');
     expect(header).toContain('Source Moved Subtree Value');
-    expect(header).toContain('Target Parent Branch Value');
+    expect(header).toContain('Target Nearest Parent Selected Value');
     expect(header).toContain('Moved Subtree Value Class');
-    expect(header).toContain('Parent Branch Value Class');
+    expect(header).toContain('Nearest Parent Selected Value Class');
     expect(header).not.toContain('Parent Branch Taxa');
     expect(header).not.toContain('Parent Branch Split Indices');
     expect(header).not.toContain('Path Hops');
@@ -182,8 +182,8 @@ describe('createSprMoveEventCsv', () => {
     expect(valueFor('Target Attachment Support')).toBe('');
     expect(valueFor('Source Moved Subtree Value')).toBe('');
     expect(valueFor('Target Moved Subtree Value')).toBe('');
-    expect(valueFor('Source Parent Branch Value')).toBe('');
-    expect(valueFor('Target Parent Branch Value')).toBe('');
+    expect(valueFor('Source Nearest Parent Selected Value')).toBe('');
+    expect(valueFor('Target Nearest Parent Selected Value')).toBe('');
     expect(valueFor('Step Range')).toBe('');
     expect(valueFor('RF Distance')).toBe('');
     expect(valueFor('Weighted RF Distance')).toBe('');

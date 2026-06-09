@@ -304,7 +304,7 @@ export class AnimationRunner {
         transitionFrame.sourceTree,
         transitionFrame.targetTree,
         transitionFrame.renderProgress,
-        transitionFrame.toRenderOptions({ isCancelled })
+        transitionFrame.toRenderOptions({ cachedInputs, isCancelled })
       );
     }
   }
