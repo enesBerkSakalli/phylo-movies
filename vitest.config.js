@@ -29,6 +29,7 @@ export default defineConfig({
       'test/DeckGLContext.test.js',
       'test/FloatingWindowGeometry.test.js',
       'test/GeometryHelperCentralization.test.js',
+      'test/lazyRouteRecovery.test.js',
       'test/ActiveTreeListSelector.test.js',
       'test/LayoutWorkerMetadata.test.js',
       'test/LayoutCacheKey.test.js',
