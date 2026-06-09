@@ -116,6 +116,18 @@ describe('example dataset configuration', () => {
     expect(seoSource).not.toContain('static precomputed paper-figure payload');
   });
 
+  it('keeps example rows visually keyed by dataset type icons', () => {
+    const exampleTabSource = fs.readFileSync(
+      path.join(process.cwd(), 'src/pages/WorkspaceInitialization/components/ExampleTab.jsx'),
+      'utf8'
+    );
+
+    expect(exampleTabSource).toContain('getExampleIcon');
+    expect(exampleTabSource).toContain('<ExampleIcon className="size-4" aria-hidden />');
+    expect(exampleTabSource).toContain('Dna');
+    expect(exampleTabSource).toContain('GitBranch');
+  });
+
   it('pre-renders raw HTML for the generated browser demo page', () => {
     const seoSource = fs.readFileSync(path.join(process.cwd(), 'scripts/apply-gh-seo.js'), 'utf8');
 

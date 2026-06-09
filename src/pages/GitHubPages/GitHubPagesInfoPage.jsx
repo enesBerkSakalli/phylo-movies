@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import phyloTreeIcon from '/icons/phylo-tree-icon.svg';
 import { Button } from '../../components/ui/button';
 import {
   Card,
@@ -11,6 +10,7 @@ import {
 } from '../../components/ui/card';
 import { APP_PREVIEW_IMAGE_URL } from '../shared/previewAssets.js';
 
+const phyloTreeIcon = `${import.meta.env.BASE_URL}icons/phylo-tree-icon.svg`;
 const REPO_URL = 'https://github.com/enesBerkSakalli/phylo-movies';
 const README_URL = `${REPO_URL}#readme`;
 const RELEASES_URL = `${REPO_URL}/releases`;

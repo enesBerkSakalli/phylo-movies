@@ -59,11 +59,64 @@ describe('tools sidebar structure', () => {
   it('uses the canonical Phylo-Movies app icon in the sidebar header', () => {
     const sidebarSource = source('src/components/sidebar/ToolsSidebar.jsx');
 
-    expect(sidebarSource).toContain("const phyloTreeIcon = '/icons/phylo-tree-icon.svg'");
+    expect(sidebarSource).toContain(
+      "const phyloTreeIcon = `${import.meta.env.BASE_URL}icons/phylo-tree-icon.svg`"
+    );
     expect(sidebarSource).toContain('src={phyloTreeIcon}');
     expect(sidebarSource).toContain('aria-label="Phylo-Movies"');
+    expect(sidebarSource).not.toContain("'/icons/phylo-tree-icon.svg'");
     expect(sidebarSource).not.toContain('Film');
     expect(sidebarSource).not.toContain('bg-primary text-primary-foreground');
+  });
+
+  it('keeps app icon paths aware of the deployed base path', () => {
+    expect(source('src/index.html')).toContain('%BASE_URL%icons/phylo-tree-icon.svg');
+    expect(source('src/index.html')).toContain('%BASE_URL%icons/favicon-32.png');
+    expect(source('src/index.html')).toContain('%BASE_URL%icons/favicon-16.png');
+    expect(source('src/index.html')).toContain('%BASE_URL%icons/apple-touch-icon.png');
+    expect(source('src/pages/Splash/splash.html')).toContain(
+      '%BASE_URL%icons/phylo-tree-icon.svg'
+    );
+    expect(source('src/pages/Splash/SplashApp.jsx')).toContain(
+      "const phyloTreeIcon = `${import.meta.env.BASE_URL}icons/phylo-tree-icon.svg`"
+    );
+    expect(source('src/pages/GitHubPages/GitHubPagesInfoPage.jsx')).toContain(
+      "const phyloTreeIcon = `${import.meta.env.BASE_URL}icons/phylo-tree-icon.svg`"
+    );
+
+    const appShellFiles = [
+      'src/index.html',
+      'src/pages/Splash/splash.html',
+      'src/pages/Splash/SplashApp.jsx',
+      'src/pages/GitHubPages/GitHubPagesInfoPage.jsx',
+      'src/components/sidebar/ToolsSidebar.jsx',
+    ];
+
+    for (const file of appShellFiles) {
+      expect(source(file)).not.toContain('"/icons/phylo-tree-icon.svg"');
+      expect(source(file)).not.toContain("'/icons/phylo-tree-icon.svg'");
+      expect(source(file)).not.toContain('href="/icons/');
+      expect(source(file)).not.toContain('src="/icons/');
+    }
+  });
+
+  it('uses the shared deployed icon in the manual chrome', () => {
+    const manualConfig = source('manual/docusaurus.config.js');
+    const packageJson = JSON.parse(source('package.json'));
+
+    expect(packageJson.scripts['manual:build']).toContain('npm run manual:prepare-assets');
+    expect(packageJson.scripts['manual:prepare-assets']).toBe(
+      'node scripts/prepare-manual-assets.mjs'
+    );
+    expect(source('scripts/prepare-manual-assets.mjs')).toContain(
+      "'src', 'public', 'icons', 'phylo-tree-icon.svg'"
+    );
+    expect(source('scripts/prepare-manual-assets.mjs')).toContain(
+      "'manual', 'static', 'icons'"
+    );
+    expect(manualConfig).toContain("favicon: 'icons/phylo-tree-icon.svg'");
+    expect(manualConfig).toContain("alt: 'Phylo-Movies'");
+    expect(manualConfig).toContain("src: 'icons/phylo-tree-icon.svg'");
   });
 
   it('keeps camera controls grouped with view effects rather than tree layout controls', () => {
@@ -111,6 +164,14 @@ describe('tools sidebar structure', () => {
     const sidebarSource = source('src/components/ui/sidebar.tsx');
 
     expect(sidebarSource).toContain('data-[state=open]:bg-sidebar-accent');
+  });
+
+  it('uses a heavier desktop sidebar edge divider', () => {
+    const sidebarSource = source('src/components/ui/sidebar.tsx');
+
+    expect(sidebarSource).toContain('border-sidebar-border');
+    expect(sidebarSource).toContain('group-data-[side=left]:border-r-2');
+    expect(sidebarSource).toContain('group-data-[side=right]:border-l-2');
   });
 
   it('keeps sidebar scrolling vertical-only', () => {

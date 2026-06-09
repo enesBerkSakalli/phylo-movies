@@ -3,6 +3,7 @@ const config = {
   tagline: 'Researcher guide for animated phylogenetic tree exploration',
   url: 'https://enesberksakalli.github.io',
   baseUrl: '/phylo-movies/manual/',
+  favicon: 'icons/phylo-tree-icon.svg',
   organizationName: 'enesBerkSakalli',
   projectName: 'phylo-movies',
   trailingSlash: true,
@@ -34,6 +35,10 @@ const config = {
   themeConfig: {
     navbar: {
       title: 'Phylo-Movies Manual',
+      logo: {
+        alt: 'Phylo-Movies',
+        src: 'icons/phylo-tree-icon.svg',
+      },
       items: [
         {
           type: 'docSidebar',
