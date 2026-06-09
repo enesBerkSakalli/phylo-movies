@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Progress } from '../../components/ui/progress';
-import phyloTreeIcon from '/icons/phylo-tree-icon.svg';
+
+const phyloTreeIcon = `${import.meta.env.BASE_URL}icons/phylo-tree-icon.svg`;
 
 const SplashApp = () => {
   const [status, setStatus] = useState('Initializing...');

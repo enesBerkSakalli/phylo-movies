@@ -32,7 +32,7 @@ import { TOOLS_SIDEBAR_GROUP_LABELS } from './ToolsSidebar.contract.js';
 import { SPR_ANALYTICS_COPY } from '../TreeStatsPanel/AnalyticsDashboard.contract.ts';
 import { selectTreeHydrationStats, useAppStore } from '../../state/phyloStore/store.js';
 
-const phyloTreeIcon = '/icons/phylo-tree-icon.svg';
+const phyloTreeIcon = `${import.meta.env.BASE_URL}icons/phylo-tree-icon.svg`;
 
 export function ToolsSidebar({
   fileName,

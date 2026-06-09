@@ -1,5 +1,14 @@
 import React from 'react';
-import { CheckCircle2, Database, Download, Loader2, Play, XCircle } from 'lucide-react';
+import {
+  CheckCircle2,
+  Database,
+  Dna,
+  Download,
+  GitBranch,
+  Loader2,
+  Play,
+  XCircle,
+} from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
 import { EXAMPLE_DATASETS } from '../exampleDatasets.js';
@@ -49,6 +58,7 @@ export function ExampleTab({
           const isDisabled = loadingExample || submitting || (!demoOnly && !backendReady);
           const includesAlignment = example.fileType === 'msa' || !!example.msaFilePath;
           const generatedArtifacts = example.generatedArtifactFiles ?? [];
+          const ExampleIcon = getExampleIcon(example, includesAlignment);
 
           return (
             <div
@@ -56,6 +66,9 @@ export function ExampleTab({
               className="grid min-w-0 gap-4 border-b px-4 py-4 last:border-b-0 hover:bg-muted/30 lg:grid-cols-[minmax(15rem,1.5fr)_0.75fr_0.75fr_0.65fr_minmax(11rem,1fr)_10rem] lg:items-center"
             >
               <div className="flex min-w-0 items-start gap-3">
+                <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-muted-foreground">
+                  <ExampleIcon className="size-4" aria-hidden />
+                </div>
                 <div className="min-w-0">
                   <div className="flex min-w-0 flex-wrap items-center gap-2">
                     <h4 className="min-w-0 text-sm font-semibold leading-tight">{example.name}</h4>
@@ -208,6 +221,13 @@ export function ExampleTab({
       </div>
     </div>
   );
+}
+
+function getExampleIcon(example, includesAlignment) {
+  if (example.fileType === 'msa') return Dna;
+  if (example.fileType === 'newick' || example.fileType === 'tree-msa') return GitBranch;
+  if (includesAlignment) return Database;
+  return Database;
 }
 
 function formatExampleSettings(settings = []) {
