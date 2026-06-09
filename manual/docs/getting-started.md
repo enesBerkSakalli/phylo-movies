@@ -34,6 +34,14 @@ Requirements:
 - Python 3.11 or newer
 - Poetry
 
+`npm` is installed together with Node.js. On macOS, install Node.js with Homebrew:
+
+```bash
+brew install node
+node -v
+npm -v
+```
+
 On macOS, Poetry can be installed at user level with Homebrew:
 
 ```bash
