@@ -8,12 +8,45 @@ const formatIndices = (indices?: number[] | null): string => {
   return [sorted.join(','), sorted.join(' ')].join(' ');
 };
 
+export const normalizeSprMoveSearchValue = (value: string): string =>
+  value
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+
+export const tokenizeSprMoveSearchQuery = (value: string): string[] =>
+  normalizeSprMoveSearchValue(value).split(/\s+/).filter(Boolean);
+
+const compactTaxonSearchAlias = (value: string): string =>
+  normalizeSprMoveSearchValue(value).replace(/\s+/g, '');
+
+const formatTaxonSearchAliases = (indices: number[], leafNamesByIndex: string[]): string => {
+  const aliases = new Set<string>();
+
+  indices.forEach((idx) => {
+    const name = leafNamesByIndex[idx];
+    if (typeof name !== 'string' || name.length === 0) return;
+
+    const normalized = normalizeSprMoveSearchValue(name);
+    const compact = compactTaxonSearchAlias(name);
+    if (normalized) aliases.add(normalized);
+    if (compact && compact !== normalized) aliases.add(compact);
+  });
+
+  return Array.from(aliases).join(' ');
+};
+
 const formatSubtreeSearchLabel = (
   indices: number[] | undefined,
   leafNamesByIndex: string[]
 ): string => {
   if (!Array.isArray(indices) || indices.length === 0) return '';
-  return [formatSubtreeLabel(indices, leafNamesByIndex), formatIndices(indices)].join(' ');
+  return [
+    formatSubtreeLabel(indices, leafNamesByIndex),
+    formatTaxonSearchAliases(indices, leafNamesByIndex),
+    formatIndices(indices),
+  ].join(' ');
 };
 
 const formatCompactSubtreeSearchLabel = (
@@ -40,7 +73,7 @@ const formatCompactSubtreeSearchLabel = (
 };
 
 const formatMaybeNumber = (value: number | null | undefined): string =>
-  Number.isFinite(Number(value)) ? String(value) : '';
+  typeof value === 'number' && Number.isFinite(value) ? String(value) : '';
 
 export function buildSprMoveEventSearchText(
   event: SprMoveEventRow,

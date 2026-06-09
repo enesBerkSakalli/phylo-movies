@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { act } from 'react-dom/test-utils';
+import { act, Simulate } from 'react-dom/test-utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SprMoveEventTable } from '../../src/components/TreeStatsPanel/SubtreeAnalytics/SprMoveEventTable';
 import type { SprMoveEventRow } from '../../src/components/TreeStatsPanel/SubtreeAnalytics/types';
@@ -169,6 +169,51 @@ describe('SPR move event table rendering', () => {
       (button) => button.textContent?.includes('Jump to move')
     );
     expect(jumpButton?.getAttribute('aria-label')).toContain('Jump to #1');
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it('finds taxa through punctuation-insensitive search queries', async () => {
+    const { container, root } = await renderTable(
+      [
+        createSprMoveEvent({
+          eventId: 'pair_0_1:spr:0',
+          signature: '2',
+          splitIndices: [2],
+          driverSplitIndices: [2],
+          pivotEdge: [2],
+          sourceAttachment: [0],
+          destinationAttachment: [1],
+        }),
+        createSprMoveEvent({
+          eventId: 'pair_0_1:spr:1',
+          eventIndex: 1,
+          signature: '3',
+          splitIndices: [3],
+          driverSplitIndices: [3],
+          pivotEdge: [3],
+          sourceAttachment: [0],
+          destinationAttachment: [1],
+        }),
+      ],
+      {
+        leafNamesByIndex: ['Root_A', 'Anchor_B', 'AB933743_P4_GII-4', 'OtherTaxon'],
+      }
+    );
+
+    const input = container.querySelector<HTMLInputElement>('input[aria-label="Search SPR moves"]');
+    expect(input).not.toBeNull();
+
+    await act(async () => {
+      input!.value = 'AB933743-P4';
+      Simulate.change(input!);
+    });
+
+    expect(container.textContent).toContain('1 / 2 SPR moves');
+    expect(container.textContent).toContain('AB933743_P4_GII-4');
+    expect(container.textContent).not.toContain('OtherTaxon');
 
     await act(async () => {
       root.unmount();

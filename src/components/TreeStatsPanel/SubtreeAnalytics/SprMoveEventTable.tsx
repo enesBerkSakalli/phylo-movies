@@ -14,7 +14,7 @@ import {
 import { formatSubtreeLabel } from '../../../domain/spr/sprAnalytics';
 import { LocateFixed, Search, X } from 'lucide-react';
 import type { SprMoveEventRow } from './types';
-import { buildSprMoveEventSearchText } from './sprMoveEventSearch';
+import { buildSprMoveEventSearchText, tokenizeSprMoveSearchQuery } from './sprMoveEventSearch';
 import { SPR_MOVE_EVENT_TABLE_COPY } from './SprMoveEventTable.contract';
 import { buildSprMoveWindowRange, type SprMoveWindowRangeOptions } from './sprMoveWindowRange';
 import { cn } from '../../../lib/utils';
@@ -302,7 +302,7 @@ export const SprMoveEventTable = ({
   const selectedMovedSubtreeSignature = getSignature(selectedMovedSubtreeIndices);
   const selectedBranchValueLabel = resolveSelectedBranchValueLabel(selectedBranchValueOption);
   const queryTerms = React.useMemo(
-    () => globalFilter.trim().toLowerCase().split(/\s+/).filter(Boolean),
+    () => tokenizeSprMoveSearchQuery(globalFilter),
     [globalFilter]
   );
   const searchableEvents = React.useMemo(
