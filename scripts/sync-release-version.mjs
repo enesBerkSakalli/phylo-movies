@@ -10,7 +10,6 @@ const root = path.resolve(__dirname, '..');
 const args = process.argv.slice(2);
 const checkOnly = args.includes('--check');
 const versionArg = args.find((arg) => arg !== '--check');
-const version = normalizeVersion(versionArg || process.env.GITHUB_REF_NAME);
 
 const files = [
   'package.json',
@@ -50,7 +49,22 @@ async function writeJson(relativePath, data) {
   await fs.writeFile(absolutePath, `${JSON.stringify(data, null, 2)}\n`);
 }
 
-async function syncVersion(relativePath) {
+async function resolveVersion() {
+  const rawVersion = versionArg || process.env.GITHUB_REF_NAME;
+
+  if (rawVersion) {
+    return normalizeVersion(rawVersion);
+  }
+
+  if (checkOnly) {
+    const rootPackage = await readJson('package.json');
+    return normalizeVersion(rootPackage.version);
+  }
+
+  return normalizeVersion(rawVersion);
+}
+
+async function syncVersion(relativePath, version) {
   const data = await readJson(relativePath);
 
   if (checkOnly) {
@@ -75,6 +89,8 @@ async function syncVersion(relativePath) {
   console.log(`Updated ${relativePath} to ${version}`);
 }
 
+const version = await resolveVersion();
+
 for (const file of files) {
-  await syncVersion(file);
+  await syncVersion(file, version);
 }
