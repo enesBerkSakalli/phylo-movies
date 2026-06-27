@@ -1,8 +1,9 @@
-import React from 'react';
-import { BrowserRouter, HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter, HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { WorkspaceInitializationPage } from './pages/WorkspaceInitialization/WorkspaceInitializationPage.jsx';
 import { ErrorBoundary } from './ErrorBoundary.jsx';
 import { isElectron } from './services/data/apiConfig.js';
+import { initWebAnalytics, trackWebAnalyticsPageView } from './services/analytics/webAnalytics.js';
 import { lazyRoute } from './lib/lazyRouteRecovery.js';
 
 const VisualizationApp = lazyRoute(() => import('./App.jsx'));
@@ -38,6 +39,7 @@ export function Router() {
   return (
     <RouterComponent basename={basename}>
       <ErrorBoundary>
+        <AnalyticsRouteTracker />
         <Routes>
           <Route path="/" element={landingElement} />
           <Route
@@ -58,6 +60,17 @@ export function Router() {
   );
 }
 
+function AnalyticsRouteTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    initWebAnalytics();
+    trackWebAnalyticsPageView();
+  }, [location.hash, location.pathname, location.search]);
+
+  return null;
+}
+
 function VisualizationRoute() {
   return (
     <LazyRoute>
@@ -67,11 +80,7 @@ function VisualizationRoute() {
 }
 
 function LazyRoute({ children }) {
-  return (
-    <React.Suspense fallback={<RouteLoadingFallback />}>
-      {children}
-    </React.Suspense>
-  );
+  return <React.Suspense fallback={<RouteLoadingFallback />}>{children}</React.Suspense>;
 }
 
 function RouteLoadingFallback() {

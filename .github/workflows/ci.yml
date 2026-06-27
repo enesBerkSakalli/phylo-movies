@@ -456,6 +456,11 @@ jobs:
         run: npm --prefix manual ci
 
       - name: Build for GitHub Pages
+        env:
+          VITE_ANALYTICS_PROVIDER: ${{ vars.VITE_ANALYTICS_PROVIDER }}
+          VITE_ANALYTICS_DOMAIN: ${{ vars.VITE_ANALYTICS_DOMAIN }}
+          VITE_ANALYTICS_SCRIPT_SRC: ${{ vars.VITE_ANALYTICS_SCRIPT_SRC }}
+          VITE_ANALYTICS_ENDPOINT: ${{ vars.VITE_ANALYTICS_ENDPOINT }}
         run: npm run build:gh:ci
 
       - name: Copy index.html to 404.html (SPA fallback)

@@ -6,11 +6,34 @@ The app has a small set of verified environment variables. The template is [.env
 
 ## Frontend
 
-| Variable           | Used by                                     | Default         | Meaning                                                             |
-| ------------------ | ------------------------------------------- | --------------- | ------------------------------------------------------------------- |
-| `VITE_DOCS_ONLY`   | `src/Router.jsx`, `scripts/apply-gh-seo.js` | unset/false     | Builds the documentation-only GitHub Pages experience when `true`.  |
-| `ELECTRON_BUILD`   | `vite.config.mts`, Electron build scripts   | unset/false     | Uses relative asset paths for Electron frontend builds when `true`. |
-| `VITE_APP_VERSION` | `vite.config.mts` define and splash UI      | package version | Injected from `package.json`; normally not set manually.            |
+| Variable                    | Used by                                                                 | Default          | Meaning                                                                                                                 |
+| --------------------------- | ----------------------------------------------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `VITE_DOCS_ONLY`            | `src/Router.jsx`, `scripts/apply-gh-seo.js`                             | unset/false      | Builds the documentation-only GitHub Pages experience when `true`.                                                      |
+| `VITE_ANALYTICS_PROVIDER`   | `src/services/analytics/webAnalytics.js`, `manual/docusaurus.config.js` | unset            | Optional public-site analytics provider: `plausible` or `goatcounter`.                                                  |
+| `VITE_ANALYTICS_DOMAIN`     | analytics setup                                                         | unset            | Plausible domain value; defaults to the current hostname in the Vite app and `enesberksakalli.github.io` in the manual. |
+| `VITE_ANALYTICS_SCRIPT_SRC` | analytics setup                                                         | provider default | Optional custom script URL for a self-hosted analytics script.                                                          |
+| `VITE_ANALYTICS_ENDPOINT`   | analytics setup                                                         | unset            | GoatCounter count endpoint, for example `https://example.goatcounter.com/count`.                                        |
+| `ELECTRON_BUILD`            | `vite.config.mts`, Electron build scripts                               | unset/false      | Uses relative asset paths for Electron frontend builds when `true`.                                                     |
+| `VITE_APP_VERSION`          | `vite.config.mts` define and splash UI                                  | package version  | Injected from `package.json`; normally not set manually.                                                                |
+
+Analytics is disabled unless `VITE_ANALYTICS_PROVIDER` is set. The frontend
+also respects browser Do Not Track. For GitHub Pages, add the same values as
+repository variables so the `gh-pages-build` workflow can inject them at build
+time.
+
+Plausible example:
+
+```bash
+VITE_ANALYTICS_PROVIDER=plausible
+VITE_ANALYTICS_DOMAIN=enesberksakalli.github.io
+```
+
+GoatCounter example:
+
+```bash
+VITE_ANALYTICS_PROVIDER=goatcounter
+VITE_ANALYTICS_ENDPOINT=https://YOUR-CODE.goatcounter.com/count
+```
 
 Vite dev server defaults:
 
