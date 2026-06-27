@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useAppStore } from '../src/state/phyloStore/store.js';
 import { TreeLayoutController } from '../src/treeVisualisation/TreeLayoutController.js';
+import { LAYOUT_PROJECTION_MODES } from '../src/treeVisualisation/layout/hyperbolicProjection.js';
 
 describe('TreeLayoutController radii', () => {
   const initialState = useAppStore.getState();
@@ -359,6 +360,94 @@ describe('TreeLayoutController radii', () => {
     expect(largeA.visualBranchLength).toBeCloseTo(0.75);
     expect(largeB.metricBranchLength).toBe(16);
     expect(largeB.visualBranchLength).toBe(1);
+  });
+
+  it('applies hyperbolic projection after branch-length radial layout', () => {
+    const treeList = [
+      {
+        name: 'root',
+        length: 0,
+        children: [
+          {
+            name: 'internal',
+            length: 1,
+            children: [{ name: 'leaf', length: 1 }],
+          },
+        ],
+      },
+    ];
+    useAppStore.setState({
+      treeList,
+      timelineFrames,
+      branchTransformation: 'none',
+      layoutAngleDegrees: 360,
+      layoutRotationDegrees: 0,
+      layoutProjectionMode: LAYOUT_PROJECTION_MODES.RADIAL,
+      hyperbolicProjectionStrength: 1,
+    });
+
+    const controller = new TreeLayoutController(null);
+    const radialLayout = controller.calculateLayout(treeList[0], { treeIndex: 0 });
+    const radialInternal = radialLayout.nodes.find((node) => node.name === 'internal');
+    controller.clearLayoutCache();
+
+    useAppStore.setState({ layoutProjectionMode: LAYOUT_PROJECTION_MODES.HYPERBOLIC });
+    const hyperbolicLayout = controller.calculateLayout(treeList[0], { treeIndex: 0 });
+    const hyperbolicInternal = hyperbolicLayout.nodes.find((node) => node.name === 'internal');
+    const hyperbolicLeaf = hyperbolicLayout.nodes.find((node) => node.name === 'leaf');
+
+    expect(hyperbolicLayout.projectionMode).toBe(LAYOUT_PROJECTION_MODES.HYPERBOLIC);
+    expect(hyperbolicInternal.radius).toBeGreaterThan(radialInternal.radius);
+    expect(hyperbolicInternal.hyperbolicOriginalRadius).toBeCloseTo(radialInternal.radius);
+    expect(hyperbolicLeaf.radius).toBeCloseTo(radialLayout.max_radius);
+    expect(hyperbolicLayout.max_radius).toBeCloseTo(radialLayout.max_radius);
+  });
+
+  it('builds Walrus 3D layout coordinates after tree layout preparation', () => {
+    const treeList = [
+      {
+        name: 'root',
+        length: 0,
+        children: [
+          {
+            name: 'left',
+            length: 1,
+            children: [{ name: 'left_leaf', length: 1 }],
+          },
+          {
+            name: 'right',
+            length: 1,
+            children: [{ name: 'right_leaf', length: 1 }],
+          },
+          {
+            name: 'middle',
+            length: 1,
+            children: [{ name: 'middle_leaf', length: 1 }],
+          },
+        ],
+      },
+    ];
+    useAppStore.setState({
+      treeList,
+      timelineFrames,
+      branchTransformation: 'none',
+      layoutAngleDegrees: 360,
+      layoutRotationDegrees: 0,
+      layoutProjectionMode: LAYOUT_PROJECTION_MODES.WALRUS_3D,
+      hyperbolicProjectionStrength: 1,
+    });
+
+    const controller = new TreeLayoutController(null);
+    const layout = controller.calculateLayout(treeList[0], { treeIndex: 0 });
+    const leaf = layout.leaves.find((node) => Math.abs(node.position?.[2] ?? 0) > 0);
+    const link = layout.links.find((entry) => entry.targetName === leaf.name);
+
+    expect(layout.projectionMode).toBe(LAYOUT_PROJECTION_MODES.WALRUS_3D);
+    expect(layout.is3dLayout).toBe(true);
+    expect(leaf.position).toHaveLength(3);
+    expect(Math.abs(leaf.position[2])).toBeGreaterThan(0);
+    expect(Math.hypot(...leaf.position)).toBeCloseTo(leaf.radius);
+    expect(link.targetPosition[2]).toBe(leaf.position[2]);
   });
 
   it('recalculates transformed trees and scaling when the dataset changes with the same transform', () => {

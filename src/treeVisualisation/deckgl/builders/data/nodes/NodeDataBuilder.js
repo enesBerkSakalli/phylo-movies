@@ -27,7 +27,8 @@ export class NodeDataBuilder {
    * @private
    */
   _createNodeData(node, nodeDotSizes) {
-    if (!Number.isFinite(node.x) || !Number.isFinite(node.y)) {
+    const position = normalizeNodePosition(node);
+    if (!position) {
       console.warn(
         '[NodeDataBuilder] Skipping node with invalid layout coordinates:',
         node.split_indices
@@ -49,8 +50,8 @@ export class NodeDataBuilder {
     return {
       id: nodeKey,
       parentId: node.parentId,
-      position: [node.x, node.y, 0],
-      renderPosition: [node.x, node.y, Z_NODE],
+      position,
+      renderPosition: [position[0], position[1], position[2] + Z_NODE],
       dotSize: dotSize,
       isLeaf,
       isInternal: !isLeaf,
@@ -68,9 +69,30 @@ export class NodeDataBuilder {
       height: node.height,
       angle: node.angle,
       polarPosition: node.radius,
+      projectionMode: node.projectionMode,
+      h3Direction: node.h3Direction,
+      h3Distance: node.h3Distance,
       split_indices: splitIndices,
       splitKey,
       child_split_indices: node.child_split_indices,
     };
   }
+}
+
+function normalizeNodePosition(node) {
+  if (!node) return null;
+
+  const rawPosition = node.position;
+  const x = Number(
+    Array.isArray(rawPosition) || ArrayBuffer.isView(rawPosition) ? rawPosition[0] : node.x
+  );
+  const y = Number(
+    Array.isArray(rawPosition) || ArrayBuffer.isView(rawPosition) ? rawPosition[1] : node.y
+  );
+  const z = Number(
+    Array.isArray(rawPosition) || ArrayBuffer.isView(rawPosition) ? rawPosition[2] : node.z
+  );
+
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+  return [x, y, Number.isFinite(z) ? z : 0];
 }

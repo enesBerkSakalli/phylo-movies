@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { calculateLayoutWorkerResult } from '../src/treeVisualisation/workers/layout.worker.js';
+import { LAYOUT_PROJECTION_MODES } from '../src/treeVisualisation/layout/hyperbolicProjection.js';
 
 describe('layout worker metadata', () => {
   it('attaches max_radius to worker layout and layer data', () => {
@@ -102,6 +103,82 @@ describe('layout worker metadata', () => {
       result.layout.max_radius + 1
     );
     expect(result.layerData.labels[0].polarPosition).toBe(result.layout.max_radius + 3);
+  });
+
+  it('applies hyperbolic projection in worker layout data', () => {
+    const treeData = {
+      name: '',
+      length: 0,
+      split_indices: [0],
+      children: [
+        {
+          name: 'internal',
+          length: 1,
+          split_indices: [0],
+          children: [{ name: 'taxon_1', length: 1, split_indices: [0], children: [] }],
+        },
+      ],
+    };
+
+    const radialResult = calculateLayoutWorkerResult(treeData, {
+      width: 800,
+      height: 600,
+      margin: 60,
+      branchTransformation: 'none',
+      layoutProjectionMode: LAYOUT_PROJECTION_MODES.RADIAL,
+      hyperbolicProjectionStrength: 1,
+    });
+    const hyperbolicResult = calculateLayoutWorkerResult(treeData, {
+      width: 800,
+      height: 600,
+      margin: 60,
+      branchTransformation: 'none',
+      layoutProjectionMode: LAYOUT_PROJECTION_MODES.HYPERBOLIC,
+      hyperbolicProjectionStrength: 1,
+    });
+    const radialInternal = radialResult.layout.nodes.find((node) => node.name === 'internal');
+    const hyperbolicInternal = hyperbolicResult.layout.nodes.find(
+      (node) => node.name === 'internal'
+    );
+
+    expect(hyperbolicResult.layout.projectionMode).toBe(LAYOUT_PROJECTION_MODES.HYPERBOLIC);
+    expect(hyperbolicInternal.radius).toBeGreaterThan(radialInternal.radius);
+    expect(hyperbolicResult.layerData.nodes).toHaveLength(radialResult.layerData.nodes.length);
+  });
+
+  it('applies Walrus 3D projection in worker layout and layer data', () => {
+    const treeData = {
+      name: '',
+      length: 0,
+      split_indices: [0, 1, 2],
+      children: [
+        { name: 'taxon_1', length: 1, split_indices: [0], children: [] },
+        { name: 'taxon_2', length: 1, split_indices: [1], children: [] },
+        { name: 'taxon_3', length: 1, split_indices: [2], children: [] },
+      ],
+    };
+
+    const result = calculateLayoutWorkerResult(treeData, {
+      width: 800,
+      height: 600,
+      margin: 60,
+      branchTransformation: 'none',
+      layoutProjectionMode: LAYOUT_PROJECTION_MODES.WALRUS_3D,
+      hyperbolicProjectionStrength: 1,
+      linkGeometryMode: 'radial-elbow',
+      labelOffsets: { DEFAULT: 2, EXTENSION: 1 },
+    });
+    const leaf = result.layout.nodes.find((node) => Math.abs(node.position?.[2] || 0) > 1e-9);
+    expect(leaf).toBeTruthy();
+    const renderedLeaf = result.layerData.nodes.find((node) => node.name === leaf.name);
+    const renderedLink = result.layerData.links.find((link) => link.targetName === leaf.name);
+
+    expect(result.layout.projectionMode).toBe(LAYOUT_PROJECTION_MODES.WALRUS_3D);
+    expect(result.layout.is3dLayout).toBe(true);
+    expect(Math.abs(leaf.position[2])).toBeGreaterThan(0);
+    expect(renderedLeaf.position[2]).toBe(leaf.position[2]);
+    expect(renderedLink.targetPosition[2]).toBe(leaf.position[2]);
+    expect(renderedLink.path[5]).toBeCloseTo(leaf.position[2]);
   });
 
   it('expands dense worker label rings without dropping labels', () => {

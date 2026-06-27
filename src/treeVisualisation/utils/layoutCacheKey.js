@@ -3,6 +3,10 @@ import {
   selectFileName,
   selectInputFrameIndices,
 } from '../../state/phyloStore/selectors/treeSelectors.js';
+import {
+  LAYOUT_PROJECTION_MODES,
+  normalizeLayoutProjectionMode,
+} from '../layout/hyperbolicProjection.js';
 
 const datasetIds = new WeakMap();
 let nextDatasetId = 1;
@@ -95,6 +99,11 @@ export function createLayoutCacheKey({
   const resolvedTreeList = resolveTreeList(state, treeList);
   const offsets = normalizedOffsets(state);
   const scale = normalizedOptionalNumber(maxGlobalScale);
+  const projectionMode = normalizeLayoutProjectionMode(state?.layoutProjectionMode);
+  const projectionStrength =
+    projectionMode === LAYOUT_PROJECTION_MODES.HYPERBOLIC
+      ? finiteNumber(state?.hyperbolicProjectionStrength, 0.65)
+      : 'unused';
 
   return [
     `dataset=${getDatasetCacheId(state, resolvedTreeList, { includeHydration: true })}`,
@@ -105,6 +114,8 @@ export function createLayoutCacheKey({
     `height=${finiteNumber(height, 0)}`,
     `angle=${finiteNumber(state?.layoutAngleDegrees, 360)}`,
     `rotation=${finiteNumber(state?.layoutRotationDegrees, 0)}`,
+    `projection=${projectionMode}`,
+    `hyperbolicStrength=${projectionStrength}`,
     `labelOffset=${offsets.label}`,
     `extensionOffset=${offsets.extension}`,
     `maxGlobalScale=${scale}`,

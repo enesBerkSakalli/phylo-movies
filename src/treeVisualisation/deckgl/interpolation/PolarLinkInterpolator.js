@@ -1,6 +1,12 @@
 import { LINK_LIFECYCLES, createLifecycleClocks } from './TransitionChangeModel.js';
-import { polarToPosition, positionFromPolar, positionToPolar } from '../../utils/polarGeometry.js';
+import {
+  normalizePosition3,
+  polarToPosition,
+  positionFromPolar,
+  positionToPolar,
+} from '../../utils/polarGeometry.js';
 import { measureFrameStep } from '../../performance/frameInstrumentation.js';
+import { twoPointFloat32Path } from '../utils/pathFormat.js';
 
 const ZERO_LENGTH_EPSILON = 1e-6;
 
@@ -175,11 +181,18 @@ export class PolarLinkInterpolator {
       this._lifecycleTargetReferencePosition(fromLink, toLink, options.lifecycle, options) ||
       targetFramePosition;
 
+    if (usesCartesianEndpointScaling(sourcePosition, targetFramePosition, targetReferencePosition)) {
+      const targetPosition = scaleAlongCartesianEndpoint(
+        sourcePosition,
+        targetFramePosition,
+        targetReferencePosition,
+        lengthScale
+      );
+      return this._createLinkDatumFromPositions(toLink, sourcePosition, targetPosition, options);
+    }
+
     const sourceRadius = Math.hypot(sourcePosition[0], sourcePosition[1]);
-    const targetReferenceRadius = Math.hypot(
-      targetReferencePosition[0],
-      targetReferencePosition[1]
-    );
+    const targetReferenceRadius = Math.hypot(targetReferencePosition[0], targetReferencePosition[1]);
     const targetAngle = Math.atan2(targetFramePosition[1], targetFramePosition[0]);
     const branchLength = Math.max(0, targetReferenceRadius - sourceRadius);
     const scaledBranchLength = branchLength * clampTime(lengthScale);
@@ -273,10 +286,13 @@ export class PolarLinkInterpolator {
       };
     });
 
-    const path = this.pathInterpolator.createPathFromPolarData(positionedLink.polarData, {
-      linkGeometryMode: options.linkGeometryMode,
-      pathPoolKey: link?.id != null ? `link:${link.id}` : null,
-    });
+    const path =
+      options.linkGeometryMode === 'straight'
+        ? twoPointFloat32Path(sourcePosition, targetPosition)
+        : this.pathInterpolator.createPathFromPolarData(positionedLink.polarData, {
+            linkGeometryMode: options.linkGeometryMode,
+            pathPoolKey: link?.id != null ? `link:${link.id}` : null,
+          });
 
     return measureFrameStep('link.datumSpread', () => ({
       ...link,
@@ -416,6 +432,38 @@ function linkEndpointNodeId(entry, endpoint) {
 function shouldAttachLifecycleEndpoints(parentLifecycle, childLifecycle) {
   const parentDirection = lifecycleDirection(parentLifecycle);
   return parentDirection !== null && parentDirection === lifecycleDirection(childLifecycle);
+}
+
+function usesCartesianEndpointScaling(...positions) {
+  return positions.some((position) => Math.abs(Number(position?.[2]) || 0) > ZERO_LENGTH_EPSILON);
+}
+
+function scaleAlongCartesianEndpoint(sourcePosition, targetFramePosition, targetReferencePosition, t) {
+  const source = normalizePosition3(sourcePosition) || [0, 0, 0];
+  const targetFrame = normalizePosition3(targetFramePosition) || [0, 0, 0];
+  const targetReference = normalizePosition3(targetReferencePosition) || [0, 0, 0];
+  const referenceDelta = [
+    targetReference[0] - source[0],
+    targetReference[1] - source[1],
+    targetReference[2] - source[2],
+  ];
+  const frameDelta = [
+    targetFrame[0] - source[0],
+    targetFrame[1] - source[1],
+    targetFrame[2] - source[2],
+  ];
+  const referenceLength = Math.hypot(referenceDelta[0], referenceDelta[1], referenceDelta[2]);
+  const frameLength = Math.hypot(frameDelta[0], frameDelta[1], frameDelta[2]);
+  const scale = clampTime(t);
+  if (referenceLength <= ZERO_LENGTH_EPSILON || frameLength <= ZERO_LENGTH_EPSILON || scale <= 0) {
+    return source;
+  }
+  const targetLength = referenceLength * scale;
+  return [
+    source[0] + (frameDelta[0] / frameLength) * targetLength,
+    source[1] + (frameDelta[1] / frameLength) * targetLength,
+    source[2] + (frameDelta[2] / frameLength) * targetLength,
+  ];
 }
 
 function lifecycleDirection(lifecycle) {

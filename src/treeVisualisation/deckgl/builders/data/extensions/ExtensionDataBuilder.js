@@ -1,5 +1,10 @@
 import { getSplitKey } from '../../../../../domain/tree/splits.js';
+import {
+  normalizeDirection3,
+  normalizePosition3,
+} from '../../../../utils/polarGeometry.js';
 import { twoPointFloat32Path } from '../../../utils/pathFormat.js';
+import { LAYOUT_PROJECTION_MODES } from '../../../../layout/hyperbolicProjection.js';
 
 /**
  * ExtensionDataBuilder - Generates extension lines for leaf nodes
@@ -23,6 +28,10 @@ export class ExtensionDataBuilder {
    * @private
    */
   _createExtensionData(leaf, extensionRadius) {
+    if (leaf.projectionMode === LAYOUT_PROJECTION_MODES.WALRUS_3D) {
+      return this._createWalrus3dExtensionData(leaf, extensionRadius);
+    }
+
     const angle = leaf.angle;
     if (
       !Number.isFinite(leaf.x) ||
@@ -69,6 +78,63 @@ export class ExtensionDataBuilder {
         },
         target: {
           angle,
+          radius: extensionRadius,
+        },
+      },
+    };
+  }
+
+  _createWalrus3dExtensionData(leaf, extensionRadius) {
+    const sourcePosition = normalizePosition3(leaf.position);
+    if (!sourcePosition || !Number.isFinite(extensionRadius)) {
+      console.warn(
+        '[ExtensionDataBuilder] Skipping 3D extension with invalid layout coordinates:',
+        leaf.split_indices
+      );
+      return null;
+    }
+
+    const sourceDistance = Math.hypot(sourcePosition[0], sourcePosition[1], sourcePosition[2]);
+    const direction = normalizeDirection3(leaf.h3Direction, sourcePosition);
+    const offset = Math.max(0, extensionRadius - sourceDistance);
+    const targetPosition = [
+      sourcePosition[0] + direction[0] * offset,
+      sourcePosition[1] + direction[1] * offset,
+      sourcePosition[2] + direction[2] * offset,
+    ];
+    const splitIndices = leaf.split_indices;
+    const splitKey = leaf.splitKey || getSplitKey({ split_indices: splitIndices });
+    const extensionKey = splitKey ? `ext-${splitKey}` : null;
+    if (!extensionKey) {
+      console.warn(
+        '[ExtensionDataBuilder] Skipping 3D extension without split_indices:',
+        leaf.name
+      );
+      return null;
+    }
+
+    return {
+      id: extensionKey,
+      sourcePosition,
+      targetPosition,
+      path: twoPointFloat32Path(sourcePosition, targetPosition),
+      name: leaf.name,
+      isLeaf: true,
+      split_indices: splitIndices,
+      splitKey,
+      projectionMode: leaf.projectionMode,
+      h3Direction: direction,
+      polarData: {
+        source: {
+          angle: Number.isFinite(leaf.angle)
+            ? leaf.angle
+            : Math.atan2(sourcePosition[1], sourcePosition[0]),
+          radius: leaf.radius,
+        },
+        target: {
+          angle: Number.isFinite(leaf.angle)
+            ? leaf.angle
+            : Math.atan2(targetPosition[1], targetPosition[0]),
           radius: extensionRadius,
         },
       },

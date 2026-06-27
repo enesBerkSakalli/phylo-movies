@@ -76,12 +76,12 @@ export class LinkGeometryBuilder {
       [
         finiteCoordinate(source.x, source.radius * Math.cos(source.angle)),
         finiteCoordinate(source.y, source.radius * Math.sin(source.angle)),
-        0,
+        finiteCoordinate(source.z, 0),
       ],
       [
         finiteCoordinate(target.x, target.radius * Math.cos(target.angle)),
         finiteCoordinate(target.y, target.radius * Math.sin(target.angle)),
-        0,
+        finiteCoordinate(target.z, 0),
       ]
     );
   }

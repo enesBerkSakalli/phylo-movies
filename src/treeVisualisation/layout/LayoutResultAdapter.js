@@ -19,6 +19,9 @@ export function createLayoutResult(root, metadata = {}) {
     margin: metadata.margin,
     scale: metadata.scale,
     uniformScale: metadata.uniformScale,
+    projectionMode: metadata.projectionMode,
+    hyperbolicProjectionStrength: metadata.hyperbolicProjectionStrength,
+    is3dLayout: metadata.is3dLayout,
     layoutCacheKey: metadata.layoutCacheKey,
   };
 }
@@ -33,8 +36,10 @@ function normalizeLayoutNode(node, parent = null, path = []) {
   const currentPath = [...path, name || `depth_${node?.depth ?? 0}`];
   const angle = node?.rotatedAngle ?? node?.angle ?? 0;
   const radius = Number.isFinite(node?.radius) ? node.radius : 0;
-  const x = Number.isFinite(node?.x) ? node.x : 0;
-  const y = Number.isFinite(node?.y) ? node.y : 0;
+  const position = normalizePosition(node);
+  const x = position[0];
+  const y = position[1];
+  const z = position[2];
   const nodeMetricBranchLength = Number(node?.metricBranchLength);
   const nodeVisualBranchLength = Number(node?.visualBranchLength);
   const metricBranchLength = Number.isFinite(nodeMetricBranchLength)
@@ -59,10 +64,20 @@ function normalizeLayoutNode(node, parent = null, path = []) {
     height: node?.height ?? 0,
     x,
     y,
+    z,
     angle,
     radius,
     polarPosition: radius,
-    position: [x, y, 0],
+    position,
+    projectionMode: node?.projectionMode,
+    hyperbolicProjectionStrength: node?.hyperbolicProjectionStrength,
+    hyperbolicOriginalRadius: node?.hyperbolicOriginalRadius,
+    h3OriginalRadius: node?.h3OriginalRadius,
+    h3ProjectionRadius: node?.h3ProjectionRadius,
+    h3ProjectedUnitRadius: node?.h3ProjectedUnitRadius,
+    h3Distance: node?.h3Distance,
+    h3SubtreeRadius: node?.h3SubtreeRadius,
+    h3Direction: copyVector(node?.h3Direction),
     isLeaf: !Array.isArray(node?.children) || node.children.length === 0,
     isInternal: Array.isArray(node?.children) && node.children.length > 0,
     path: currentPath,
@@ -122,6 +137,8 @@ function toLinkEndpoint(node) {
     id: node.id,
     x: node.x,
     y: node.y,
+    z: node.z,
+    position: node.position,
     angle: node.angle,
     radius: node.radius,
     length: node.length,
@@ -135,6 +152,24 @@ function toLinkEndpoint(node) {
 
 function copySplitIndices(splitIndices) {
   return Array.isArray(splitIndices) ? [...splitIndices] : [];
+}
+
+function copyVector(vector) {
+  if (!Array.isArray(vector) && !ArrayBuffer.isView(vector)) return undefined;
+  const copied = Array.from(vector, (value) => Number(value));
+  return copied.every((value) => Number.isFinite(value)) ? copied : undefined;
+}
+
+function normalizePosition(node) {
+  const explicitPosition = copyVector(node?.position);
+  if (explicitPosition && explicitPosition.length >= 3) {
+    return [explicitPosition[0], explicitPosition[1], explicitPosition[2]];
+  }
+
+  const x = Number(node?.x);
+  const y = Number(node?.y);
+  const z = Number(node?.z);
+  return [Number.isFinite(x) ? x : 0, Number.isFinite(y) ? y : 0, Number.isFinite(z) ? z : 0];
 }
 
 function resolveSplitKey(data, nodeId) {

@@ -10,6 +10,7 @@ import {
   labelTextAnchor,
   positionFromPolar,
   shouldFlipLabel,
+  usesCartesianPositionInterpolation,
 } from '../../../utils/polarGeometry.js';
 
 export class PolarLabelInterpolator {
@@ -37,10 +38,11 @@ export class PolarLabelInterpolator {
     const velocityEntry = options?.velocityEntry ?? null;
     const radiusOverride = options?.radiusOverride;
     const hasRadiusOverride = Number.isFinite(radiusOverride);
+    const usesCartesianPosition = usesCartesianPositionInterpolation(fromLabel, toLabel);
     const angularT = velocityEntry?.angularT ?? t;
     const interpolatedPosition = this._interpolatePosition(fromLabel, toLabel, t, velocityEntry);
     const motionOpacity = 1;
-    const angle = hasRadiusOverride
+    const angle = hasRadiusOverride && !usesCartesianPosition
       ? angleFromPosition(interpolatedPosition, toLabel.angle)
       : toLabel.angle;
     const z =
@@ -51,11 +53,11 @@ export class PolarLabelInterpolator {
 
     return {
       ...toLabel,
-      position: hasRadiusOverride
+      position: hasRadiusOverride && !usesCartesianPosition
         ? positionFromPolar(radiusOverride, angle, z)
         : interpolatedPosition,
       motionOpacity,
-      ...(hasRadiusOverride
+      ...(hasRadiusOverride && !usesCartesianPosition
         ? {
             angle,
             polarPosition: radiusOverride,

@@ -3,6 +3,7 @@ import { LinkDataBuilder } from './builders/data/links/LinkDataBuilder.js';
 import { NodeDataBuilder } from './builders/data/nodes/NodeDataBuilder.js';
 import { LabelDataBuilder } from './builders/data/labels/LabelDataBuilder.js';
 import { ExtensionDataBuilder } from './builders/data/extensions/ExtensionDataBuilder.js';
+import { LAYOUT_PROJECTION_MODES } from '../layout/hyperbolicProjection.js';
 
 export class DeckGLTreeLayerDataFactory {
   constructor() {
@@ -32,7 +33,11 @@ export class DeckGLTreeLayerDataFactory {
       canvasHeight: layout.height,
       radiusConfig,
     });
-    const links = this.linkDataBuilder.convertLinks(layout.links, { linkGeometryMode });
+    const effectiveLinkGeometryMode =
+      layout?.projectionMode === LAYOUT_PROJECTION_MODES.WALRUS_3D ? 'straight' : linkGeometryMode;
+    const links = this.linkDataBuilder.convertLinks(layout.links, {
+      linkGeometryMode: effectiveLinkGeometryMode,
+    });
     const labels = this.labelDataBuilder.convertLabels(
       layout.leaves,
       labelRadius || extensionRadius

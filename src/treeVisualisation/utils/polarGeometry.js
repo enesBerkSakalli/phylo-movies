@@ -1,6 +1,8 @@
 import { shortestAngle, crossesAngle, longArcDelta } from '../../domain/math/mathUtils.js';
 
 const TAU = Math.PI * 2;
+const CARTESIAN_PROJECTION_MODES = new Set(['walrus-3d']);
+const Z_EPSILON = 1e-9;
 
 export function interpolateScalar(from, to, t, fallback = 0) {
   const fromValue = Number.isFinite(from) ? from : fallback;
@@ -30,6 +32,10 @@ export function rootAwareAngleDelta(fromAngle, toAngle, rootAngle = 0) {
 
 export function interpolatePolarPosition(fromElement, toElement, t, options = {}) {
   if (!fromElement || !toElement) return [0, 0, 0];
+  if (usesCartesianPositionInterpolation(fromElement, toElement)) {
+    const position = interpolateCartesianPosition(fromElement, toElement, t);
+    if (position) return position;
+  }
 
   const angularT = options.velocityEntry?.angularT ?? t;
   const fromRadius = fromElement.polarPosition ?? fromElement.radius ?? 0;
@@ -41,6 +47,57 @@ export function interpolatePolarPosition(fromElement, toElement, t, options = {}
     fromAngle + rootAwareAngleDelta(fromAngle, toAngle, options.rootAngle ?? 0) * angularT;
 
   return positionFromPolar(radius, angle, 0);
+}
+
+export function usesCartesianPositionInterpolation(fromElement, toElement) {
+  return (
+    hasCartesianProjectionMode(fromElement) ||
+    hasCartesianProjectionMode(toElement) ||
+    hasNonzeroPositionZ(fromElement) ||
+    hasNonzeroPositionZ(toElement)
+  );
+}
+
+export function interpolateCartesianPosition(fromElement, toElement, t) {
+  const fromPosition = readElementPosition(fromElement);
+  const toPosition = readElementPosition(toElement);
+  if (!fromPosition && !toPosition) return null;
+  return interpolateVector3(fromPosition || toPosition, toPosition || fromPosition, t);
+}
+
+export function interpolateVector3(fromPosition, toPosition, t) {
+  const from = normalizePosition3(fromPosition);
+  const to = normalizePosition3(toPosition);
+  if (!from && !to) return [0, 0, 0];
+  const a = from || to;
+  const b = to || from;
+  return [
+    interpolateScalar(a[0], b[0], t),
+    interpolateScalar(a[1], b[1], t),
+    interpolateScalar(a[2], b[2], t),
+  ];
+}
+
+export function normalizePosition3(position) {
+  if (!Array.isArray(position) && !ArrayBuffer.isView(position)) return null;
+  const x = Number(position[0]);
+  const y = Number(position[1]);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+  const z = Number(position[2]);
+  return [x, y, Number.isFinite(z) ? z : 0];
+}
+
+export function normalizeDirection3(direction, fallbackPosition, fallback = [0, 0, 1]) {
+  const source =
+    (Array.isArray(direction) || ArrayBuffer.isView(direction)) && direction.length >= 3
+      ? direction
+      : fallbackPosition;
+  const vector = normalizePosition3(source);
+  if (!vector) return fallback;
+
+  const length = Math.hypot(vector[0], vector[1], vector[2]);
+  if (!Number.isFinite(length) || length <= Z_EPSILON) return fallback;
+  return [vector[0] / length, vector[1] / length, vector[2] / length];
 }
 
 export function positionToPolar(position) {
@@ -136,4 +193,27 @@ export function replaceLastPathPoint(path, point) {
   }
 
   return path;
+}
+
+function hasCartesianProjectionMode(element) {
+  return CARTESIAN_PROJECTION_MODES.has(element?.projectionMode);
+}
+
+function hasNonzeroPositionZ(element) {
+  const position = readElementPosition(element);
+  return position ? Math.abs(position[2]) > Z_EPSILON : false;
+}
+
+function readElementPosition(element) {
+  if (!element) return null;
+  const rawPosition = element.position;
+  if (Array.isArray(rawPosition) || ArrayBuffer.isView(rawPosition)) {
+    return normalizePosition3(rawPosition);
+  }
+
+  const x = Number(element.x);
+  const y = Number(element.y);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+  const z = Number(element.z);
+  return [x, y, Number.isFinite(z) ? z : 0];
 }

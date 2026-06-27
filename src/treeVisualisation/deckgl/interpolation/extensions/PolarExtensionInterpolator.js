@@ -3,7 +3,15 @@
  * Extensions are radial lines from leaf nodes to outer radius
  */
 import { PolarPathInterpolator } from '../path/PolarPathInterpolator.js';
-import { firstPathPoint, lastPathPoint, positionFromPolar } from '../../../utils/polarGeometry.js';
+import {
+  firstPathPoint,
+  interpolateVector3,
+  lastPathPoint,
+  positionFromPolar,
+  positionToPolar,
+  usesCartesianPositionInterpolation,
+} from '../../../utils/polarGeometry.js';
+import { twoPointFloat32Path } from '../../utils/pathFormat.js';
 
 export class PolarExtensionInterpolator {
   constructor() {
@@ -27,6 +35,30 @@ export class PolarExtensionInterpolator {
    */
   interpolateExtension(fromExt, toExt, t, options = {}) {
     const id = toExt?.id ?? fromExt?.id;
+    if (usesCartesianPositionInterpolation(fromExt, toExt)) {
+      const sourcePosition = interpolateVector3(fromExt?.sourcePosition, toExt?.sourcePosition, t);
+      const targetPosition = interpolateVector3(fromExt?.targetPosition, toExt?.targetPosition, t);
+      const source = positionToPolar(sourcePosition);
+      const target = positionToPolar(targetPosition);
+      return {
+        ...toExt,
+        path: twoPointFloat32Path(sourcePosition, targetPosition),
+        sourcePosition,
+        targetPosition,
+        polarData: {
+          ...toExt.polarData,
+          source: {
+            ...toExt.polarData?.source,
+            ...source,
+          },
+          target: {
+            ...toExt.polarData?.target,
+            ...target,
+          },
+        },
+      };
+    }
+
     const polarData = this.pathInterpolator.interpolatePolarData(fromExt, toExt, t, {
       velocityEntry: options?.velocityEntry ?? null,
       targetRadiusOverride: options?.targetRadiusOverride,

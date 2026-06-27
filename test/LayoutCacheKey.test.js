@@ -45,6 +45,12 @@ describe('layout cache key', () => {
     expect(
       createLayoutCacheKey({
         ...baseOptions,
+        state: { ...baseState, layoutProjectionMode: 'hyperbolic' },
+      })
+    ).not.toBe(baseKey);
+    expect(
+      createLayoutCacheKey({
+        ...baseOptions,
         state: { ...baseState, linkGeometryMode: 'straight' },
       })
     ).not.toBe(baseKey);
@@ -64,6 +70,53 @@ describe('layout cache key', () => {
     expect(
       createLayoutCacheKey({ ...baseOptions, state: { ...baseState, treeHydrationVersion: 1 } })
     ).not.toBe(baseKey);
+  });
+
+  it('uses hyperbolic strength only when that mode changes geometry', () => {
+    const radialKey = createLayoutCacheKey({
+      ...baseOptions,
+      state: { ...baseState, layoutProjectionMode: 'radial', hyperbolicProjectionStrength: 0.2 },
+    });
+    const radialOtherStrengthKey = createLayoutCacheKey({
+      ...baseOptions,
+      state: { ...baseState, layoutProjectionMode: 'radial', hyperbolicProjectionStrength: 0.9 },
+    });
+    const walrusKey = createLayoutCacheKey({
+      ...baseOptions,
+      state: {
+        ...baseState,
+        layoutProjectionMode: 'walrus-3d',
+        hyperbolicProjectionStrength: 0.2,
+      },
+    });
+    const walrusOtherStrengthKey = createLayoutCacheKey({
+      ...baseOptions,
+      state: {
+        ...baseState,
+        layoutProjectionMode: 'walrus-3d',
+        hyperbolicProjectionStrength: 0.9,
+      },
+    });
+    const hyperbolicKey = createLayoutCacheKey({
+      ...baseOptions,
+      state: {
+        ...baseState,
+        layoutProjectionMode: 'hyperbolic',
+        hyperbolicProjectionStrength: 0.2,
+      },
+    });
+    const hyperbolicOtherStrengthKey = createLayoutCacheKey({
+      ...baseOptions,
+      state: {
+        ...baseState,
+        layoutProjectionMode: 'hyperbolic',
+        hyperbolicProjectionStrength: 0.9,
+      },
+    });
+
+    expect(radialOtherStrengthKey).toBe(radialKey);
+    expect(walrusOtherStrengthKey).toBe(walrusKey);
+    expect(hyperbolicOtherStrengthKey).not.toBe(hyperbolicKey);
   });
 
   it('keeps visual-only label size out of layout cache identity', () => {

@@ -81,12 +81,14 @@ export class LinkDataBuilder {
       source: {
         x: link.source.x,
         y: link.source.y,
+        z: link.source.z,
         angle: link.source.angle,
         radius: link.source.radius,
       },
       target: {
         x: link.target.x,
         y: link.target.y,
+        z: link.target.z,
         angle: link.target.angle,
         radius: link.target.radius,
       },
@@ -119,5 +121,11 @@ export class LinkDataBuilder {
 }
 
 function hasFiniteCoordinates(node) {
+  if (!node) return false;
+
+  const position = node.position;
+  if (Array.isArray(position) || ArrayBuffer.isView(position)) {
+    return Number.isFinite(position[0]) && Number.isFinite(position[1]);
+  }
   return Number.isFinite(node.x) && Number.isFinite(node.y);
 }

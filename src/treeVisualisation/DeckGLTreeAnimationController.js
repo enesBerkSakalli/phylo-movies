@@ -454,8 +454,14 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     if (!treeData) return;
 
     const latestState = useAppStore.getState();
-    const { branchTransformation, layoutAngleDegrees, layoutRotationDegrees, styleConfig } =
-      latestState;
+    const {
+      branchTransformation,
+      layoutAngleDegrees,
+      layoutRotationDegrees,
+      layoutProjectionMode,
+      hyperbolicProjectionStrength,
+      styleConfig,
+    } = latestState;
     const offsets = styleConfig?.labelOffsets || { DEFAULT: 20, EXTENSION: 5 };
     const linkGeometryMode = this._getLinkGeometryMode(latestState);
 
@@ -480,6 +486,8 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
           branchTransformation,
           layoutAngleDegrees,
           layoutRotationDegrees,
+          layoutProjectionMode,
+          hyperbolicProjectionStrength,
           labelOffsets: offsets,
           treeIndex,
           treeSide: 'left',
@@ -508,6 +516,7 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
   }
 
   _getLinkGeometryMode(state = useAppStore.getState()) {
+    if (state?.layoutProjectionMode === 'walrus-3d') return 'straight';
     return state?.linkGeometryMode === 'straight' ? 'straight' : 'radial-elbow';
   }
 

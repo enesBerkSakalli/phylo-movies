@@ -89,6 +89,37 @@ describe('TreeInterpolator path buffer pool correctness', () => {
     expect(path).toBeInstanceOf(Float32Array);
     expect(path).toHaveLength(0);
   });
+
+  it('preserves Walrus 3D depth during animated interpolation', () => {
+    const interpolator = new TreeInterpolator();
+    const from = walrusFrame({
+      leafPosition: [10, 0, 10],
+      labelPosition: [12, 0, 12],
+      extensionPosition: [14, 0, 14],
+    });
+    const to = walrusFrame({
+      leafPosition: [20, 0, 30],
+      labelPosition: [24, 0, 34],
+      extensionPosition: [28, 0, 38],
+    });
+
+    const result = interpolator.interpolateTreeData(from, to, 0.5, {
+      linkGeometryMode: 'straight',
+    });
+    const leaf = result.nodes.find((node) => node.id === 'leaf');
+    const link = result.links.find((entry) => entry.id === 'leaf-link');
+    const label = result.labels.find((entry) => entry.id === 'leaf-label');
+    const extension = result.extensions.find((entry) => entry.id === 'leaf-extension');
+
+    expect(leaf.position).toEqual([15, 0, 20]);
+    expect(leaf.renderPosition[2]).toBeGreaterThan(20);
+    expect(link.targetPosition).toEqual([15, 0, 20]);
+    expect(Array.from(link.path)).toEqual([0, 0, 0, 15, 0, 20]);
+    expect(label.position).toEqual([18, 0, 23]);
+    expect(extension.sourcePosition).toEqual([15, 0, 20]);
+    expect(extension.targetPosition).toEqual([21, 0, 26]);
+    expect(Array.from(extension.path)).toEqual([15, 0, 20, 21, 0, 26]);
+  });
 });
 
 function curvedPathLink() {
@@ -123,5 +154,74 @@ function link(id, sourceRadius, targetRadius, sourceAngle, targetAngle) {
       target: { angle: targetAngle, radius: targetRadius },
     },
     path: new Float32Array([...sourcePosition, ...targetPosition]),
+  };
+}
+
+function walrusFrame({ leafPosition, labelPosition, extensionPosition }) {
+  const root = {
+    id: 'root',
+    position: [0, 0, 0],
+    renderPosition: [0, 0, 0],
+    radius: 0,
+    polarPosition: 0,
+    angle: 0,
+    projectionMode: 'walrus-3d',
+  };
+  const leafRadius = Math.hypot(leafPosition[0], leafPosition[1], leafPosition[2]);
+  const leaf = {
+    id: 'leaf',
+    parentId: 'root',
+    position: leafPosition,
+    renderPosition: leafPosition,
+    radius: leafRadius,
+    polarPosition: leafRadius,
+    angle: Math.atan2(leafPosition[1], leafPosition[0]),
+    projectionMode: 'walrus-3d',
+  };
+  return {
+    max_radius: Math.hypot(extensionPosition[0], extensionPosition[1], extensionPosition[2]),
+    nodes: [root, leaf],
+    links: [
+      {
+        id: 'leaf-link',
+        sourceId: 'root',
+        targetId: 'leaf',
+        sourcePosition: root.position,
+        targetPosition: leafPosition,
+        polarData: {
+          source: { angle: 0, radius: 0 },
+          target: { angle: leaf.angle, radius: leafRadius },
+        },
+        path: new Float32Array([...root.position, ...leafPosition]),
+      },
+    ],
+    labels: [
+      {
+        id: 'leaf-label',
+        position: labelPosition,
+        radius: Math.hypot(labelPosition[0], labelPosition[1], labelPosition[2]),
+        polarPosition: Math.hypot(labelPosition[0], labelPosition[1], labelPosition[2]),
+        angle: Math.atan2(labelPosition[1], labelPosition[0]),
+        projectionMode: 'walrus-3d',
+        rotation: 0,
+        textAnchor: 'middle',
+      },
+    ],
+    extensions: [
+      {
+        id: 'leaf-extension',
+        sourcePosition: leafPosition,
+        targetPosition: extensionPosition,
+        projectionMode: 'walrus-3d',
+        polarData: {
+          source: { angle: leaf.angle, radius: leafRadius },
+          target: {
+            angle: Math.atan2(extensionPosition[1], extensionPosition[0]),
+            radius: Math.hypot(extensionPosition[0], extensionPosition[1], extensionPosition[2]),
+          },
+        },
+        path: new Float32Array([...leafPosition, ...extensionPosition]),
+      },
+    ],
   };
 }

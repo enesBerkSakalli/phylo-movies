@@ -1,5 +1,10 @@
 import { TidyTreeLayout } from '../layout/TidyTreeLayout.js';
 import { createLayoutResult } from '../layout/LayoutResultAdapter.js';
+import {
+  LAYOUT_PROJECTION_MODES,
+  applyLayoutProjection,
+  normalizeLayoutProjectionMode,
+} from '../layout/hyperbolicProjection.js';
 import { DeckGLTreeLayerDataFactory } from '../deckgl/DeckGLTreeLayerDataFactory.js';
 import { transformBranchLengths } from '../../domain/tree/branchTransform.js';
 import {
@@ -35,8 +40,14 @@ export function calculateLayoutWorkerResult(treeData, options) {
   const rootNode = hasMaxGlobalScale
     ? layoutEngine.constructRadialTreeWithUniformScaling(Number(options.maxGlobalScale))
     : layoutEngine.constructRadialTree(false);
-  const maxRadius = layoutEngine.getMaxRadius(rootNode);
-  const layoutResult = createLayoutResult(rootNode, {
+  const normalizedProjectionMode = normalizeLayoutProjectionMode(options.layoutProjectionMode);
+  const projectedRootNode = applyLayoutProjection(rootNode, {
+    projectionMode: normalizedProjectionMode,
+    strength: options.hyperbolicProjectionStrength,
+    maxRadius: layoutEngine.getMaxRadius(rootNode),
+  });
+  const maxRadius = layoutEngine.getMaxRadius(projectedRootNode);
+  const layoutResult = createLayoutResult(projectedRootNode, {
     max_radius: maxRadius,
     width: options.width,
     height: options.height,
@@ -44,13 +55,20 @@ export function calculateLayoutWorkerResult(treeData, options) {
     scale: layoutEngine.scale,
     uniformScale: layoutEngine.uniformScale,
     layoutCacheKey: options.layoutCacheKey,
+    projectionMode: normalizedProjectionMode,
+    hyperbolicProjectionStrength: options.hyperbolicProjectionStrength,
+    is3dLayout: normalizedProjectionMode === LAYOUT_PROJECTION_MODES.WALRUS_3D,
   });
   const offsets = options.labelOffsets || { DEFAULT: 20, EXTENSION: 5 };
-  const stableGlobalRadius = getStableGlobalRenderedRadius({
-    maxGlobalScale: options.maxGlobalScale,
-    layoutScale: layoutEngine.uniformScale ?? layoutEngine.scale,
-    hasMaxGlobalScale,
-  });
+  const stableGlobalRadius =
+    layoutResult.projectionMode === LAYOUT_PROJECTION_MODES.HYPERBOLIC ||
+    layoutResult.projectionMode === LAYOUT_PROJECTION_MODES.WALRUS_3D
+      ? null
+      : getStableGlobalRenderedRadius({
+          maxGlobalScale: options.maxGlobalScale,
+          layoutScale: layoutEngine.uniformScale ?? layoutEngine.scale,
+          hasMaxGlobalScale,
+        });
   const baseRadius = Number.isFinite(maxRadius)
     ? Math.max(0, maxRadius)
     : (stableGlobalRadius ?? 0);

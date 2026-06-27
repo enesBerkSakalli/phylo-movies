@@ -5,6 +5,7 @@ import { TreeNodeInteractionHandler } from '../../src/treeVisualisation/interact
 import { useAppStore } from '../../src/state/phyloStore/store.js';
 import { createLayoutResult } from '../../src/treeVisualisation/layout/LayoutResultAdapter.js';
 import { assignLayoutNodeIds } from '../../src/treeVisualisation/layout/LayoutBaseUtils.js';
+import { LAYOUT_PROJECTION_MODES } from '../../src/treeVisualisation/layout/hyperbolicProjection.js';
 
 function makeLayoutTree() {
   const root = hierarchy({
@@ -32,6 +33,45 @@ function makeLayoutTree() {
     height: 100,
     margin: 0,
     scale: 1,
+  });
+}
+
+function makeWalrus3dLayoutTree() {
+  const root = hierarchy({
+    name: '',
+    length: 0,
+    split_indices: [0, 1],
+    children: [
+      { name: 'taxon-a', length: 1, split_indices: [0], children: [] },
+      { name: 'taxon-b', length: 1, split_indices: [1], children: [] },
+    ],
+  });
+
+  root.each((node, index) => {
+    const x = index * 10;
+    const y = index * 5;
+    const z = index * 8;
+    const radius = Math.hypot(x, y, z);
+    node.x = x;
+    node.y = y;
+    node.z = z;
+    node.position = [x, y, z];
+    node.angle = index;
+    node.rotatedAngle = index;
+    node.radius = radius;
+    node.projectionMode = LAYOUT_PROJECTION_MODES.WALRUS_3D;
+    node.h3Direction = radius > 0 ? [x / radius, y / radius, z / radius] : [0, 0, 1];
+  });
+  assignLayoutNodeIds(root);
+
+  return createLayoutResult(root, {
+    max_radius: 30,
+    width: 100,
+    height: 100,
+    margin: 0,
+    scale: 1,
+    projectionMode: LAYOUT_PROJECTION_MODES.WALRUS_3D,
+    is3dLayout: true,
   });
 }
 
@@ -93,11 +133,37 @@ describe('deck.gl layer render context', () => {
     expect(layerData.links[0].path).toHaveLength(6);
   });
 
+  it('preserves Walrus 3D coordinates in nodes, links, labels, and extensions', () => {
+    const factory = new DeckGLTreeLayerDataFactory();
+    const layout = makeWalrus3dLayoutTree();
+
+    const layerData = factory.convertTreeToLayerData(layout, {
+      extensionRadius: 40,
+      labelRadius: 50,
+      linkGeometryMode: 'radial-elbow',
+    });
+    const renderedLeaf = layerData.nodes.find((node) => node.name === 'taxon-a');
+    const renderedLink = layerData.links.find((link) => link.targetName === 'taxon-a');
+    const renderedLabel = layerData.labels.find((label) => label.name === 'taxon-a');
+    const renderedExtension = layerData.extensions.find(
+      (extension) => extension.name === 'taxon-a'
+    );
+
+    expect(renderedLeaf.position[2]).toBeGreaterThan(0);
+    expect(renderedLeaf.renderPosition[2]).toBeGreaterThan(renderedLeaf.position[2]);
+    expect(renderedLink.targetPosition[2]).toBe(renderedLeaf.position[2]);
+    expect(renderedLink.path[5]).toBe(renderedLeaf.position[2]);
+    expect(renderedLabel.position[2]).toBeGreaterThan(renderedLeaf.position[2]);
+    expect(renderedExtension.targetPosition[2]).toBeGreaterThan(renderedLeaf.position[2]);
+  });
+
   it('skips invalid layout coordinates instead of rendering them at the origin', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const factory = new DeckGLTreeLayerDataFactory();
     const layout = makeLayoutTree();
-    layout.nodes.find((node) => node.name === 'taxon-a').x = undefined;
+    const invalidNode = layout.nodes.find((node) => node.name === 'taxon-a');
+    invalidNode.x = undefined;
+    invalidNode.position = [undefined, invalidNode.y, 0];
 
     const layerData = factory.convertTreeToLayerData(layout, {
       extensionRadius: 40,

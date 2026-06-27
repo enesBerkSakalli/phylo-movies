@@ -13,6 +13,11 @@ import {
 } from './utils/layoutCacheKey.js';
 import { createLayoutResult } from './layout/LayoutResultAdapter.js';
 import {
+  LAYOUT_PROJECTION_MODES,
+  applyLayoutProjection,
+  normalizeLayoutProjectionMode,
+} from './layout/hyperbolicProjection.js';
+import {
   calculateLabelAngleSpan,
   calculateReadableLabelRadii,
   STABLE_LABEL_LAYOUT_FONT_SIZE,
@@ -174,6 +179,7 @@ export class TreeLayoutController {
     const { treeIndex } = options;
     const state = useAppStore.getState();
     const { branchTransformation, layoutAngleDegrees, layoutRotationDegrees } = state;
+    const { layoutProjectionMode, hyperbolicProjectionStrength } = state;
     const treeList = selectActiveTreeList(state);
 
     if (!treeData && Number.isInteger(treeIndex)) {
@@ -213,7 +219,9 @@ export class TreeLayoutController {
     const layout = this._computeLayout(
       transformedTreeData,
       layoutAngleDegrees,
-      layoutRotationDegrees
+      layoutRotationDegrees,
+      layoutProjectionMode,
+      hyperbolicProjectionStrength
     );
     if (layoutCacheKey && layout) {
       layout.layoutCacheKey = layoutCacheKey;
@@ -275,7 +283,13 @@ export class TreeLayoutController {
     return null;
   }
 
-  _computeLayout(transformedTreeData, layoutAngleDegrees, layoutRotationDegrees) {
+  _computeLayout(
+    transformedTreeData,
+    layoutAngleDegrees,
+    layoutRotationDegrees,
+    layoutProjectionMode,
+    hyperbolicProjectionStrength
+  ) {
     const layoutCalculator = new TidyTreeLayout(transformedTreeData);
     layoutCalculator.setDimension(this.width, this.height);
     layoutCalculator.setMargin(TREE_LAYOUT_MARGIN);
@@ -285,14 +299,23 @@ export class TreeLayoutController {
     const layoutResult = hasUniformScaleValue(this.maxGlobalScale)
       ? layoutCalculator.constructRadialTreeWithUniformScaling(this.maxGlobalScale)
       : layoutCalculator.constructRadialTree(false);
+    const normalizedProjectionMode = normalizeLayoutProjectionMode(layoutProjectionMode);
+    const projectedLayoutResult = applyLayoutProjection(layoutResult, {
+      projectionMode: normalizedProjectionMode,
+      strength: hyperbolicProjectionStrength,
+      maxRadius: layoutCalculator.getMaxRadius(layoutResult),
+    });
 
-    return createLayoutResult(layoutResult, {
-      max_radius: layoutCalculator.getMaxRadius(layoutResult),
+    return createLayoutResult(projectedLayoutResult, {
+      max_radius: layoutCalculator.getMaxRadius(projectedLayoutResult),
       width: this.width,
       height: this.height,
       margin: layoutCalculator.margin,
       scale: layoutCalculator.scale,
       uniformScale: layoutCalculator.uniformScale,
+      projectionMode: normalizedProjectionMode,
+      hyperbolicProjectionStrength,
+      is3dLayout: normalizedProjectionMode === LAYOUT_PROJECTION_MODES.WALRUS_3D,
     });
   }
 
@@ -307,7 +330,11 @@ export class TreeLayoutController {
     const { styleConfig } = useAppStore.getState();
     const offsets = styleConfig?.labelOffsets || { DEFAULT: 20, EXTENSION: 5 };
     const layoutRadius = Number(layout?.max_radius);
-    const globalRenderedRadius = this._getStableGlobalRenderedRadius(layout);
+    const globalRenderedRadius =
+      layout?.projectionMode === LAYOUT_PROJECTION_MODES.HYPERBOLIC ||
+      layout?.projectionMode === LAYOUT_PROJECTION_MODES.WALRUS_3D
+        ? null
+        : this._getStableGlobalRenderedRadius(layout);
     const baseRadius = Number.isFinite(layoutRadius)
       ? Math.max(0, layoutRadius)
       : Number.isFinite(globalRenderedRadius)
