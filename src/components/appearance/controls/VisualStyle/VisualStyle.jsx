@@ -1,16 +1,21 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
   selectActiveTreeList,
   selectBranchAnnotationLabelKey,
   selectFontSize,
+  selectHyperbolicProjectionStrength,
   selectLabelsVisible,
   selectLayoutAngleDegrees,
+  selectLayoutProjectionMode,
   selectLayoutRotationDegrees,
   selectNodeSize,
+  selectSetHyperbolicProjectionStrength,
   selectSetBranchAnnotationLabelKey,
+  selectSetCameraMode,
   selectSetFontSize,
   selectSetLabelsVisible,
   selectSetLayoutAngleDegrees,
+  selectSetLayoutProjectionMode,
   selectSetLayoutRotationDegrees,
   selectSetNodeSize,
   selectSetStrokeWidth,
@@ -19,6 +24,7 @@ import {
   useAppStore,
 } from '../../../../state/phyloStore/store.js';
 import { getAvailableBranchAnnotationOptions } from '../../../../domain/tree/branchSupportIndex.js';
+import { LAYOUT_PROJECTION_MODES } from '../../../../treeVisualisation/layout/hyperbolicProjection.js';
 import { SidebarMenuItem, SidebarMenuButton } from '../../../ui/sidebar';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../../../ui/collapsible';
 import { ChevronDown, Circle, RotateCw } from 'lucide-react';
@@ -106,6 +112,25 @@ export function LayoutTransformSection() {
   const setLayoutAngleDegrees = useAppStore(selectSetLayoutAngleDegrees);
   const layoutRotationDegrees = useAppStore(selectLayoutRotationDegrees);
   const setLayoutRotationDegrees = useAppStore(selectSetLayoutRotationDegrees);
+  const layoutProjectionMode = useAppStore(selectLayoutProjectionMode);
+  const setLayoutProjectionMode = useAppStore(selectSetLayoutProjectionMode);
+  const hyperbolicProjectionStrength = useAppStore(selectHyperbolicProjectionStrength);
+  const setHyperbolicProjectionStrength = useAppStore(selectSetHyperbolicProjectionStrength);
+  const setCameraMode = useAppStore(selectSetCameraMode);
+  const treeControllers = useAppStore(selectTreeControllers);
+
+  const handleSetLayoutProjectionMode = useCallback(
+    (mode) => {
+      setLayoutProjectionMode(mode);
+      if (mode !== LAYOUT_PROJECTION_MODES.WALRUS_3D) return;
+
+      setCameraMode?.('orbit');
+      for (const controller of treeControllers) {
+        controller?.setCameraMode?.('orbit');
+      }
+    },
+    [setCameraMode, setLayoutProjectionMode, treeControllers]
+  );
 
   return (
     <Collapsible asChild className="group/collapsible">
@@ -123,6 +148,10 @@ export function LayoutTransformSection() {
             setLayoutAngleDegrees={setLayoutAngleDegrees}
             layoutRotationDegrees={layoutRotationDegrees}
             setLayoutRotationDegrees={setLayoutRotationDegrees}
+            layoutProjectionMode={layoutProjectionMode}
+            setLayoutProjectionMode={handleSetLayoutProjectionMode}
+            hyperbolicProjectionStrength={hyperbolicProjectionStrength}
+            setHyperbolicProjectionStrength={setHyperbolicProjectionStrength}
           />
         </CollapsibleContent>
       </SidebarMenuItem>

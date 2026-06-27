@@ -1,3 +1,10 @@
+import {
+  DEFAULT_HYPERBOLIC_PROJECTION_STRENGTH,
+  DEFAULT_LAYOUT_PROJECTION_MODE,
+  normalizeHyperbolicProjectionStrength,
+  normalizeLayoutProjectionMode,
+} from '../../../../treeVisualisation/layout/hyperbolicProjection.js';
+
 export const DEFAULT_BRANCH_TRANSFORMATION = 'normalized-sqrt';
 
 function invalidateTreeLayout(get) {
@@ -21,6 +28,8 @@ export const createTreeLayoutSlice = (set, get) => ({
   linkGeometryMode: 'radial-elbow',
   layoutAngleDegrees: 360,
   layoutRotationDegrees: 0,
+  layoutProjectionMode: DEFAULT_LAYOUT_PROJECTION_MODE,
+  hyperbolicProjectionStrength: DEFAULT_HYPERBOLIC_PROJECTION_STRENGTH,
 
   // ==========================================================================
   // ACTIONS
@@ -50,6 +59,20 @@ export const createTreeLayoutSlice = (set, get) => ({
     const value = Number.isFinite(degrees) ? degrees : 0;
     if (get().layoutRotationDegrees === value) return;
     set({ layoutRotationDegrees: value });
+    invalidateTreeLayout(get);
+  },
+
+  setLayoutProjectionMode: (mode) => {
+    const nextMode = normalizeLayoutProjectionMode(mode);
+    if (get().layoutProjectionMode === nextMode) return;
+    set({ layoutProjectionMode: nextMode });
+    invalidateTreeLayout(get);
+  },
+
+  setHyperbolicProjectionStrength: (strength) => {
+    const value = normalizeHyperbolicProjectionStrength(strength);
+    if (get().hyperbolicProjectionStrength === value) return;
+    set({ hyperbolicProjectionStrength: value });
     invalidateTreeLayout(get);
   },
 });

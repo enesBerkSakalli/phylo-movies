@@ -12,6 +12,7 @@ export type NavigationDirection = 'forward' | 'backward' | 'jump';
 export type CameraMode = 'orthographic' | 'orbit';
 export type AnimationStage = 'COLLAPSE' | 'EXPAND' | 'REORDER' | null;
 export type LinkGeometryMode = 'radial-elbow' | 'straight';
+export type LayoutProjectionMode = 'radial' | 'hyperbolic' | 'walrus-3d';
 export type TimelineOccurrenceSelector =
   | 'first'
   | 'last'
@@ -206,6 +207,8 @@ export interface AppStoreState {
   linkGeometryMode: 'radial-elbow' | 'straight';
   layoutAngleDegrees: number;
   layoutRotationDegrees: number;
+  layoutProjectionMode: LayoutProjectionMode;
+  hyperbolicProjectionStrength: number;
 
   // From treeViewport.slice
   cameraMode: 'orthographic' | 'orbit';
@@ -335,8 +338,11 @@ export interface AppStoreState {
   setLinkGeometryMode: (mode: 'radial-elbow' | 'straight') => void;
   setLayoutAngleDegrees: (degrees: number) => void;
   setLayoutRotationDegrees: (degrees: number) => void;
+  setLayoutProjectionMode: (mode: LayoutProjectionMode) => void;
+  setHyperbolicProjectionStrength: (strength: number) => void;
 
   toggleCameraMode: () => CameraMode;
+  setCameraMode: (mode: CameraMode) => CameraMode;
 
   setTaxaColoringOpen: (isOpen: boolean) => void;
   setTaxaColoringWindow: (partial: Partial<FloatingWindowRect>) => void;

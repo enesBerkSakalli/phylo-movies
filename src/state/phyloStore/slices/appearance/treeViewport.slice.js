@@ -13,4 +13,10 @@ export const createTreeViewportSlice = (set, get) => ({
     set({ cameraMode: newMode });
     return newMode;
   },
+  setCameraMode: (mode) => {
+    const nextMode = mode === 'orbit' ? 'orbit' : 'orthographic';
+    if (get().cameraMode === nextMode) return nextMode;
+    set({ cameraMode: nextMode });
+    return nextMode;
+  },
 });
