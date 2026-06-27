@@ -1,0 +1,213 @@
+{
+  "biotoolsID": "phylo-movies",
+  "name": "Phylo-Movies",
+  "description": "Phylo-Movies is an open-source React and Flask web application, also available as a desktop app, for inspecting ordered phylogenetic tree series. It computes and visualizes subtree-prune-and-regraft transition frames between consecutive trees, helping users see which taxa or subtrees move across sliding-window analyses, bootstrap replicates, and curated tree-series comparisons. The viewer includes timeline playback, tree comparison, MSA context, coloring, analytics, image export, and recording tools.",
+  "homepage": "https://enesberksakalli.github.io/phylo-movies/",
+  "version": [
+    "0.98.1"
+  ],
+  "toolType": [
+    "Web application",
+    "Desktop application"
+  ],
+  "operatingSystem": [
+    "Linux",
+    "Windows",
+    "Mac"
+  ],
+  "language": [
+    "JavaScript",
+    "Python",
+    "TypeScript"
+  ],
+  "license": "MIT",
+  "cost": "Free of charge",
+  "accessibility": "Open access",
+  "maturity": "Mature",
+  "topic": [
+    {
+      "uri": "http://edamontology.org/topic_3293",
+      "term": "Phylogenetics"
+    },
+    {
+      "uri": "http://edamontology.org/topic_0092",
+      "term": "Data visualisation"
+    }
+  ],
+  "function": [
+    {
+      "operation": [
+        {
+          "uri": "http://edamontology.org/operation_0567",
+          "term": "Phylogenetic tree visualisation"
+        },
+        {
+          "uri": "http://edamontology.org/operation_0324",
+          "term": "Phylogenetic tree analysis"
+        }
+      ],
+      "input": [
+        {
+          "data": {
+            "uri": "http://edamontology.org/data_0872",
+            "term": "Phylogenetic tree"
+          },
+          "format": [
+            {
+              "uri": "http://edamontology.org/format_1910",
+              "term": "newick"
+            }
+          ]
+        },
+        {
+          "data": {
+            "uri": "http://edamontology.org/data_0863",
+            "term": "Sequence alignment"
+          },
+          "format": [
+            {
+              "uri": "http://edamontology.org/format_1929",
+              "term": "FASTA"
+            }
+          ]
+        }
+      ],
+      "output": [
+        {
+          "data": {
+            "uri": "http://edamontology.org/data_0872",
+            "term": "Phylogenetic tree"
+          },
+          "format": [
+            {
+              "uri": "http://edamontology.org/format_3464",
+              "term": "JSON"
+            },
+            {
+              "uri": "http://edamontology.org/format_1910",
+              "term": "newick"
+            }
+          ]
+        }
+      ],
+      "note": "Visualizes ordered phylogenetic tree series as animated transition movies with comparison, MSA context, movement analytics, image export, and recording support."
+    }
+  ],
+  "publication": [
+    {
+      "doi": "10.64898/2026.04.01.715821",
+      "type": [
+        "Primary"
+      ],
+      "note": "bioRxiv preprint describing the Phylo-Movies method and examples."
+    },
+    {
+      "doi": "10.5281/zenodo.20488923",
+      "type": [
+        "Primary"
+      ],
+      "version": "0.98.1",
+      "note": "Archived software release on Zenodo."
+    }
+  ],
+  "credit": [
+    {
+      "name": "Enes Berk Sakalli",
+      "email": "enes@lbi-netmed.at",
+      "url": "https://github.com/enesBerkSakalli",
+      "typeEntity": "Person",
+      "typeRole": [
+        "Developer",
+        "Primary contact"
+      ],
+      "note": "Corresponding software contact."
+    },
+    {
+      "name": "Simon E. Haendeler",
+      "typeEntity": "Person",
+      "typeRole": [
+        "Developer"
+      ]
+    },
+    {
+      "name": "Arndt von Haeseler",
+      "typeEntity": "Person",
+      "typeRole": [
+        "Developer"
+      ]
+    },
+    {
+      "name": "Heiko A. Schmidt",
+      "typeEntity": "Person",
+      "typeRole": [
+        "Developer"
+      ]
+    }
+  ],
+  "link": [
+    {
+      "url": "https://github.com/enesBerkSakalli/phylo-movies",
+      "type": [
+        "Repository"
+      ],
+      "note": "Source code repository."
+    },
+    {
+      "url": "https://enesberksakalli.github.io/phylo-movies/demo/",
+      "type": [
+        "Service"
+      ],
+      "note": "Static browser demo with precomputed example movies."
+    },
+    {
+      "url": "https://github.com/enesBerkSakalli/phylo-movies/issues",
+      "type": [
+        "Issue tracker"
+      ]
+    }
+  ],
+  "download": [
+    {
+      "url": "https://github.com/enesBerkSakalli/phylo-movies",
+      "type": "Source code",
+      "note": "Source checkout for full web application and backend workflows.",
+      "version": "0.98.1"
+    },
+    {
+      "url": "https://github.com/enesBerkSakalli/phylo-movies/releases/tag/v0.98.1",
+      "type": "Binaries",
+      "note": "Desktop convenience builds for macOS, Windows, and Linux.",
+      "version": "0.98.1"
+    }
+  ],
+  "documentation": [
+    {
+      "url": "https://enesberksakalli.github.io/phylo-movies/manual/",
+      "type": [
+        "User manual"
+      ],
+      "note": "Researcher-facing manual."
+    },
+    {
+      "url": "https://github.com/enesBerkSakalli/phylo-movies/blob/main/README.md",
+      "type": [
+        "General"
+      ],
+      "note": "Project overview, installation, usage, citation, and links."
+    },
+    {
+      "url": "https://github.com/enesBerkSakalli/phylo-movies/blob/main/docs/getting-started.md",
+      "type": [
+        "Installation instructions"
+      ],
+      "note": "Local source-checkout setup instructions."
+    },
+    {
+      "url": "https://github.com/enesBerkSakalli/phylo-movies/blob/main/docs/api.md",
+      "type": [
+        "API documentation"
+      ],
+      "note": "Backend API documentation."
+    }
+  ]
+}
