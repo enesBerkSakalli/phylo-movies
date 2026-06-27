@@ -76,4 +76,31 @@ describe('moving subtree highlighting', () => {
       255,
     ]);
   });
+
+  it('applies subtree highlight color mode to active link strokes', () => {
+    const link = { split_indices: [1, 2], opacity: 1 };
+    const helpers = { getBaseOpacity: () => 255 };
+    const cached = {
+      colorManager: {
+        getBranchColorForInnerLine: () => '#112233',
+        getBranchColor: () => '#112233',
+        isLinkInActiveMoverSubtree: () => true,
+        isPivotEdge: () => false,
+        isCompletedChangeEdge: () => false,
+        isUpcomingChangeEdge: () => false,
+        isLinkHistorySubtree: () => false,
+      },
+      dimmingEnabled: false,
+      dimmingOpacity: 0.3,
+      upcomingChangesEnabled: false,
+      highlightedSubtreeData: [],
+      subtreeHighlightsEnabled: true,
+      subtreeDimmingEnabled: false,
+      subtreeDimmingOpacity: 0.3,
+      highlightColorMode: 'solid',
+      subtreeHighlightColor: '#abcdef',
+    };
+
+    expect(Array.from(getLinkColor(link, cached, helpers))).toEqual([171, 205, 239, 255]);
+  });
 });

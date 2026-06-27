@@ -131,10 +131,12 @@ function createLinkChange(id, fromLink, toLink, zeroEpsilon) {
   const fromLength = getVisibleBranchLength(fromLink);
   const toLength = getVisibleBranchLength(toLink);
   const lifecycle = classifyLinkLifecycle(fromLink, toLink, fromLength, toLength, zeroEpsilon);
+  const splitKey =
+    toLink?.splitKey || fromLink?.splitKey || getSplitKey(toLink || fromLink) || id;
 
   return {
     id,
-    splitKey: id,
+    splitKey,
     lifecycle,
     fromLink,
     toLink,
@@ -158,7 +160,7 @@ function classifyLinkLifecycle(fromLink, toLink, fromLength, toLength, zeroEpsil
 
 function resolveLinkKey(linkOrKey) {
   if (typeof linkOrKey === 'string') return linkOrKey;
-  return linkOrKey?.splitKey || getSplitKey(linkOrKey) || linkOrKey?.id || null;
+  return linkOrKey?.id || linkOrKey?.splitKey || getSplitKey(linkOrKey) || null;
 }
 
 function clamp01(value) {

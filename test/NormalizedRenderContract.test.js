@@ -405,6 +405,36 @@ describe('normalized render contract', () => {
     expect(extensions[0]).not.toHaveProperty('leaf');
   });
 
+  it('keys links by edge endpoints while preserving target split identity', () => {
+    const builder = new LinkDataBuilder();
+    const makeLink = (sourceId, sourceSplitKey) => ({
+      sourceId,
+      targetId: 'node-target-split',
+      sourceSplitKey,
+      targetSplitKey: 'target-split',
+      splitKey: 'target-split',
+      sourceSplitIndices: [0, 1],
+      targetSplitIndices: [1],
+      sourcePosition: [0, 0, 0],
+      targetPosition: [1, 0, 0],
+      source: { x: 0, y: 0, z: 0, angle: 0, radius: 0, position: [0, 0, 0] },
+      target: { x: 1, y: 0, z: 0, angle: 0, radius: 1, position: [1, 0, 0] },
+    });
+
+    const links = builder.convertLinks([
+      makeLink('node-parent-a', 'parent-a-split'),
+      makeLink('node-parent-b', 'parent-b-split'),
+    ]);
+
+    expect(links).toHaveLength(2);
+    expect(links[0].id).toBe('link-node-parent-a->node-target-split');
+    expect(links[1].id).toBe('link-node-parent-b->node-target-split');
+    expect(links[0].splitKey).toBe('target-split');
+    expect(links[1].splitKey).toBe('target-split');
+    expect(links[0].targetSplitKey).toBe('target-split');
+    expect(links[1].targetSplitKey).toBe('target-split');
+  });
+
   it('publishes branch-length metadata in DeckGL node and link data', () => {
     const root = hierarchy({
       name: 'root',

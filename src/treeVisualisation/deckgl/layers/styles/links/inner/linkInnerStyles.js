@@ -2,7 +2,7 @@ import { colorToRgb } from '../../../../../../services/ui/colorUtils.js';
 import { SYSTEM_TREE_COLORS } from '../../../../../../constants/TreeColors.js';
 import { calculateFlightDashArray } from '../dashUtils.js';
 import { applyDimmingWithCache } from '../../dimmingUtils.js';
-import { getInnerLinkColor } from '../linkUtils.js';
+import { getInnerLinkColor, getSubtreeHighlightRgb } from '../linkUtils.js';
 import { resolveTreeElementHighlight, TREE_HIGHLIGHT_ROLE } from '../../highlightResolver.js';
 import { applyDenseBaseOpacity } from '../../denseVisualDeclutter.js';
 
@@ -54,8 +54,22 @@ export function getLinkColor(link, cached, helpers) {
     return _linkColorOut;
   }
 
-  // Get color for inner line: active edges get blue, marked keep base color (unless contrast mode)
-  let rgb = getInnerLinkColor(link, cached);
+  // Get color for inner line. Active/subtree highlights use the same mode resolver as
+  // nodes/extensions so the UI highlight style applies consistently across the tree.
+  let rgb;
+  if (
+    highlight.role === TREE_HIGHLIGHT_ROLE.ACTIVE_MOVER ||
+    highlight.role === TREE_HIGHLIGHT_ROLE.SUBTREE_HIGHLIGHT
+  ) {
+    rgb = getSubtreeHighlightRgb(
+      link,
+      cm,
+      cached.highlightColorMode || 'solid',
+      cached.subtreeHighlightColor
+    );
+  } else {
+    rgb = getInnerLinkColor(link, cached);
+  }
 
   // Calculate opacity with unified dimming logic
   const { subtreeDimmingEnabled, subtreeDimmingOpacity } = cached;

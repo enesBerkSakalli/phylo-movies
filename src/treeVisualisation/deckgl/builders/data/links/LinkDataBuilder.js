@@ -39,10 +39,12 @@ export class LinkDataBuilder {
       link.splitKey ||
       link.targetSplitKey ||
       getSplitKey({ split_indices: link.targetSplitIndices });
-    const linkKey = splitKey ? `link-${splitKey}` : null;
+    const sourceSplitKey =
+      link.sourceSplitKey || getSplitKey({ split_indices: link.sourceSplitIndices });
     const sourceId = link.sourceId;
     const targetId = link.targetId;
-    if (!linkKey || !sourceId || !targetId) {
+    const linkKey = sourceId && targetId ? `link-${sourceId}->${targetId}` : null;
+    if (!linkKey || !splitKey || !sourceId || !targetId) {
       console.warn('[LinkDataBuilder] Skipping link without normalized ids:', link.targetName);
       return null;
     }
@@ -63,6 +65,8 @@ export class LinkDataBuilder {
       isInternal: link.isInternal === true,
       split_indices: link.targetSplitIndices,
       splitKey,
+      sourceSplitKey,
+      targetSplitKey: splitKey,
       radialLength: this._calculateRadialLength(link),
       sourceId,
       targetId,

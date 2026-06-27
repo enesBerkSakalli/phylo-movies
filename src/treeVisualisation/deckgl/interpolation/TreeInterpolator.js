@@ -410,14 +410,18 @@ function alignNodesToRenderedLinkTargets(nodes, links) {
   for (const link of links) {
     if (!link?.targetId || !isFinitePoint(link.targetPosition)) continue;
     targetPositionByNodeId ??= new Map();
-    targetPositionByNodeId.set(link.targetId, link.targetPosition);
+    const priority = linkTargetAlignmentPriority(link);
+    const current = targetPositionByNodeId.get(link.targetId);
+    if (!current || priority > current.priority) {
+      targetPositionByNodeId.set(link.targetId, { position: link.targetPosition, priority });
+    }
   }
 
   if (!targetPositionByNodeId) return nodes;
 
   let changed = false;
   const alignedNodes = nodes.map((node) => {
-    const linkTargetPosition = targetPositionByNodeId.get(node?.id);
+    const linkTargetPosition = targetPositionByNodeId.get(node?.id)?.position;
     if (!linkTargetPosition) return node;
 
     changed = true;
@@ -437,6 +441,23 @@ function alignNodesToRenderedLinkTargets(nodes, links) {
   });
 
   return changed ? alignedNodes : nodes;
+}
+
+function linkTargetAlignmentPriority(link) {
+  switch (link?.lifecycle) {
+    case LINK_LIFECYCLES.ENTERING:
+    case LINK_LIFECYCLES.REVIVING:
+      return 4;
+    case LINK_LIFECYCLES.UNCHANGED:
+    case LINK_LIFECYCLES.LENGTH_CHANGING:
+      return 3;
+    case LINK_LIFECYCLES.ZEROING:
+      return 2;
+    case LINK_LIFECYCLES.EXITING:
+      return 1;
+    default:
+      return 3;
+  }
 }
 
 function isFinitePoint(point) {
