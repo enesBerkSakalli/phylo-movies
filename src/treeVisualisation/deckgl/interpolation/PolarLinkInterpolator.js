@@ -7,6 +7,7 @@ import {
 } from '../../utils/polarGeometry.js';
 import { measureFrameStep } from '../../performance/frameInstrumentation.js';
 import { twoPointFloat32Path } from '../utils/pathFormat.js';
+import { pointsMatch } from './pointUtils.js';
 
 const ZERO_LENGTH_EPSILON = 1e-6;
 
@@ -27,10 +28,7 @@ export class PolarLinkInterpolator {
       toLinks,
       timeFactor,
       (fromLink, toLink, t, velocityEntry) =>
-        this._interpolateLinkDatum(fromLink, toLink, t, {
-          ...options,
-          velocityEntry,
-        }),
+        this._interpolateLinkDatum(fromLink, toLink, t, options, velocityEntry),
       options
     );
   }
@@ -219,7 +217,14 @@ export class PolarLinkInterpolator {
     return linkEndpointPosition(referenceLink, 'target');
   }
 
-  _interpolateLinkEndpointPosition(fromLink, toLink, endpoint, frameT, options = {}) {
+  _interpolateLinkEndpointPosition(
+    fromLink,
+    toLink,
+    endpoint,
+    frameT,
+    options = {},
+    velocityEntry = options.velocityEntry ?? null
+  ) {
     const idField = endpoint === 'source' ? 'sourceId' : 'targetId';
     const nodeId = toLink?.[idField] || fromLink?.[idField];
     const fromNode = nodeId ? options.nodeFromMap?.get(nodeId) : null;
@@ -242,38 +247,37 @@ export class PolarLinkInterpolator {
       fromLink?.polarData?.[polarEndpoint],
       toLink?.polarData?.[polarEndpoint],
       frameT,
-      options.velocityEntry ?? null
+      velocityEntry
     );
   }
 
-  _interpolateLinkDatum(fromLink, toLink, t, options = {}) {
+  _interpolateLinkDatum(fromLink, toLink, t, options = {}, velocityEntry = options.velocityEntry) {
     const sourcePosition = this._interpolateLinkEndpointPosition(
       fromLink,
       toLink,
       'source',
       t,
-      options
+      options,
+      velocityEntry
     );
     const targetPosition = this._interpolateLinkEndpointPosition(
       fromLink,
       toLink,
       'target',
       t,
-      options
+      options,
+      velocityEntry
     );
 
     return this._createLinkDatumFromPositions(toLink, sourcePosition, targetPosition, {
-      ...options,
+      linkGeometryMode: options.linkGeometryMode,
       lifecycle: options.lifecycle || LINK_LIFECYCLES.UNCHANGED,
       transitionPhase: options.transitionPhase ?? t,
     });
   }
 
   _createLinkDatumFromPositions(link, sourcePosition, targetPosition, options = {}) {
-    // positionedLink is a throwaway used only to feed interpolatePath, which reads
-    // nothing but `.polarData`. Avoid spreading the whole link object here; build
-    // the minimal shape instead to cut per-frame garbage.
-    const positionedLink = measureFrameStep('link.datumAssembly', () => {
+    const { polarData, radialLength } = measureFrameStep('link.datumAssembly', () => {
       const sourcePolar = positionToPolar(sourcePosition);
       const targetPolar = positionToPolar(targetPosition);
       return {
@@ -289,7 +293,7 @@ export class PolarLinkInterpolator {
     const path =
       options.linkGeometryMode === 'straight'
         ? twoPointFloat32Path(sourcePosition, targetPosition)
-        : this.pathInterpolator.createPathFromPolarData(positionedLink.polarData, {
+        : this.pathInterpolator.createPathFromPolarData(polarData, {
             linkGeometryMode: options.linkGeometryMode,
             pathPoolKey: link?.id != null ? `link:${link.id}` : null,
           });
@@ -299,12 +303,8 @@ export class PolarLinkInterpolator {
       path,
       sourcePosition,
       targetPosition,
-      polarData: positionedLink.polarData,
-      radialLength: positionedLink.radialLength,
-      split_indices: link.split_indices,
-      splitKey: link.splitKey,
-      children: link.children,
-      targetName: link.targetName,
+      polarData,
+      radialLength,
       lifecycle: options.lifecycle || LINK_LIFECYCLES.UNCHANGED,
       transitionPhase: options.transitionPhase ?? 1,
     }));
@@ -495,14 +495,4 @@ function exitingStructuralOpacity(element, options) {
 
 function clampTime(timeFactor) {
   return Math.max(0, Math.min(1, Number.isFinite(timeFactor) ? timeFactor : 0));
-}
-
-function pointsMatch(a, b, epsilon = 1e-6) {
-  return (
-    Array.isArray(a) &&
-    Array.isArray(b) &&
-    Math.abs((a[0] ?? 0) - (b[0] ?? 0)) <= epsilon &&
-    Math.abs((a[1] ?? 0) - (b[1] ?? 0)) <= epsilon &&
-    Math.abs((a[2] ?? 0) - (b[2] ?? 0)) <= epsilon
-  );
 }

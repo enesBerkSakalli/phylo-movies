@@ -277,6 +277,46 @@ describe('TreeInterpolator label radius smoothing', () => {
     );
   });
 
+  it('does not clone nodes when endpoint alignment is already satisfied', () => {
+    const interpolator = new TreeInterpolator();
+    const alignedNode = {
+      id: 'child',
+      position: [10, 0, 0],
+      renderPosition: [10, 0, 1],
+      angle: 0,
+      polarPosition: 10,
+    };
+    interpolator.nodeInterpolator.interpolateNode = vi.fn(() => alignedNode);
+    interpolator.linkInterpolator.interpolateLinks = vi.fn(() => [
+      {
+        id: 'parent-child',
+        targetId: 'child',
+        targetPosition: [10, 0, 0],
+        lifecycle: 'unchanged',
+      },
+    ]);
+
+    const result = interpolator.interpolateTreeData(
+      {
+        max_radius: 10,
+        nodes: [{ id: 'child' }],
+        links: [],
+        labels: [],
+        extensions: [],
+      },
+      {
+        max_radius: 10,
+        nodes: [{ id: 'child' }],
+        links: [],
+        labels: [],
+        extensions: [],
+      },
+      0.5
+    );
+
+    expect(result.nodes[0]).toBe(alignedNode);
+  });
+
   it('reuses element lookup maps across frames for the same layout data', () => {
     const interpolator = new TreeInterpolator();
     const createMap = vi.spyOn(interpolator.elementMatcher, '_createElementMap');

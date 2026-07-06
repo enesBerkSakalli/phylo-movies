@@ -246,10 +246,6 @@ export class PolarPathInterpolator {
       result[idx + 2] = 0;
     }
 
-    const arcEndIdx = segmentCount * 3;
-    result[arcEndIdx] = sourceRadius * Math.cos(targetAngle);
-    result[arcEndIdx + 1] = sourceRadius * Math.sin(targetAngle);
-
     const lastIdx = (totalPoints - 1) * 3;
     result[lastIdx] = targetX;
     result[lastIdx + 1] = targetY;

@@ -22,6 +22,18 @@ describe('TreeInterpolator path buffer pool correctness', () => {
     expect(path).toHaveLength((EXPECTED_ANIMATED_ARC_SEGMENT_COUNT + 2) * 3);
   });
 
+  it('keeps the final arc sample distinct from the radial target', () => {
+    const interpolator = new PolarPathInterpolator();
+    const path = interpolator.interpolatePath(curvedPathLink(), curvedPathLink(), 0.5);
+    const arcEndIndex = EXPECTED_ANIMATED_ARC_SEGMENT_COUNT * 3;
+    const targetIndex = (EXPECTED_ANIMATED_ARC_SEGMENT_COUNT + 1) * 3;
+
+    expect(path[arcEndIndex]).toBeCloseTo(0, 5);
+    expect(path[arcEndIndex + 1]).toBeCloseTo(50, 5);
+    expect(path[targetIndex]).toBeCloseTo(0, 5);
+    expect(path[targetIndex + 1]).toBeCloseTo(80, 5);
+  });
+
   it('produces distinct, non-aliased path buffers for distinct links in one frame', () => {
     const interpolator = new TreeInterpolator();
     const from = {

@@ -14,6 +14,7 @@ import { ANIMATION_STAGES } from './stages/animationStageDetector.js';
 import { LINK_LIFECYCLES } from './TransitionChangeModel.js';
 import { measureFrameStep } from '../../performance/frameInstrumentation.js';
 import { Z_NODE } from '../constants/zOffsets.js';
+import { pointsMatch } from './pointUtils.js';
 
 /**
  * TreeInterpolator - Orchestrates tree data interpolation
@@ -424,12 +425,14 @@ function alignNodesToRenderedLinkTargets(nodes, links) {
     const linkTargetPosition = targetPositionByNodeId.get(node?.id)?.position;
     if (!linkTargetPosition) return node;
 
-    changed = true;
     const position = [
       linkTargetPosition[0],
       linkTargetPosition[1],
       Number.isFinite(linkTargetPosition[2]) ? linkTargetPosition[2] : 0,
     ];
+    if (pointsMatch(node.position, position)) return node;
+
+    changed = true;
 
     return {
       ...node,
