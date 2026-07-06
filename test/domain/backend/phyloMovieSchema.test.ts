@@ -254,6 +254,18 @@ describe('validatePhyloMovieData', () => {
     expect(hydratedTree.children[0].splitKey).toBe(toSubtreeKey([0]));
   });
 
+  it('still validates compact tuple tree shape by default when hydration is disabled', () => {
+    expect(() =>
+      validatePhyloMovieData(
+        makePayload({
+          ...compactTreeDefinitions,
+          interpolated_trees: [[0], [0], [0]],
+        }),
+        { hydrateTrees: false }
+      )
+    ).toThrow(/tuple node/);
+  });
+
   it('accepts structured branch annotation fields on tree nodes', () => {
     const annotatedTree = {
       ...tree,

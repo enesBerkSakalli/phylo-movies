@@ -5,7 +5,7 @@ import type {
   TimelineFrame,
   TimelinePair,
 } from './phyloMovieTypes';
-import { assertExactRecordKeys, assertRecord } from './schemaValidation';
+import { assertExactRecordKeys, assertRecord, requiredArray } from './schemaValidation';
 import {
   validateFrames,
   validateMsa,
@@ -40,6 +40,7 @@ export type {
 
 type ValidationOptions = {
   hydrateTrees?: boolean;
+  validateTreePayloads?: boolean;
 };
 
 export type PhyloMovieTransportData = Omit<PhyloMovieData, 'interpolated_trees'> & {
@@ -52,7 +53,7 @@ export type PhyloMovieTransportData = Omit<PhyloMovieData, 'interpolated_trees'>
 export function validatePhyloMovieData(data: unknown): PhyloMovieData;
 export function validatePhyloMovieData(
   data: unknown,
-  options: { hydrateTrees: false }
+  options: { hydrateTrees: false; validateTreePayloads?: boolean }
 ): PhyloMovieTransportData;
 export function validatePhyloMovieData(
   data: unknown,
@@ -84,7 +85,9 @@ export function validatePhyloMovieData(
   const hydrateTrees = options.hydrateTrees !== false;
   const interpolatedTrees = hydrateTrees
     ? validateTreeList(data.interpolated_trees, annotationDefinitions, treeDictionaries)
-    : validateTreePayloadList(data.interpolated_trees, annotationDefinitions, treeDictionaries);
+    : options.validateTreePayloads === false
+      ? requiredArray(data.interpolated_trees, 'interpolated_trees')
+      : validateTreePayloadList(data.interpolated_trees, annotationDefinitions, treeDictionaries);
   const treeCount = interpolatedTrees.length;
   const frames = validateFrames(data.frames, treeCount);
   const pairs = validatePairs(data.pairs, treeCount);
