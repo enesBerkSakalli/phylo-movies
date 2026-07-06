@@ -5,6 +5,7 @@ const EMPTY_PAIR_METRICS = Object.freeze({
   rows: Object.freeze([]),
   semantics: Object.freeze({}),
 });
+const LARGE_DATASET_LABEL_TAXA_THRESHOLD = 300;
 
 export const createDatasetLifecycleSlice = (set, get) => ({
   // ==========================================================================
@@ -56,7 +57,7 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       pair_metrics: pairMetrics,
       subtree_highlight_tracking: subtreeHighlightTracking,
     } = movieData;
-    const treeList = createHydratedTreeCache(movieData, frames);
+    const treeList = createHydratedTreeCache(movieData);
     const leafNamesByIndex = deriveLeafNamesByIndex(treeList[0]);
 
     const { sequences: msaSequences, window_size: windowSize, step_size: stepSize } = movieData.msa;
@@ -95,6 +96,7 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       subtreeHighlightTracking,
       temporalEvents,
       selectedTimelineSegmentIndex: null,
+      labelsVisible: shouldShowLabelsByDefault(leafNamesByIndex),
       playhead: {
         animationProgress: 0,
         timelineProgress: null,
@@ -107,16 +109,10 @@ export const createDatasetLifecycleSlice = (set, get) => ({
   },
 });
 
-function createHydratedTreeCache(movieData, frames) {
+function createHydratedTreeCache(movieData) {
   const treePayloadList = movieData.interpolated_trees;
   const treeList = new Array(treePayloadList.length);
   const indicesToHydrate = new Set([0]);
-
-  frames.forEach((frame) => {
-    if (frame?.frame_type === 'input_tree' || frame?.is_observed_input === true) {
-      indicesToHydrate.add(frame.frame_index);
-    }
-  });
 
   indicesToHydrate.forEach((treeIndex) => {
     if (treeIndex >= 0 && treeIndex < treePayloadList.length) {
@@ -125,6 +121,13 @@ function createHydratedTreeCache(movieData, frames) {
   });
 
   return treeList;
+}
+
+function shouldShowLabelsByDefault(leafNamesByIndex) {
+  const leafCount = Array.isArray(leafNamesByIndex)
+    ? leafNamesByIndex.reduce((count, name) => count + (typeof name === 'string' ? 1 : 0), 0)
+    : 0;
+  return leafCount <= LARGE_DATASET_LABEL_TAXA_THRESHOLD;
 }
 
 function deriveLeafNamesByIndex(tree) {

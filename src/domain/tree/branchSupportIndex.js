@@ -307,11 +307,15 @@ export function buildBranchSupportIndex({ interpolatedTrees, frames } = {}) {
 
     const frameIndex = frame.frame_index;
     const inputTreeIndex = frame.input_tree_index;
-    const tree = interpolatedTrees[frameIndex];
-    if (!tree) {
+    if (frameIndex >= interpolatedTrees.length) {
       throw new Error(
         `buildBranchSupportIndex input frame ${index} references missing interpolated_trees[${frameIndex}]`
       );
+    }
+
+    const tree = interpolatedTrees[frameIndex];
+    if (!tree) {
+      return;
     }
 
     const allTaxaIndices = normalizeIndices(tree.split_indices);

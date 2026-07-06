@@ -78,9 +78,12 @@ export default function calculateScales(treeList, inputFrameIndices) {
 }
 
 function _calculateScale(node, isRoot = true) {
+  if (!node) return 0;
+
   let maxRadius = 0;
-  if (node.children) {
-    node.children.forEach((child) => {
+  const children = getScaleChildren(node);
+  if (children.length > 0) {
+    children.forEach((child) => {
       let child_scale = _calculateScale(child, false);
 
       if (maxRadius < child_scale) {
@@ -88,6 +91,24 @@ function _calculateScale(node, isRoot = true) {
       }
     });
   }
-  maxRadius = maxRadius + (isRoot ? 0 : getReadableVisualBranchLength(node));
+  maxRadius = maxRadius + (isRoot ? 0 : getScaleBranchLength(node));
   return maxRadius;
+}
+
+function getScaleChildren(node) {
+  if (Array.isArray(node)) {
+    return Array.isArray(node[4]) ? node[4] : [];
+  }
+
+  return Array.isArray(node?.children) ? node.children : [];
+}
+
+function getScaleBranchLength(node) {
+  if (!Array.isArray(node)) {
+    return getReadableVisualBranchLength(node);
+  }
+
+  const value = Number(node[0]);
+  if (!Number.isFinite(value) || value < 0) return 0;
+  return value;
 }

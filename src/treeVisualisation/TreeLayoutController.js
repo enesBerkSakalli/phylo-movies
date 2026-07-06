@@ -117,8 +117,16 @@ export class TreeLayoutController {
    * Ensures consistent radii across input and transition trees.
    */
   initializeUniformScaling(branchTransformation = 'none') {
-    const state = useAppStore.getState();
-    const treeList = selectActiveTreeList(state);
+    let state = useAppStore.getState();
+    let treeList = selectActiveTreeList(state);
+    const inputFrameIndices = selectInputFrameIndices(state);
+
+    if (branchTransformation !== 'none') {
+      state.ensureTreesHydrated?.(inputFrameIndices);
+      state = useAppStore.getState();
+      treeList = selectActiveTreeList(state);
+    }
+
     const scalingCacheKey = createUniformScalingCacheKey({ state, treeList, branchTransformation });
 
     if (!Array.isArray(treeList) || treeList.length === 0) {
@@ -132,12 +140,10 @@ export class TreeLayoutController {
       return;
     }
 
-    const inputFrameIndices = selectInputFrameIndices(state);
-    const transformedTreeList = this._getOrCacheTransformedTrees(
-      treeList,
-      branchTransformation,
-      state
-    );
+    const transformedTreeList =
+      branchTransformation === 'none'
+        ? getScaleSourceTreeList(state, treeList)
+        : this._getOrCacheTransformedTrees(treeList, branchTransformation, state);
     const { maxGlobalScale, minWindowSize } = this._calculateTrajectoryScale(
       transformedTreeList,
       inputFrameIndices
@@ -393,4 +399,11 @@ export class TreeLayoutController {
 
 function hasUniformScaleValue(value) {
   return value !== null && value !== undefined && Number.isFinite(Number(value));
+}
+
+function getScaleSourceTreeList(state, treeList) {
+  const treePayloadList = state?.treePayloadList;
+  return Array.isArray(treePayloadList) && treePayloadList.length === treeList.length
+    ? treePayloadList
+    : treeList;
 }

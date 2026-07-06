@@ -57,6 +57,20 @@ const compactTreeDefinitions = {
   split_definitions: [[0, 1], [0], [1]],
 };
 
+function makeStarTree(taxaCount) {
+  return {
+    name: '',
+    length: 0,
+    split_indices: Array.from({ length: taxaCount }, (_value, index) => index),
+    children: Array.from({ length: taxaCount }, (_value, index) => ({
+      name: `taxon-${index}`,
+      length: 0,
+      split_indices: [index],
+      children: [],
+    })),
+  };
+}
+
 function makeBackendMovieData() {
   return {
     interpolated_trees: [tree0, tree1, tree2],
@@ -246,6 +260,7 @@ describe('phylo store dataset normalization', () => {
     expect(state.temporalEvents).toBe(movieData.temporal_events);
     expect(state.pairMetrics).toBe(movieData.pair_metrics);
     expect(state.pairs).toBe(movieData.pairs);
+    expect(state.labelsVisible).toBe(true);
     expect(phyloStoreModule.selectPairById(state).pair_0_1).toBe(movieData.pairs[0]);
     expect(phyloStoreModule.selectInputFrameIndices(state)).toEqual([0, 2]);
     expect(phyloStoreModule.selectPairMetrics(state).rows).toEqual([
@@ -270,6 +285,18 @@ describe('phylo store dataset normalization', () => {
     expect(Object.prototype.hasOwnProperty.call(state, 'pivotEdgeTracking')).toBe(false);
   });
 
+  it('hides tree labels by default for large taxa datasets', () => {
+    const largeTree = makeStarTree(301);
+    const movieData = phyloData.validate({
+      ...makeBackendMovieData(),
+      interpolated_trees: [largeTree, largeTree, largeTree],
+    });
+
+    useAppStore.getState().initialize(movieData);
+
+    expect(useAppStore.getState().labelsVisible).toBe(false);
+  });
+
   it('keeps compact trees out of the runtime cache until a frame is requested', () => {
     const movieData = makeCompactMovieData();
 
@@ -283,9 +310,9 @@ describe('phylo store dataset normalization', () => {
     expect(state.leafNamesByIndex).toEqual(['taxon-a', 'taxon-b']);
     expect(phyloStoreModule.selectTreeHydrationStats(state)).toMatchObject({
       totalTrees: 3,
-      hydratedTrees: 2,
+      hydratedTrees: 1,
       compactPayloadTrees: 3,
-      hydratedPercent: 2 / 3,
+      hydratedPercent: 1 / 3,
     });
     expect(phyloStoreModule.selectTreeHydrationStats(state)).toBe(
       phyloStoreModule.selectTreeHydrationStats(state)
@@ -298,9 +325,9 @@ describe('phylo store dataset normalization', () => {
     expect(useAppStore.getState().treeList).not.toBe(state.treeList);
     expect(phyloStoreModule.selectTreeHydrationStats(useAppStore.getState())).toMatchObject({
       totalTrees: 3,
-      hydratedTrees: 3,
+      hydratedTrees: 2,
       compactPayloadTrees: 3,
-      hydratedPercent: 1,
+      hydratedPercent: 2 / 3,
     });
   });
 
@@ -371,7 +398,7 @@ describe('phylo store dataset normalization', () => {
     expect(state.treeList[3]).toEqual(hydratedCompactTree);
     expect(state.treeList[4]).toEqual(hydratedCompactTree);
     expect(state.treeList[5]).toBeUndefined();
-    expect(state.treeList[6]).toEqual(hydratedCompactTree);
+    expect(state.treeList[6]).toBeUndefined();
   });
 
   it('coalesces batch tree hydration into one treeList reference update', () => {

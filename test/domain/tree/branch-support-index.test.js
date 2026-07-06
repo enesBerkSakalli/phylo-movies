@@ -196,6 +196,32 @@ describe('branch annotation indexing', () => {
     ).toThrow(/references missing interpolated_trees\[2\]/);
   });
 
+  it('skips in-range input trees that have not been hydrated yet', () => {
+    const sparseTrees = new Array(3);
+    sparseTrees[0] = tree;
+
+    const index = buildBranchSupportIndex({
+      interpolatedTrees: sparseTrees,
+      frames: [
+        {
+          frame_index: 0,
+          frame_type: 'input_tree',
+          is_observed_input: true,
+          input_tree_index: 0,
+        },
+        {
+          frame_index: 2,
+          frame_type: 'input_tree',
+          is_observed_input: true,
+          input_tree_index: 1,
+        },
+      ],
+    });
+
+    expect(index.getSupport(0, [0, 1])).toMatchObject({ primary: 91 });
+    expect(index.getSupport(1, [0, 1])).toBeNull();
+  });
+
   it('formats support and classifies source and destination branch values', () => {
     expect(formatSupportValue({ primary: 88.345 })).toBe('88.3');
     expect(formatSupportValue(null)).toBe('-');

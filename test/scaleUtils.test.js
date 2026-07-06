@@ -49,6 +49,14 @@ describe('scaleUtils', () => {
       expect(result[1].value).toBe(20);
     });
 
+    it('calculates scale directly from compact tuple tree payloads', () => {
+      const compactTree = [0, 0, 0, null, [[5, 1, 1, null, [[3, 2, 2, null, []]]], [2, 3, 3, null, []]]];
+
+      const result = calculateScales([compactTree], [0]);
+
+      expect(result[0].value).toBe(8);
+    });
+
     it('handles specific indices only', () => {
       const list = [
         { length: 0, children: [{ length: 10 }] },

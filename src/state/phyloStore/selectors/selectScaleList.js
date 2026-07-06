@@ -8,14 +8,19 @@ let cachedScaleList = [];
 
 export const selectScaleList = (state) => {
   const treeList = selectActiveTreeList(state);
+  const treePayloadList = state.treePayloadList;
   const inputFrameIndices = selectInputFrameIndices(state);
+  const scaleTreeList =
+    Array.isArray(treePayloadList) && treePayloadList.length === treeList.length
+      ? treePayloadList
+      : treeList;
 
-  if (treeList === cachedTreeList && inputFrameIndices === cachedInputFrameIndices) {
+  if (scaleTreeList === cachedTreeList && inputFrameIndices === cachedInputFrameIndices) {
     return cachedScaleList;
   }
 
-  cachedTreeList = treeList;
+  cachedTreeList = scaleTreeList;
   cachedInputFrameIndices = inputFrameIndices;
-  cachedScaleList = treeList.length ? calculateScales(treeList, inputFrameIndices) : [];
+  cachedScaleList = scaleTreeList.length ? calculateScales(scaleTreeList, inputFrameIndices) : [];
   return cachedScaleList;
 };
