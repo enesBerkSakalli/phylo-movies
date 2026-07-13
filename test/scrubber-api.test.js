@@ -1,7 +1,6 @@
 const { expect } = require('chai');
 
 const { ScrubberAPI } = require('../src/timeline/core/ScrubberAPI.js');
-const { TimelineClock } = require('../src/timeline/core/TimelineClock.js');
 const { TimelineDataset } = require('../src/timeline/data/TimelineDataset.js');
 const { TransitionFrame } = require('../src/timeline/time/TransitionFrame.js');
 const { useAppStore } = require('../src/state/phyloStore/store.js');
@@ -86,13 +85,15 @@ function createTimelineManager(movieData) {
     segments,
     timelineData,
   });
-  const timelineClock = new TimelineClock({
-    timelineDataset,
-  });
-
   return {
+    destroy: () => {},
     resolveFrameAtTimelineProgress: (progress) =>
-      timelineClock.getTransitionFrameForProgress(progress),
+      timelineDataset.getTransitionFrameAtTimelineProgress(progress),
+    getCursorAtTimelineProgress: (progress) =>
+      timelineDataset.getCursorAtTimelineProgress(progress),
+    getCursorAtMovieTime: (movieTimeMs) => timelineDataset.getCursorAtMovieTime(movieTimeMs),
+    getCursorForFrame: (frameIndex, options) =>
+      timelineDataset.getCursorForFrame(frameIndex, options),
   };
 }
 
@@ -103,11 +104,12 @@ function flushMicrotasks() {
 describe('ScrubberAPI', () => {
   beforeEach(() => {
     const movieData = createMovieData();
+    const movieTimelineManager = createTimelineManager(movieData);
     useAppStore.setState({
-      navigationDirection: 'forward',
       comparisonMode: false,
       movieData,
       treeList: movieData.interpolated_trees,
+      movieTimelineManager,
       timelineFrames: [
         { frame_index: 0, frame_type: 'input_tree', is_observed_input: true },
         {
@@ -177,7 +179,7 @@ describe('ScrubberAPI', () => {
 
     expect(api.lastTransitionState.progress).to.equal(0.8);
     expect(api.lastTransitionState.transitionFrame.cursorTreeIndex).to.equal(2);
-    expect(useAppStore.getState().playhead.timelineProgress).to.equal(0.8);
+    expect(useAppStore.getState().timelineCursor.timelineProgress).to.equal(0.8);
     expect(useAppStore.getState().frameIndex).to.equal(2);
   });
 
@@ -328,7 +330,7 @@ describe('ScrubberAPI', () => {
       expect(errorCalls).to.have.length(1);
       expect(errorCalls[0][0]).to.equal('[ScrubberAPI] Scrub update failed:');
       expect(errorCalls[0][1]).to.deep.include({ progress: 0.5, error: renderError });
-      expect(useAppStore.getState().playhead.timelineProgress).to.equal(0.5);
+      expect(useAppStore.getState().timelineCursor.timelineProgress).to.equal(0.5);
     } finally {
       console.error = originalError;
     }

@@ -1,4 +1,4 @@
-import { renderTreeControllers } from '../../internal/changeTracking.helpers.js';
+import { renderTreeController } from '../../internal/changeTracking.helpers.js';
 
 function mapToPlainObject(value) {
   return value instanceof Map ? Object.fromEntries(value) : value;
@@ -36,7 +36,7 @@ export const createTaxonomyColoringSlice = (set, get) => ({
       taxaGrouping: normalized,
       taxaColorVersion: s.taxaColorVersion + 1,
     }));
-    renderTreeControllers(get());
+    renderTreeController(get());
   },
 
   setMonophyleticColoring: (enabled) => {
@@ -46,6 +46,6 @@ export const createTaxonomyColoringSlice = (set, get) => ({
       monophyleticColoringEnabled: enabled,
       taxaColorVersion: s.taxaColorVersion + 1,
     }));
-    renderTreeControllers(get());
+    renderTreeController(get());
   },
 });

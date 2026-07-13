@@ -3,20 +3,16 @@ import {
   detectCurrentAnimationStage,
 } from '../deckgl/interpolation/stages/animationStageDetector.js';
 import { applyRenderProgressEasing } from '../deckgl/interpolation/stages/stageEasing.js';
-import { calculatePlaybackState } from '../../domain/animation/AnimationTiming.js';
 import {
   selectActiveTreeList,
   selectInputFrameIndices,
 } from '../../state/phyloStore/selectors/treeSelectors.js';
-import { PlaybackCursor } from '../../timeline/time/PlaybackCursor.js';
-import { TransitionFrame } from '../../timeline/time/TransitionFrame.js';
-import { measureFrameStep } from '../performance/frameInstrumentation.js';
 
 /**
  * AnimationRunner
  *
  * Orchestrates the high-frequency animation loop for the tree visualization.
- * It decouples "Game Time" (AnimationTiming.js) from "Render Time" (deck.gl),
+ * It decouples semantic movie time from deck.gl render time,
  * allowing the animation to maintain correct pacing even if rendering drifts.
  *
  * Performance Note:
@@ -167,15 +163,15 @@ export class AnimationRunner {
     const playback = getPlaybackState(state, timestamp);
     if (!playback) return true; // Stop if invalid config
 
-    const { progress, isFinished } = playback;
+    const { isFinished } = playback;
 
-    this._syncPlaybackProgress(timestamp, progress, isFinished, playback);
+    this._syncPlaybackProgress(timestamp, isFinished, playback);
     if (this._deferRenderUntilNextFrame) {
       this._deferRenderUntilNextFrame = false;
       return isFinished;
     }
 
-    const transitionFrame = playback.transitionFrame ?? buildLinearTransitionFrame(state, playback);
+    const transitionFrame = playback.transitionFrame;
 
     if (!transitionFrame?.sourceTree || !transitionFrame?.targetTree) return true;
     const fromIndex = transitionFrame.sourceTreeIndex;
@@ -257,14 +253,10 @@ export class AnimationRunner {
     return isFinished;
   }
 
-  _syncPlaybackProgress(timestamp, progress, isFinished, playback = {}) {
+  _syncPlaybackProgress(timestamp, isFinished, playback = {}) {
     // Throttle progress updates to ~10fps
     if (isFinished || timestamp - this._lastProgressSyncTime > 100) {
-      this.updateProgress(progress, {
-        timelineProgress: playback.timelineProgress,
-        frameIndex: playback.frameIndex,
-        holdKind: playback.holdKind,
-      });
+      this.updateProgress(playback);
       this._lastProgressSyncTime = timestamp;
     }
   }
@@ -316,33 +308,14 @@ export class AnimationRunner {
  * Extracts and calculates basic timing info
  */
 function getPlaybackState(state, timestamp) {
-  const { animationStartTime, animationSpeed, transitionDuration, pauseDuration } = state;
-  const treeList = selectActiveTreeList(state);
-  // Guard: Invalid config
-  if (!Number.isFinite(animationStartTime) || !treeList || treeList.length === 0) return null;
-
-  const semanticPlayback = getSemanticTimelinePlaybackState(state, timestamp, treeList);
-  if (semanticPlayback) {
-    return semanticPlayback;
-  }
-
-  return calculatePlaybackState({
-    timestamp,
-    startTime: animationStartTime,
-    speed: animationSpeed,
-    totalItems: treeList.length,
-    transitionDuration,
-    pauseDuration,
-  });
-}
-
-function getSemanticTimelinePlaybackState(state, timestamp, treeList) {
   const { animationStartTime, animationSpeed, movieTimelineManager } = state;
   const totalDurationMs = movieTimelineManager?.timelineData?.totalDuration;
 
   if (
     !movieTimelineManager ||
     typeof movieTimelineManager.resolveFrameAtTimelineProgress !== 'function' ||
+    typeof movieTimelineManager.getCursorAtMovieTime !== 'function' ||
+    !Number.isFinite(animationStartTime) ||
     !Number.isFinite(totalDurationMs) ||
     totalDurationMs <= 0
   ) {
@@ -351,65 +324,31 @@ function getSemanticTimelinePlaybackState(state, timestamp, treeList) {
 
   const safeSpeed = Number.isFinite(animationSpeed) && animationSpeed > 0 ? animationSpeed : 1;
   const elapsedMs = Math.max(0, timestamp - animationStartTime) * safeSpeed;
+  const movieTimeMs = Math.min(elapsedMs, totalDurationMs);
   const rawProgress = elapsedMs / totalDurationMs;
-  const timelineProgress = Math.max(0, Math.min(1, rawProgress));
+  const timelineProgress = movieTimeMs / totalDurationMs;
   const transitionFrame = movieTimelineManager.resolveFrameAtTimelineProgress(timelineProgress);
+  const timelineCursor = movieTimelineManager.getCursorAtMovieTime(movieTimeMs, {
+    bias: 'nearest',
+  });
 
-  if (!transitionFrame) {
+  if (!transitionFrame || !timelineCursor) {
     return null;
   }
 
-  const cursor = PlaybackCursor.fromTransitionFrame(transitionFrame, {
-    timelineProgress,
-    treeCount: treeList.length,
-  });
-  const playbackState = cursor.toPlaybackState();
-
   return {
-    progress: playbackState.animationProgress,
-    timelineProgress: playbackState.timelineProgress,
+    movieTimeMs,
+    timelineProgress,
+    timelineCursor,
     isFinished: rawProgress >= 1,
     fromIndex: transitionFrame.sourceTreeIndex,
     toIndex: transitionFrame.targetTreeIndex,
     localT: transitionFrame.transitionProgress,
     isInPause: Boolean(transitionFrame.holdKind),
-    holdKind: playbackState.holdKind,
-    frameIndex: playbackState.frameIndex,
+    holdKind: transitionFrame.holdKind,
+    frameIndex: timelineCursor.frameIndex,
     transitionFrame,
   };
-}
-
-/**
- * Determines which tree list to use (Standard vs Movie mode)
- */
-function getActiveTreeSequence(state) {
-  return selectActiveTreeList(state);
-}
-
-function buildLinearTransitionFrame(state, playback) {
-  const { fromIndex, toIndex, localT } = playback;
-  const [hydratedFromTree, hydratedToTree] = measureFrameStep(
-    'animationRunner.ensureTreesHydrated',
-    () => state.ensureTreesHydrated?.([fromIndex, toIndex]) ?? [null, null]
-  );
-  const trees = getActiveTreeSequence(state);
-  const fromTree = hydratedFromTree ?? trees[fromIndex];
-  const toTree = hydratedToTree ?? trees[toIndex];
-  if (!fromTree) return null;
-
-  return TransitionFrame.from(
-    {
-      sourceTree: fromTree,
-      targetTree: toTree,
-      sourceTreeIndex: fromIndex,
-      targetTreeIndex: toIndex,
-      transitionProgress: localT,
-      holdKind: playback.holdKind,
-    },
-    {
-      timelineProgress: playback.timelineProgress,
-    }
-  );
 }
 
 function isFrameSensitiveLifecycleStage(transitionChangeModel) {

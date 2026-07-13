@@ -17,7 +17,6 @@ class MockDeckGLTreeAnimationController {
     this.ready = true;
     this.readyPromise = Promise.resolve();
     this.renderTimelineProgress = vi.fn(() => Promise.resolve());
-    this.renderProgress = vi.fn(() => Promise.resolve());
     this.renderAllElements = vi.fn(() => Promise.resolve());
     this.resetInterpolationCaches = vi.fn();
     this.initializeUniformScaling = vi.fn();
@@ -103,9 +102,9 @@ describe('useTreeController static render scheduling', () => {
     controllerInstance = null;
     storeState = {
       treeList: [{ id: 'tree-0' }],
-      treeControllers: [],
-      setTreeControllers: (controllers) => {
-        storeState = { ...storeState, treeControllers: controllers };
+      treeController: null,
+      setTreeController: (treeController) => {
+        storeState = { ...storeState, treeController };
       },
       movieTimelineManager: null,
       playing: false,
@@ -119,7 +118,6 @@ describe('useTreeController static render scheduling', () => {
         movieTimeMs: 0,
         timelineProgress: 0.1,
       },
-      playhead: { timelineProgress: 0.1, animationProgress: 0.1 },
       setRenderInProgress: vi.fn(),
       syncMSAEnabled: false,
       clearMsaRegion: vi.fn(),
@@ -154,7 +152,11 @@ describe('useTreeController static render scheduling', () => {
     expect(controllerInstance.renderTimelineProgress).toHaveBeenCalledWith(0.1);
 
     updateStore({
-      playhead: { timelineProgress: 0.9, animationProgress: 0.9 },
+      timelineCursor: {
+        ...storeState.timelineCursor,
+        movieTimeMs: 9000,
+        timelineProgress: 0.9,
+      },
     });
     await flushNextRaf();
 
@@ -309,7 +311,7 @@ describe('useTreeController static render scheduling', () => {
     });
   });
 
-  it('schedules a hook render when navigation changes frame index and playhead together', async () => {
+  it('schedules a hook render when navigation replaces the timeline cursor', async () => {
     const { root } = await renderHookHarness();
 
     await flushNextRaf();
@@ -317,12 +319,45 @@ describe('useTreeController static render scheduling', () => {
 
     updateStore({
       frameIndex: 1,
-      playhead: { timelineProgress: 0.5, animationProgress: 0.5 },
+      timelineCursor: {
+        ...storeState.timelineCursor,
+        frameIndex: 1,
+        movieTimeMs: 5000,
+        timelineProgress: 0.5,
+      },
     });
     await flushNextRaf();
 
     expect(controllerInstance.renderTimelineProgress).toHaveBeenCalledTimes(2);
     expect(controllerInstance.renderTimelineProgress).toHaveBeenLastCalledWith(0.5);
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it('does not queue static renders for cursor updates owned by playback', async () => {
+    const { root } = await renderHookHarness();
+
+    await flushNextRaf();
+    expect(rafQueue).toHaveLength(0);
+
+    updateStore({
+      playing: true,
+      timelineCursor: {
+        ...storeState.timelineCursor,
+        movieTimeMs: 2500,
+        timelineProgress: 0.25,
+      },
+    });
+
+    expect(rafQueue).toHaveLength(0);
+
+    updateStore({ playing: false });
+    expect(rafQueue).toHaveLength(1);
+
+    await flushNextRaf();
+    expect(controllerInstance.renderTimelineProgress).toHaveBeenLastCalledWith(0.25);
 
     await act(async () => {
       root.unmount();

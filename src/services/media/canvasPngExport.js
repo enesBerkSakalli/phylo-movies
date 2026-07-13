@@ -1,10 +1,8 @@
-export function getActiveTreeCanvas(treeControllers = []) {
-  const controllers = Array.isArray(treeControllers) ? treeControllers : [];
-  if (!controllers.length) {
+export function getTreeCanvas(treeController = null) {
+  if (!treeController) {
     return { canvas: null, reason: 'missing-controller' };
   }
 
-  const treeController = controllers[controllers.length - 1];
   const canvas = treeController?.deckContext?.canvas ?? null;
 
   if (!canvas) {

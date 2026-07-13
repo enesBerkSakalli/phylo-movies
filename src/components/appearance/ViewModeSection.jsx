@@ -2,7 +2,7 @@ import React from 'react';
 import {
   selectCameraMode,
   selectToggleCameraMode,
-  selectTreeControllers,
+  selectTreeController,
   useAppStore,
 } from '../../state/phyloStore/store.js';
 import { Button } from '../ui/button';
@@ -16,14 +16,14 @@ import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../ui/colla
 import { Box, ChevronDown, Info } from 'lucide-react';
 
 export function ViewModeSection() {
-  const treeControllers = useAppStore(selectTreeControllers);
+  const treeController = useAppStore(selectTreeController);
   const cameraMode = useAppStore(selectCameraMode);
   const toggleCameraMode = useAppStore(selectToggleCameraMode);
 
   const handleCameraModeToggle = () => {
     try {
       const newMode = toggleCameraMode();
-      treeControllers.forEach((controller) => controller.setCameraMode(newMode));
+      treeController?.setCameraMode(newMode);
     } catch {}
   };
 

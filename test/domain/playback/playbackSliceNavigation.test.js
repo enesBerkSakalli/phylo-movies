@@ -6,29 +6,33 @@ const trees = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
 const resetPlaybackState = () => {
   useAppStore.setState({
     playing: false,
+    timelineCursor: null,
     animationStartTime: null,
     animationSpeed: 1,
-    transitionDuration: 1,
-    pauseDuration: 0,
-    playhead: {
-      animationProgress: 0,
-      timelineProgress: null,
-    },
     frameIndex: 0,
-    navigationDirection: 'forward',
     renderInProgress: false,
     treeList: [],
     movieTimelineManager: null,
-    timelineCursor: null,
   });
 };
+
+function createManager(overrides = {}) {
+  return {
+    timelineData: { totalDuration: 17_000 },
+    getCursorForFrame: vi.fn(),
+    getCursorAtMovieTime: vi.fn(),
+    getCursorAtTimelineProgress: vi.fn(),
+    ...overrides,
+  };
+}
 
 describe('playback navigation', () => {
   afterEach(() => {
     resetPlaybackState();
+    vi.restoreAllMocks();
   });
 
-  it('pauses playback when navigation seeks to another frame', () => {
+  it('pauses playback and replaces the complete semantic position when seeking', () => {
     const cursor = {
       frameIndex: 2,
       inputTreeIndex: 2,
@@ -44,95 +48,69 @@ describe('playback navigation', () => {
       animationStartTime: 1000,
       treeList: trees,
       frameIndex: 0,
-      movieTimelineManager: {
-        getCursorForFrame,
-      },
-      playhead: {
-        animationProgress: 0,
-        timelineProgress: 0,
-      },
+      movieTimelineManager: createManager({ getCursorForFrame }),
     });
 
-    useAppStore.getState().goToPosition(2, 'jump');
+    useAppStore.getState().goToPosition(2, 'forward');
 
     const state = useAppStore.getState();
     expect(state.playing).toBe(false);
     expect(state.animationStartTime).toBe(null);
     expect(state.frameIndex).toBe(2);
-    expect(state.navigationDirection).toBe('jump');
-    expect(state.playhead).toEqual({
-      animationProgress: 1,
-      timelineProgress: 0.75,
-    });
     expect(state.timelineCursor).toBe(cursor);
-    expect(getCursorForFrame).toHaveBeenCalledWith(2, {});
+    expect(state.timelineCursor.movieTimeMs).toBe(3000);
+    expect(getCursorForFrame).toHaveBeenCalledWith(2, { occurrence: 'semantic' });
   });
 
-  it('refreshes timeline progress when navigation seeks to the current frame with an explicit timeline position', () => {
-    useAppStore.setState({
-      playing: true,
-      animationStartTime: 1000,
-      treeList: trees,
-      frameIndex: 1,
-      playhead: {
-        animationProgress: 0.5,
-        timelineProgress: 0.5,
-      },
-      movieTimelineManager: {
-        getCursorAtTimelineProgress: vi.fn((timelineProgress) => ({
-          frameIndex: 1,
-          inputTreeIndex: 1,
-          sourceFrameIndex: 1,
-          msaWindowIndex: 1,
-          movieTimeMs: 2600,
-          timelineProgress,
-        })),
-      },
-    });
-
-    useAppStore.getState().goToPosition(1, 'jump', { timelineProgress: 0.65 });
-
-    const state = useAppStore.getState();
-    expect(state.playing).toBe(false);
-    expect(state.animationStartTime).toBe(null);
-    expect(state.frameIndex).toBe(1);
-    expect(state.navigationDirection).toBe('jump');
-    expect(state.playhead).toEqual({
-      animationProgress: 0.5,
-      timelineProgress: 0.65,
-    });
-    expect(state.timelineCursor).toMatchObject({
-      frameIndex: 1,
-      timelineProgress: 0.65,
-    });
-  });
-
-  it('preserves exact semantic timeline progress when playback pauses inside a hold', () => {
-    const pauseProgress = 9000 / 17000;
-    const holdStartProgress = 8700 / 17000;
+  it('uses an explicit timeline position even when the frame index is unchanged', () => {
     const cursor = {
-      frameIndex: 7,
+      frameIndex: 1,
       inputTreeIndex: 1,
-      sourceFrameIndex: 7,
-      msaWindowIndex: 7,
-      movieTimeMs: 9000,
-      timelineProgress: pauseProgress,
+      sourceFrameIndex: 1,
+      msaWindowIndex: 1,
+      movieTimeMs: 2600,
+      timelineProgress: 0.65,
     };
     const getCursorAtTimelineProgress = vi.fn(() => cursor);
 
     useAppStore.setState({
       playing: true,
       animationStartTime: 1000,
+      treeList: trees,
+      frameIndex: 1,
+      movieTimelineManager: createManager({ getCursorAtTimelineProgress }),
+    });
+
+    useAppStore.getState().goToPosition(1, 'forward', { timelineProgress: 0.65 });
+
+    const state = useAppStore.getState();
+    expect(state.playing).toBe(false);
+    expect(state.animationStartTime).toBe(null);
+    expect(state.frameIndex).toBe(1);
+    expect(state.timelineCursor).toBe(cursor);
+    expect(state.timelineCursor.movieTimeMs).toBe(2600);
+    expect(getCursorAtTimelineProgress).toHaveBeenCalledWith(0.65);
+  });
+
+  it('captures the exact semantic movie position when pausing inside a hold', () => {
+    vi.spyOn(performance, 'now').mockReturnValue(10_000);
+    const cursor = {
+      frameIndex: 7,
+      inputTreeIndex: 1,
+      sourceFrameIndex: 7,
+      msaWindowIndex: 7,
+      movieTimeMs: 9000,
+      timelineProgress: 9000 / 17_000,
+    };
+    const getCursorAtMovieTime = vi.fn(() => cursor);
+
+    useAppStore.setState({
+      playing: true,
+      animationStartTime: 1000,
+      animationSpeed: 1,
       treeList: Array.from({ length: 13 }, (_, index) => ({ id: index })),
       frameIndex: 7,
-      movieTimelineManager: {
-        getTimelineProgressForLinearTreeProgress: vi.fn(() => holdStartProgress),
-        getCursorAtTimelineProgress,
-      },
-      playhead: {
-        animationProgress: 7 / 12,
-        timelineProgress: pauseProgress,
-      },
+      movieTimelineManager: createManager({ getCursorAtMovieTime }),
     });
 
     useAppStore.getState().stop();
@@ -140,63 +118,41 @@ describe('playback navigation', () => {
     const state = useAppStore.getState();
     expect(state.playing).toBe(false);
     expect(state.animationStartTime).toBe(null);
-    expect(state.playhead.timelineProgress).toBe(pauseProgress);
     expect(state.timelineCursor).toBe(cursor);
-    expect(getCursorAtTimelineProgress).toHaveBeenCalledWith(pauseProgress);
+    expect(state.timelineCursor.movieTimeMs).toBe(9000);
+    expect(getCursorAtMovieTime).toHaveBeenCalledWith(9000);
   });
 
-  it('resumes from final input-tree hold instead of restarting when semantic time has not finished', () => {
-    const previousPerformance = globalThis.performance;
-    const now = 20_000;
-    globalThis.performance = {
-      ...(previousPerformance || {}),
-      now: () => now,
+  it('resumes from a final input-tree hold that has not reached movie end', () => {
+    vi.spyOn(performance, 'now').mockReturnValue(20_000);
+    const cursor = {
+      frameIndex: 12,
+      inputTreeIndex: 1,
+      sourceFrameIndex: 12,
+      msaWindowIndex: 12,
+      movieTimeMs: 16_000,
+      timelineProgress: 16_000 / 17_000,
     };
+    const getCursorAtMovieTime = vi.fn(() => cursor);
 
-    try {
-      const timelineProgress = 16000 / 17000;
-      const cursor = {
-        frameIndex: 12,
-        inputTreeIndex: 1,
-        sourceFrameIndex: 12,
-        msaWindowIndex: 12,
-        movieTimeMs: 16000,
-        timelineProgress,
-      };
+    useAppStore.setState({
+      playing: false,
+      timelineCursor: cursor,
+      animationStartTime: null,
+      animationSpeed: 1,
+      treeList: Array.from({ length: 13 }, (_, index) => ({ id: index })),
+      frameIndex: 12,
+      movieTimelineManager: createManager({ getCursorAtMovieTime }),
+    });
 
-      useAppStore.setState({
-        playing: false,
-        animationStartTime: null,
-        animationSpeed: 1,
-        transitionDuration: 1,
-        pauseDuration: 0,
-        treeList: Array.from({ length: 13 }, (_, index) => ({ id: index })),
-        frameIndex: 12,
-        movieTimelineManager: {
-          timelineData: { totalDuration: 17000 },
-          resolveFrameAtTimelineProgress: vi.fn(() => ({
-            sourceTreeIndex: 12,
-            targetTreeIndex: 12,
-            transitionProgress: 0,
-          })),
-          getCursorAtTimelineProgress: vi.fn(() => cursor),
-        },
-        playhead: {
-          animationProgress: 1,
-          timelineProgress,
-        },
-      });
+    useAppStore.getState().play();
 
-      useAppStore.getState().play();
-
-      const state = useAppStore.getState();
-      expect(state.playing).toBe(true);
-      expect(state.frameIndex).toBe(12);
-      expect(state.playhead.timelineProgress).toBe(timelineProgress);
-      expect(state.playhead.animationProgress).toBe(1);
-      expect(state.animationStartTime).toBe(now - 16000);
-    } finally {
-      globalThis.performance = previousPerformance;
-    }
+    const state = useAppStore.getState();
+    expect(state.playing).toBe(true);
+    expect(state.frameIndex).toBe(12);
+    expect(state.timelineCursor).toBe(cursor);
+    expect(state.timelineCursor.movieTimeMs).toBe(16_000);
+    expect(state.animationStartTime).toBe(4000);
+    expect(getCursorAtMovieTime).toHaveBeenCalledWith(16_000);
   });
 });

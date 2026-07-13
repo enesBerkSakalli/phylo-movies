@@ -18,7 +18,6 @@ clearTimelineModuleCache();
 
 const { MovieTimelineManager } = require('../src/timeline/core/MovieTimelineManager.js');
 const { AnimationRunner } = require('../src/treeVisualisation/systems/AnimationRunner.js');
-const { calculatePlaybackState } = require('../src/domain/animation/AnimationTiming.js');
 const { TransitionFrame } = require('../src/timeline/time/TransitionFrame.js');
 const { useAppStore } = require('../src/state/phyloStore/store.js');
 
@@ -48,6 +47,56 @@ function makeContainer(width = 800, height = 80) {
   return container;
 }
 
+function createSemanticRunnerManager(trees, stepDurationMs = 2000) {
+  const totalDuration = Math.max(1, trees.length - 1) * stepDurationMs;
+  const getCursorAtMovieTime = (movieTimeMs) => {
+    const boundedTime = Math.max(0, Math.min(totalDuration, movieTimeMs));
+    const timelineProgress = boundedTime / totalDuration;
+    return {
+      frameIndex: Math.min(
+        Math.ceil(timelineProgress * Math.max(1, trees.length - 1)),
+        trees.length - 1
+      ),
+      movieTimeMs: boundedTime,
+      timelineProgress,
+    };
+  };
+
+  return {
+    timelineData: { totalDuration },
+    resolveFrameAtTimelineProgress: (progress) => {
+      const boundedProgress = Math.max(0, Math.min(1, progress));
+      const scaledProgress = boundedProgress * Math.max(1, trees.length - 1);
+      const sourceTreeIndex = Math.min(Math.floor(scaledProgress), trees.length - 2);
+      const targetTreeIndex = sourceTreeIndex + 1;
+      const transitionProgress = boundedProgress === 1 ? 1 : scaledProgress - sourceTreeIndex;
+
+      return TransitionFrame.from({
+        sourceTree: trees[sourceTreeIndex],
+        targetTree: trees[targetTreeIndex],
+        sourceTreeIndex,
+        targetTreeIndex,
+        transitionProgress,
+      });
+    },
+    getCursorAtMovieTime,
+    getCursorAtTimelineProgress: (progress) => getCursorAtMovieTime(progress * totalDuration),
+    getCursorForFrame: (frameIndex) => getCursorAtMovieTime(frameIndex * stepDurationMs),
+  };
+}
+
+function createSemanticRunnerState(trees, { stepDurationMs = 2000, ...overrides } = {}) {
+  return {
+    playing: true,
+    animationStartTime: 1000,
+    animationSpeed: 1,
+    treeList: trees,
+    movieTimelineManager: createSemanticRunnerManager(trees, stepDurationMs),
+    comparisonMode: false,
+    ...overrides,
+  };
+}
+
 describe('MovieTimelineManager lifecycle', () => {
   let movieData;
 
@@ -58,16 +107,12 @@ describe('MovieTimelineManager lifecycle', () => {
   afterEach(() => {
     useAppStore.setState({
       playing: false,
+      timelineCursor: null,
       animationStartTime: null,
       animationSpeed: 1,
-      transitionDuration: 1,
-      pauseDuration: 0,
-      playhead: {
-        animationProgress: 0,
-        timelineProgress: null,
-      },
       frameIndex: 0,
       treeList: [],
+      treeController: null,
       movieTimelineManager: null,
       hoveredSegmentIndex: null,
       hoveredSegmentData: null,
@@ -84,7 +129,7 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('can exist before a host container is available', () => {
-    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees, useAppStore);
 
     expect(manager.timeline).to.equal(null);
     expect(manager.container).to.equal(null);
@@ -93,8 +138,31 @@ describe('MovieTimelineManager lifecycle', () => {
     manager.destroy();
   });
 
+  it('rebinds scrubber ownership when the tree controller changes', () => {
+    const firstController = {};
+    const secondController = {};
+    useAppStore.setState({ treeController: firstController });
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees, useAppStore);
+    const firstScrubber = manager.scrubberAPI;
+
+    expect(firstScrubber.treeController).to.equal(firstController);
+
+    useAppStore.setState({ treeController: secondController });
+    const secondScrubber = manager.scrubberAPI;
+
+    expect(firstScrubber.treeController).to.equal(null);
+    expect(secondScrubber.treeController).to.equal(secondController);
+
+    useAppStore.setState({ treeController: null });
+
+    expect(secondScrubber.treeController).to.equal(null);
+    expect(manager.scrubberAPI).to.equal(null);
+
+    manager.destroy();
+  });
+
   it('exposes canonical timeline cursor lookups before mounting', () => {
-    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees, useAppStore);
 
     const startCursor = manager.getCursorAtMovieTime(0);
     const progressCursor = manager.getCursorAtTimelineProgress(startCursor.timelineProgress);
@@ -114,8 +182,6 @@ describe('MovieTimelineManager lifecycle', () => {
       sourceFrameIndex: 22,
       msaWindowIndex: 1,
     });
-    expect(manager.getFrameOccurrences(22).length).to.be.greaterThan(1);
-
     manager.destroy();
   });
 
@@ -133,8 +199,14 @@ describe('MovieTimelineManager lifecycle', () => {
       },
     });
 
-    const manager = new MovieTimelineManager(movieData, treeList);
-    const frame = manager.resolveFrameAtIndex(1);
+    const manager = new MovieTimelineManager(movieData, treeList, useAppStore);
+    const occurrence = manager.timelineDataset
+      .getOccurrencesForFrame(1)
+      .find((item) => item.role === 'motion_target');
+    const movieTimeMs = (occurrence.movieTimeStartMs + occurrence.movieTimeEndMs) / 2;
+    const frame = manager.resolveFrameAtTimelineProgress(
+      movieTimeMs / manager.timelineData.totalDuration
+    );
 
     expect(hydratedIndices).to.not.deep.equal([]);
     expect(frame.sourceTree).to.equal(movieData.interpolated_trees[0]);
@@ -158,8 +230,14 @@ describe('MovieTimelineManager lifecycle', () => {
       },
     });
 
-    const manager = new MovieTimelineManager(movieData, treeList);
-    const frame = manager.resolveFrameAtIndex(1);
+    const manager = new MovieTimelineManager(movieData, treeList, useAppStore);
+    const occurrence = manager.timelineDataset
+      .getOccurrencesForFrame(1)
+      .find((item) => item.role === 'motion_target');
+    const movieTimeMs = (occurrence.movieTimeStartMs + occurrence.movieTimeEndMs) / 2;
+    const frame = manager.resolveFrameAtTimelineProgress(
+      movieTimeMs / manager.timelineData.totalDuration
+    );
 
     expect(hydratedIndices).to.deep.equal([[0, 1]]);
     expect(frame.sourceTree).to.equal(movieData.interpolated_trees[0]);
@@ -170,7 +248,7 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('exposes timeline-owned status snapshots before mounting', () => {
-    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees, useAppStore);
     const cursor = manager.getCursorForFrame(22, { occurrence: 'last' });
 
     const status = manager.getTimelineStatusSnapshot({
@@ -193,7 +271,7 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('mounts into an explicit host and unmounts cleanly', async () => {
-    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees, useAppStore);
     const host = makeContainer();
 
     await manager.mount(host);
@@ -214,7 +292,7 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('keeps timeline viewport controls behind the manager API', () => {
-    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees, useAppStore);
     const calls = [];
 
     manager.timeline = {
@@ -268,7 +346,7 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('remounts into a new host without leaving stale DOM behind', async () => {
-    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees, useAppStore);
     const firstHost = makeContainer(640, 60);
     const secondHost = makeContainer(720, 90);
 
@@ -287,7 +365,7 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('clears transient tooltip and hover state on unmount', () => {
-    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees, useAppStore);
     const host = makeContainer();
 
     useAppStore.setState({
@@ -310,7 +388,7 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('stores clicked timeline selection by segment index only', () => {
-    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees, useAppStore);
     const selectedSegment = manager.getSegment(1);
 
     manager._onTimelineClick({
@@ -341,18 +419,16 @@ describe('MovieTimelineManager lifecycle', () => {
     );
   });
 
-  it('keeps clicked inspector selection visually pinned while playhead sync changes current position', async () => {
-    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
+  it('keeps clicked inspector selection visually pinned while cursor sync changes current position', async () => {
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees, useAppStore);
     const host = makeContainer();
+    const cursor = manager.getCursorAtTimelineProgress(0.9);
 
     useAppStore.setState({
       treeList: movieData.interpolated_trees,
       selectedTimelineSegmentIndex: 0,
       playing: true,
-      playhead: {
-        animationProgress: 0.9,
-        timelineProgress: null,
-      },
+      timelineCursor: cursor,
     });
 
     await manager.mount(host);
@@ -365,16 +441,14 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('restores scrubber position and inspected segment selection on remount from store state', async () => {
-    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees, useAppStore);
     const firstHost = makeContainer(640, 60);
     const secondHost = makeContainer(640, 60);
+    const cursor = manager.getCursorAtTimelineProgress(0.6);
 
     useAppStore.setState({
       playing: false,
-      playhead: {
-        animationProgress: 0.1,
-        timelineProgress: 0.6,
-      },
+      timelineCursor: cursor,
       selectedTimelineSegmentIndex: 2,
     });
 
@@ -396,7 +470,7 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('syncs renderer inspected selection when the store selection is cleared', async () => {
-    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees, useAppStore);
     const host = makeContainer();
 
     useAppStore.setState({ selectedTimelineSegmentIndex: 1 });
@@ -411,7 +485,7 @@ describe('MovieTimelineManager lifecycle', () => {
     manager.destroy();
   });
 
-  it('keeps fractional timeline position when playback resumes after scrubbing', () => {
+  it('resumes from the exact semantic movie position after scrubbing', () => {
     const previousPerformance = global.performance;
     const now = 10_000;
     global.performance = {
@@ -421,37 +495,22 @@ describe('MovieTimelineManager lifecycle', () => {
 
     try {
       const trees = [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }, { id: 'e' }];
-      const timelineProgress = 0.42;
-      const manager = {
-        resolveFrameAtTimelineProgress: (progress) => {
-          expect(progress).to.equal(timelineProgress);
-          return TransitionFrame.from({
-            sourceTreeIndex: 1,
-            targetTreeIndex: 2,
-            transitionProgress: 0.25,
-          });
-        },
-        getTimelineProgressForLinearTreeProgress: () => timelineProgress,
-      };
+      const manager = createSemanticRunnerManager(trees);
+      const cursor = manager.getCursorAtMovieTime(1250);
 
       useAppStore.setState({
         treeList: trees,
         movieTimelineManager: manager,
         animationSpeed: 1,
-        playhead: {
-          animationProgress: 0,
-          timelineProgress,
-        },
+        timelineCursor: cursor,
         playing: false,
       });
 
       useAppStore.getState().play();
 
       const state = useAppStore.getState();
-      expect(state.playhead).to.deep.equal({
-        animationProgress: 0.3125,
-        timelineProgress,
-      });
+      expect(state.timelineCursor).to.deep.equal(cursor);
+      expect(state.timelineCursor.movieTimeMs).to.equal(1250);
       expect(state.frameIndex).to.equal(1);
       expect(state.animationStartTime).to.equal(now - 1250);
     } finally {
@@ -459,156 +518,11 @@ describe('MovieTimelineManager lifecycle', () => {
     }
   });
 
-  it('uses configured transition and pause duration when playback resumes', () => {
-    const previousPerformance = global.performance;
-    const now = 10_000;
-    global.performance = {
-      ...(previousPerformance || {}),
-      now: () => now,
-    };
-
-    try {
-      const trees = [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }, { id: 'e' }];
-      const timelineProgress = 0.42;
-      const manager = {
-        resolveFrameAtTimelineProgress: () =>
-          TransitionFrame.from({
-            sourceTreeIndex: 1,
-            targetTreeIndex: 2,
-            transitionProgress: 0.25,
-          }),
-        getTimelineProgressForLinearTreeProgress: () => timelineProgress,
-      };
-
-      useAppStore.setState({
-        treeList: trees,
-        movieTimelineManager: manager,
-        animationSpeed: 1,
-        transitionDuration: 2,
-        pauseDuration: 0.5,
-        playhead: {
-          animationProgress: 0,
-          timelineProgress,
-        },
-        playing: false,
-      });
-
-      useAppStore.getState().play();
-
-      const state = useAppStore.getState();
-      expect(state.playhead.animationProgress).to.equal(0.3125);
-      expect(state.animationStartTime).to.equal(now - 3000);
-
-      const resumedPlayback = calculatePlaybackState({
-        timestamp: now,
-        startTime: state.animationStartTime,
-        speed: state.animationSpeed,
-        totalItems: trees.length,
-        transitionDuration: state.transitionDuration,
-        pauseDuration: state.pauseDuration,
-      });
-      expect(resumedPlayback.fromIndex).to.equal(1);
-      expect(resumedPlayback.toIndex).to.equal(2);
-      expect(resumedPlayback.localT).to.equal(0.25);
-    } finally {
-      global.performance = previousPerformance;
-    }
-  });
-
-  it('uses semantic timeline duration when playback resumes inside a movie hold', () => {
-    const previousPerformance = global.performance;
-    const now = 10_000;
-    global.performance = {
-      ...(previousPerformance || {}),
-      now: () => now,
-    };
-
-    try {
-      const trees = [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }];
-      const timelineProgress = 1100 / 4100;
-      const manager = {
-        timelineData: { totalDuration: 4100 },
-        resolveFrameAtTimelineProgress: () =>
-          TransitionFrame.from({
-            sourceTreeIndex: 1,
-            targetTreeIndex: 1,
-            transitionProgress: 0,
-            holdKind: 'mover',
-          }),
-        getTimelineProgressForLinearTreeProgress: () => timelineProgress,
-      };
-
-      useAppStore.setState({
-        treeList: trees,
-        movieTimelineManager: manager,
-        animationSpeed: 1,
-        transitionDuration: 1,
-        pauseDuration: 0,
-        playhead: {
-          animationProgress: 0,
-          timelineProgress,
-        },
-        playing: false,
-      });
-
-      useAppStore.getState().play();
-
-      const state = useAppStore.getState();
-      expect(state.playhead.animationProgress).to.equal(1 / 3);
-      expect(state.animationStartTime).to.equal(now - 1100);
-    } finally {
-      global.performance = previousPerformance;
-    }
-  });
-
-  it('uses configured transition duration when advancing animation frames', async () => {
-    let renderOptions = null;
-    let renderedT = null;
-    let syncedProgress = null;
-
-    const runner = new AnimationRunner({
-      getState: () => ({
-        playing: true,
-        animationStartTime: 1_000,
-        animationSpeed: 1,
-        transitionDuration: 2,
-        pauseDuration: 0,
-        treeList: [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
-        comparisonMode: false,
-      }),
-      getOrCacheInterpolationData: () => ({
-        dataFrom: { nodes: [] },
-        dataTo: { nodes: [] },
-      }),
-      renderSingleFrame: async (_fromTree, _toTree, easedT, options) => {
-        renderedT = easedT;
-        renderOptions = options;
-      },
-      renderComparisonFrame: async () => {},
-      setAnimationStage: () => {},
-      updateProgress: (progress) => {
-        syncedProgress = progress;
-      },
-      stopAnimation: () => {},
-      requestRedraw: () => {},
-    });
-
-    runner.isRunning = true;
-    const shouldStop = await runner._processFrame(2_000);
-
-    expect(shouldStop).to.equal(false);
-    expect(syncedProgress).to.equal(0.25);
-    expect(renderOptions.fromTreeIndex).to.equal(0);
-    expect(renderOptions.toTreeIndex).to.equal(1);
-    expect(renderedT).to.equal(0.5);
-  });
-
   it('uses semantic movie timeline duration when advancing animation frames', async () => {
     const trees = [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }];
     let timelineProgressSeen = null;
     let cacheIndices = null;
     let renderOptions = null;
-    let syncedProgress = null;
     let syncedMeta = null;
     const manager = {
       timelineData: { totalDuration: 4100 },
@@ -623,6 +537,11 @@ describe('MovieTimelineManager lifecycle', () => {
           holdKind: 'mover',
         });
       },
+      getCursorAtMovieTime: (movieTimeMs) => ({
+        frameIndex: 1,
+        movieTimeMs,
+        timelineProgress: movieTimeMs / 4100,
+      }),
     };
 
     const runner = new AnimationRunner({
@@ -630,8 +549,6 @@ describe('MovieTimelineManager lifecycle', () => {
         playing: true,
         animationStartTime: 1_000,
         animationSpeed: 1,
-        transitionDuration: 1,
-        pauseDuration: 0,
         treeList: trees,
         movieTimelineManager: manager,
         comparisonMode: false,
@@ -648,9 +565,8 @@ describe('MovieTimelineManager lifecycle', () => {
       },
       renderComparisonFrame: async () => {},
       setAnimationStage: () => {},
-      updateProgress: (progress, meta) => {
-        syncedProgress = progress;
-        syncedMeta = meta;
+      updateProgress: (playback) => {
+        syncedMeta = playback;
       },
       stopAnimation: () => {},
     });
@@ -664,7 +580,6 @@ describe('MovieTimelineManager lifecycle', () => {
     expect(renderOptions.fromTreeIndex).to.equal(1);
     expect(renderOptions.toTreeIndex).to.equal(1);
     expect(renderOptions.rawTimeFactor).to.equal(0);
-    expect(syncedProgress).to.equal(1 / 3);
     expect(syncedMeta).to.include({
       timelineProgress: 1100 / 4100,
       frameIndex: 1,
@@ -676,15 +591,7 @@ describe('MovieTimelineManager lifecycle', () => {
     const callOrder = [];
 
     const runner = new AnimationRunner({
-      getState: () => ({
-        playing: true,
-        animationStartTime: 1_000,
-        animationSpeed: 1,
-        transitionDuration: 2,
-        pauseDuration: 0,
-        treeList: [{ id: 'a' }, { id: 'b' }],
-        comparisonMode: false,
-      }),
+      getState: () => createSemanticRunnerState([{ id: 'a' }, { id: 'b' }]),
       getOrCacheInterpolationData: () => {
         callOrder.push('layout');
         return {
@@ -707,19 +614,11 @@ describe('MovieTimelineManager lifecycle', () => {
     expect(callOrder).to.deep.equal(['progress', 'layout']);
   });
 
-  it('defers first playback render so playhead movement is not blocked by layout', async () => {
+  it('defers first playback render so cursor movement is not blocked by layout', async () => {
     const callOrder = [];
 
     const runner = new AnimationRunner({
-      getState: () => ({
-        playing: true,
-        animationStartTime: 1_000,
-        animationSpeed: 1,
-        transitionDuration: 2,
-        pauseDuration: 0,
-        treeList: [{ id: 'a' }, { id: 'b' }],
-        comparisonMode: false,
-      }),
+      getState: () => createSemanticRunnerState([{ id: 'a' }, { id: 'b' }]),
       getOrCacheInterpolationData: () => {
         callOrder.push('layout');
         return {
@@ -754,15 +653,7 @@ describe('MovieTimelineManager lifecycle', () => {
     const renderOrder = [];
 
     const runner = new AnimationRunner({
-      getState: () => ({
-        playing: true,
-        animationStartTime: 1_000,
-        animationSpeed: 1,
-        transitionDuration: 2,
-        pauseDuration: 0,
-        treeList: [{ id: 'a' }, { id: 'b' }],
-        comparisonMode: false,
-      }),
+      getState: () => createSemanticRunnerState([{ id: 'a' }, { id: 'b' }]),
       getOrCacheInterpolationData: () => ({
         dataFrom: { nodes: [] },
         dataTo: { nodes: [] },
@@ -791,15 +682,7 @@ describe('MovieTimelineManager lifecycle', () => {
     const highlightIndices = [];
 
     const runner = new AnimationRunner({
-      getState: () => ({
-        playing: true,
-        animationStartTime: 1_000,
-        animationSpeed: 1,
-        transitionDuration: 2,
-        pauseDuration: 0,
-        treeList: [{ id: 'a' }, { id: 'b' }],
-        comparisonMode: false,
-      }),
+      getState: () => createSemanticRunnerState([{ id: 'a' }, { id: 'b' }]),
       getOrCacheInterpolationData: () => ({
         dataFrom: { nodes: [] },
         dataTo: { nodes: [] },
@@ -823,15 +706,7 @@ describe('MovieTimelineManager lifecycle', () => {
     let callCount = 0;
 
     const runner = new AnimationRunner({
-      getState: () => ({
-        playing: true,
-        animationStartTime: 1_000,
-        animationSpeed: 1,
-        transitionDuration: 2,
-        pauseDuration: 0,
-        treeList: [{ id: 'a' }, { id: 'b' }],
-        comparisonMode: false,
-      }),
+      getState: () => createSemanticRunnerState([{ id: 'a' }, { id: 'b' }]),
       getOrCacheInterpolationData: () => {
         callCount += 1;
         if (callCount === 1) {
@@ -870,15 +745,7 @@ describe('MovieTimelineManager lifecycle', () => {
     let callCount = 0;
 
     const runner = new AnimationRunner({
-      getState: () => ({
-        playing: true,
-        animationStartTime: 1_000,
-        animationSpeed: 1,
-        transitionDuration: 2,
-        pauseDuration: 0,
-        treeList: [{ id: 'a' }, { id: 'b' }],
-        comparisonMode: false,
-      }),
+      getState: () => createSemanticRunnerState([{ id: 'a' }, { id: 'b' }]),
       getOrCacheInterpolationData: () => {
         callCount += 1;
         return {
@@ -923,13 +790,29 @@ describe('MovieTimelineManager lifecycle', () => {
       playing: true,
       animationStartTime: 1_000,
       animationSpeed: 1,
-      transitionDuration: 2,
-      pauseDuration: 0,
       treeList: [sourceTree, undefined],
       comparisonMode: false,
       ensureTreesHydrated: sinon.spy((indices) =>
         indices.map((index) => (index === 0 ? sourceTree : targetTree))
       ),
+    };
+    state.movieTimelineManager = {
+      timelineData: { totalDuration: 2000 },
+      resolveFrameAtTimelineProgress: (progress) => {
+        const [hydratedSource, hydratedTarget] = state.ensureTreesHydrated([0, 1]);
+        return TransitionFrame.from({
+          sourceTree: hydratedSource,
+          targetTree: hydratedTarget,
+          sourceTreeIndex: 0,
+          targetTreeIndex: 1,
+          transitionProgress: progress,
+        });
+      },
+      getCursorAtMovieTime: (movieTimeMs) => ({
+        frameIndex: 1,
+        movieTimeMs,
+        timelineProgress: movieTimeMs / 2000,
+      }),
     };
     const renderedFrames = [];
 
@@ -975,15 +858,8 @@ describe('MovieTimelineManager lifecycle', () => {
     };
 
     const runner = new AnimationRunner({
-      getState: () => ({
-        playing: true,
-        animationStartTime: 1_000,
-        animationSpeed: 1,
-        transitionDuration: 1,
-        pauseDuration: 0,
-        treeList: [{ id: 'a' }, { id: 'b' }],
-        comparisonMode: false,
-      }),
+      getState: () =>
+        createSemanticRunnerState([{ id: 'a' }, { id: 'b' }], { stepDurationMs: 1000 }),
       getOrCacheInterpolationData: () => ({
         dataFrom: { layoutCacheKey: 'from', nodes: [{ id: 'node-a' }] },
         dataTo: { layoutCacheKey: 'to', nodes: [{ id: 'node-a' }] },
@@ -1024,15 +900,7 @@ describe('MovieTimelineManager lifecycle', () => {
 
     try {
       const runner = new AnimationRunner({
-        getState: () => ({
-          playing: true,
-          animationStartTime: 1_000,
-          animationSpeed: 1,
-          transitionDuration: 2,
-          pauseDuration: 0,
-          treeList: [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
-          comparisonMode: false,
-        }),
+        getState: () => createSemanticRunnerState([{ id: 'a' }, { id: 'b' }, { id: 'c' }]),
         getOrCacheInterpolationData: () => ({
           dataFrom: { nodes: [] },
           dataTo: { nodes: [] },
@@ -1082,15 +950,7 @@ describe('MovieTimelineManager lifecycle', () => {
 
     try {
       const runner = new AnimationRunner({
-        getState: () => ({
-          playing: true,
-          animationStartTime: 1_000,
-          animationSpeed: 1,
-          transitionDuration: 2,
-          pauseDuration: 0,
-          treeList: [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
-          comparisonMode: false,
-        }),
+        getState: () => createSemanticRunnerState([{ id: 'a' }, { id: 'b' }, { id: 'c' }]),
         getOrCacheInterpolationData: () => ({
           dataFrom: { nodes: [] },
           dataTo: { nodes: [] },
@@ -1135,98 +995,7 @@ describe('MovieTimelineManager lifecycle', () => {
     }
   });
 
-  it('maps generic scrub position through weighted timeline progress', () => {
-    const trees = [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }, { id: 'e' }];
-    const manager = {
-      getTimelineProgressForLinearTreeProgress: (progress, treeCount) => {
-        expect(progress).to.equal(0.25);
-        expect(treeCount).to.equal(trees.length);
-        return 0.6;
-      },
-    };
-
-    useAppStore.setState({
-      treeList: trees,
-      movieTimelineManager: manager,
-      playhead: {
-        animationProgress: 0,
-        timelineProgress: null,
-      },
-      frameIndex: 0,
-    });
-
-    useAppStore.getState().setScrubPosition(0.25);
-
-    const state = useAppStore.getState();
-    expect(state.frameIndex).to.equal(1);
-    expect(state.playhead).to.deep.equal({
-      animationProgress: 0.25,
-      timelineProgress: 0.6,
-    });
-  });
-
-  it('updates stored timeline progress while playback advances', () => {
-    useAppStore.setState({
-      playing: true,
-      playhead: {
-        animationProgress: 0,
-        timelineProgress: 0.2,
-      },
-    });
-
-    useAppStore.getState().updateTimelineState({
-      currentSegmentIndex: 1,
-      totalSegments: 4,
-      treeInSegment: 2,
-      treesInSegment: 3,
-      timelineProgress: 0.7,
-    });
-
-    const state = useAppStore.getState();
-    expect(state.playhead.timelineProgress).to.equal(0.7);
-    expect(state.currentSegmentIndex).to.equal(1);
-    expect(state.treeInSegment).to.equal(2);
-    expect(state.treesInSegment).to.equal(3);
-  });
-
-  it('does not publish a new playhead when timeline state is unchanged', () => {
-    useAppStore.setState({
-      playing: true,
-      currentSegmentIndex: 1,
-      totalSegments: 4,
-      treeInSegment: 2,
-      treesInSegment: 3,
-      playhead: {
-        animationProgress: 0.4,
-        timelineProgress: 0.7,
-      },
-      frameIndex: 2,
-    });
-
-    const previousPlayhead = useAppStore.getState().playhead;
-    let updateCount = 0;
-    const unsubscribe = useAppStore.subscribe(() => {
-      updateCount += 1;
-    });
-
-    try {
-      useAppStore.getState().updateTimelineState({
-        currentSegmentIndex: 1,
-        totalSegments: 4,
-        treeInSegment: 2,
-        treesInSegment: 3,
-        timelineProgress: 0.7,
-      });
-    } finally {
-      unsubscribe();
-    }
-
-    const state = useAppStore.getState();
-    expect(updateCount).to.equal(0);
-    expect(state.playhead).to.equal(previousPlayhead);
-  });
-
-  it('coalesces repeated timeline store notifications into one pending frame', () => {
+  it('coalesces repeated position updates into one pending frame', () => {
     const previousRequestAnimationFrame = global.requestAnimationFrame;
     const previousCancelAnimationFrame = global.cancelAnimationFrame;
     const frameCallbacks = [];
@@ -1241,28 +1010,24 @@ describe('MovieTimelineManager lifecycle', () => {
     global.cancelAnimationFrame = () => {};
 
     try {
-      const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
+      const manager = new MovieTimelineManager(
+        movieData,
+        movieData.interpolated_trees,
+        useAppStore
+      );
       frameCallbacks.pop()?.(0);
       scheduledCount = 0;
 
-      useAppStore.setState({
-        playhead: { animationProgress: 0.1, timelineProgress: 0.1 },
-      });
-      useAppStore.setState({
-        playhead: { animationProgress: 0.2, timelineProgress: 0.2 },
-      });
-      useAppStore.setState({
-        playhead: { animationProgress: 0.3, timelineProgress: 0.3 },
-      });
+      manager._scheduleCurrentPositionUpdate();
+      manager._scheduleCurrentPositionUpdate();
+      manager._scheduleCurrentPositionUpdate();
 
       expect(scheduledCount).to.equal(1);
 
       frameCallbacks.pop()?.(1_000);
       scheduledCount = 0;
 
-      useAppStore.setState({
-        playhead: { animationProgress: 0.4, timelineProgress: 0.4 },
-      });
+      manager._scheduleCurrentPositionUpdate();
 
       expect(scheduledCount).to.equal(1);
 
@@ -1274,7 +1039,7 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('binds renderer scrub state to the scrub controller', async () => {
-    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees, useAppStore);
     const host = makeContainer();
 
     await manager.mount(host);
@@ -1290,7 +1055,7 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('treats unmount after destroy as a no-op', () => {
-    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees, useAppStore);
     const host = makeContainer();
 
     manager.mount(host);

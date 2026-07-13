@@ -48,10 +48,10 @@ export class TreeColorManager {
    */
   refreshColorCategories() {
     const store = useAppStore.getState();
-    for (const controller of store.treeControllers) {
-      const render = controller.scheduleRenderAllElements ?? controller.renderAllElements;
-      render.call(controller);
-    }
+    const controller = store.treeController;
+    if (!controller) return;
+    const render = controller.scheduleRenderAllElements ?? controller.renderAllElements;
+    render.call(controller);
   }
 
   // ===========================

@@ -42,51 +42,6 @@ export class TimelineMathUtils {
   }
 
   // ==========================================================================
-  // SEGMENT LOOKUP
-  // ==========================================================================
-
-  static findSegmentForFrameIndex(segments, frameIndex, options = {}) {
-    if (options.preferInputTreeHold === true) {
-      const inputTreeHoldLookup = this._findSegmentForFrameIndex(segments, frameIndex, {
-        inputTreeHoldOnly: true,
-      });
-      if (inputTreeHoldLookup.segment) {
-        return inputTreeHoldLookup;
-      }
-    }
-
-    return this._findSegmentForFrameIndex(segments, frameIndex);
-  }
-
-  static _findSegmentForFrameIndex(segments, frameIndex, options = {}) {
-    for (let i = 0; i < segments.length; i++) {
-      const segment = segments[i];
-
-      if (!TimelineTimingResolver.hasSemanticTiming(segment)) {
-        throw new Error('[TimelineMathUtils] timeline segment timing is required');
-      }
-
-      const segmentDuration = this.calculateSegmentDuration(segment);
-      const timeInSegment = TimelineTimingResolver.getTimeForFrameIndex(
-        segment,
-        frameIndex,
-        segmentDuration,
-        this.EPSILON_MS,
-        options
-      );
-      if (timeInSegment !== null) {
-        return { segmentIndex: i, timeInSegment, segment };
-      }
-    }
-
-    return {
-      segmentIndex: TIMELINE_CONSTANTS.DEFAULT_SEGMENT_INDEX,
-      timeInSegment: TIMELINE_CONSTANTS.DEFAULT_PROGRESS,
-      segment: null,
-    };
-  }
-
-  // ==========================================================================
   // FRAME INDEX RESOLUTION
   // ==========================================================================
 
@@ -151,26 +106,6 @@ export class TimelineMathUtils {
     throw new Error('[TimelineMathUtils] timeline segment timing is required');
   }
 
-  static calculateFramePositionInSegment(segment, frameIndex) {
-    const treesInSegment = segment.interpolationData.length;
-
-    if (treesInSegment > 1) {
-      const foundIndex = segment.interpolationData.findIndex(
-        (item) => item.originalIndex === frameIndex
-      );
-      const treeInSegment =
-        foundIndex !== -1
-          ? foundIndex + TIMELINE_CONSTANTS.INDEX_OFFSET_UI
-          : TIMELINE_CONSTANTS.DEFAULT_TREE_IN_SEGMENT;
-      return { treeInSegment, treesInSegment };
-    }
-
-    return {
-      treeInSegment: TIMELINE_CONSTANTS.DEFAULT_TREE_IN_SEGMENT,
-      treesInSegment: TIMELINE_CONSTANTS.DEFAULT_TREES_IN_SEGMENT,
-    };
-  }
-
   // ==========================================================================
   // DURATION CALCULATIONS
   // ==========================================================================
@@ -190,32 +125,6 @@ export class TimelineMathUtils {
   // ==========================================================================
   // TRANSITION FRAMES
   // ==========================================================================
-
-  static getTransitionFrameForProgress(progress, treeList) {
-    if (!Array.isArray(treeList) || treeList.length === 0) {
-      return TransitionFrame.from({
-        sourceTree: null,
-        targetTree: null,
-        transitionProgress: 0,
-        sourceTreeIndex: -1,
-        targetTreeIndex: -1,
-      });
-    }
-
-    const clampedProgress = this.clampProgress(progress);
-    const totalTrees = treeList.length;
-    const exactIndex = clampedProgress * (totalTrees - 1);
-    const fromIndex = Math.floor(exactIndex);
-    const toIndex = Math.min(fromIndex + 1, totalTrees - 1);
-
-    return TransitionFrame.from({
-      sourceTree: treeList[fromIndex],
-      targetTree: treeList[toIndex],
-      transitionProgress: exactIndex - fromIndex,
-      sourceTreeIndex: fromIndex,
-      targetTreeIndex: toIndex,
-    });
-  }
 
   static getTransitionFrameForTimelineProgress(progress, segments, timelineData, treeList) {
     if (
@@ -260,54 +169,6 @@ export class TimelineMathUtils {
       this._createStaticTransitionFrame.bind(this),
       this.clampProgress.bind(this)
     );
-  }
-
-  static getTimelineProgressAtFrame(segments, timelineData, frameIndex, options = {}) {
-    if (
-      !Number.isInteger(frameIndex) ||
-      !Array.isArray(segments) ||
-      !timelineData ||
-      !Number.isFinite(timelineData.totalDuration) ||
-      timelineData.totalDuration <= 0
-    ) {
-      return null;
-    }
-
-    const lookup = this.findSegmentForFrameIndex(segments, frameIndex, options);
-    if (lookup.segmentIndex < 0 || !lookup.segment) {
-      return null;
-    }
-
-    const bounds = getSegmentBounds(lookup.segmentIndex, timelineData);
-    if (!bounds) return null;
-    return this.timeToProgress(bounds.start + lookup.timeInSegment, timelineData.totalDuration);
-  }
-
-  static getTimelineProgressForLinearTreeProgress(progress, treeCount, segments, timelineData) {
-    if (!Number.isFinite(treeCount) || treeCount <= 1) {
-      return this.getTimelineProgressAtFrame(segments, timelineData, 0, {
-        preferInputTreeHold: true,
-      });
-    }
-
-    const clampedProgress = this.clampProgress(progress);
-    const exactFrameIndex = clampedProgress * (treeCount - 1);
-    const fromIndex = Math.floor(exactFrameIndex);
-    const toIndex = Math.min(fromIndex + 1, treeCount - 1);
-    const timeFactor = exactFrameIndex - fromIndex;
-
-    const fromProgress = this.getTimelineProgressAtFrame(segments, timelineData, fromIndex, {
-      preferInputTreeHold: true,
-    });
-    const toProgress = this.getTimelineProgressAtFrame(segments, timelineData, toIndex, {
-      preferInputTreeHold: true,
-    });
-
-    if (fromProgress == null || toProgress == null) {
-      throw new Error('[TimelineMathUtils] timeline progress for frame index is required');
-    }
-
-    return fromProgress + (toProgress - fromProgress) * timeFactor;
   }
 
   // ==========================================================================

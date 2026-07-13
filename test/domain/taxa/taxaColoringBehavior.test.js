@@ -30,18 +30,16 @@ describe('taxa coloring store behavior', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders tree controllers once when a color manager is present', () => {
+  it('renders the tree controller once when a color manager is present', () => {
     const controller = { renderAllElements: vi.fn() };
     const colorManager = {
       refreshColorCategories: vi.fn(() => {
-        useAppStore.getState().treeControllers.forEach((treeController) => {
-          treeController.renderAllElements();
-        });
+        useAppStore.getState().treeController?.renderAllElements();
       }),
     };
 
     useAppStore.setState({
-      treeControllers: [controller],
+      treeController: controller,
       colorManager,
       taxaGrouping: null,
       taxaColorVersion: 0,
@@ -374,7 +372,7 @@ describe('TaxaColoringRndWindow palette application', () => {
       taxaColoringOpen: true,
       taxaColoringWindow: { x: 40, y: 40, width: 640, height: 700 },
       leafNamesByIndex: taxaNames,
-      treeControllers: [{ renderAllElements: vi.fn() }],
+      treeController: { renderAllElements: vi.fn() },
       taxaGrouping: null,
       taxaColorVersion: 0,
       playing: false,

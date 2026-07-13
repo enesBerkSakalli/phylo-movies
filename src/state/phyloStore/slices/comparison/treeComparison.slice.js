@@ -1,5 +1,5 @@
 import { clamp } from '../../../../domain/math/mathUtils.js';
-import { renderTreeControllers } from '../../internal/changeTracking.helpers.js';
+import { renderTreeController } from '../../internal/changeTracking.helpers.js';
 
 export const createComparisonViewSlice = (set, get) => ({
   // ==========================================================================
@@ -40,10 +40,8 @@ export const createComparisonViewSlice = (set, get) => ({
     const state = get();
     if (!state.comparisonMode) return;
 
-    state.treeControllers.forEach((controller) => {
-      controller.layerManager?.comparisonRenderer?.resetAutoFit?.();
-    });
-    renderTreeControllers(state);
+    state.treeController?.layerManager?.comparisonRenderer?.resetAutoFit?.();
+    renderTreeController(state);
   },
 
   setConnectorStrokeWidth: (width) => set({ connectorStrokeWidth: Number(width) }),
@@ -51,7 +49,7 @@ export const createComparisonViewSlice = (set, get) => ({
   setLinkConnectionOpacity: (opacity) => {
     const value = Math.max(0, Math.min(1, Number(opacity)));
     set((state) => ({ linkConnectionOpacity: value, colorVersion: state.colorVersion + 1 }));
-    renderTreeControllers(get());
+    renderTreeController(get());
   },
 
   // ==========================================================================

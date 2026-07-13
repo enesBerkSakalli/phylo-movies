@@ -8,7 +8,7 @@ describe('tree layout store invalidation', () => {
     useAppStore.setState(initialState, true);
   });
 
-  it('resets interpolation caches and renders controllers when branch transformation changes', () => {
+  it('resets interpolation caches and renders when branch transformation changes', () => {
     const controller = {
       _lastFocusedTreeIndex: 0,
       layerManager: { comparisonRenderer: { resetAutoFit: vi.fn() } },
@@ -16,7 +16,7 @@ describe('tree layout store invalidation', () => {
       renderAllElements: vi.fn(),
     };
     useAppStore.setState({
-      treeControllers: [controller],
+      treeController: controller,
       branchTransformation: 'none',
     });
 
@@ -34,7 +34,7 @@ describe('tree layout store invalidation', () => {
       renderAllElements: vi.fn(),
     };
     useAppStore.setState({
-      treeControllers: [controller],
+      treeController: controller,
       layoutRotationDegrees: 0,
     });
 
@@ -50,7 +50,7 @@ describe('tree layout store invalidation', () => {
       renderAllElements: vi.fn(),
     };
     useAppStore.setState({
-      treeControllers: [controller],
+      treeController: controller,
       comparisonMode: true,
       viewsConnected: false,
       playing: false,

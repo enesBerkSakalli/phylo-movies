@@ -29,7 +29,7 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
   // ==========================================================================
 
   constructor(options = {}) {
-    const { animations = true, viewSide = 'single' } = options || {};
+    const { animations = true } = options || {};
     super(null);
     this.animationsEnabled = animations;
     this._destroyed = false;
@@ -77,7 +77,7 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     };
     // -----------------------------
 
-    this.interactionHandler = new TreeNodeInteractionHandler(this, viewSide);
+    this.interactionHandler = new TreeNodeInteractionHandler(this);
 
     // Track last tree index we auto-fit to
     this._lastFocusedTreeIndex = null;
@@ -548,11 +548,6 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
       timeFactor,
       options
     );
-  }
-
-  async renderProgress(progress) {
-    if (this._destroyed) return;
-    return this.interpolationRenderer.renderProgress(progress);
   }
 
   async renderTimelineProgress(progress) {

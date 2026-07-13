@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { createTreeDatasetSlice } from './slices/dataset/treeDataset.slice.js';
 import { createDatasetLifecycleSlice } from './slices/dataset/datasetLifecycle.slice.js';
 import { createPlaybackSlice } from '../../core/slices/playbackSlice.js';
-import { createTreeControllersRuntimeSlice } from './slices/runtime/treeControllersRuntime.slice.js';
+import { createTreeControllerRuntimeSlice } from './slices/runtime/treeControllerRuntime.slice.js';
 import { createTimelineRuntimeSlice } from './slices/runtime/timelineRuntime.slice.js';
 import { createTimelineSlice } from './slices/playback/treeTimeline.slice.js';
 import { createTreeAppearanceSlice } from './slices/appearance/treeAppearance.slice.js';
@@ -27,11 +27,11 @@ export * from './selectors/treeSelectors.js';
 /**
  * @type {import('zustand').UseBoundStore<import('zustand').StoreApi<AppStoreState>>}
  */
-export const useAppStore = create((set, get) => ({
+export const useAppStore = create((set, get, store) => ({
   ...createTreeDatasetSlice(set, get),
-  ...createDatasetLifecycleSlice(set, get),
+  ...createDatasetLifecycleSlice(set, get, store),
   ...createPlaybackSlice(set, get),
-  ...createTreeControllersRuntimeSlice(set, get),
+  ...createTreeControllerRuntimeSlice(set, get),
   ...createTimelineRuntimeSlice(set, get),
   ...createTimelineSlice(set, get),
   ...createTreeAppearanceSlice(set, get),

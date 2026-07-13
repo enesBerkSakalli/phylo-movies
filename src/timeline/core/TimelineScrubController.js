@@ -30,7 +30,6 @@ export class TimelineScrubController {
     this.lastScrubTime = 0;
     this.scrubRequestId = null;
     this.pendingScrubTimeMs = null;
-    this.lastScrubEndTime = 0;
   }
 
   async handleScrubbing(timeMs) {
@@ -100,21 +99,14 @@ export class TimelineScrubController {
     const lastState = scrubberAPI ? await scrubberAPI.endScrubbing(finalProgress) : null;
 
     this.isScrubbing = false;
-    this.lastScrubEndTime = performance.now();
     this.getTimelineRenderer()?.syncScrubState();
 
     if (lastState?.transitionFrame) {
-      this.store
-        .getState()
-        .setTimelineProgress(finalProgress, lastState.transitionFrame.cursorTreeIndex);
+      this.store.getState().setTimelineProgress(finalProgress);
       return;
     }
 
-    const cursor = this.timelineDataset.getCursorAtTimelineProgress(finalProgress, {
-      bias: 'nearest',
-    });
-
-    this.store.getState().setTimelineProgress(finalProgress, cursor.frameIndex);
+    this.store.getState().setTimelineProgress(finalProgress);
   }
 
   resetOnUnmount() {

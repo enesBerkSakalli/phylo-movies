@@ -6,7 +6,7 @@ import {
   selectContextMenuPosition,
   selectHideNodeContextMenu,
   selectSetManuallyMarkedNodes,
-  selectTreeControllers,
+  selectTreeController,
   useAppStore,
 } from '../state/phyloStore/store.js';
 
@@ -33,7 +33,7 @@ export function NodeContextMenu() {
   const node = useAppStore(selectContextMenuNode);
   const hideMenu = useAppStore(selectHideNodeContextMenu);
   const setManuallyMarkedNodes = useAppStore(selectSetManuallyMarkedNodes);
-  const treeControllers = useAppStore(selectTreeControllers);
+  const treeController = useAppStore(selectTreeController);
 
   // Close menu on click outside
   useEffect(() => {
@@ -131,7 +131,7 @@ export function NodeContextMenu() {
 
     if (splitIndices && setManuallyMarkedNodes) {
       setManuallyMarkedNodes(splitIndices);
-      treeControllers[0]?.focusOnSubtree?.(splitIndices);
+      treeController?.focusOnSubtree?.(splitIndices);
       toast.success(`Highlighted subtree with ${splitIndices.length} taxa`);
     } else {
       toast.warning('Could not highlight this subtree.', {
@@ -139,13 +139,12 @@ export function NodeContextMenu() {
       });
     }
     hideMenu();
-  }, [node, setManuallyMarkedNodes, treeControllers, hideMenu]);
+  }, [node, setManuallyMarkedNodes, treeController, hideMenu]);
 
   const handleFocusOnNode = useCallback(() => {
     if (!node) return;
 
-    const controller = treeControllers[0];
-    if (!controller) {
+    if (!treeController) {
       toast.warning('Tree view is not ready for focusing yet.', {
         description: 'Wait until the current tree finishes rendering, then try again.',
       });
@@ -153,14 +152,14 @@ export function NodeContextMenu() {
       return;
     }
 
-    const focused = controller.focusOnNode(node);
+    const focused = treeController.focusOnNode(node);
     if (!focused) {
       toast.warning('Could not focus this node.', {
         description: 'The selected node is not present in the current rendered tree view.',
       });
     }
     hideMenu();
-  }, [node, treeControllers, hideMenu]);
+  }, [node, treeController, hideMenu]);
 
   const handleCopyInfo = useCallback(() => {
     if (!node) return;

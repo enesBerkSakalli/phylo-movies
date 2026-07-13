@@ -354,7 +354,7 @@ describe('tree viewport behavior', () => {
       'utf8'
     );
 
-    expect(source).toContain('controller.renderAllElements({ skipAutoFit: true })');
+    expect(source).toContain('treeController?.renderAllElements({ skipAutoFit: true })');
   });
 
   it('resize marks an untouched single-tree view for refit', async () => {

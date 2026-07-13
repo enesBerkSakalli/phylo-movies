@@ -51,10 +51,7 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
       layoutAngleDegrees: 360,
       layoutRotationDegrees: 0,
       styleConfig: { labelOffsets: { DEFAULT: 20, EXTENSION: 5 } },
-      playhead: {
-        animationProgress: 0,
-        timelineProgress: null,
-      },
+      timelineCursor: null,
       frameIndex: 0,
       setAnimationStage: sandbox.stub(),
       stop: sandbox.stub(),
@@ -90,10 +87,7 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
       layoutAngleDegrees: 360,
       layoutRotationDegrees: 0,
       styleConfig: { labelOffsets: { DEFAULT: 20, EXTENSION: 5 } },
-      playhead: {
-        animationProgress: 0,
-        timelineProgress: null,
-      },
+      timelineCursor: null,
       frameIndex: 0,
       // Ensure functions exist if called
       setAnimationStage: sandbox.stub(),
@@ -220,17 +214,15 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
     mockWorkerInstance = controller.layoutWorker;
     sandbox.spy(mockWorkerInstance, 'postMessage');
 
-    // AnimationRunner is instantiated inside controller constructor.
-    // We need to inspect how 'updateProgress' callback was passed to it.
-    // Since real AnimationRunner is used, we can simulate the callback if we access it,
-    // OR we can trigger it via the runner if exposed.
-    // But AnimationRunner's updateProgress calls the callback passed in options.
-
-    // Let's grab the updateProgress callback stored in the AnimationRunner instance
     const runner = controller.animationRunner;
 
-    // Trigger updateProgress for progress 0.0 (Tree 0) -> Should prefetch 1 & 2
-    runner.updateProgress(0.0);
+    runner.updateProgress({
+      timelineCursor: {
+        frameIndex: 0,
+        movieTimeMs: 0,
+        timelineProgress: 0,
+      },
+    });
 
     expect(mockWorkerInstance.postMessage.calledTwice).to.be.true;
 

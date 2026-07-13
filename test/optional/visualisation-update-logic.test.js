@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import * as changeTrackingHelpers from '../../src/state/phyloStore/internal/changeTracking.helpers.js';
 
-const { resolveSubtreeHighlights, calculateChangePreviews, renderTreeControllers } =
+const { resolveSubtreeHighlights, calculateChangePreviews, renderTreeController } =
   changeTrackingHelpers;
 
 describe('Tree Visualisation - State Update Logic', () => {
@@ -234,36 +234,32 @@ describe('Tree Visualisation - State Update Logic', () => {
     });
   });
 
-  describe('renderTreeControllers (Playback Render Ownership)', () => {
-    it('renders registered controllers when playback is paused', () => {
+  describe('renderTreeController (Playback Render Ownership)', () => {
+    it('renders the registered controller when playback is paused', () => {
       let renderCount = 0;
 
-      renderTreeControllers({
+      renderTreeController({
         playing: false,
-        treeControllers: [
-          {
-            renderAllElements: () => {
-              renderCount += 1;
-            },
+        treeController: {
+          renderAllElements: () => {
+            renderCount += 1;
           },
-        ],
+        },
       });
 
       expect(renderCount).to.equal(1);
     });
 
-    it('does not render registered controllers while playback owns frames', () => {
+    it('does not render while playback owns frames', () => {
       let renderCount = 0;
 
-      renderTreeControllers({
+      renderTreeController({
         playing: true,
-        treeControllers: [
-          {
-            renderAllElements: () => {
-              renderCount += 1;
-            },
+        treeController: {
+          renderAllElements: () => {
+            renderCount += 1;
           },
-        ],
+        },
       });
 
       expect(renderCount).to.equal(0);

@@ -4,21 +4,21 @@ import { AppTooltip } from '../ui/app-tooltip';
 import { Download, Loader2 } from 'lucide-react';
 import {
   selectFrameIndex,
-  selectTreeControllers,
+  selectTreeController,
   useAppStore,
 } from '../../state/phyloStore/store.js';
 import { toast } from 'sonner';
 import {
   createCanvasPngBlob,
   createPngFileName,
-  getActiveTreeCanvas,
+  getTreeCanvas,
 } from '../../services/media/canvasPngExport.js';
 
 // ==========================================================================
 // STORE SELECTORS
 // ==========================================================================
 export function SaveImageButton({ disabled = false }) {
-  const treeControllers = useAppStore(selectTreeControllers);
+  const treeController = useAppStore(selectTreeController);
   const frameIndex = useAppStore(selectFrameIndex);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -26,7 +26,7 @@ export function SaveImageButton({ disabled = false }) {
     setIsSaving(true);
     try {
       // If no controller exists, we can't save
-      if (!treeControllers.length) {
+      if (!treeController) {
         console.error('[SaveImageButton] No tree controller is available for PNG export.');
         toast.error('PNG export is not ready yet.', {
           description: 'Wait until the tree finishes rendering, then try again.',
@@ -34,7 +34,7 @@ export function SaveImageButton({ disabled = false }) {
         return;
       }
 
-      const { canvas, treeController } = getActiveTreeCanvas(treeControllers);
+      const { canvas } = getTreeCanvas(treeController);
 
       if (!canvas) {
         console.error('[SaveImageButton] Deck.gl canvas is missing from the active controller.', {

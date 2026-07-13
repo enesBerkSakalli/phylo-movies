@@ -4,7 +4,7 @@ import { useAppStore } from '../../../src/state/phyloStore/store.js';
 describe('taxonomy coloring store updates', () => {
   afterEach(() => {
     useAppStore.setState({
-      treeControllers: [],
+      treeController: null,
       colorManager: null,
       taxaGrouping: null,
       taxaColorVersion: 0,
@@ -14,7 +14,7 @@ describe('taxonomy coloring store updates', () => {
     vi.clearAllMocks();
   });
 
-  it('commits taxa grouping before repainting tree controllers', () => {
+  it('commits taxa grouping before repainting the tree controller', () => {
     let groupingObservedDuringRender = null;
     let versionObservedDuringRender = null;
     const controller = {
@@ -26,7 +26,7 @@ describe('taxonomy coloring store updates', () => {
     };
 
     useAppStore.setState({
-      treeControllers: [controller],
+      treeController: controller,
       taxaGrouping: null,
       taxaColorVersion: 0,
       playing: false,
@@ -56,7 +56,7 @@ describe('taxonomy coloring store updates', () => {
 
   it('normalizes Map-backed taxa and CSV color assignments for plain object lookup', () => {
     useAppStore.setState({
-      treeControllers: [],
+      treeController: null,
       taxaGrouping: null,
       taxaColorVersion: 0,
       playing: false,
@@ -83,7 +83,7 @@ describe('taxonomy coloring store updates', () => {
     });
   });
 
-  it('updates monophyletic color manager state before repainting controllers', () => {
+  it('updates monophyletic color manager state before repainting the controller', () => {
     let managerEnabled = true;
     let observedDuringRender = null;
     const colorManager = {
@@ -98,7 +98,7 @@ describe('taxonomy coloring store updates', () => {
     };
 
     useAppStore.setState({
-      treeControllers: [controller],
+      treeController: controller,
       colorManager,
       monophyleticColoringEnabled: true,
       taxaColorVersion: 0,

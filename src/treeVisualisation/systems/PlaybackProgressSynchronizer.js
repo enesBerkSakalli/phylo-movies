@@ -1,54 +1,20 @@
-import { selectActiveTreeList } from '../../state/phyloStore/store.js';
-
 export function createPlaybackProgressSynchronizer({
   getState,
   isPrefetchEnabled = () => false,
   prefetchFrame = () => {},
 }) {
-  return (progress, playbackState = {}) => {
+  return (playbackState = {}) => {
     const state = getState();
-    const syncState = resolvePlaybackProgressSyncState({
-      state,
-      progress,
-      playbackState,
-    });
-
-    state.setPlayhead({
-      animationProgress: syncState.animationProgress,
-      timelineProgress: syncState.timelineProgress,
-      frameIndex: syncState.frameIndex,
-    });
-
-    if (isPrefetchEnabled() && syncState.totalTrees > 0) {
-      prefetchFrame(syncState.frameIndex + 1);
-      prefetchFrame(syncState.frameIndex + 2);
+    const cursor = playbackState.timelineCursor;
+    if (!cursor) {
+      throw new Error('[PlaybackProgressSynchronizer] timeline cursor is required');
     }
-  };
-}
 
-export function resolvePlaybackProgressSyncState({
-  state,
-  progress,
-  playbackState = {},
-  treeList = selectActiveTreeList(state),
-}) {
-  const totalTrees = treeList?.length || 0;
-  const derivedTreeIndex =
-    totalTrees > 0 ? Math.min(Math.floor(progress * (totalTrees - 1)), totalTrees - 1) : 0;
-  const frameIndex = Number.isInteger(playbackState.frameIndex)
-    ? playbackState.frameIndex
-    : derivedTreeIndex;
-  const timelineProgress = Number.isFinite(playbackState.timelineProgress)
-    ? playbackState.timelineProgress
-    : (state.movieTimelineManager?.getTimelineProgressForLinearTreeProgress?.(
-        progress,
-        totalTrees
-      ) ?? progress);
+    state.setTimelineCursor(cursor);
 
-  return {
-    animationProgress: progress,
-    timelineProgress,
-    frameIndex,
-    totalTrees,
+    if (isPrefetchEnabled()) {
+      prefetchFrame(cursor.frameIndex + 1);
+      prefetchFrame(cursor.frameIndex + 2);
+    }
   };
 }

@@ -111,12 +111,11 @@ describe('TimelineDataset', () => {
     });
   });
 
-  it('owns input-frame indices and distance-index navigation', () => {
+  it('owns input-frame indices', () => {
     const dataset = TimelineDataset.fromMovieData(smallExampleMovieData);
 
     expect(dataset.getInputFrameIndices()).toEqual([0, 22, 23, 45, 46, 47, 48, 70, 92, 114]);
     expect(dataset.isInputFrame(22)).toBe(true);
     expect(dataset.isInputFrame(7)).toBe(false);
-    expect(dataset.getPairFrameRanges()[0]).toEqual([0, 22]);
   });
 });

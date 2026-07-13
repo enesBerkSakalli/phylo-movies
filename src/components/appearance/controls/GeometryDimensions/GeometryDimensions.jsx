@@ -47,7 +47,7 @@ export function GeometryDimensions({
   setStrokeWidth,
   fontSizeNumber,
   setFontSize,
-  treeControllers,
+  treeController,
   labelsVisible,
   onToggleLabels,
   branchAnnotationLabelKey,
@@ -72,16 +72,14 @@ export function GeometryDimensions({
       try {
         do {
           needsRenderRef.current = false;
-          for (const controller of treeControllers) {
-            await controller.renderAllElements(options);
-          }
+          await treeController?.renderAllElements(options);
         } while (needsRenderRef.current);
       } catch {
       } finally {
         isRenderingRef.current = false;
       }
     },
-    [treeControllers]
+    [treeController]
   );
 
   const handleNodeSizeChange = useCallback(

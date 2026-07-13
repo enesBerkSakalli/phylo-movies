@@ -470,11 +470,7 @@ describe('phylo store dataset normalization', () => {
     const hydratedTrees = useAppStore.getState().ensureTreesHydrated([2, 3, 4]);
 
     unsubscribe();
-    expect(hydratedTrees).toEqual([
-      hydratedCompactTree,
-      hydratedCompactTree,
-      hydratedCompactTree,
-    ]);
+    expect(hydratedTrees).toEqual([hydratedCompactTree, hydratedCompactTree, hydratedCompactTree]);
     expect(treeListUpdates).toHaveLength(1);
     expect(treeListUpdates[0]).not.toBe(initialTreeList);
     expect(useAppStore.getState().treeHydrationVersion).toBe(1);
@@ -611,7 +607,6 @@ describe('phylo store dataset normalization', () => {
       ['selectMsaWindow.js', '?? null'],
       ['selectPairs.js', '??'],
       ['selectPairById.js', '??'],
-      ['selectPlayhead.js', '??'],
       ['selectTaxaColoringWindow.js', '?? null'],
       ['selectTaxaGrouping.js', '?? null'],
     ];
@@ -759,7 +754,7 @@ describe('phylo store dataset normalization', () => {
         file: 'src/state/phyloStore/slices/appearance/treeLayout.slice.js',
         patterns: [
           'resetInterpolationCaches?.(',
-          'state.treeControllers || []',
+          'state.treeControllers',
           'controller?.renderAllElements?.(',
         ],
       },
@@ -775,13 +770,13 @@ describe('phylo store dataset normalization', () => {
         file: 'src/state/phyloStore/internal/changeTracking.helpers.js',
         patterns: [
           'state?.playing',
-          'state?.treeControllers',
+          'state.treeControllers',
           'Array.isArray(controllers)',
           'c?.renderAllElements?.(',
         ],
       },
       {
-        file: 'src/state/phyloStore/slices/runtime/treeControllersRuntime.slice.js',
+        file: 'src/state/phyloStore/slices/runtime/treeControllerRuntime.slice.js',
         patterns: [
           'Array.isArray(controllers)',
           'controller?.destroy',
@@ -803,49 +798,48 @@ describe('phylo store dataset normalization', () => {
     expect(violations).toEqual([]);
   });
 
-  it('keeps controller consumers on the composed controller-array contract', () => {
+  it('keeps controller consumers on the single-controller contract', () => {
     const sourceChecks = [
       {
         file: 'src/hooks/useTreeController.js',
         patterns: [
-          'Array.isArray(state.treeControllers)',
-          'state.treeControllers?.[0]',
-          'state.treeControllers?.length',
+          'state.treeControllers',
+          'setTreeControllers',
           'controller?.resetInterpolationCaches?.(',
           'controller?.initializeUniformScaling?.(',
         ],
       },
       {
         file: 'src/components/msa/MSAControls.jsx',
-        patterns: ['Array.isArray(treeControllers)', 'controller?.calculateLayout'],
+        patterns: ['treeControllers', 'selectPrimaryTreeController'],
       },
       {
         file: 'src/services/media/canvasRecorder.js',
-        patterns: ['Array.isArray(treeControllers)'],
+        patterns: ['treeControllers', 'primaryController'],
       },
       {
         file: 'src/components/media/SaveImageButton.jsx',
-        patterns: ['!treeControllers ||'],
+        patterns: ['treeControllers', 'getActiveTreeCanvas'],
       },
       {
         file: 'src/treeVisualisation/systems/TreeColorManager.js',
-        patterns: ['store.treeControllers || []', 'controller?.renderAllElements'],
+        patterns: ['store.treeControllers'],
       },
       {
         file: 'src/components/appearance/FocusAndChangeEffects.jsx',
-        patterns: ['c?.setCameraMode?.(', 'controller?.renderAllElements?.('],
+        patterns: ['treeControllers'],
       },
       {
         file: 'src/components/appearance/color/ColoringPanel.jsx',
-        patterns: ['treeControllers ?? []', 'controller?.renderAllElements?.('],
+        patterns: ['treeControllers'],
       },
       {
         file: 'src/components/appearance/controls/GeometryDimensions/GeometryDimensions.jsx',
-        patterns: ['controller?.renderAllElements?.('],
+        patterns: ['treeControllers'],
       },
       {
         file: 'src/components/appearance/controls/VisualStyle/VisualStyle.jsx',
-        patterns: ['controller?.renderAllElements?.('],
+        patterns: ['treeControllers'],
       },
       {
         file: 'src/components/deckgl/TreeCanvasControls.jsx',
@@ -858,7 +852,7 @@ describe('phylo store dataset normalization', () => {
       },
       {
         file: 'src/timeline/core/MovieTimelineManager.js',
-        patterns: ['treeControllers?.[0]'],
+        patterns: ['treeControllers', 'selectPrimaryTreeController'],
       },
     ];
 

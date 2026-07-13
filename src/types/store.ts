@@ -57,12 +57,7 @@ export interface MovieTimelineManagerRuntime {
   ) => TimelineCursorState | null;
   getSegment?: (segmentIndex: number) => unknown;
   getSegmentCount?: () => number;
-  getTimelineProgressForLinearTreeProgress?: (progress: number, treeCount: number) => number | null;
-  getTransitionFrameForTimelineProgress?: (timelineProgress: number) => unknown;
-  resolveFrameAtIndex?: (
-    frameIndex: number,
-    options?: TimelineCursorFrameOptions
-  ) => unknown | null;
+  getCursorAtMovieTime?: (movieTimeMs: number) => TimelineCursorState | null;
   resolveFrameAtTimelineProgress?: (timelineProgress: number) => unknown | null;
   hasTransitionSegments?: () => boolean;
   mount?: (container: HTMLElement) => void;
@@ -103,16 +98,6 @@ export interface ContextMenuNode {
   children: ContextMenuNode[];
 }
 
-export interface PlaybackPlayhead {
-  animationProgress: number;
-  timelineProgress: number | null;
-}
-
-export interface PlaybackCursorState extends PlaybackPlayhead {
-  frameIndex: number;
-  holdKind?: string | null;
-}
-
 export interface TimelineCursorState {
   frameIndex: number;
   inputTreeIndex: number | null;
@@ -135,16 +120,6 @@ export interface TimelineCursorState {
   motionTargetFrameIndex?: number | null;
 }
 
-export interface TimelineStateUpdate {
-  frameIndex?: number;
-  playhead?: PlaybackPlayheadUpdate;
-  timelineCursor?: TimelineCursorState | null;
-  timelineProgress?: number | null;
-  [key: string]: unknown;
-}
-
-export type PlaybackPlayheadUpdate = Partial<PlaybackCursorState>;
-
 export interface PlaybackSeekOptions {
   timelineProgress?: number | null;
 }
@@ -166,22 +141,14 @@ export interface AppStoreState {
 
   // From playbackSlice
   playing: boolean;
-  playhead: PlaybackPlayhead;
   timelineCursor: TimelineCursorState | null;
   animationStartTime: number | null;
   animationSpeed: number;
-  transitionDuration: number;
-  pauseDuration: number;
   frameIndex: number;
-  navigationDirection: 'forward' | 'backward' | 'jump';
-  currentSegmentIndex: number;
-  totalSegments: number;
-  treeInSegment: number;
-  treesInSegment: number;
   renderInProgress: boolean;
 
-  // From treeControllersRuntime.slice
-  treeControllers: TreeControllerRuntime[];
+  // From treeControllerRuntime.slice
+  treeController: TreeControllerRuntime | null;
 
   // From timelineRuntime.slice
   movieTimelineManager: MovieTimelineManagerRuntime | null;
@@ -290,8 +257,6 @@ export interface AppStoreState {
   play: () => void;
   stop: () => void;
   setAnimationSpeed: (newSpeed: number) => void;
-  adjustAnimationStartTime: (deltaMs: number) => void;
-  setNavigationDirection: (direction: NavigationDirection) => void;
   goToPosition: (
     position: number,
     direction?: NavigationDirection,
@@ -301,14 +266,12 @@ export interface AppStoreState {
   backward: () => void;
   goToNextInputTree: () => void;
   goToPreviousInputTree: () => void;
-  updateTimelineState: (timelineState: TimelineStateUpdate) => void;
-  setScrubPosition: (progress: number) => void;
-  setTimelineProgress: (progress: number, treeIndex: number) => void;
-  setPlayhead: (playhead: PlaybackPlayheadUpdate, frameIndex?: number) => void;
+  setTimelineProgress: (progress: number) => void;
+  setTimelineCursor: (cursor: TimelineCursorState) => void;
   setRenderInProgress: (inProgress: boolean) => void;
   resetPlayback: () => void;
 
-  setTreeControllers: (controllers: TreeControllerRuntime[]) => void;
+  setTreeController: (controller: TreeControllerRuntime | null) => void;
   startAnimationPlayback: () => Promise<void>;
   resetInterpolationCaches: () => void;
   stopAnimationPlayback: () => void;

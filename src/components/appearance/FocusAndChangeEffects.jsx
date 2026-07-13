@@ -17,7 +17,7 @@ import {
   selectSetUpcomingChangesEnabled,
   selectSubtreeDimmingEnabled,
   selectSubtreeDimmingOpacity,
-  selectTreeControllers,
+  selectTreeController,
   selectUpcomingChangesEnabled,
   useAppStore,
 } from '../../state/phyloStore/store.js';
@@ -45,7 +45,7 @@ export function FocusAndChangeEffects() {
   const pulseEnabled = useAppStore(selectChangePulseEnabled);
   const dashingEnabled = useAppStore(selectPivotEdgeDashingEnabled);
   const upcomingChangesEnabled = useAppStore(selectUpcomingChangesEnabled);
-  const treeControllers = useAppStore(selectTreeControllers);
+  const treeController = useAppStore(selectTreeController);
 
   const setDimmingEnabled = useAppStore(selectSetDimmingEnabled);
   const setDimmingOpacity = useAppStore(selectSetDimmingOpacity);
@@ -57,15 +57,11 @@ export function FocusAndChangeEffects() {
   const setDashingEnabled = useAppStore(selectSetPivotEdgeDashingEnabled);
   const setUpcomingChangesEnabled = useAppStore(selectSetUpcomingChangesEnabled);
 
-  const rerenderAll = async () => {
-    for (const controller of treeControllers) {
-      await controller.renderAllElements();
-    }
-  };
+  const rerenderTree = async () => treeController?.renderAllElements();
 
   const rerenderAfter = async (applyValue) => {
     applyValue();
-    await rerenderAll();
+    await rerenderTree();
   };
 
   const toggleDimming = (value) => rerenderAfter(() => setDimmingEnabled(!!value));

@@ -19,15 +19,6 @@ function loadMovieData() {
   throw new Error('No input JSON found for TimelineMathUtils tests.');
 }
 
-function loadPaperExampleMovieData() {
-  return JSON.parse(
-    fs.readFileSync(
-      path.join(__dirname, '..', 'publication_data', 'precomputed', 'paper_example.movie.json'),
-      'utf8'
-    )
-  );
-}
-
 function makeSemanticTimingFixture() {
   const treeList = Array.from({ length: 4 }, (_, index) => ({ id: `tree-${index}` }));
   const segments = [
@@ -64,115 +55,10 @@ describe('TimelineMathUtils', () => {
     timelineData = TimelineDataProcessor.createTimelineData(segments);
   });
 
-  it('round-trips interpolation frame lookup through getTargetFrameForTime', () => {
-    segments.forEach((segment, segmentIndex) => {
-      if (!segment.hasInterpolation || segment.interpolationData.length <= 1) {
-        return;
-      }
-
-      const segmentStartTime =
-        segmentIndex === 0 ? 0 : timelineData.cumulativeDurations[segmentIndex - 1];
-
-      segment.interpolationData.forEach((entry) => {
-        if (entry.originalIndex === segment.contextStart) {
-          return;
-        }
-
-        const lookup = TimelineMathUtils.findSegmentForFrameIndex(segments, entry.originalIndex);
-        const absoluteTime = segmentStartTime + lookup.timeInSegment;
-        const resolved = TimelineMathUtils.getTargetFrameForTime(
-          segments,
-          absoluteTime,
-          timelineData.segmentDurations,
-          'nearest',
-          timelineData.cumulativeDurations
-        );
-
-        expect(lookup.segmentIndex).to.equal(segmentIndex);
-        expect(resolved.segmentIndex).to.equal(segmentIndex);
-        expect(resolved.frameIndex).to.equal(entry.originalIndex);
-      });
-    });
-  });
-
   it('returns zero progress and zero time when total duration is zero', () => {
     expect(TimelineMathUtils.timeToProgress(0, 0)).to.equal(0);
     expect(TimelineMathUtils.timeToProgress(250, 0)).to.equal(0);
     expect(TimelineMathUtils.progressToTime(0.5, 0)).to.equal(0);
-  });
-
-  it('returns a safe empty transition frame for empty input', () => {
-    const result = TimelineMathUtils.getTransitionFrameForProgress(0.25, []);
-
-    expect(result).to.include({
-      sourceTree: null,
-      targetTree: null,
-      transitionProgress: 0,
-      sourceTreeIndex: -1,
-      targetTreeIndex: -1,
-    });
-  });
-
-  it('maps linear frame progress onto weighted timeline progress', () => {
-    const firstInterpolationIndex = segments.findIndex(
-      (segment) => segment.hasInterpolation && segment.interpolationData.length > 1
-    );
-    const segment = segments[firstInterpolationIndex];
-    const entry = segment.interpolationData[segment.interpolationData.length - 1];
-    const linearProgress = entry.originalIndex / (loadMovieData().interpolated_trees.length - 1);
-
-    const weightedProgress = TimelineMathUtils.getTimelineProgressForLinearTreeProgress(
-      linearProgress,
-      loadMovieData().interpolated_trees.length,
-      segments,
-      timelineData
-    );
-
-    const currentTime = TimelineMathUtils.progressToTime(
-      weightedProgress,
-      timelineData.totalDuration
-    );
-    const resolved = TimelineMathUtils.getTargetFrameForTime(
-      segments,
-      currentTime,
-      timelineData.segmentDurations,
-      'nearest',
-      timelineData.cumulativeDurations
-    );
-
-    expect(resolved.frameIndex).to.equal(entry.originalIndex);
-    expect(weightedProgress).to.not.equal(linearProgress);
-  });
-
-  it('maps the paper example final linear progress to the final input-tree hold', () => {
-    const movieData = loadPaperExampleMovieData();
-    const paperSegments = TimelineDataProcessor.createSegments(movieData);
-    const paperTimelineData = TimelineDataProcessor.createTimelineData(paperSegments);
-    const treeCount = movieData.interpolated_trees.length;
-
-    const weightedProgress = TimelineMathUtils.getTimelineProgressForLinearTreeProgress(
-      1,
-      treeCount,
-      paperSegments,
-      paperTimelineData
-    );
-    const currentTime = TimelineMathUtils.progressToTime(
-      weightedProgress,
-      paperTimelineData.totalDuration
-    );
-    const resolved = TimelineMathUtils.getTargetFrameForTime(
-      paperSegments,
-      currentTime,
-      paperTimelineData.segmentDurations,
-      'nearest',
-      paperTimelineData.cumulativeDurations
-    );
-
-    expect(currentTime).to.equal(15900);
-    expect(resolved).to.include({
-      frameIndex: treeCount - 1,
-      segmentIndex: 3,
-    });
   });
 
   it('uses explicit interpolation intervals, not frame count, for transition segment duration', () => {

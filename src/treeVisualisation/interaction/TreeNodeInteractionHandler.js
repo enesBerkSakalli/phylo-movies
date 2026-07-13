@@ -6,9 +6,8 @@ import { getSplitKey } from '../../domain/tree/splits.js';
  * Coordinates between layer data and tree data for click/hover events
  */
 export class TreeNodeInteractionHandler {
-  constructor(layoutCalculator, viewSide = 'single') {
+  constructor(layoutCalculator) {
     this.layoutCalculator = layoutCalculator;
-    this.viewSide = viewSide; // 'left' | 'right' | 'single'
   }
 
   /**

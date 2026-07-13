@@ -26,7 +26,6 @@ export class TimelineDataset {
       frameViews,
       occurrences,
       occurrencesByFrameIndex,
-      pairs: movieData.pairs,
       treeList: options.treeList ?? movieData.interpolated_trees,
     });
   }
@@ -37,7 +36,6 @@ export class TimelineDataset {
     frameViews,
     occurrences,
     occurrencesByFrameIndex,
-    pairs,
     treeList,
   }) {
     this.segments = segments;
@@ -45,7 +43,6 @@ export class TimelineDataset {
     this.frameViews = frameViews;
     this.occurrences = occurrences;
     this.occurrencesByFrameIndex = occurrencesByFrameIndex;
-    this.pairs = pairs;
     this.treeList = Array.isArray(treeList) ? treeList : [];
     this._inputFrameIndices = null;
     this._inputFrameIndexSet = null;
@@ -79,36 +76,8 @@ export class TimelineDataset {
     return this._inputFrameIndices;
   }
 
-  getPairs() {
-    return this.pairs;
-  }
-
-  getPairFrameRanges() {
-    return this.pairs.map((pair) => [pair.source_frame_index, pair.target_frame_index]);
-  }
-
   getSegment(segmentIndex) {
     return Number.isInteger(segmentIndex) ? this.segments[segmentIndex] : null;
-  }
-
-  getFramePositionInSegment(segmentIndex, frameIndex) {
-    const segment = this.getSegment(segmentIndex);
-    if (!segment) {
-      return {
-        treeInSegment: 1,
-        treesInSegment: 1,
-      };
-    }
-    return TimelineMathUtils.calculateFramePositionInSegment(segment, frameIndex);
-  }
-
-  getTimelineProgressForLinearTreeProgress(progress, treeCount) {
-    return TimelineMathUtils.getTimelineProgressForLinearTreeProgress(
-      progress,
-      treeCount,
-      this.segments,
-      this.timelineData
-    );
   }
 
   getTransitionFrameAtTimelineProgress(progress) {

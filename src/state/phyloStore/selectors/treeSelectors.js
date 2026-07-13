@@ -75,8 +75,7 @@ export { selectPivotEdgeDashingEnabled } from './selectPivotEdgeDashingEnabled.j
 export { selectPivotEdgeForFrame } from './selectPivotEdgeForFrame.js';
 export { selectPivotEdgesEnabled } from './selectPivotEdgesEnabled.js';
 export { selectPlaying } from './selectPlaying.js';
-export { selectPlayhead } from './selectPlayhead.js';
-export { selectPrimaryTreeController } from './selectPrimaryTreeController.js';
+export { selectTreeController } from './selectTreeController.js';
 export { selectScaleList } from './selectScaleList.js';
 export { selectReset } from './selectReset.js';
 export { selectScrollToEndTimeline } from './selectScrollToEndTimeline.js';
@@ -140,7 +139,6 @@ export { selectToggleCameraMode } from './selectToggleCameraMode.js';
 export { selectToggleComparisonMode } from './selectToggleComparisonMode.js';
 export { selectLeafNamesByIndex } from './selectLeafNamesByIndex.js';
 export { selectTreeContext } from './selectTreeContext.js';
-export { selectTreeControllers } from './selectTreeControllers.js';
 export { selectTimelineFrameAtIndex } from './selectTimelineFrameAtIndex.js';
 export { selectTimelineFrames } from './selectTimelineFrames.js';
 export { selectUpcomingChangesEnabled } from './selectUpcomingChangesEnabled.js';

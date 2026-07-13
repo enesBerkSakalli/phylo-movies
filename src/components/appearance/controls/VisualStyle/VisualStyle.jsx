@@ -20,7 +20,7 @@ import {
   selectSetNodeSize,
   selectSetStrokeWidth,
   selectStrokeWidth,
-  selectTreeControllers,
+  selectTreeController,
   useAppStore,
 } from '../../../../state/phyloStore/store.js';
 import { getAvailableBranchAnnotationOptions } from '../../../../domain/tree/branchSupportIndex.js';
@@ -44,7 +44,7 @@ export function GeometryDimensionsSection() {
   const setNodeSize = useAppStore(selectSetNodeSize);
   const setStrokeWidth = useAppStore(selectSetStrokeWidth);
   const setFontSize = useAppStore(selectSetFontSize);
-  const treeControllers = useAppStore(selectTreeControllers);
+  const treeController = useAppStore(selectTreeController);
   const activeTreeList = useAppStore(selectActiveTreeList);
   const labelsVisible = useAppStore(selectLabelsVisible);
   const setLabelsVisible = useAppStore(selectSetLabelsVisible);
@@ -56,9 +56,7 @@ export function GeometryDimensionsSection() {
   const handleToggleLabels = async (value) => {
     try {
       setLabelsVisible(!!value);
-      for (const controller of treeControllers) {
-        await controller.renderAllElements({ skipAutoFit: true });
-      }
+      await treeController?.renderAllElements({ skipAutoFit: true });
     } catch {}
   };
 
@@ -70,9 +68,7 @@ export function GeometryDimensionsSection() {
   const handleChangeBranchAnnotationLabelKey = async (valueKey) => {
     try {
       setBranchAnnotationLabelKey(valueKey);
-      for (const controller of treeControllers) {
-        await controller.renderAllElements();
-      }
+      await treeController?.renderAllElements();
     } catch {}
   };
 
@@ -94,7 +90,7 @@ export function GeometryDimensionsSection() {
             setStrokeWidth={setStrokeWidth}
             fontSizeNumber={fontSizeNumber}
             setFontSize={setFontSize}
-            treeControllers={treeControllers}
+            treeController={treeController}
             labelsVisible={labelsVisible}
             onToggleLabels={handleToggleLabels}
             branchAnnotationLabelKey={branchAnnotationLabelKey}
@@ -117,7 +113,7 @@ export function LayoutTransformSection() {
   const hyperbolicProjectionStrength = useAppStore(selectHyperbolicProjectionStrength);
   const setHyperbolicProjectionStrength = useAppStore(selectSetHyperbolicProjectionStrength);
   const setCameraMode = useAppStore(selectSetCameraMode);
-  const treeControllers = useAppStore(selectTreeControllers);
+  const treeController = useAppStore(selectTreeController);
 
   const handleSetLayoutProjectionMode = useCallback(
     (mode) => {
@@ -125,11 +121,9 @@ export function LayoutTransformSection() {
       if (mode !== LAYOUT_PROJECTION_MODES.WALRUS_3D) return;
 
       setCameraMode?.('orbit');
-      for (const controller of treeControllers) {
-        controller?.setCameraMode?.('orbit');
-      }
+      treeController?.setCameraMode?.('orbit');
     },
-    [setCameraMode, setLayoutProjectionMode, treeControllers]
+    [setCameraMode, setLayoutProjectionMode, treeController]
   );
 
   return (

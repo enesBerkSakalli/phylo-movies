@@ -40,37 +40,6 @@ export class TimelineTimingResolver {
     return null;
   }
 
-  static getTimeForFrameIndex(segment, frameIndex, segmentDuration, epsilonMs, options = {}) {
-    const inputTreeHoldOnly = options.inputTreeHoldOnly === true;
-    let elapsed = 0;
-
-    for (const interval of segment.timing) {
-      const duration = TimelineInterval.durationMs(interval);
-
-      if (TimelineInterval.isMotion(interval) && !inputTreeHoldOnly) {
-        if (interval.fromIndex === frameIndex) {
-          return elapsed;
-        }
-        if (interval.toIndex === frameIndex) {
-          const targetTime = elapsed + duration;
-          return targetTime >= segmentDuration
-            ? Math.max(0, segmentDuration - epsilonMs)
-            : targetTime;
-        }
-      } else if (
-        TimelineInterval.isHold(interval) &&
-        interval.holdIndex === frameIndex &&
-        (!inputTreeHoldOnly || interval.holdKind === 'input_tree')
-      ) {
-        return elapsed;
-      }
-
-      elapsed += duration;
-    }
-
-    return null;
-  }
-
   static getTransitionFrame(segment, localTime, treeList, createStaticFrame, clampProgress) {
     const resolved = this.resolveInterval(segment.timing, localTime);
     const interval = resolved?.interval;

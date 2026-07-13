@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   createCanvasPngBlob,
   createPngFileName,
-  getActiveTreeCanvas,
+  getTreeCanvas,
 } from '../../../src/services/media/canvasPngExport.js';
 
 describe('canvas PNG export helpers', () => {
@@ -12,27 +12,25 @@ describe('canvas PNG export helpers', () => {
     vi.restoreAllMocks();
   });
 
-  it('selects the active tree canvas from the right-most controller', () => {
-    const leftCanvas = { id: 'left-canvas' };
-    const rightCanvas = { id: 'right-canvas' };
-    const leftController = { deckContext: { canvas: leftCanvas } };
-    const rightController = { deckContext: { canvas: rightCanvas } };
+  it('returns the registered tree controller canvas', () => {
+    const canvas = { id: 'tree-canvas' };
+    const treeController = { deckContext: { canvas } };
 
-    expect(getActiveTreeCanvas([leftController, rightController])).toEqual({
-      canvas: rightCanvas,
+    expect(getTreeCanvas(treeController)).toEqual({
+      canvas,
       reason: null,
-      treeController: rightController,
+      treeController,
     });
   });
 
   it('reports why no export canvas is available', () => {
-    expect(getActiveTreeCanvas()).toEqual({
+    expect(getTreeCanvas()).toEqual({
       canvas: null,
       reason: 'missing-controller',
     });
 
     const treeController = { deckContext: null };
-    expect(getActiveTreeCanvas([treeController])).toEqual({
+    expect(getTreeCanvas(treeController)).toEqual({
       canvas: null,
       reason: 'missing-canvas',
       treeController,

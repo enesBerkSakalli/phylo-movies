@@ -144,13 +144,13 @@ describe('tree highlight state', () => {
     const previousState = useAppStore.getState();
     const previousMarkedNodes = previousState.manuallyMarkedNodes;
     const previousColorManager = previousState.colorManager;
-    const previousTreeControllers = previousState.treeControllers;
+    const previousTreeController = previousState.treeController;
     const colorManager = {
       updateHighlightedSubtrees: vi.fn(),
     };
 
     try {
-      useAppStore.setState({ colorManager, treeControllers: [] });
+      useAppStore.setState({ colorManager, treeController: null });
 
       useAppStore.getState().setManuallyMarkedNodes([0, 2]);
 
@@ -163,7 +163,7 @@ describe('tree highlight state', () => {
       useAppStore.setState({
         manuallyMarkedNodes: previousMarkedNodes,
         colorManager: previousColorManager,
-        treeControllers: previousTreeControllers,
+        treeController: previousTreeController,
       });
     }
   });

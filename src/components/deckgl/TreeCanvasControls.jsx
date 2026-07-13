@@ -5,7 +5,7 @@ import { Separator } from '../ui/separator';
 import { AppTooltip } from '../ui/app-tooltip';
 import {
   selectActiveTreeListLength,
-  selectPrimaryTreeController,
+  selectTreeController,
   useAppStore,
 } from '../../state/phyloStore/store.js';
 import { RecordingControls } from '../media/RecordingControls.jsx';
@@ -17,7 +17,7 @@ const TOOL_GROUP_CLASS =
   'flex items-center gap-1 rounded-md border border-border/60 bg-background/85 p-1 shadow-lg backdrop-blur-sm';
 
 export function TreeCanvasControls() {
-  const controller = useAppStore(selectPrimaryTreeController);
+  const controller = useAppStore(selectTreeController);
   const treeListLength = useAppStore(selectActiveTreeListLength);
   const disabled = !controller;
   const captureDisabled = treeListLength === 0;

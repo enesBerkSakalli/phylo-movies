@@ -4,14 +4,14 @@ import { Button } from '../ui/button';
 import { AppTooltip } from '../ui/app-tooltip';
 import {
   selectFrameIndex,
-  selectTreeControllers,
+  selectTreeController,
   useAppStore,
 } from '../../state/phyloStore/store.js';
 import { toast } from 'sonner';
 import {
   createCanvasPngBlob,
   createPngFileName,
-  getActiveTreeCanvas,
+  getTreeCanvas,
 } from '../../services/media/canvasPngExport.js';
 
 function getClipboardItemConstructor() {
@@ -47,14 +47,14 @@ function getClipboardErrorDescription(error) {
 }
 
 export function CopyImageButton({ disabled = false }) {
-  const treeControllers = useAppStore(selectTreeControllers);
+  const treeController = useAppStore(selectTreeController);
   const frameIndex = useAppStore(selectFrameIndex);
   const [isCopying, setIsCopying] = useState(false);
 
   const handleCopyImage = async () => {
     setIsCopying(true);
     try {
-      if (!treeControllers.length) {
+      if (!treeController) {
         console.error('[CopyImageButton] No tree controller is available for PNG copy.');
         toast.error('PNG copy is not ready yet.', {
           description: 'Wait until the tree finishes rendering, then try again.',
@@ -62,7 +62,7 @@ export function CopyImageButton({ disabled = false }) {
         return;
       }
 
-      const { canvas, treeController } = getActiveTreeCanvas(treeControllers);
+      const { canvas } = getTreeCanvas(treeController);
 
       if (!canvas) {
         console.error('[CopyImageButton] Deck.gl canvas is missing from the active controller.', {

@@ -5,7 +5,7 @@ import {
 import { TreeColorManager } from '../../../../treeVisualisation/systems/TreeColorManager.js';
 import {
   calculateChangePreviews,
-  renderTreeControllers,
+  renderTreeController,
   toManualMarkedSets,
   toSubtreeSets,
 } from '../../internal/changeTracking.helpers.js';
@@ -170,7 +170,7 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
       syncPivotPulseAnimation(get, getEdgeCount(normalizedPivotEdge) > 0);
     }
 
-    renderTreeControllers(get());
+    renderTreeController(get());
   },
 
   updateColorManagerForCurrentIndex: () => {

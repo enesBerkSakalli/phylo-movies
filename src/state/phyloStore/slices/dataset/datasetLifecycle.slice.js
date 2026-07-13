@@ -7,7 +7,7 @@ const EMPTY_PAIR_METRICS = Object.freeze({
 });
 const LARGE_DATASET_LABEL_TAXA_THRESHOLD = 300;
 
-export const createDatasetLifecycleSlice = (set, get) => ({
+export const createDatasetLifecycleSlice = (set, get, store) => ({
   // ==========================================================================
   // ACTIONS: Reset
   // ==========================================================================
@@ -76,7 +76,7 @@ export const createDatasetLifecycleSlice = (set, get) => ({
     const existingManager = get().movieTimelineManager;
     existingManager?.destroy();
 
-    const movieTimelineManager = new MovieTimelineManager(movieData, treeList);
+    const movieTimelineManager = new MovieTimelineManager(movieData, treeList, store);
     const timelineCursor = movieTimelineManager.getCursorForFrame(0);
 
     set({
@@ -97,10 +97,6 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       temporalEvents,
       selectedTimelineSegmentIndex: null,
       labelsVisible: shouldShowLabelsByDefault(leafNamesByIndex),
-      playhead: {
-        animationProgress: 0,
-        timelineProgress: null,
-      },
       frameIndex: 0,
       playing: false,
     });

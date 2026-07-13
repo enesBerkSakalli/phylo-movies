@@ -1,5 +1,5 @@
 import {
-  renderTreeControllers,
+  renderTreeController,
   toManualMarkedSets,
   getMovingSubtreeAtIndex,
   getSubtreeHistoryAtIndex,
@@ -61,7 +61,7 @@ export const createSubtreeSelectionSlice = (set, get) => ({
         ...getSubtreeHighlightData(),
       ]);
     }
-    renderTreeControllers(get());
+    renderTreeController(get());
   },
 
   setManuallyMarkedNodes: (nodeIds = []) => {
@@ -70,6 +70,6 @@ export const createSubtreeSelectionSlice = (set, get) => ({
     const { getSubtreeHighlightData, updateColorManagerHighlightedSubtrees } = get();
     const manual = toManualMarkedSets(nodes);
     updateColorManagerHighlightedSubtrees([...manual, ...getSubtreeHighlightData()]);
-    renderTreeControllers(get());
+    renderTreeController(get());
   },
 });

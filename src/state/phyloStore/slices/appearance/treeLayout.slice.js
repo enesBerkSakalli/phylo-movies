@@ -11,13 +11,14 @@ function invalidateTreeLayout(get) {
   const state = get();
   state.resetInterpolationCaches();
 
-  for (const controller of state.treeControllers) {
-    controller._lastFocusedTreeIndex = null;
-    controller.layerManager?.comparisonRenderer?.resetAutoFit?.();
-    Promise.resolve(controller.renderAllElements()).catch((error) => {
-      console.warn('[treeLayout] Failed to render layout update:', error);
-    });
-  }
+  const controller = state.treeController;
+  if (!controller) return;
+
+  controller._lastFocusedTreeIndex = null;
+  controller.layerManager?.comparisonRenderer?.resetAutoFit?.();
+  Promise.resolve(controller.renderAllElements()).catch((error) => {
+    console.warn('[treeLayout] Failed to render layout update:', error);
+  });
 }
 
 export const createTreeLayoutSlice = (set, get) => ({

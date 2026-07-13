@@ -69,12 +69,10 @@ export class ScrubberAPI {
       if (!transitionFrame) return;
 
       const state = this.store.getState();
-      const direction = state.navigationDirection;
+      state.setTimelineProgress(progress);
+      await this._renderScrubFrame(transitionFrame);
 
-      state.setTimelineProgress(progress, transitionFrame.cursorTreeIndex);
-      await this._renderScrubFrame(transitionFrame, direction);
-
-      this.lastTransitionState = { progress, transitionFrame, direction };
+      this.lastTransitionState = { progress, transitionFrame };
     } catch (error) {
       console.error('[ScrubberAPI] Scrub update failed:', {
         progress,
@@ -107,7 +105,7 @@ export class ScrubberAPI {
   // RENDERING
   // ==========================================================================
 
-  async _renderScrubFrame(transitionFrame, direction) {
+  async _renderScrubFrame(transitionFrame) {
     const state = this.store.getState();
     if (!transitionFrame.sourceTree || !transitionFrame.targetTree) return;
 
@@ -115,7 +113,6 @@ export class ScrubberAPI {
 
     const options = transitionFrame.toRenderOptions({
       scrubMode: true,
-      direction,
     });
 
     if (state.comparisonMode) {

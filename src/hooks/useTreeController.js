@@ -36,8 +36,8 @@ export function useTreeController() {
       const state = useAppStore.getState();
       if (state.treeList.length === 0) return;
 
-      if (state.treeControllers.length > 0) {
-        controllerRef.current = state.treeControllers[0];
+      if (state.treeController) {
+        controllerRef.current = state.treeController;
         return;
       }
 
@@ -45,7 +45,7 @@ export function useTreeController() {
         animations: true,
       });
 
-      state.setTreeControllers([controller]);
+      state.setTreeController(controller);
       controllerRef.current = controller;
     };
 
@@ -70,7 +70,7 @@ export function useTreeController() {
           if (state.movieTimelineManager?.scrubController?.isScrubbing) return;
           if (state.playing) return;
 
-          const controller = controllerRef.current || state.treeControllers[0];
+          const controller = controllerRef.current || state.treeController;
           if (!controller || state.treeList.length === 0) return;
 
           state.setRenderInProgress(true);
@@ -86,13 +86,10 @@ export function useTreeController() {
           try {
             if (state.comparisonMode) {
               await renderComparisonMode(controller, state, state.frameIndex, state.timelineCursor);
-            } else if (
-              state.playhead?.timelineProgress != null &&
-              typeof controller.renderTimelineProgress === 'function'
-            ) {
-              await controller.renderTimelineProgress(state.playhead.timelineProgress);
+            } else if (Number.isFinite(state.timelineCursor?.timelineProgress)) {
+              await controller.renderTimelineProgress(state.timelineCursor.timelineProgress);
             } else {
-              await controller.renderProgress(state.playhead?.animationProgress ?? 0);
+              await controller.renderAllElements({ treeIndex: state.frameIndex });
             }
           } catch (error) {
             console.error('[useTreeController] Tree render failed:', {
@@ -160,7 +157,7 @@ export function useTreeController() {
       ) {
         // Reset comparison auto-fit when toggling comparison mode so the camera
         // refits properly for the new layout (single ↔ side-by-side).
-        const ctrl = controllerRef.current || state.treeControllers[0];
+        const ctrl = controllerRef.current || state.treeController;
         if (state.comparisonMode !== prevState.comparisonMode) {
           if (ctrl) {
             ctrl._lastFocusedTreeIndex = null;
@@ -171,8 +168,8 @@ export function useTreeController() {
         scheduleRender();
       }
 
-      if (state.treeControllers !== prevState.treeControllers) {
-        controllerRef.current = state.treeControllers[0] ?? null;
+      if (state.treeController !== prevState.treeController) {
+        controllerRef.current = state.treeController;
       }
 
       const frameIndexChanged = state.frameIndex !== prevState.frameIndex;
@@ -180,14 +177,7 @@ export function useTreeController() {
 
       if (frameIndexChanged || timelineCursorChanged) {
         syncMsaRegion();
-        if (!isTimelineScrubbing) {
-          scheduleRender();
-        }
-      }
-
-      if (state.playhead !== prevState.playhead && !frameIndexChanged && !timelineCursorChanged) {
-        syncMsaRegion();
-        if (!isTimelineScrubbing) {
+        if (!isTimelineScrubbing && !state.playing) {
           scheduleRender();
         }
       }
@@ -199,7 +189,7 @@ export function useTreeController() {
       // Ensure every controller reacts to branch length transforms, even if the change
       // originated outside the TreeStructure dropdown.
       if (state.branchTransformation !== prevState.branchTransformation) {
-        const controller = controllerRef.current || state.treeControllers[0];
+        const controller = controllerRef.current || state.treeController;
         if (controller) {
           controller.resetInterpolationCaches();
           controller.initializeUniformScaling(state.branchTransformation);
@@ -237,8 +227,8 @@ export function useTreeController() {
       const state = useAppStore.getState();
       controllerRef.current = null;
 
-      if (state.treeControllers.length) {
-        state.setTreeControllers([]);
+      if (state.treeController) {
+        state.setTreeController(null);
       } else if (controller) {
         controller.destroy();
       }

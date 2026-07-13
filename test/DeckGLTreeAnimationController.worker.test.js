@@ -44,10 +44,7 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
       layoutAngleDegrees: 360,
       layoutRotationDegrees: 0,
       styleConfig: { labelOffsets: { DEFAULT: 20, EXTENSION: 5 } },
-      playhead: {
-        animationProgress: 0,
-        timelineProgress: null,
-      },
+      timelineCursor: null,
       frameIndex: 0,
     });
   });
@@ -384,14 +381,18 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     });
     controller = new ControllerClass(null);
 
-    controller.animationRunner.updateProgress(0.1, {
+    const timelineCursor = {
       timelineProgress: 0.4,
+      movieTimeMs: 4200,
       frameIndex: 2,
+    };
+    controller.animationRunner.updateProgress({
+      timelineCursor,
     });
 
     const state = useAppStore.getState();
-    expect(state.playhead.animationProgress).toBe(0.1);
-    expect(state.playhead.timelineProgress).toBe(0.4);
+    expect(state.timelineCursor).toBe(timelineCursor);
+    expect(state.timelineCursor.movieTimeMs).toBe(4200);
     expect(state.frameIndex).toBe(2);
   });
 

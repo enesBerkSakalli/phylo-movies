@@ -21,7 +21,7 @@ import {
   selectLeafNamesByIndex,
   selectSetTaxaColoringOpen,
   selectTaxaColoringOpen,
-  selectTreeControllers,
+  selectTreeController,
   useAppStore,
 } from '../../../state/phyloStore/store.js';
 import { Switch } from '../../ui/switch';
@@ -45,7 +45,7 @@ import { SYSTEM_TREE_COLORS } from '../../../constants/TreeColors.js';
 export function ColoringPanel({ onOpenTaxaColoring }) {
   const monophyletic = useAppStore(selectMonophyleticColoringEnabled);
   const pivotEdgesEnabled = useAppStore(selectPivotEdgesEnabled);
-  const treeControllers = useAppStore(selectTreeControllers);
+  const treeController = useAppStore(selectTreeController);
   const pivotEdgeColor = useAppStore(selectPivotEdgeColor);
   const subtreeHighlightColor = useAppStore(selectSubtreeHighlightColor);
   const taxaNames = useAppStore(selectLeafNamesByIndex) || [];
@@ -94,8 +94,8 @@ export function ColoringPanel({ onOpenTaxaColoring }) {
 
   const focusHighlightedSubtree = useCallback(() => {
     if (!manuallyMarkedNodes?.length) return;
-    treeControllers[0]?.focusOnSubtree?.(manuallyMarkedNodes);
-  }, [manuallyMarkedNodes, treeControllers]);
+    treeController?.focusOnSubtree?.(manuallyMarkedNodes);
+  }, [manuallyMarkedNodes, treeController]);
 
   const openTaxaColoring = useCallback(() => {
     if (!hasTaxa) return;

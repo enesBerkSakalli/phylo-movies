@@ -32,18 +32,17 @@ export class CanvasRecorder {
   }
 
   _resolveCanvas() {
-    const { treeControllers } = useAppStore.getState();
-    const primaryController = treeControllers[0] ?? null;
+    const { treeController } = useAppStore.getState();
 
     const canvas =
-      primaryController?.deckContext?.canvas || document.querySelector('#webgl-container canvas');
+      treeController?.deckContext?.canvas || document.querySelector('#webgl-container canvas');
     if (!canvas) {
       throw new Error(
         'Visualization canvas is not available yet. Wait until the tree finishes rendering, then start recording again.'
       );
     }
     this.deck =
-      primaryController?.deckContext?.getDeck?.() || primaryController?.deckContext?.deck || null;
+      treeController?.deckContext?.getDeck?.() || treeController?.deckContext?.deck || null;
     return canvas;
   }
 

@@ -118,6 +118,6 @@ describe('TimelineScrubController', () => {
     expect(cancelledFrameId).to.equal(7);
     expect(updateCalls).to.deep.equal([]);
     expect(finalCalls).to.deep.equal([0.9]);
-    expect(setTimelineProgressCalls).to.deep.equal([[0.9, 9]]);
+    expect(setTimelineProgressCalls).to.deep.equal([[0.9]]);
   });
 });

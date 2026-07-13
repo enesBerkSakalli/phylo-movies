@@ -1,12 +1,9 @@
 import { TimelineDataProcessor } from '../data/TimelineDataProcessor.js';
 import { TimelineDataset } from '../data/TimelineDataset.js';
-import { TimelineClock } from './TimelineClock.js';
-import { TimelineConductor } from './TimelineConductor.js';
 import { ScrubberAPI } from './ScrubberAPI.js';
 import { TimelineNavigationController } from './TimelineNavigationController.js';
 import { TimelineScrubController } from './TimelineScrubController.js';
 import { TimelineStateSynchronizer } from './TimelineStateSynchronizer.js';
-import { useAppStore } from '../../state/phyloStore/store.js';
 import { buildTimelineStatusSnapshot } from '../view/timelineStatusModel.js';
 import { TransitionFrame } from '../time/TransitionFrame.js';
 
@@ -30,12 +27,16 @@ function loadDeckTimelineRenderer() {
  * - store subscription wiring
  */
 export class MovieTimelineManager {
-  constructor(movieData, treeList) {
+  constructor(movieData, treeList, store) {
     if (!Array.isArray(treeList) || treeList.length === 0) {
       throw new Error('MovieTimelineManager requires a non-empty normalized treeList');
     }
+    if (!store || typeof store.getState !== 'function' || typeof store.subscribe !== 'function') {
+      throw new Error('MovieTimelineManager requires an injected store API');
+    }
 
     this.treeList = treeList;
+    this.store = store;
     this.isDestroyed = false;
     this.container = null;
     this.scrubberAPI = null;
@@ -49,26 +50,22 @@ export class MovieTimelineManager {
       timelineData: this.timelineData,
       treeList,
     });
-    this.timelineConductor = TimelineConductor.fixed(this.timelineDataset);
-    this.timelineClock = new TimelineClock({
-      timelineDataset: this.timelineDataset,
-    });
     this.stateSynchronizer = new TimelineStateSynchronizer({
       timelineDataset: this.timelineDataset,
-      store: useAppStore,
+      store: this.store,
     });
     this.navigationController = new TimelineNavigationController({
       timelineDataset: this.timelineDataset,
       segments: this.segments,
       timelineData: this.timelineData,
-      store: useAppStore,
+      store: this.store,
       onTimelinePositionUpdated: () => this.updateCurrentPosition(),
     });
     this.scrubController = new TimelineScrubController({
       timelineDataset: this.timelineDataset,
       timelineData: this.timelineData,
       segments: this.segments,
-      store: useAppStore,
+      store: this.store,
       getTimelineRenderer: () => this.timeline,
       getScrubberAPI: () => this.scrubberAPI,
       stopPlayback: () => this._stopPlayback(),
@@ -84,18 +81,15 @@ export class MovieTimelineManager {
   _initialize() {
     this._initializeScrubberAPI();
 
-    this.unsubscribeFromStore = useAppStore.subscribe((state, prevState) => {
-      if (state.frameIndex !== prevState.frameIndex || state.playhead !== prevState.playhead) {
+    this.unsubscribeFromStore = this.store.subscribe((state, prevState) => {
+      if (state.timelineCursor !== prevState.timelineCursor) {
         if (!this.scrubController?.isScrubbing) {
           this._scheduleCurrentPositionUpdate();
         }
       }
 
-      if (state.treeControllers !== prevState.treeControllers) {
-        const controller = this._selectScrubberController();
-        if (controller && controller !== this.scrubberAPI?.treeController) {
-          this._initializeScrubberAPI(controller);
-        }
+      if (state.treeController !== prevState.treeController) {
+        this._initializeScrubberAPI(state.treeController);
       }
 
       if (state.selectedTimelineSegmentIndex !== prevState.selectedTimelineSegmentIndex) {
@@ -115,16 +109,15 @@ export class MovieTimelineManager {
     });
   }
 
-  _initializeScrubberAPI(controllerOverride = null) {
-    const controller = controllerOverride || this._selectScrubberController();
-    if (!controller) return;
+  _initializeScrubberAPI(controller = this._selectScrubberController()) {
+    if (controller === this.scrubberAPI?.treeController) return;
 
-    this.scrubberAPI = new ScrubberAPI(controller, this, useAppStore);
+    this.scrubberAPI?.destroy();
+    this.scrubberAPI = controller ? new ScrubberAPI(controller, this, this.store) : null;
   }
 
   _selectScrubberController() {
-    const { treeControllers } = useAppStore.getState();
-    return treeControllers[0] || null;
+    return this.store.getState().treeController;
   }
 
   // ==========================================================================
@@ -139,10 +132,7 @@ export class MovieTimelineManager {
       this.timeline && this.timeline.container && container.contains(this.timeline.container);
 
     if (isSameContainer && isTimelineAttached) {
-      this.stateSynchronizer.restoreMountedState(
-        this.timeline,
-        this.scrubController.lastScrubEndTime
-      );
+      this.stateSynchronizer.restoreMountedState(this.timeline);
       return Promise.resolve(this.timeline);
     }
 
@@ -158,8 +148,8 @@ export class MovieTimelineManager {
     this.timeline = null;
     this.container = null;
 
-    useAppStore.getState().setTooltipHovered(false);
-    useAppStore.getState().setHoveredSegment(null, null);
+    this.store?.getState().setTooltipHovered(false);
+    this.store?.getState().setHoveredSegment(null, null);
   }
 
   async _createTimeline() {
@@ -213,14 +203,11 @@ export class MovieTimelineManager {
     });
     this.timeline.bindHoverState({
       setHoveredSegment: (segmentIndex, segmentData, position) => {
-        useAppStore.getState().setHoveredSegment(segmentIndex, segmentData, position);
+        this.store.getState().setHoveredSegment(segmentIndex, segmentData, position);
       },
     });
     this._setupEvents();
-    this.stateSynchronizer.restoreMountedState(
-      this.timeline,
-      this.scrubController.lastScrubEndTime
-    );
+    this.stateSynchronizer.restoreMountedState(this.timeline);
     this._syncSelectedSegmentFromStore();
     return this.timeline;
   }
@@ -257,7 +244,7 @@ export class MovieTimelineManager {
   _onTimelineClick(properties) {
     const segmentIndex = Number.isInteger(properties.segmentIndex) ? properties.segmentIndex : null;
 
-    useAppStore.getState().setSelectedTimelineSegment(segmentIndex);
+    this.store.getState().setSelectedTimelineSegment(segmentIndex);
 
     if (segmentIndex !== null && this.navigationController) {
       this.navigationController.handleTimelineClick(segmentIndex, properties.ms);
@@ -267,7 +254,7 @@ export class MovieTimelineManager {
   _syncSelectedSegmentFromStore() {
     if (!this.timeline) return;
 
-    const { selectedTimelineSegmentIndex } = useAppStore.getState();
+    const { selectedTimelineSegmentIndex } = this.store.getState();
     const isValidSelection =
       Number.isInteger(selectedTimelineSegmentIndex) &&
       selectedTimelineSegmentIndex >= 0 &&
@@ -286,17 +273,7 @@ export class MovieTimelineManager {
     if (this.isDestroyed || !this.scrubController || !this.stateSynchronizer) return;
     if (this.scrubController.isScrubbing || !this.timelineData || !this.timeline) return;
 
-    const syncState = this.stateSynchronizer.syncRendererFromStore(
-      this.timeline,
-      this.scrubController.lastScrubEndTime
-    );
-    if (syncState && !syncState.preservingScrubPosition) {
-      this.stateSynchronizer.updateStoreTimelineState(
-        syncState.currentTime,
-        syncState.segment,
-        syncState.frameIndex
-      );
-    }
+    this.stateSynchronizer.syncRendererFromStore(this.timeline);
   }
 
   // ==========================================================================
@@ -304,12 +281,12 @@ export class MovieTimelineManager {
   // ==========================================================================
 
   _stopPlayback() {
-    const store = useAppStore.getState();
+    const store = this.store.getState();
     if (store.playing) store.stop();
   }
 
   getSegmentCount() {
-    return this.timelineClock?.getSegmentCount() ?? 0;
+    return this.segments?.length ?? 0;
   }
 
   getSegment(index) {
@@ -357,25 +334,11 @@ export class MovieTimelineManager {
   }
 
   resolveFrameAtTimelineProgress(progress) {
-    const transitionFrame = this.timelineClock?.getTransitionFrameForProgress(progress) ?? null;
-    return this._hydrateResolvedFrame(transitionFrame);
+    const transitionFrame = this.timelineDataset?.getTransitionFrameAtTimelineProgress(progress);
+    return this._hydrateResolvedFrame(transitionFrame, progress);
   }
 
-  resolveFrameAtIndex(frameIndex, options = {}) {
-    const cursor = this.timelineDataset?.getCursorForFrame(frameIndex, {
-      occurrence: 'first',
-      timeAnchor: 'start',
-      ...options,
-    });
-    if (!cursor) return null;
-    return this.resolveFrameAtTimelineProgress(cursor.timelineProgress);
-  }
-
-  getTransitionFrameForTimelineProgress(progress) {
-    return this.resolveFrameAtTimelineProgress(progress);
-  }
-
-  _hydrateResolvedFrame(transitionFrame) {
+  _hydrateResolvedFrame(transitionFrame, timelineProgress) {
     if (
       !transitionFrame ||
       !Number.isInteger(transitionFrame.sourceTreeIndex) ||
@@ -385,7 +348,7 @@ export class MovieTimelineManager {
     }
 
     if (!transitionFrame.sourceTree || !transitionFrame.targetTree) {
-      const state = useAppStore.getState();
+      const state = this.store.getState();
       const [hydratedSource, hydratedTarget] =
         state.ensureTreesHydrated?.([
           transitionFrame.sourceTreeIndex,
@@ -395,43 +358,27 @@ export class MovieTimelineManager {
       const targetTree = transitionFrame.targetTree ?? hydratedTarget;
       if (!sourceTree || !targetTree) return null;
 
-      return TransitionFrame.from({
-        sourceTree,
-        targetTree,
-        sourceTreeIndex: transitionFrame.sourceTreeIndex,
-        targetTreeIndex: transitionFrame.targetTreeIndex,
-        transitionProgress: transitionFrame.transitionProgress,
-        renderProgress: transitionFrame.renderProgress,
-        timelineProgress: transitionFrame.timelineProgress,
-        holdKind: transitionFrame.holdKind,
-        stage: transitionFrame.stage,
-        transitionChangeModel: transitionFrame.transitionChangeModel,
-      });
+      return copyTransitionFrame(transitionFrame, sourceTree, targetTree, timelineProgress);
     }
 
-    return transitionFrame;
-  }
-
-  getTimelineProgressForLinearTreeProgress(progress, treeCount) {
-    return (
-      this.timelineClock?.getTimelineProgressForLinearTreeProgress(progress, treeCount) ?? null
+    return copyTransitionFrame(
+      transitionFrame,
+      transitionFrame.sourceTree,
+      transitionFrame.targetTree,
+      timelineProgress
     );
   }
 
   getCursorAtMovieTime(movieTimeMs, options = {}) {
-    return this.timelineConductor?.setMovieTimeMs(movieTimeMs, options) ?? null;
+    return this.timelineDataset?.getCursorAtMovieTime(movieTimeMs, options) ?? null;
   }
 
   getCursorAtTimelineProgress(timelineProgress, options = {}) {
-    return this.timelineConductor?.setTimelineProgress(timelineProgress, options) ?? null;
+    return this.timelineDataset?.getCursorAtTimelineProgress(timelineProgress, options) ?? null;
   }
 
   getCursorForFrame(frameIndex, options = {}) {
-    return this.timelineConductor?.setFrameIndex(frameIndex, options) ?? null;
-  }
-
-  getFrameOccurrences(frameIndex) {
-    return this.timelineDataset?.getOccurrencesForFrame(frameIndex) ?? [];
+    return this.timelineDataset?.getCursorForFrame(frameIndex, options) ?? null;
   }
 
   getTimelineStatusSnapshot({
@@ -465,6 +412,8 @@ export class MovieTimelineManager {
   // ==========================================================================
 
   destroy() {
+    if (this.isDestroyed) return;
+
     this.isDestroyed = true;
     this.unsubscribeFromStore?.();
     if (this._timelineUpdateFrameId !== null) {
@@ -479,11 +428,25 @@ export class MovieTimelineManager {
     this.segments = null;
     this.timelineData = null;
     this.timelineDataset = null;
-    this.timelineConductor = null;
-    this.timelineClock = null;
     this.navigationController = null;
     this.scrubberAPI = null;
     this.scrubController = null;
     this.stateSynchronizer = null;
+    this.store = null;
   }
+}
+
+function copyTransitionFrame(transitionFrame, sourceTree, targetTree, timelineProgress) {
+  return TransitionFrame.from({
+    sourceTree,
+    targetTree,
+    sourceTreeIndex: transitionFrame.sourceTreeIndex,
+    targetTreeIndex: transitionFrame.targetTreeIndex,
+    transitionProgress: transitionFrame.transitionProgress,
+    renderProgress: transitionFrame.renderProgress,
+    timelineProgress,
+    holdKind: transitionFrame.holdKind,
+    stage: transitionFrame.stage,
+    transitionChangeModel: transitionFrame.transitionChangeModel,
+  });
 }

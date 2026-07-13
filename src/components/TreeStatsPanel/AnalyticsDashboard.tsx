@@ -32,7 +32,7 @@ import {
   selectSetBranchAnnotationLabelKey,
   selectTemporalEvents,
   selectTimelineFrames,
-  selectTreeControllers,
+  selectTreeController,
   useAppStore,
 } from '../../state/phyloStore/store.js';
 import { buildSprAnalyticsModel } from '../../domain/spr/sprAnalytics';
@@ -245,7 +245,7 @@ const AnalyticsDashboardBody = () => {
     selectedMovedSubtreeIndices,
     branchAnnotationValueKey,
     setBranchAnnotationLabelKey,
-    treeControllers,
+    treeController,
   } = useAppStore(
     useShallow((state) => ({
       pairs: selectPairs(state),
@@ -262,7 +262,7 @@ const AnalyticsDashboardBody = () => {
       selectedMovedSubtreeIndices: selectMarkedNodes(state),
       branchAnnotationValueKey: selectBranchAnnotationLabelKey(state),
       setBranchAnnotationLabelKey: selectSetBranchAnnotationLabelKey(state),
-      treeControllers: selectTreeControllers(state),
+      treeController: selectTreeController(state),
     }))
   );
   const windowRangeOptions = useMemo(
@@ -320,11 +320,9 @@ const AnalyticsDashboardBody = () => {
   const handleBranchValueSelectionChange = React.useCallback(
     async (valueKey: string) => {
       setBranchAnnotationLabelKey(valueKey);
-      for (const controller of treeControllers) {
-        await controller.renderAllElements();
-      }
+      await treeController?.renderAllElements();
     },
-    [setBranchAnnotationLabelKey, treeControllers]
+    [setBranchAnnotationLabelKey, treeController]
   );
 
   const handleExportRecurrenceCsv = () => {

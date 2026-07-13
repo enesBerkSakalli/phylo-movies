@@ -19,14 +19,14 @@ import {
   selectFrameIndex,
   selectMsaRowOrder,
   selectSetMsaRowOrder,
-  selectTreeControllers,
+  selectTreeController,
   useAppStore,
 } from '../../state/phyloStore/store.js';
 import { MSARegionOverrides, MSAViewActions } from './controls';
 
 export function MSAControls() {
   const { processedData, showLetters, setShowLetters, colorScheme, setColorScheme } = useMSA();
-  const treeControllers = useAppStore(selectTreeControllers);
+  const treeController = useAppStore(selectTreeController);
   const currentTree = useAppStore(selectCurrentTree);
   const frameIndex = useAppStore(selectFrameIndex);
   const msaRowOrder = useAppStore(selectMsaRowOrder);
@@ -34,11 +34,10 @@ export function MSAControls() {
   const clearMsaRowOrder = useAppStore(selectClearMsaRowOrder);
 
   const handleMatchTreeOrder = () => {
-    const controller = treeControllers[0];
-    if (!controller) return;
+    if (!treeController) return;
     if (!currentTree) return;
 
-    const layout = controller.calculateLayout(currentTree, { treeIndex: frameIndex });
+    const layout = treeController.calculateLayout(currentTree, { treeIndex: frameIndex });
     if (!Array.isArray(layout?.leaves)) return;
 
     const leaves = [...layout.leaves].sort((a, b) => (a.angle ?? 0) - (b.angle ?? 0));
@@ -62,7 +61,7 @@ export function MSAControls() {
     clearMsaRowOrder();
   };
 
-  const canMatchTreeOrder = Boolean(treeControllers[0] && currentTree);
+  const canMatchTreeOrder = Boolean(treeController && currentTree);
   const canResetOrder = Array.isArray(msaRowOrder) && msaRowOrder.length > 0;
 
   return (

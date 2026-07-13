@@ -34,13 +34,11 @@ export class LayerManager {
    * @returns {Array} Array of deck.gl layers
    */
   createTreeLayers(data) {
-    const { nodes, links, labels, extensions = [], connectors = [], interpolationTime } = data;
+    const { nodes, links, labels, extensions = [], connectors = [] } = data;
     const storeState = useAppStore.getState();
 
-    // Merge interpolationTime from data if present (for animations)
     const state = {
       ...storeState,
-      interpolationTime: interpolationTime ?? storeState.interpolationTime ?? 0,
       metricScale: Number.isFinite(data?.metricScale) ? data.metricScale : 1,
       zoom: data?.zoom ?? storeState.viewState?.zoom, // Prefer zoom from data/overrides, fallback to store
     };

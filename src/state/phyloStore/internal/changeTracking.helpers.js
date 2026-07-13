@@ -56,13 +56,13 @@ export function calculateChangePreviews(state, indexOverride = null) {
   return { upcoming, completed };
 }
 
-export function renderTreeControllers(state) {
+export function renderTreeController(state) {
   if (state.playing) return;
 
-  state.treeControllers.forEach((controller) => {
-    const render = controller.scheduleRenderAllElements ?? controller.renderAllElements;
-    render.call(controller);
-  });
+  const controller = state.treeController;
+  if (!controller) return;
+  const render = controller.scheduleRenderAllElements ?? controller.renderAllElements;
+  render.call(controller);
 }
 
 export function toManualMarkedSets(nodes) {
