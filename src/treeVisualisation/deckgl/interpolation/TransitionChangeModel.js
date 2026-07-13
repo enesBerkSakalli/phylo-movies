@@ -15,28 +15,33 @@ export function buildTransitionChangeModel(dataFrom, dataTo, options = {}) {
   const zeroEpsilon = Number.isFinite(options.zeroEpsilon)
     ? Math.max(0, options.zeroEpsilon)
     : DEFAULT_ZERO_EPSILON;
-  const fromLinks = createLinkMap(dataFrom?.links);
-  const toLinks = createLinkMap(dataTo?.links);
+  const fromLinks = createLinkInterpolationMap(dataFrom?.links);
+  const toLinks = createLinkInterpolationMap(dataTo?.links);
   const linkChanges = new Map();
 
   let hasLifecycleChanges = false;
 
-  for (const [id, fromLink] of fromLinks) {
-    const changed = createLinkChange(id, fromLink, toLinks.get(id) || null, zeroEpsilon);
+  for (const [splitKey, fromLink] of fromLinks) {
+    const changed = createLinkChange(
+      splitKey,
+      fromLink,
+      toLinks.get(splitKey) || null,
+      zeroEpsilon
+    );
     if (changed.lifecycle !== LINK_LIFECYCLES.UNCHANGED) {
       hasLifecycleChanges = true;
     }
-    linkChanges.set(id, changed);
+    linkChanges.set(splitKey, changed);
   }
 
-  for (const [id, toLink] of toLinks) {
-    if (fromLinks.has(id)) continue;
+  for (const [splitKey, toLink] of toLinks) {
+    if (fromLinks.has(splitKey)) continue;
 
-    const changed = createLinkChange(id, null, toLink, zeroEpsilon);
+    const changed = createLinkChange(splitKey, null, toLink, zeroEpsilon);
     if (changed.lifecycle !== LINK_LIFECYCLES.UNCHANGED) {
       hasLifecycleChanges = true;
     }
-    linkChanges.set(id, changed);
+    linkChanges.set(splitKey, changed);
   }
 
   const result = {
@@ -44,7 +49,7 @@ export function buildTransitionChangeModel(dataFrom, dataTo, options = {}) {
     linkChanges,
     hasLifecycleChanges,
     getLinkChange(linkOrKey) {
-      return linkChanges.get(resolveLinkKey(linkOrKey)) || null;
+      return linkChanges.get(getLinkInterpolationKey(linkOrKey)) || null;
     },
     getLinkLifecycle(linkOrKey) {
       return this.getLinkChange(linkOrKey)?.lifecycle || LINK_LIFECYCLES.UNCHANGED;
@@ -116,26 +121,23 @@ function iterateLinkChanges(transitionChangeModel) {
   return changes instanceof Map ? changes.values() : [];
 }
 
-function createLinkMap(links) {
+export function createLinkInterpolationMap(links) {
   const map = new Map();
   if (!Array.isArray(links)) return map;
 
   for (const link of links) {
-    const key = resolveLinkKey(link);
+    const key = getLinkInterpolationKey(link);
     if (key) map.set(key, link);
   }
   return map;
 }
 
-function createLinkChange(id, fromLink, toLink, zeroEpsilon) {
+function createLinkChange(splitKey, fromLink, toLink, zeroEpsilon) {
   const fromLength = getVisibleBranchLength(fromLink);
   const toLength = getVisibleBranchLength(toLink);
   const lifecycle = classifyLinkLifecycle(fromLink, toLink, fromLength, toLength, zeroEpsilon);
-  const splitKey =
-    toLink?.splitKey || fromLink?.splitKey || getSplitKey(toLink || fromLink) || id;
 
   return {
-    id,
     splitKey,
     lifecycle,
     fromLink,
@@ -158,9 +160,9 @@ function classifyLinkLifecycle(fromLink, toLink, fromLength, toLength, zeroEpsil
   return LINK_LIFECYCLES.UNCHANGED;
 }
 
-function resolveLinkKey(linkOrKey) {
+export function getLinkInterpolationKey(linkOrKey) {
   if (typeof linkOrKey === 'string') return linkOrKey;
-  return linkOrKey?.id || linkOrKey?.splitKey || getSplitKey(linkOrKey) || null;
+  return linkOrKey?.splitKey || getSplitKey(linkOrKey) || linkOrKey?.id || null;
 }
 
 function clamp01(value) {

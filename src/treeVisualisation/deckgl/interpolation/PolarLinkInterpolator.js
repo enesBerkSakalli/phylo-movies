@@ -44,22 +44,22 @@ export class PolarLinkInterpolator {
     const incomingLifecycleEntryByTarget = new Map();
     const resolvedEntries = new Map();
     const resolvingEntries = new Set();
-    const processedFromIds = new Set();
+    const processedFromKeys = new Set();
 
-    const addEntry = (id, fromLink, toLink, fallbackLifecycle, flags = {}) => {
+    const addEntry = (matchKey, fromLink, toLink, fallbackLifecycle, flags = {}) => {
       const link = toLink || fromLink;
-      const change = model.getLinkChange(link) || model.getLinkChange(id);
+      const change = model.getLinkChange(link) || model.getLinkChange(matchKey);
       const lifecycle = change?.lifecycle || fallbackLifecycle;
       const clock = getLifecycleClock(lifecycle, clocks, timeFactor);
       const lengthScale = getLifecycleLengthScale(lifecycle, clock, timeFactor);
       const entry = {
-        id,
+        matchKey,
         fromLink,
         toLink,
         lifecycle,
         clock,
         lengthScale,
-        velocityEntry: velocityMap?.get(id) ?? null,
+        velocityEntry: velocityMap?.get(matchKey) ?? null,
         change,
         ...flags,
       };
@@ -74,35 +74,35 @@ export class PolarLinkInterpolator {
       return entry;
     };
 
-    for (const [id, toLink] of toMap) {
-      const fromLink = fromMap.get(id);
+    for (const [matchKey, toLink] of toMap) {
+      const fromLink = fromMap.get(matchKey);
 
       if (fromLink) {
-        processedFromIds.add(id);
-        addEntry(id, fromLink, toLink, LINK_LIFECYCLES.UNCHANGED);
+        processedFromKeys.add(matchKey);
+        addEntry(matchKey, fromLink, toLink, LINK_LIFECYCLES.UNCHANGED);
       } else {
-        addEntry(id, null, toLink, LINK_LIFECYCLES.ENTERING, { isEntering: true });
+        addEntry(matchKey, null, toLink, LINK_LIFECYCLES.ENTERING, { isEntering: true });
       }
     }
 
-    for (const [id, fromLink] of fromMap) {
-      if (processedFromIds.has(id)) continue;
+    for (const [matchKey, fromLink] of fromMap) {
+      if (processedFromKeys.has(matchKey)) continue;
 
-      addEntry(id, fromLink, null, LINK_LIFECYCLES.EXITING, { isExiting: true });
+      addEntry(matchKey, fromLink, null, LINK_LIFECYCLES.EXITING, { isExiting: true });
     }
 
     const resolveEntry = (entry) => {
-      if (resolvedEntries.has(entry.id)) return resolvedEntries.get(entry.id);
-      if (resolvingEntries.has(entry.id)) {
+      if (resolvedEntries.has(entry.matchKey)) return resolvedEntries.get(entry.matchKey);
+      if (resolvingEntries.has(entry.matchKey)) {
         return this._computeLifecycleEntry(entry, timeFactor, options);
       }
 
-      resolvingEntries.add(entry.id);
+      resolvingEntries.add(entry.matchKey);
       const sourceId = linkEndpointNodeId(entry, 'source');
       const parentEntry = sourceId ? incomingLifecycleEntryByTarget.get(sourceId) : null;
       const parentDatum =
         parentEntry &&
-        parentEntry.id !== entry.id &&
+        parentEntry.matchKey !== entry.matchKey &&
         shouldAttachLifecycleEndpoints(parentEntry.lifecycle, entry.lifecycle)
           ? resolveEntry(parentEntry)
           : null;
@@ -112,8 +112,8 @@ export class PolarLinkInterpolator {
           ? { sourcePositionOverride: parentDatum.targetPosition }
           : {}),
       });
-      resolvingEntries.delete(entry.id);
-      resolvedEntries.set(entry.id, computed);
+      resolvingEntries.delete(entry.matchKey);
+      resolvedEntries.set(entry.matchKey, computed);
       return computed;
     };
 

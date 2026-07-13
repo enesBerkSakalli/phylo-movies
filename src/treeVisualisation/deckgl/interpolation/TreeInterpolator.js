@@ -11,7 +11,10 @@ import {
   getGlobalAngularMaxAngle,
 } from './VelocityNormalizer.js';
 import { ANIMATION_STAGES } from './stages/animationStageDetector.js';
-import { LINK_LIFECYCLES } from './TransitionChangeModel.js';
+import {
+  LINK_LIFECYCLES,
+  createLinkInterpolationMap,
+} from './TransitionChangeModel.js';
 import { measureFrameStep } from '../../performance/frameInstrumentation.js';
 import { Z_NODE } from '../constants/zOffsets.js';
 import { pointsMatch } from './pointUtils.js';
@@ -34,6 +37,7 @@ export class TreeInterpolator {
       nodeInterpolator: this.nodeInterpolator,
     });
     this._elementMapCache = new WeakMap();
+    this._linkMapCache = new WeakMap();
     this._polarAngleMapCache = new WeakMap();
     this._angularDistanceCache = new WeakMap();
     this._angularDistanceMaxCache = new WeakMap();
@@ -73,8 +77,8 @@ export class TreeInterpolator {
     const nodeToMap = this._getElementMap(dataTo.nodes);
     const labelFromMap = this._getElementMap(dataFrom.labels);
     const labelToMap = this._getElementMap(dataTo.labels);
-    const linkFromMap = this._getElementMap(dataFrom.links);
-    const linkToMap = this._getElementMap(dataTo.links);
+    const linkFromMap = this._getLinkMap(dataFrom.links);
+    const linkToMap = this._getLinkMap(dataTo.links);
     const extFromMap = this._getElementMap(dataFrom.extensions);
     const extToMap = this._getElementMap(dataTo.extensions);
 
@@ -228,6 +232,15 @@ export class TreeInterpolator {
     return map;
   }
 
+  _getLinkMap(links) {
+    const cached = this._linkMapCache.get(links);
+    if (cached) return cached;
+
+    const map = createLinkInterpolationMap(links);
+    this._linkMapCache.set(links, map);
+    return map;
+  }
+
   _getGlobalAngularDistanceMax(angularDistanceMaps) {
     const { nodes, labels, links, extensions } = angularDistanceMaps || {};
     if (!nodes || !labels || !links || !extensions) {
@@ -320,6 +333,7 @@ export class TreeInterpolator {
     this.labelInterpolator?.resetCache?.();
     this.extensionInterpolator?.resetCache?.();
     this._elementMapCache = new WeakMap();
+    this._linkMapCache = new WeakMap();
     this._polarAngleMapCache = new WeakMap();
     this._angularDistanceCache = new WeakMap();
     this._angularDistanceMaxCache = new WeakMap();

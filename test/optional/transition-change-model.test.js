@@ -146,7 +146,7 @@ describe('TransitionChangeModel', () => {
     expect(model.hasLifecycleChanges).to.equal(true);
   });
 
-  it('treats a same target split with a different source as an edge replacement', () => {
+  it('matches the same target split across endpoint-specific edge ids', () => {
     const fromLink = {
       ...link('link-node-parent-a->node-child', 10, 20),
       splitKey: 'child-split',
@@ -162,13 +162,17 @@ describe('TransitionChangeModel', () => {
 
     const model = buildTransitionChangeModel(frame([fromLink]), frame([toLink]));
 
-    expect(model.getLinkLifecycle(fromLink)).to.equal('exiting');
-    expect(model.getLinkLifecycle(toLink)).to.equal('entering');
-    expect(model.linkChanges.size).to.equal(2);
-    expect(model.lifecycleSummary.counts.exiting).to.equal(1);
-    expect(model.lifecycleSummary.counts.entering).to.equal(1);
-    expect(model.linkChanges.get(fromLink.id).splitKey).to.equal('child-split');
-    expect(model.linkChanges.get(toLink.id).splitKey).to.equal('child-split');
+    expect(model.getLinkLifecycle(fromLink)).to.equal('unchanged');
+    expect(model.getLinkLifecycle(toLink)).to.equal('unchanged');
+    expect(model.linkChanges.size).to.equal(1);
+    expect(model.lifecycleSummary.counts.exiting).to.equal(0);
+    expect(model.lifecycleSummary.counts.entering).to.equal(0);
+    expect(model.lifecycleSummary.counts.unchanged).to.equal(1);
+    expect(model.linkChanges.get('child-split')).to.include({
+      splitKey: 'child-split',
+      fromLink,
+      toLink,
+    });
   });
 
   it('summarizes structural lifecycles separately from branch-length changes', () => {
@@ -644,7 +648,7 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     );
   });
 
-  it('anchors reparented target nodes to the entering replacement edge', () => {
+  it('renders a reparented split as one branch', () => {
     const oldParentId = 'node-parent-a';
     const newParentId = 'node-parent-b';
     const childId = 'node-child';
@@ -670,20 +674,21 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     );
     const transitionChangeModel = buildTransitionChangeModel(from, to);
 
-    const result = new TreeInterpolator().interpolateTreeData(from, to, 0.5, {
-      transitionChangeModel,
-    });
-    const linkById = new Map(result.links.map((item) => [item.id, item]));
-    const childNode = result.nodes.find((item) => item.id === childId);
-    const exiting = linkById.get(exitingOldEdge.id);
-    const entering = linkById.get(enteringNewEdge.id);
+    for (const options of [{}, { transitionChangeModel }]) {
+      const result = new TreeInterpolator().interpolateTreeData(from, to, 0.5, options);
+      const childNode = result.nodes.find((item) => item.id === childId);
+      const renderedLink = result.links[0];
 
-    expect(exiting.lifecycle).to.equal('exiting');
-    expect(entering.lifecycle).to.equal('entering');
-    expect(lastPathRadius(exiting.path)).to.be.closeTo(10, 0.001);
-    expect(lastPathRadius(entering.path)).to.be.closeTo(110, 0.001);
-    expect(childNode.position[0]).to.be.closeTo(entering.targetPosition[0], 0.001);
-    expect(childNode.position[0]).not.to.be.closeTo(exiting.targetPosition[0], 0.001);
+      expect(result.links).to.have.length(1);
+      expect(renderedLink.id).to.equal(enteringNewEdge.id);
+      expect(renderedLink.splitKey).to.equal('child-split');
+      expect(renderedLink.lifecycle).to.equal('unchanged');
+      expect(renderedLink.isEntering).to.not.equal(true);
+      expect(renderedLink.isExiting).to.not.equal(true);
+      expect(childNode.position[0]).to.be.closeTo(renderedLink.targetPosition[0], 0.001);
+      expect(childNode.position[1]).to.be.closeTo(renderedLink.targetPosition[1], 0.001);
+      expect(childNode.isEntering).to.not.equal(true);
+    }
   });
 
   it('keeps nested entering child branch sources attached to the growing parent branch', () => {

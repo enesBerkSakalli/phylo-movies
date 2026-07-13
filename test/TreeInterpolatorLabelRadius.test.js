@@ -317,20 +317,22 @@ describe('TreeInterpolator label radius smoothing', () => {
     expect(result.nodes[0]).toBe(alignedNode);
   });
 
-  it('reuses element lookup maps across frames for the same layout data', () => {
+  it('reuses element and link lookup maps across frames for the same layout data', () => {
     const interpolator = new TreeInterpolator();
-    const createMap = vi.spyOn(interpolator.elementMatcher, '_createElementMap');
     const fromData = treeData('from', 0);
     const toData = treeData('to', Math.PI / 4);
+    const fromNodeMap = interpolator._getElementMap(fromData.nodes);
+    const toNodeMap = interpolator._getElementMap(toData.nodes);
+    const fromLinkMap = interpolator._getLinkMap(fromData.links);
+    const toLinkMap = interpolator._getLinkMap(toData.links);
 
-    try {
-      interpolator.interpolateTreeData(fromData, toData, 0.25);
-      interpolator.interpolateTreeData(fromData, toData, 0.5);
+    interpolator.interpolateTreeData(fromData, toData, 0.25);
+    interpolator.interpolateTreeData(fromData, toData, 0.5);
 
-      expect(createMap).toHaveBeenCalledTimes(8);
-    } finally {
-      createMap.mockRestore();
-    }
+    expect(interpolator._getElementMap(fromData.nodes)).toBe(fromNodeMap);
+    expect(interpolator._getElementMap(toData.nodes)).toBe(toNodeMap);
+    expect(interpolator._getLinkMap(fromData.links)).toBe(fromLinkMap);
+    expect(interpolator._getLinkMap(toData.links)).toBe(toLinkMap);
   });
 
   it('reuses derived angle and distance maps for stable element maps', () => {
