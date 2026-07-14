@@ -1,0 +1,102 @@
+import { describe, it, expect } from 'vitest';
+import calculateScales, { getMaxScaleValue } from '../../../../src/domain/tree/scaleUtils.js';
+
+describe('scaleUtils', () => {
+  describe('calculateScales', () => {
+    it('calculates max depth for a single simple tree', () => {
+      // Depth: Root (0) -> Child (10) = 10
+      const tree = { length: 0, children: [{ length: 10 }] };
+      const result = calculateScales([tree], [0]);
+      expect(result).toHaveLength(1);
+      expect(result[0].value).toBe(10);
+      expect(result[0].index).toBe(0);
+    });
+
+    it('ignores the backend root branch length because the layout does not render it', () => {
+      const tree = { length: 1, children: [{ length: 10 }] };
+      const result = calculateScales([tree], [0]);
+      expect(result[0].value).toBe(10);
+    });
+
+    it('uses visual branch lengths because scale is display geometry', () => {
+      const tree = {
+        length: 1,
+        visualBranchLength: 100,
+        children: [{ length: 0.0001, visualBranchLength: 5 }],
+      };
+      const result = calculateScales([tree], [0]);
+      expect(result[0].value).toBe(5);
+    });
+
+    it('calculates max depth for a nested tree', () => {
+      // Depth: Root(0) -> A(5) -> B(3) = 8
+      // Depth: Root(0) -> C(2) = 2
+      // Max should be 8
+      const tree = {
+        length: 0,
+        children: [{ length: 5, children: [{ length: 3 }] }, { length: 2 }],
+      };
+      const result = calculateScales([tree], [0]);
+      expect(result[0].value).toBe(8);
+    });
+
+    it('handles multiple trees', () => {
+      const tree1 = { length: 0, children: [{ length: 10 }] };
+      const tree2 = { length: 0, children: [{ length: 20 }] };
+      const result = calculateScales([tree1, tree2], [0, 1]);
+      expect(result).toHaveLength(2);
+      expect(result[0].value).toBe(10);
+      expect(result[1].value).toBe(20);
+    });
+
+    it('calculates scale directly from compact tuple tree payloads', () => {
+      const compactTree = [0, 0, 0, null, [[5, 1, 1, null, [[3, 2, 2, null, []]]], [2, 3, 3, null, []]]];
+
+      const result = calculateScales([compactTree], [0]);
+
+      expect(result[0].value).toBe(8);
+    });
+
+    it('handles specific indices only', () => {
+      const list = [
+        { length: 0, children: [{ length: 10 }] },
+        { length: 0, children: [{ length: 20 }] },
+        { length: 0, children: [{ length: 30 }] },
+      ];
+      // Only calc for index 0 and 2
+      const result = calculateScales(list, [0, 2]);
+      expect(result).toHaveLength(2);
+      expect(result[0].value).toBe(10); // Index 0
+      expect(result[1].value).toBe(30); // Index 2
+      expect(result[1].index).toBe(2);
+    });
+
+    it('requires explicit input frame indices', () => {
+      const tree = { length: 0, children: [{ length: 10 }] };
+
+      expect(() => calculateScales([tree])).toThrow('inputFrameIndices');
+    });
+
+    it('clamps negative branch lengths without increasing exact zero branches', () => {
+      const tree = {
+        length: 0,
+        children: [{ length: -0.5 }, { length: 0 }],
+      };
+
+      const result = calculateScales([tree], [0]);
+
+      expect(result[0].value).toBe(0);
+    });
+  });
+
+  describe('getMaxScaleValue', () => {
+    it('returns the maximum value from a list of objects', () => {
+      const input = [{ value: 10 }, { value: 50 }, { value: 5 }];
+      expect(getMaxScaleValue(input)).toBe(50);
+    });
+
+    it('returns 1 for empty list (safe default)', () => {
+      expect(getMaxScaleValue([])).toBe(1);
+    });
+  });
+});

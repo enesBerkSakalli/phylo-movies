@@ -1,0 +1,183 @@
+import { describe, expect, it } from 'vitest';
+import {
+  createLayoutCacheKey,
+  createTransformCacheKey,
+  createUniformScalingCacheKey,
+} from '../../../../src/treeVisualisation/utils/layoutCacheKey.js';
+
+describe('layout cache key', () => {
+  const baseState = {
+    treeList: [{ id: 'tree-0' }],
+    datasetVersion: 1,
+    branchTransformation: 'none',
+    layoutAngleDegrees: 360,
+    layoutRotationDegrees: 0,
+    timelineFrames: [{ frame_index: 0, frame_type: 'input_tree', is_observed_input: true }],
+    styleConfig: { labelOffsets: { DEFAULT: 20, EXTENSION: 5 } },
+  };
+
+  const baseOptions = {
+    state: baseState,
+    treeIndex: 0,
+    width: 800,
+    height: 600,
+    maxGlobalScale: 12,
+  };
+
+  it('changes for each layout-affecting input', () => {
+    const baseKey = createLayoutCacheKey(baseOptions);
+
+    expect(
+      createLayoutCacheKey({ ...baseOptions, state: { ...baseState, datasetVersion: 2 } })
+    ).not.toBe(baseKey);
+    expect(createLayoutCacheKey({ ...baseOptions, treeIndex: 1 })).not.toBe(baseKey);
+    expect(
+      createLayoutCacheKey({ ...baseOptions, state: { ...baseState, branchTransformation: 'log' } })
+    ).not.toBe(baseKey);
+    expect(createLayoutCacheKey({ ...baseOptions, width: 900 })).not.toBe(baseKey);
+    expect(createLayoutCacheKey({ ...baseOptions, height: 700 })).not.toBe(baseKey);
+    expect(
+      createLayoutCacheKey({ ...baseOptions, state: { ...baseState, layoutAngleDegrees: 180 } })
+    ).not.toBe(baseKey);
+    expect(
+      createLayoutCacheKey({ ...baseOptions, state: { ...baseState, layoutRotationDegrees: 45 } })
+    ).not.toBe(baseKey);
+    expect(
+      createLayoutCacheKey({
+        ...baseOptions,
+        state: { ...baseState, layoutProjectionMode: 'hyperbolic' },
+      })
+    ).not.toBe(baseKey);
+    expect(
+      createLayoutCacheKey({
+        ...baseOptions,
+        state: { ...baseState, linkGeometryMode: 'straight' },
+      })
+    ).not.toBe(baseKey);
+    expect(
+      createLayoutCacheKey({
+        ...baseOptions,
+        state: { ...baseState, styleConfig: { labelOffsets: { DEFAULT: 30, EXTENSION: 5 } } },
+      })
+    ).not.toBe(baseKey);
+    expect(
+      createLayoutCacheKey({
+        ...baseOptions,
+        state: { ...baseState, styleConfig: { labelOffsets: { DEFAULT: 20, EXTENSION: 10 } } },
+      })
+    ).not.toBe(baseKey);
+    expect(createLayoutCacheKey({ ...baseOptions, maxGlobalScale: 20 })).not.toBe(baseKey);
+    expect(
+      createLayoutCacheKey({ ...baseOptions, state: { ...baseState, treeHydrationVersion: 1 } })
+    ).not.toBe(baseKey);
+  });
+
+  it('uses hyperbolic strength only when that mode changes geometry', () => {
+    const radialKey = createLayoutCacheKey({
+      ...baseOptions,
+      state: { ...baseState, layoutProjectionMode: 'radial', hyperbolicProjectionStrength: 0.2 },
+    });
+    const radialOtherStrengthKey = createLayoutCacheKey({
+      ...baseOptions,
+      state: { ...baseState, layoutProjectionMode: 'radial', hyperbolicProjectionStrength: 0.9 },
+    });
+    const walrusKey = createLayoutCacheKey({
+      ...baseOptions,
+      state: {
+        ...baseState,
+        layoutProjectionMode: 'walrus-3d',
+        hyperbolicProjectionStrength: 0.2,
+      },
+    });
+    const walrusOtherStrengthKey = createLayoutCacheKey({
+      ...baseOptions,
+      state: {
+        ...baseState,
+        layoutProjectionMode: 'walrus-3d',
+        hyperbolicProjectionStrength: 0.9,
+      },
+    });
+    const hyperbolicKey = createLayoutCacheKey({
+      ...baseOptions,
+      state: {
+        ...baseState,
+        layoutProjectionMode: 'hyperbolic',
+        hyperbolicProjectionStrength: 0.2,
+      },
+    });
+    const hyperbolicOtherStrengthKey = createLayoutCacheKey({
+      ...baseOptions,
+      state: {
+        ...baseState,
+        layoutProjectionMode: 'hyperbolic',
+        hyperbolicProjectionStrength: 0.9,
+      },
+    });
+
+    expect(radialOtherStrengthKey).toBe(radialKey);
+    expect(walrusOtherStrengthKey).toBe(walrusKey);
+    expect(hyperbolicOtherStrengthKey).not.toBe(hyperbolicKey);
+  });
+
+  it('keeps visual-only label size out of layout cache identity', () => {
+    const baseKey = createLayoutCacheKey({
+      ...baseOptions,
+      state: { ...baseState, fontSize: '0.8em' },
+    });
+    const largeLabelKey = createLayoutCacheKey({
+      ...baseOptions,
+      state: { ...baseState, fontSize: '8em' },
+    });
+
+    expect(largeLabelKey).toBe(baseKey);
+    expect(largeLabelKey).not.toContain('fontSize=');
+  });
+
+  it('distinguishes intentional zero scale from missing scale', () => {
+    const zeroScaleKey = createLayoutCacheKey({ ...baseOptions, maxGlobalScale: 0 });
+    const missingScaleKey = createLayoutCacheKey({ ...baseOptions, maxGlobalScale: null });
+
+    expect(zeroScaleKey).toContain('maxGlobalScale=0');
+    expect(missingScaleKey).toContain('maxGlobalScale=none');
+    expect(zeroScaleKey).not.toBe(missingScaleKey);
+  });
+
+  it('makes transform cache identity hydration-aware without changing uniform scaling identity', () => {
+    const baseTransformKey = createTransformCacheKey({ state: baseState });
+    const hydratedState = { ...baseState, treeHydrationVersion: 1 };
+
+    expect(createTransformCacheKey({ state: hydratedState })).not.toBe(baseTransformKey);
+    expect(createUniformScalingCacheKey({ state: hydratedState })).toBe(
+      createUniformScalingCacheKey({ state: baseState })
+    );
+  });
+
+  it('keeps moving-subtree highlights out of render-affecting layout cache keys', () => {
+    const treeList = [{ id: 'tree-0' }, { id: 'tree-1' }];
+    const transitionState = {
+      ...baseState,
+      treeList,
+      subtreeHighlightTracking: [[[5], [3]], null],
+    };
+    const key = createLayoutCacheKey({
+      state: transitionState,
+      treeIndex: 1,
+      width: 800,
+      height: 600,
+      maxGlobalScale: 12,
+    });
+    const keyWithoutTracking = createLayoutCacheKey({
+      state: {
+        ...transitionState,
+        subtreeHighlightTracking: null,
+      },
+      treeIndex: 1,
+      width: 800,
+      height: 600,
+      maxGlobalScale: 12,
+    });
+
+    expect(key).toBe(keyWithoutTracking);
+    expect(key).not.toContain('rotationAlignmentExcludeTaxa');
+  });
+});

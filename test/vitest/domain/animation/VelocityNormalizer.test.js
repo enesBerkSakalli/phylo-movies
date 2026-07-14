@@ -1,0 +1,170 @@
+import { describe, it, expect } from 'vitest';
+import {
+  computeAngularDistance,
+  computeAngularDistances,
+  getGlobalAngularMaxAngle,
+  buildGlobalVelocityMaps,
+} from '../../../../src/treeVisualisation/deckgl/interpolation/VelocityNormalizer.js';
+import { PolarNodeInterpolator } from '../../../../src/treeVisualisation/deckgl/interpolation/nodes/PolarNodeInterpolator.js';
+
+describe('VelocityNormalizer', () => {
+  describe('computeAngularDistance', () => {
+    it('returns 0 for null/missing nodes', () => {
+      expect(computeAngularDistance(null, null)).toBe(0);
+      expect(computeAngularDistance(null, { angle: 1 })).toBe(0);
+    });
+
+    it('returns 0 for two identical nodes (no angular movement)', () => {
+      const node = { angle: 1.0 };
+      expect(computeAngularDistance(node, node)).toBeCloseTo(0, 10);
+    });
+
+    it('returns correct angular distance for simple case', () => {
+      const from = { angle: Math.PI / 4 };
+      const to = { angle: (3 * Math.PI) / 4 };
+      expect(computeAngularDistance(from, to)).toBeCloseTo(Math.PI / 2, 10);
+    });
+
+    it('does not treat starting on the root angle as crossing through it', () => {
+      const from = { angle: 0 };
+      const to = { angle: Math.PI / 4 };
+      expect(computeAngularDistance(from, to)).toBeCloseTo(Math.PI / 4, 10);
+    });
+
+    it('larger angular change produces larger distance', () => {
+      const short = computeAngularDistance({ angle: Math.PI / 4 }, { angle: Math.PI / 4 + 0.5 });
+      const long = computeAngularDistance({ angle: Math.PI / 4 }, { angle: Math.PI / 4 + 2.0 });
+      expect(long).toBeGreaterThan(short);
+    });
+
+    it('ignores radius differences (angle-only)', () => {
+      const dist1 = computeAngularDistance(
+        { angle: 1.0, polarPosition: 50 },
+        { angle: 2.0, polarPosition: 50 }
+      );
+      const dist2 = computeAngularDistance(
+        { angle: 1.0, polarPosition: 200 },
+        { angle: 2.0, polarPosition: 500 }
+      );
+      expect(dist1).toBeCloseTo(dist2, 10);
+    });
+  });
+
+  describe('computeAngularDistances', () => {
+    function makeNode(id, angle) {
+      return { id, angle };
+    }
+    function toMap(nodes) {
+      return new Map(nodes.map((n) => [n.id, n]));
+    }
+
+    it('returns distances only for matched pairs', () => {
+      const from = toMap([makeNode('A', 1.0), makeNode('C', 0.5)]);
+      const to = toMap([makeNode('A', 2.0), makeNode('B', 3.0)]);
+      const distances = computeAngularDistances(from, to);
+      expect(distances.size).toBe(1);
+      expect(distances.has('A')).toBe(true);
+      expect(distances.has('B')).toBe(false);
+    });
+  });
+
+  describe('buildGlobalVelocityMaps', () => {
+    it('computes the global max independently from velocity-map construction', () => {
+      const globalMaxAngle = getGlobalAngularMaxAngle({
+        nodes: new Map([['n1', 0.25]]),
+        labels: new Map([['l1', 1.5]]),
+        links: new Map([['link-1', 0.75]]),
+      });
+
+      expect(globalMaxAngle).toBeCloseTo(1.5, 10);
+    });
+
+    it('uses a precomputed global max angle when supplied', () => {
+      const { velocityMaps, globalMaxAngle } = buildGlobalVelocityMaps(
+        { nodes: new Map([['n1', 0.5]]) },
+        0.25,
+        { globalMaxAngle: 2 }
+      );
+
+      expect(globalMaxAngle).toBe(2);
+      expect(velocityMaps.nodes.get('n1').angularT).toBe(1);
+    });
+
+    it('uses the global max angular displacement across element types', () => {
+      const nodeAngular = new Map([
+        ['n1', 0.5],
+        ['n2', 1.0],
+      ]);
+      const labelAngular = new Map([
+        ['l1', 2.0],
+        ['l2', 0.3],
+      ]);
+
+      const { velocityMaps, globalMaxAngle } = buildGlobalVelocityMaps(
+        { nodes: nodeAngular, labels: labelAngular },
+        0.5
+      );
+
+      expect(globalMaxAngle).toBeCloseTo(2.0, 10);
+      expect(velocityMaps.labels.get('l1').angularT).toBeCloseTo(0.5, 5);
+      expect(velocityMaps.nodes.get('n1').angularT).toBe(1);
+      expect(velocityMaps.nodes.get('n2').angularT).toBe(1);
+    });
+
+    it('correctly normalises when global max is in a different type', () => {
+      const nodeAngular = new Map([['n1', 0.2]]);
+      const extAngular = new Map([['e1', 1.0]]);
+
+      const { velocityMaps } = buildGlobalVelocityMaps(
+        { nodes: nodeAngular, extensions: extAngular },
+        0.4
+      );
+
+      expect(velocityMaps.nodes.get('n1').angularT).toBe(1);
+      expect(velocityMaps.extensions.get('e1').angularT).toBeCloseTo(0.4, 5);
+    });
+
+    it('handles empty distance maps gracefully', () => {
+      const { velocityMaps, globalMaxAngle } = buildGlobalVelocityMaps(
+        { nodes: new Map(), labels: new Map() },
+        0.5
+      );
+      expect(globalMaxAngle).toBe(0);
+      expect(velocityMaps.nodes.size).toBe(0);
+      expect(velocityMaps.labels.size).toBe(0);
+    });
+
+    it('elements with zero angular distance get t passthrough', () => {
+      const { velocityMaps } = buildGlobalVelocityMaps(
+        {
+          nodes: new Map([
+            ['n1', 1.0],
+            ['n2', 0],
+          ]),
+        },
+        0.6
+      );
+
+      const n1 = velocityMaps.nodes.get('n1');
+      const n2 = velocityMaps.nodes.get('n2');
+
+      expect(n1.angularT).toBeCloseTo(0.6, 5);
+      expect(n2.angularT).toBeCloseTo(0.6, 5);
+    });
+  });
+
+  describe('angle-only interpolation contract', () => {
+    it('uses angularT for angle while radius follows the base eased time', () => {
+      const interpolator = new PolarNodeInterpolator();
+      const fromNode = { angle: Math.PI / 4, polarPosition: 50 };
+      const toNode = { angle: (3 * Math.PI) / 4, polarPosition: 150 };
+
+      const position = interpolator.interpolatePosition(fromNode, toNode, 0.25, { angularT: 0.5 });
+      const interpolatedRadius = Math.hypot(position[0], position[1]);
+      const interpolatedAngle = Math.atan2(position[1], position[0]);
+
+      expect(interpolatedRadius).toBeCloseTo(75, 5);
+      expect(interpolatedAngle).toBeCloseTo(Math.PI / 2, 5);
+    });
+  });
+});

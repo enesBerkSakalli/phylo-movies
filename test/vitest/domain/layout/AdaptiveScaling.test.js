@@ -1,0 +1,408 @@
+import { describe, it, expect } from 'vitest';
+import { LayerStyles } from '../../../../src/treeVisualisation/deckgl/layers/LayerStyles.js';
+import { getLinkColor } from '../../../../src/treeVisualisation/deckgl/layers/styles/links/inner/linkInnerStyles.js';
+import { getLinkWidth } from '../../../../src/treeVisualisation/deckgl/layers/styles/links/linkWidthStyles.js';
+import { getLinkOutlineWidth } from '../../../../src/treeVisualisation/deckgl/layers/styles/links/outline/linkOutlineStyles.js';
+import {
+  getNodeColor,
+  getNodeBorderColor,
+} from '../../../../src/treeVisualisation/deckgl/layers/styles/nodes/nodeStyles.js';
+import { getNodeRadius } from '../../../../src/treeVisualisation/deckgl/layers/styles/nodes/nodeRadiusStyles.js';
+import { getLabelSize } from '../../../../src/treeVisualisation/deckgl/layers/styles/labels/labelStyles.js';
+import {
+  getExtensionColor,
+  getExtensionWidth,
+} from '../../../../src/treeVisualisation/deckgl/layers/styles/extensionStyles.js';
+import { MIN_READABLE_METRIC_SCALE } from '../../../../src/treeVisualisation/deckgl/layers/styles/readableMetricScale.js';
+
+describe('Adaptive Visual Scaling', () => {
+  // Mock helpers to simulate user configuration
+  const helpers = {
+    getBaseStrokeWidth: () => 2.0, // User preference
+    getBaseOpacity: (opacity = 1) => Math.round((opacity ?? 1) * 255),
+    nodeSize: 1.0, // User preference multiplier
+  };
+
+  // Mock color manager (minimal)
+  const mockColorManager = {
+    isCompletedChangeEdge: () => false,
+    isUpcomingChangeEdge: () => false,
+    isPivotEdge: () => false,
+    isNodeCompletedChangeEdge: () => false,
+    isNodePivotEdge: () => false, // Added missing method
+    isNodeSourceEdge: () => false,
+    isNodeDestinationEdge: () => false,
+    getBranchColorForInnerLine: () => '#000000',
+    getNodeBaseColor: () => '#000', // Needed for isNodeVisuallyHighlighted
+    getNodeColor: () => '#000', // Needed for isNodeVisuallyHighlighted
+  };
+
+  describe('Render State Scaling', () => {
+    it('should cache metricScale from the layer render state', () => {
+      const layerStyles = new LayerStyles();
+      const cached = layerStyles.getCachedState({
+        metricScale: 0.25,
+        leafNamesByIndex: [],
+      });
+
+      expect(cached.metricScale).toBeCloseTo(0.25);
+      expect(cached.readableMetricScale).toBeCloseTo(MIN_READABLE_METRIC_SCALE);
+      layerStyles.destroy();
+    });
+
+    it('should leave visual scale unchanged for sparse trees', () => {
+      const layerStyles = new LayerStyles();
+      const cached = layerStyles.getCachedState({
+        leafNamesByIndex: new Array(25),
+      });
+
+      expect(cached.visualScale).toBeCloseTo(1);
+      layerStyles.destroy();
+    });
+
+    it('should reduce visual scale for dense trees', () => {
+      const layerStyles = new LayerStyles();
+      const cached = layerStyles.getCachedState({
+        leafNamesByIndex: new Array(200),
+      });
+
+      expect(cached.visualScale).toBeCloseTo(Math.pow(50 / 200, 0.6));
+      layerStyles.destroy();
+    });
+  });
+
+  describe('Link Width Scaling', () => {
+    it('should scale width by metricScale', () => {
+      const cached = {
+        colorManager: mockColorManager,
+        upcomingChangesEnabled: false,
+        densityScale: 1.0,
+        metricScale: 0.5, // Simulated collapsed tree (50% scale)
+      };
+      const link = {
+        split_indices: [],
+      };
+
+      // Base width is 2.0
+      // With metricScale 0.5, expected result is 1.0
+      const width = getLinkWidth(link, cached, helpers);
+      expect(width).toBeCloseTo(1.0);
+    });
+
+    it('should respect user configuration as base', () => {
+      const customHelpers = { ...helpers, getBaseStrokeWidth: () => 4.0 };
+      const cached = {
+        colorManager: mockColorManager,
+        metricScale: 0.5,
+      };
+      const link = { split_indices: [] };
+      const width = getLinkWidth(link, cached, customHelpers);
+      // Base 4.0 * 0.5 = 2.0
+      expect(width).toBeCloseTo(2.0);
+    });
+
+    it('should use default metricScale of 1.0 if missing', () => {
+      const cached = { colorManager: mockColorManager }; // No metricScale
+      const link = { split_indices: [] };
+      const width = getLinkWidth(link, cached, helpers);
+      expect(width).toBeCloseTo(2.0);
+    });
+
+    it('should scale fallback width when no color manager is available', () => {
+      const cached = { metricScale: 0.5 };
+      const link = { split_indices: [] };
+      const width = getLinkWidth(link, cached, helpers);
+      expect(width).toBeCloseTo(1.0);
+    });
+
+    it('should scale highlighted outline width by metricScale', () => {
+      const cached = {
+        colorManager: {
+          ...mockColorManager,
+          isCompletedChangeEdge: () => true,
+        },
+        upcomingChangesEnabled: true,
+        metricScale: 0.5,
+      };
+      const link = { split_indices: [] };
+      const width = getLinkOutlineWidth(link, cached, helpers);
+      expect(width).toBeCloseTo(5.0);
+    });
+
+    it('should enforce a readable metric-scale floor before deck.gl pixel clamping', () => {
+      const cached = {
+        colorManager: mockColorManager,
+        metricScale: 0.01,
+      };
+      const link = { split_indices: [] };
+
+      const width = getLinkWidth(link, cached, helpers);
+      expect(width).toBeCloseTo(2.0 * MIN_READABLE_METRIC_SCALE);
+    });
+
+    it('should reduce unhighlighted link width for dense trees', () => {
+      const cached = {
+        colorManager: mockColorManager,
+        metricScale: 1,
+        visualScale: 0.3,
+      };
+      const link = { split_indices: [] };
+
+      const width = getLinkWidth(link, cached, helpers);
+      expect(width).toBeCloseTo(0.6);
+    });
+
+    it('should fade unhighlighted base links for dense trees without changing deck.gl floors', () => {
+      const cached = {
+        colorManager: mockColorManager,
+        visualScale: 0.3,
+      };
+      const link = {
+        opacity: 1,
+        split_indices: [],
+      };
+
+      const color = [...getLinkColor(link, cached, helpers)];
+
+      expect(color).toEqual([0, 0, 0, Math.round(255 * 0.45)]);
+    });
+  });
+
+  describe('Node Radius Scaling', () => {
+    it('should scale radius by metricScale', () => {
+      const cached = {
+        colorManager: mockColorManager,
+        metricScale: 0.5,
+      };
+      // Mock node with normalized split metadata
+      const node = {
+        radius: 5,
+        data: { split_indices: [] },
+      };
+
+      // Base radius = 5 * nodeSize(1) = 5
+      // With metricScale 0.5 -> 2.5
+      const radius = getNodeRadius(node, 3, cached, helpers);
+      expect(radius).toBeCloseTo(2.5);
+    });
+
+    it('should respect user configuration (nodeSize)', () => {
+      const customHelpers = { ...helpers, nodeSize: 2.0 }; // User wants 2x nodes
+      const cached = {
+        colorManager: mockColorManager,
+        metricScale: 0.5,
+      };
+      const node = {
+        radius: 5,
+        data: { split_indices: [] },
+      };
+
+      // Base = 5 * 2 = 10
+      // Scaled = 10 * 0.5 = 5
+      const radius = getNodeRadius(node, 3, cached, customHelpers);
+      expect(radius).toBeCloseTo(5.0);
+    });
+
+    it('should use default metricScale of 1.0 if missing', () => {
+      const cached = { colorManager: mockColorManager };
+      const node = {
+        radius: 5,
+        data: { split_indices: [] },
+      };
+      const radius = getNodeRadius(node, 3, cached, helpers);
+      expect(radius).toBeCloseTo(5.0);
+    });
+
+    it('should scale highlighted radius by metricScale', () => {
+      const cached = {
+        colorManager: {
+          ...mockColorManager,
+          isNodeCompletedChangeEdge: () => true,
+        },
+        upcomingChangesEnabled: true,
+        densityScale: 1.0,
+        metricScale: 0.5,
+      };
+      const node = {
+        radius: 5,
+        data: { split_indices: [] },
+      };
+      const radius = getNodeRadius(node, 3, cached, helpers);
+      expect(radius).toBeCloseTo(3.75);
+    });
+
+    it('should highlight entering nodes without shrinking them', () => {
+      const cached = {
+        colorManager: mockColorManager,
+        metricScale: 1,
+      };
+      const node = {
+        isEntering: true,
+        isLeaf: true,
+        radius: 5,
+        opacity: 1,
+        split_indices: [3],
+      };
+
+      const radius = getNodeRadius(node, 3, cached, helpers);
+      const fillColor = [...getNodeColor(node, cached, helpers)];
+      const borderColor = [...getNodeBorderColor(node, cached, helpers)];
+
+      expect(radius).toBeCloseTo(6.75);
+      expect(fillColor).toEqual([34, 197, 94, 255]);
+      expect(borderColor).toEqual([24, 138, 66, 255]);
+    });
+
+    it('should let entering node highlight override explicit black node color', () => {
+      const cached = {
+        colorManager: mockColorManager,
+        metricScale: 1,
+      };
+      const node = {
+        color: [0, 0, 0],
+        isEntering: true,
+        isLeaf: true,
+        radius: 5,
+        opacity: 1,
+        split_indices: [3],
+      };
+
+      const fillColor = [...getNodeColor(node, cached, helpers)];
+
+      expect(fillColor).toEqual([34, 197, 94, 255]);
+    });
+
+    it('should apply adaptive visual scale before metric scale', () => {
+      const cached = {
+        colorManager: mockColorManager,
+        metricScale: 0.5,
+        visualScale: 0.5,
+      };
+      const node = {
+        radius: 5,
+        data: { split_indices: [] },
+      };
+
+      const radius = getNodeRadius(node, 3, cached, helpers);
+
+      expect(radius).toBeCloseTo(1.25);
+    });
+
+    it('should keep tiny metric-scale nodes above the readable style floor', () => {
+      const cached = {
+        colorManager: mockColorManager,
+        metricScale: 0.01,
+      };
+      const node = {
+        radius: 5,
+        data: { split_indices: [] },
+      };
+
+      const radius = getNodeRadius(node, 3, cached, helpers);
+      expect(radius).toBeCloseTo(5 * MIN_READABLE_METRIC_SCALE);
+    });
+
+    it('should soften unhighlighted internal node dots in dense trees without hiding them', () => {
+      const cached = {
+        colorManager: mockColorManager,
+        visualScale: 0.3,
+      };
+      const node = {
+        isLeaf: false,
+        radius: 5,
+        opacity: 1,
+        data: { split_indices: [] },
+      };
+
+      const radius = getNodeRadius(node, 3, cached, helpers);
+      const fillColor = [...getNodeColor(node, cached, helpers)];
+      const borderColor = [...getNodeBorderColor(node, cached, helpers)];
+
+      expect(radius).toBeCloseTo(1.5);
+      expect(fillColor[3]).toBe(Math.round(255 * 0.45));
+      expect(borderColor[3]).toBe(Math.round(255 * 0.45));
+    });
+
+    it('should keep leaf node dots visible in dense trees', () => {
+      const cached = {
+        colorManager: mockColorManager,
+        visualScale: 0.3,
+      };
+      const node = {
+        isLeaf: true,
+        radius: 5,
+        opacity: 1,
+        data: { split_indices: [] },
+      };
+
+      const radius = getNodeRadius(node, 3, cached, helpers);
+      const fillColor = [...getNodeColor(node, cached, helpers)];
+
+      expect(radius).toBeCloseTo(1.5);
+      expect(fillColor[3]).toBe(255);
+    });
+  });
+
+  describe('Extension Width Scaling', () => {
+    it('should scale width by metricScale', () => {
+      const cached = {
+        metricScale: 0.5,
+      };
+      const extension = { split_indices: [] };
+
+      const width = getExtensionWidth(extension, 2.0, cached);
+
+      expect(width).toBeCloseTo(1.0);
+    });
+
+    it('should keep tiny metric-scale extension lines above the readable style floor', () => {
+      const cached = {
+        metricScale: 0.01,
+      };
+      const extension = { split_indices: [] };
+
+      const width = getExtensionWidth(extension, 2.0, cached);
+
+      expect(width).toBeCloseTo(2.0 * MIN_READABLE_METRIC_SCALE);
+    });
+
+    it('should reduce extension width for dense trees', () => {
+      const cached = {
+        metricScale: 1,
+        visualScale: 0.3,
+      };
+      const extension = { split_indices: [] };
+
+      const width = getExtensionWidth(extension, 2.0, cached);
+      expect(width).toBeCloseTo(0.6);
+    });
+
+    it('should fade unhighlighted base extensions for dense trees', () => {
+      const cached = {
+        colorManager: mockColorManager,
+        visualScale: 0.3,
+      };
+      const extension = {
+        opacity: 1,
+        split_indices: [],
+        isLeaf: true,
+      };
+
+      const color = [...getExtensionColor(extension, cached, helpers)];
+
+      expect(color).toEqual([0, 0, 0, Math.round(255 * 0.45)]);
+    });
+  });
+
+  describe('Label Size Scaling', () => {
+    it('should apply adaptive visual scale to base label size', () => {
+      const cached = {
+        visualScale: 0.5,
+      };
+
+      const size = getLabelSize({ id: 'node1' }, '2em', cached);
+
+      expect(size).toBeCloseTo(12);
+    });
+  });
+});

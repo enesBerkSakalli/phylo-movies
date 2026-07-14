@@ -8,19 +8,20 @@ Authoritative commands:
 npm run test:all
 npm run test:mocha
 npm run test:vitest
+npm run test:supplemental
 npm run test:list
 npm run test:structure
 ```
 
 Structure:
 
-- Root `test/*.test.js` files are default-suite tests only.
-- `test/domain/` and `test/integration/` are default Vitest suites.
-- `test/optional/` contains supplemental Mocha tests that are tracked
-  separately by `npm run test:structure` but still run as part of
-  `npm run test:all`.
+- `test/vitest/domain/` contains focused domain, state, layout, and rendering tests.
+- `test/vitest/integration/` contains cross-module, worker, UI-contract, and data-service tests.
+- `test/mocha/default/` contains the core timeline and backend-boundary Mocha suite.
+- `test/mocha/supplemental/` contains isolated Mocha specs that run one file at a time.
 - `test/data/` contains static test fixtures. The browser-demo payloads are
   generated under `publication_data/precomputed/`.
+- `test/fixtures/` and `test/helpers/` are shared by both runners.
 
 Generated browser-demo fixtures are owned by:
 
@@ -36,8 +37,8 @@ the norovirus browser examples first infer IQ-TREE window trees from the
 committed MSA, then write the generated tree series and precomputed JSON.
 `fixtures:check` is non-mutating and fails when a committed fixture is stale.
 
-`npm run test:structure` fails if a test file is neither in the default suite
-nor under `test/optional/`.
+`npm run test:structure` fails if a spec is outside the canonical Mocha or
+Vitest directories.
 
 Standalone debugging and audit scripts belong in `scripts/diagnostics/`, not in
 this directory.
