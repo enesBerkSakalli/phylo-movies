@@ -1,5 +1,6 @@
 import { selectTreeContext } from '../../selectors/treeSelectors.js';
 import { hydrateMovieTreeAtIndex } from '../../../../domain/backend/treeHydration.js';
+import { selectInputFrameIndicesFromRows } from '../../../../timeline/data/timelineFrameIndex.js';
 
 const EMPTY_PAIR_METRICS = Object.freeze({
   rows: Object.freeze([]),
@@ -69,6 +70,12 @@ export const createTreeDatasetSlice = (set, get) => ({
     }
 
     return hydratedTrees;
+  },
+
+  ensureInputTreesHydrated: () => {
+    const state = get();
+    const inputFrameIndices = selectInputFrameIndicesFromRows(state.timelineFrames);
+    return state.ensureTreesHydrated(inputFrameIndices);
   },
 
   prefetchTreeHydrationWindow: (centerIndex, radius = 1) => {

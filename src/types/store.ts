@@ -126,7 +126,7 @@ export interface PlaybackSeekOptions {
 
 export interface AppStoreState {
   // From treeDataset.slice
-  treeList: TreeNode[];
+  treeList: Array<TreeNode | undefined>;
   timelineFrames: TimelineFrame[];
   leafNamesByIndex: string[];
   fileName: string | null;
@@ -136,6 +136,7 @@ export interface AppStoreState {
   pairs: TimelinePair[];
   subtreeHighlightTracking: SubtreeHighlightTracking;
   temporalEvents: TemporalEvent[];
+  ensureInputTreesHydrated: () => Array<TreeNode | null>;
 
   // From datasetLifecycle.slice
 

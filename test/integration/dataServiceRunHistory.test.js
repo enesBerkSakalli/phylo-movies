@@ -63,9 +63,7 @@ describe('phyloData run history', () => {
       treeCount: secondRun.interpolated_trees.length,
       treeChunkCount: 1,
     });
-    expect(memoryStore.get(`phyloMovieRun:${runs[0].id}`)).not.toHaveProperty(
-      'interpolated_trees'
-    );
+    expect(memoryStore.get(`phyloMovieRun:${runs[0].id}`)).not.toHaveProperty('interpolated_trees');
     expect(memoryStore.get(`phyloMovieRun:${runs[0].id}:trees:0`)).toHaveLength(
       secondRun.interpolated_trees.length
     );
@@ -96,17 +94,16 @@ describe('phyloData run history', () => {
     }
   });
 
-  it('stores trusted transport payloads without deep tree validation', async () => {
+  it('rejects malformed compact trees before storing a run', async () => {
     const { phyloData } = await import('../../src/services/data/dataService.js');
-    const basePayload = makePayload('Trusted run');
+    const basePayload = makePayload('Malformed run');
     const payload = {
       ...basePayload,
       interpolated_trees: basePayload.frames.map(() => [0]),
     };
 
-    await expect(phyloData.set(payload, { label: 'Trusted run' })).resolves.toMatchObject({
-      interpolated_trees: payload.interpolated_trees,
-    });
+    await expect(phyloData.set(payload, { label: 'Malformed run' })).rejects.toThrow(/tuple node/);
+    expect(memoryStore.size).toBe(0);
   });
 
   it('opens multi-chunk run payloads in tree order', async () => {
@@ -183,6 +180,55 @@ describe('phyloData run history', () => {
     expect(memoryStore.has(`phyloMovieRun:${run.id}:trees:2`)).toBe(false);
   });
 
+  it('discards every stored chunk when the active run is incomplete', async () => {
+    const { phyloData } = await import('../../src/services/data/dataService.js');
+
+    await phyloData.set(makeChunkedPayload('Incomplete active run', 257), {
+      label: 'Incomplete active run',
+    });
+    const [run] = await phyloData.listRuns();
+    memoryStore.delete(`phyloMovieRun:${run.id}:trees:1`);
+
+    await expect(phyloData.get()).resolves.toBeNull();
+
+    expect(await phyloData.listRuns()).toEqual([]);
+    expect(memoryStore.has('phyloMovieData')).toBe(false);
+    expectRunPayloadRemoved(run);
+  });
+
+  it('discards every stored chunk when an incomplete history run is opened', async () => {
+    const { phyloData } = await import('../../src/services/data/dataService.js');
+
+    await phyloData.set(makeChunkedPayload('Incomplete history run', 257), {
+      label: 'Incomplete history run',
+    });
+    const [run] = await phyloData.listRuns();
+    await phyloData.remove();
+    memoryStore.delete(`phyloMovieRun:${run.id}:trees:1`);
+
+    await expect(phyloData.openRun(run.id)).rejects.toThrow(/no longer available/);
+
+    expect(await phyloData.listRuns()).toEqual([]);
+    expectRunPayloadRemoved(run);
+  });
+
+  it('discards a stored run when compact tree validation fails during reload', async () => {
+    const { phyloData } = await import('../../src/services/data/dataService.js');
+
+    await phyloData.set(makeChunkedPayload('Corrupt tree run', 257), {
+      label: 'Corrupt tree run',
+    });
+    const [run] = await phyloData.listRuns();
+    const firstChunk = memoryStore.get(`phyloMovieRun:${run.id}:trees:0`);
+    firstChunk[0] = [0];
+
+    await expect(phyloData.get()).rejects.toThrow(/tuple node/);
+
+    expect(await phyloData.listRuns()).toEqual([]);
+    expect(memoryStore.has('phyloMovieData')).toBe(false);
+    expectRunPayloadRemoved(run);
+  });
+
   it('prunes saved runs from older payload schema versions', async () => {
     const { phyloData } = await import('../../src/services/data/dataService.js');
     memoryStore.set('phyloMovieRuns', [makeRunRecord('old-run', 1)]);
@@ -243,7 +289,13 @@ function makeChunkedPayload(label, treeCount) {
   const lastFrameIndex = treeCount - 1;
   return {
     ...makePayload(label),
-    interpolated_trees: Array.from({ length: treeCount }, (_value, index) => [index]),
+    interpolated_trees: Array.from({ length: treeCount }, (_value, index) =>
+      structuredClone(
+        smallExampleMovieData.interpolated_trees[
+          index % smallExampleMovieData.interpolated_trees.length
+        ]
+      )
+    ),
     frames: Array.from({ length: treeCount }, (_value, index) =>
       index === 0 || index === lastFrameIndex
         ? makeInputFrame(index, index === 0 ? 0 : 1)
@@ -319,4 +371,11 @@ function makeRunRecord(id, payloadSchemaVersion) {
     createdAt: '2026-06-05T00:00:00.000Z',
     payloadSchemaVersion,
   };
+}
+
+function expectRunPayloadRemoved(run) {
+  expect(memoryStore.has(`phyloMovieRun:${run.id}`)).toBe(false);
+  for (let chunkIndex = 0; chunkIndex < run.treeChunkCount; chunkIndex += 1) {
+    expect(memoryStore.has(`phyloMovieRun:${run.id}:trees:${chunkIndex}`)).toBe(false);
+  }
 }

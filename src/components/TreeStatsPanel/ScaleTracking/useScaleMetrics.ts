@@ -7,7 +7,7 @@ import type { ScaleMetrics, TreeNode, ScaleListItem } from '../Shared/types';
 
 interface UseScaleMetricsParams {
   sourceFrameIndex: number;
-  treeList: TreeNode[];
+  treeList: Array<TreeNode | undefined>;
   scaleList: ScaleListItem[] | null | undefined;
   maxScale: number;
 }

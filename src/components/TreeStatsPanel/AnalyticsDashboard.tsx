@@ -22,6 +22,7 @@ import {
   selectActiveTreeList,
   selectBranchAnnotationLabelKey,
   selectHasMsa,
+  selectInputFrameIndices,
   selectLeafNamesByIndex,
   selectMarkedNodes,
   selectMsaColumnCount,
@@ -245,6 +246,8 @@ const AnalyticsDashboardBody = () => {
     selectedMovedSubtreeIndices,
     branchAnnotationValueKey,
     setBranchAnnotationLabelKey,
+    inputFrameIndices,
+    ensureInputTreesHydrated,
     treeController,
   } = useAppStore(
     useShallow((state) => ({
@@ -262,9 +265,17 @@ const AnalyticsDashboardBody = () => {
       selectedMovedSubtreeIndices: selectMarkedNodes(state),
       branchAnnotationValueKey: selectBranchAnnotationLabelKey(state),
       setBranchAnnotationLabelKey: selectSetBranchAnnotationLabelKey(state),
+      inputFrameIndices: selectInputFrameIndices(state),
+      ensureInputTreesHydrated: state.ensureInputTreesHydrated,
       treeController: selectTreeController(state),
     }))
   );
+  const inputTreesReady = inputFrameIndices.every((frameIndex) => interpolatedTrees[frameIndex]);
+
+  React.useEffect(() => {
+    ensureInputTreesHydrated();
+  }, [ensureInputTreesHydrated, inputFrameIndices]);
+
   const windowRangeOptions = useMemo(
     () => ({
       hasMsa,
@@ -283,14 +294,13 @@ const AnalyticsDashboardBody = () => {
     [branchAnnotationOptions, branchAnnotationValueKey]
   );
 
-  const branchSupportIndex = useMemo(
-    () =>
-      buildBranchSupportIndex({
-        interpolatedTrees,
-        frames,
-      }),
-    [interpolatedTrees, frames]
-  );
+  const branchSupportIndex = useMemo(() => {
+    if (!inputTreesReady) return null;
+    return buildBranchSupportIndex({
+      interpolatedTrees,
+      frames,
+    });
+  }, [frames, inputTreesReady, interpolatedTrees]);
 
   const sprOptions = useMemo(
     () => ({
@@ -311,11 +321,17 @@ const AnalyticsDashboardBody = () => {
     ]
   );
 
-  const analyticsModel = useMemo<SprAnalyticsModel>(() => {
-    return buildSprAnalyticsModel(pairs, sprOptions);
-  }, [pairs, sprOptions]);
+  const analyticsModel = useMemo<SprAnalyticsModel | null>(() => {
+    if (!inputTreesReady || !branchSupportIndex) return null;
+    return buildSprAnalyticsModel(pairs, {
+      ...sprOptions,
+      branchSupportIndex,
+    });
+  }, [branchSupportIndex, inputTreesReady, pairs, sprOptions]);
 
-  const { eventRows: sprMoveEvents, movedSubtreeRecurrences, summary: sprSummary } = analyticsModel;
+  const sprMoveEvents = analyticsModel?.eventRows ?? [];
+  const movedSubtreeRecurrences = analyticsModel?.movedSubtreeRecurrences ?? [];
+  const sprSummary = analyticsModel?.summary ?? null;
 
   const handleBranchValueSelectionChange = React.useCallback(
     async (valueKey: string) => {
@@ -343,6 +359,19 @@ const AnalyticsDashboardBody = () => {
     if (!eventCsvContent) return;
     downloadCsvFile(eventCsvContent, createSprMoveEventExportName(fileName));
   };
+
+  if (!analyticsModel || !sprSummary) {
+    return (
+      <div
+        role="status"
+        aria-live="polite"
+        className="flex min-h-40 flex-1 items-center justify-center gap-2 text-sm text-muted-foreground"
+      >
+        <Activity className="size-4 animate-pulse" aria-hidden />
+        <span>Preparing analytics...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">

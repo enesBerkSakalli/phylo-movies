@@ -15,10 +15,7 @@ const RUN_DATA_PREFIX = 'phyloMovieRun:';
 const MAX_STORED_RUNS = 8;
 const RUN_PAYLOAD_SCHEMA_VERSION = 2;
 const RUN_TREE_CHUNK_SIZE = 128;
-const TRUSTED_TRANSPORT_VALIDATION_OPTIONS = Object.freeze({
-  hydrateTrees: false,
-  validateTreePayloads: false,
-});
+const TRANSPORT_VALIDATION_OPTIONS = Object.freeze({ hydrateTrees: false });
 const STALE_RUN_MESSAGE =
   'Saved run was created with an older movie update pattern. Reprocess the dataset before visualizing it again.';
 let volatilePhyloData = null;
@@ -70,7 +67,7 @@ const storage = {
 export const phyloData = {
   async get() {
     if (volatilePhyloData) {
-      return this.validate(volatilePhyloData, TRUSTED_TRANSPORT_VALIDATION_OPTIONS);
+      return this.validate(volatilePhyloData, TRANSPORT_VALIDATION_OPTIONS);
     }
 
     const data = await storage.get(STORAGE_KEYS.PHYLO_DATA);
@@ -92,11 +89,15 @@ export const phyloData = {
 
         const runData = await readRunPayload(data.runId);
         if (!runData) {
-          await removeRunFromIndex(data.runId);
-          await this.remove();
+          await discardRun(data.runId);
           return null;
         }
-        return this.validate(runData, TRUSTED_TRANSPORT_VALIDATION_OPTIONS);
+        try {
+          return this.validate(runData, TRANSPORT_VALIDATION_OPTIONS);
+        } catch (error) {
+          await discardRun(data.runId);
+          throw error;
+        }
       }
 
       if (isInlinePayload(data)) {
@@ -118,7 +119,7 @@ export const phyloData = {
   },
 
   async set(data, options = {}) {
-    const validatedBackendData = validatePhyloMovieData(data, TRUSTED_TRANSPORT_VALIDATION_OPTIONS);
+    const validatedBackendData = validatePhyloMovieData(data, TRANSPORT_VALIDATION_OPTIONS);
     const run = await createRunRecord(validatedBackendData, options);
 
     try {
@@ -164,14 +165,17 @@ export const phyloData = {
 
     const runData = await readRunPayload(runId);
     if (!runData) {
-      await removeRunFromIndex(runId);
+      await discardRun(runId);
       throw new Error('Saved run data is no longer available.');
     }
 
-    const validatedBackendData = validatePhyloMovieData(
-      runData,
-      TRUSTED_TRANSPORT_VALIDATION_OPTIONS
-    );
+    let validatedBackendData;
+    try {
+      validatedBackendData = validatePhyloMovieData(runData, TRANSPORT_VALIDATION_OPTIONS);
+    } catch (error) {
+      await discardRun(runId);
+      throw error;
+    }
     await storage.set(STORAGE_KEYS.PHYLO_DATA, createRunReference(runId));
     volatilePhyloData = null;
     return validatedBackendData;

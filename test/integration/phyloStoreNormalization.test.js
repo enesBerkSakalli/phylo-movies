@@ -331,6 +331,23 @@ describe('phylo store dataset normalization', () => {
     });
   });
 
+  it('hydrates every input tree in one update for dataset-wide analytics', () => {
+    const movieData = makeCompactMovieData();
+
+    useAppStore.getState().initialize(movieData);
+    const initialTreeList = useAppStore.getState().treeList;
+    const hydratedInputTrees = useAppStore.getState().ensureInputTreesHydrated();
+    const state = useAppStore.getState();
+
+    expect(phyloStoreModule.selectInputFrameIndices(state)).toEqual([0, 2]);
+    expect(hydratedInputTrees).toEqual([hydratedCompactTree, hydratedCompactTree]);
+    expect(state.treeList).not.toBe(initialTreeList);
+    expect(state.treeList[0]).toEqual(hydratedCompactTree);
+    expect(state.treeList[1]).toBeUndefined();
+    expect(state.treeList[2]).toEqual(hydratedCompactTree);
+    expect(state.treeHydrationVersion).toBe(1);
+  });
+
   it('prefetches the current tree hydration window without hydrating the whole dataset', () => {
     const interpolatedFrames = Array.from({ length: 5 }, (_value, index) => ({
       frame_index: index + 1,

@@ -315,7 +315,9 @@ export function buildBranchSupportIndex({ interpolatedTrees, frames } = {}) {
 
     const tree = interpolatedTrees[frameIndex];
     if (!tree) {
-      return;
+      throw new Error(
+        `buildBranchSupportIndex requires hydrated interpolated_trees[${frameIndex}] for input frame ${index}`
+      );
     }
 
     const allTaxaIndices = normalizeIndices(tree.split_indices);
