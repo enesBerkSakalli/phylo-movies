@@ -2,15 +2,13 @@
  * Monophyletic coloring utilities
  * Handles base color calculation for branches and nodes based on taxa colors
  *
- * Now integrates with the dynamic taxaGrouping system from the store,
+ * Integrates with supplied taxa grouping data,
  * supporting taxa mode, group mode (separator-based), and CSV mode.
  *
- * PERFORMANCE: Uses a render-cycle cache to avoid repeated store access.
+ * PERFORMANCE: Uses a render-cycle cache to avoid repeated grouping lookups.
  * Call `resetTaxonColorCache()` at the start of each render cycle.
  */
 import { SYSTEM_TREE_COLORS } from '../../../constants/TreeColors.js';
-import { useAppStore } from '../../../state/phyloStore/store.js';
-import { selectLeafNamesByIndex } from '../../../state/phyloStore/selectors/treeSelectors.js';
 import { getTaxonColor } from '../../../treeColoring/utils/GroupingUtils.js';
 import { getSplitIndices } from '../../../domain/tree/splits.js';
 import { colorToRgb, rgbToHex } from '../../../services/ui/colorUtils.js';
@@ -18,7 +16,7 @@ import { colorToRgb, rgbToHex } from '../../../services/ui/colorUtils.js';
 // =============================================================================
 // RENDER-CYCLE CACHE
 // Cache taxon colors for the duration of a single render cycle.
-// This avoids repeated store.getState() and getTaxonColor() calls.
+// This avoids repeated getTaxonColor() calls.
 // =============================================================================
 
 let _taxonColorCache = null; // Map<taxonName, color|null>
@@ -33,11 +31,10 @@ export function resetTaxonColorCache() {
 }
 
 /**
- * Build the color cache lazily on first access within a render cycle.
+ * Build the color cache lazily for the supplied color data.
  */
-function ensureColorCache() {
-  const state = useAppStore.getState();
-  const taxaGrouping = state.taxaGrouping;
+function ensureColorCache(colorData) {
+  const taxaGrouping = colorData?.taxaGrouping ?? null;
 
   // If cache is missing or taxaGrouping reference changed, (re)build cache
   if (!_taxonColorCache || _cachedTaxaGrouping !== taxaGrouping) {
@@ -53,7 +50,7 @@ function ensureColorCache() {
  * @param {Object} node - Normalized tree render node
  * @returns {Array<string>} Array of leaf names
  */
-export function getSubtreeLeaves(node) {
+export function getSubtreeLeaves(node, colorData = null) {
   if (!node) return [];
 
   if (Array.isArray(node.leafNames)) {
@@ -65,7 +62,7 @@ export function getSubtreeLeaves(node) {
     if (name) return [name];
   }
 
-  const leafNamesFromSplits = getLeafNamesFromSplitIndices(node);
+  const leafNamesFromSplits = getLeafNamesFromSplitIndices(node, colorData?.leafNamesByIndex);
   if (leafNamesFromSplits.length > 0) {
     return leafNamesFromSplits;
   }
@@ -95,15 +92,15 @@ function _collectLeafNamesRecursive(node) {
 }
 
 /**
- * Get the effective color for a taxon, respecting taxaGrouping from store
+ * Get the effective color for a taxon, respecting supplied taxa grouping data
  *
  * PERFORMANCE: Uses render-cycle cache to avoid repeated lookups.
  *
  * @param {string} taxonName - The taxon name
  * @returns {string|null} The color or null if default
  */
-function getEffectiveTaxonColor(taxonName) {
-  const { cache, taxaGrouping } = ensureColorCache();
+function getEffectiveTaxonColor(taxonName, colorData) {
+  const { cache, taxaGrouping } = ensureColorCache(colorData);
 
   // Check cache first
   if (cache.has(taxonName)) {
@@ -131,15 +128,15 @@ function getEffectiveTaxonColor(taxonName) {
  * @param {Object} node - Tree node to check
  * @returns {{ isMonophyletic: boolean, color: string|null }} Result with color if monophyletic
  */
-export function checkMonophyletic(node) {
-  const subtreeLeaves = getSubtreeLeaves(node);
+export function checkMonophyletic(node, colorData = null) {
+  const subtreeLeaves = getSubtreeLeaves(node, colorData);
 
   if (subtreeLeaves.length === 0) {
     return { isMonophyletic: false, color: null };
   }
 
   // Get effective colors for all leaves (null means default/no group)
-  const leafColors = subtreeLeaves.map((leafName) => getEffectiveTaxonColor(leafName));
+  const leafColors = subtreeLeaves.map((leafName) => getEffectiveTaxonColor(leafName, colorData));
 
   // Filter out nulls (taxa with no specific color)
   const nonNullColors = leafColors.filter((c) => c !== null);
@@ -164,7 +161,7 @@ export function checkMonophyletic(node) {
  * @param {boolean} monophyleticEnabled - Whether monophyletic coloring is enabled
  * @returns {string} Hex color code
  */
-export function getBaseBranchColor(linkData, monophyleticEnabled) {
+export function getBaseBranchColor(linkData, monophyleticEnabled, colorData = null) {
   const branchNode = getBranchNode(linkData);
   if (!branchNode) {
     return SYSTEM_TREE_COLORS.defaultColor;
@@ -173,7 +170,7 @@ export function getBaseBranchColor(linkData, monophyleticEnabled) {
   // Leaf branches ALWAYS get their taxa color
   if (isLeafNode(branchNode)) {
     const leafName = getNodeName(branchNode);
-    const color = getEffectiveTaxonColor(leafName);
+    const color = getEffectiveTaxonColor(leafName, colorData);
     return color || SYSTEM_TREE_COLORS.defaultColor;
   }
 
@@ -182,7 +179,7 @@ export function getBaseBranchColor(linkData, monophyleticEnabled) {
     return SYSTEM_TREE_COLORS.defaultColor;
   }
 
-  const { isMonophyletic, color } = checkMonophyletic(branchNode);
+  const { isMonophyletic, color } = checkMonophyletic(branchNode, colorData);
   return isMonophyletic ? color : SYSTEM_TREE_COLORS.defaultColor;
 }
 
@@ -192,7 +189,7 @@ export function getBaseBranchColor(linkData, monophyleticEnabled) {
  * @param {boolean} monophyleticEnabled - Whether monophyletic coloring is enabled
  * @returns {string} Hex color code
  */
-export function getBaseNodeColor(nodeData, monophyleticEnabled) {
+export function getBaseNodeColor(nodeData, monophyleticEnabled, colorData = null) {
   if (!nodeData) {
     return SYSTEM_TREE_COLORS.defaultColor;
   }
@@ -200,7 +197,7 @@ export function getBaseNodeColor(nodeData, monophyleticEnabled) {
   // Leaf nodes ALWAYS get their taxa color
   if (isLeafNode(nodeData)) {
     const name = getNodeName(nodeData);
-    const color = getEffectiveTaxonColor(name);
+    const color = getEffectiveTaxonColor(name, colorData);
     return color || SYSTEM_TREE_COLORS.defaultColor;
   }
 
@@ -209,7 +206,7 @@ export function getBaseNodeColor(nodeData, monophyleticEnabled) {
     return SYSTEM_TREE_COLORS.defaultColor;
   }
 
-  const { isMonophyletic, color } = checkMonophyletic(nodeData);
+  const { isMonophyletic, color } = checkMonophyletic(nodeData, colorData);
   return isMonophyletic ? color : SYSTEM_TREE_COLORS.defaultColor;
 }
 
@@ -227,11 +224,10 @@ function getNodeName(node) {
   return node?.name || node?.text || node?.targetName || '';
 }
 
-function getLeafNamesFromSplitIndices(node) {
+function getLeafNamesFromSplitIndices(node, leafNamesByIndex = []) {
   const splitIndices = getSplitIndices(node);
   if (!Array.isArray(splitIndices) || splitIndices.length === 0) return [];
 
-  const leafNamesByIndex = selectLeafNamesByIndex(useAppStore.getState());
   if (!Array.isArray(leafNamesByIndex) || leafNamesByIndex.length === 0) return [];
 
   return splitIndices.map((index) => leafNamesByIndex[index]).filter(Boolean);

@@ -8,7 +8,6 @@
  *
  * Used by LayerStyles.js to provide colors for DeckGL layers
  */
-import { useAppStore } from '../../state/phyloStore/store.js';
 import { SYSTEM_TREE_COLORS } from '../../constants/TreeColors.js';
 import {
   getBaseBranchColor,
@@ -29,7 +28,8 @@ import {
 } from '../../domain/tree/splits.js';
 
 export class TreeColorManager {
-  constructor() {
+  constructor(colorData = null) {
+    this._colorData = colorData;
     this.monophyleticColoringEnabled = true;
     this.subtreeHighlightsEnabled = true; // Controls whether highlighted subtrees get accent color
     this.currentPivotEdges = new Set();
@@ -43,15 +43,8 @@ export class TreeColorManager {
     this.activeMoverSubtrees = [];
   }
 
-  /**
-   * Refresh the color categories and trigger re-render
-   */
-  refreshColorCategories() {
-    const store = useAppStore.getState();
-    const controller = store.treeController;
-    if (!controller) return;
-    const render = controller.scheduleRenderAllElements ?? controller.renderAllElements;
-    render.call(controller);
+  setColorData(colorData) {
+    this._colorData = colorData;
   }
 
   // ===========================
@@ -71,7 +64,7 @@ export class TreeColorManager {
       return SYSTEM_TREE_COLORS.pivotEdgeColor;
     } else {
       // Highlighted branches keep their base color (taxa/monophyletic)
-      return getBaseBranchColor(linkData, this.monophyleticColoringEnabled);
+      return getBaseBranchColor(linkData, this.monophyleticColoringEnabled, this._colorData);
     }
   }
 
@@ -81,7 +74,7 @@ export class TreeColorManager {
    * @returns {string} Hex color code
    */
   getBranchColor(linkData) {
-    return getBaseBranchColor(linkData, this.monophyleticColoringEnabled);
+    return getBaseBranchColor(linkData, this.monophyleticColoringEnabled, this._colorData);
   }
 
   // ========================
@@ -103,7 +96,7 @@ export class TreeColorManager {
       return SYSTEM_TREE_COLORS.pivotEdgeColor;
     }
 
-    return getBaseNodeColor(nodeData, this.monophyleticColoringEnabled);
+    return getBaseNodeColor(nodeData, this.monophyleticColoringEnabled, this._colorData);
   }
 
   /**
@@ -113,7 +106,7 @@ export class TreeColorManager {
    * @returns {string} Hex color code
    */
   getNodeBaseColor(nodeData) {
-    return getBaseNodeColor(nodeData, this.monophyleticColoringEnabled);
+    return getBaseNodeColor(nodeData, this.monophyleticColoringEnabled, this._colorData);
   }
 
   // =======================

@@ -32,17 +32,14 @@ describe('taxa coloring store behavior', () => {
 
   it('renders the tree controller once when a color manager is present', () => {
     const controller = { renderAllElements: vi.fn() };
-    const colorManager = {
-      refreshColorCategories: vi.fn(() => {
-        useAppStore.getState().treeController?.renderAllElements();
-      }),
-    };
+    const colorManager = { setColorData: vi.fn() };
 
     useAppStore.setState({
       treeController: controller,
       colorManager,
       taxaGrouping: null,
       taxaColorVersion: 0,
+      leafNamesByIndex: ['TaxonA'],
       playing: false,
     });
 
@@ -52,6 +49,14 @@ describe('taxa coloring store behavior', () => {
     });
 
     expect(controller.renderAllElements).toHaveBeenCalledTimes(1);
+    expect(colorManager.setColorData).toHaveBeenCalledWith({
+      taxaGrouping: {
+        mode: 'taxa',
+        taxaColorMap: { TaxonA: '#123456' },
+        groupColorMap: {},
+      },
+      leafNamesByIndex: ['TaxonA'],
+    });
   });
 });
 

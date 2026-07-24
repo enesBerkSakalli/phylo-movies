@@ -32,6 +32,12 @@ export const createTaxonomyColoringSlice = (set, get) => ({
       normalized.csvTaxaMap = mapToPlainObject(normalized.csvTaxaMap);
     }
 
+    const { colorManager, leafNamesByIndex } = get();
+    colorManager?.setColorData({
+      taxaGrouping: normalized,
+      leafNamesByIndex,
+    });
+
     set((s) => ({
       taxaGrouping: normalized,
       taxaColorVersion: s.taxaColorVersion + 1,

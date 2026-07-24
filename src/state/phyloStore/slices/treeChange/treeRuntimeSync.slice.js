@@ -49,7 +49,10 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
     calculateChangePreviews(get(), indexOverride),
 
   initializeColors: () => {
-    const colorManager = new TreeColorManager();
+    const colorManager = new TreeColorManager({
+      taxaGrouping: get().taxaGrouping,
+      leafNamesByIndex: get().leafNamesByIndex,
+    });
     const initialMonophyleticColoring = get().monophyleticColoringEnabled;
     colorManager.setMonophyleticColoring(initialMonophyleticColoring);
 

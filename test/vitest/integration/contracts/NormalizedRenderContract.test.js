@@ -52,6 +52,17 @@ describe('normalized render contract', () => {
   });
 
   it('colors normalized branches and nodes without hierarchy wrapper references', () => {
+    const colorData = {
+      leafNamesByIndex: ['Taxon_A', 'Taxon_B', 'Taxon_C'],
+      taxaGrouping: {
+        mode: 'taxa',
+        taxaColorMap: {
+          Taxon_A: '#ff0000',
+          Taxon_B: '#ff0000',
+          Taxon_C: '#00ff00',
+        },
+      },
+    };
     const leafBranch = {
       split_indices: [0],
       name: 'Taxon_A',
@@ -66,14 +77,20 @@ describe('normalized render contract', () => {
       isLeaf: false,
     };
 
-    expect(getBaseBranchColor(leafBranch, true)).toBe('#ff0000');
-    expect(getBaseBranchColor(monophyleticBranch, true)).toBe('#ff0000');
-    expect(getBaseBranchColor(mixedBranch, true)).not.toBe('#ff0000');
-    expect(getBaseNodeColor(monophyleticBranch, true)).toBe('#ff0000');
+    expect(getBaseBranchColor(leafBranch, true, colorData)).toBe('#ff0000');
+    expect(getBaseBranchColor(monophyleticBranch, true, colorData)).toBe('#ff0000');
+    expect(getBaseBranchColor(mixedBranch, true, colorData)).not.toBe('#ff0000');
+    expect(getBaseNodeColor(monophyleticBranch, true, colorData)).toBe('#ff0000');
   });
 
   it('keeps subtree highlight display color out of the color manager base API', () => {
-    const manager = new TreeColorManager();
+    const manager = new TreeColorManager({
+      leafNamesByIndex: ['Taxon_A'],
+      taxaGrouping: {
+        mode: 'taxa',
+        taxaColorMap: { Taxon_A: '#ff0000' },
+      },
+    });
     manager.updateHighlightedSubtrees([new Set([0])]);
 
     const highlightedLeaf = {
