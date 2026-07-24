@@ -7,28 +7,31 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 let msaContext;
+let connectedCommands;
 const viewerInstances = [];
+const connectViewerCommands = vi.fn((commands) => {
+  connectedCommands = commands;
+  return () => {
+    if (connectedCommands === commands) connectedCommands = null;
+  };
+});
 
 vi.mock('../../../../src/components/msa/useMSA.js', () => ({
   useMSA: () => msaContext,
+  useMSAViewport: () => msaContext,
+  useSetMSAVisibleRange: () => msaContext.setVisibleRange,
 }));
 
 vi.mock('../../../../src/msaViewer/MSADeckGLViewer', () => ({
   MSADeckGLViewer: class MockMSADeckGLViewer {
     constructor() {
-      this.loadFromProcessedData = vi.fn();
-      this.clearData = vi.fn();
-      this.setRegion = vi.fn();
-      this.clearRegion = vi.fn();
-      this.setPreviousRegion = vi.fn();
-      this.clearPreviousRegion = vi.fn();
-      this.scrollTo = vi.fn();
-      this.scrollToRegion = vi.fn();
+      this.update = vi.fn();
+      this.centerRegion = vi.fn();
+      this.centerViewportOn = vi.fn();
+      this.zoomIn = vi.fn();
+      this.zoomOut = vi.fn();
+      this.fitAlignment = vi.fn();
       this.destroy = vi.fn();
-      this.render = vi.fn();
-      this.setShowLetters = vi.fn();
-      this.setColorScheme = vi.fn();
-      this.setRowColorMap = vi.fn();
       viewerInstances.push(this);
     }
   },
@@ -50,13 +53,12 @@ function createContext(overrides = {}) {
     msaRegion: { start: 1, end: 2 },
     msaPreviousRegion: null,
     showLetters: true,
-    viewAction: null,
     colorScheme: 'default',
     setVisibleRange: vi.fn(),
     rowColorMap: {},
     visibleRange: { r0: 0, r1: 1, c0: 0, c1: 1 },
-    scrollAction: null,
-    scrollToPosition: vi.fn(),
+    connectViewerCommands,
+    centerViewportOn: vi.fn(),
     ...overrides,
   };
 }
@@ -75,29 +77,44 @@ async function renderReact(element) {
 
 afterEach(() => {
   viewerInstances.length = 0;
+  connectedCommands = null;
   msaContext = null;
   document.body.innerHTML = '';
   vi.clearAllMocks();
 });
 
 describe('MSA viewer contract', () => {
-  it('loads processed alignment data only when processed data changes', async () => {
+  it('sends one transactional viewer snapshot per relevant change', async () => {
     const { MSAViewer } = await import('../../../../src/components/msa/MSAViewer.jsx');
 
     msaContext = createContext({ msaRegion: { start: 1, end: 2 } });
     const { root } = await renderReact(React.createElement(MSAViewer));
     const viewer = viewerInstances[0];
 
-    expect(viewer.loadFromProcessedData).toHaveBeenCalledTimes(1);
-    expect(viewer.loadFromProcessedData).toHaveBeenCalledWith(processedData);
+    expect(viewer.update).toHaveBeenCalledTimes(1);
+    expect(viewer.update).toHaveBeenCalledWith({
+      data: processedData,
+      currentRegion: { start: 1, end: 2 },
+      previousRegion: null,
+      showLetters: true,
+      colorScheme: 'default',
+      rowColorMap: {},
+    });
 
     msaContext = createContext({ msaRegion: { start: 2, end: 3 } });
     await act(async () => {
       root.render(React.createElement(MSAViewer));
     });
 
-    expect(viewer.loadFromProcessedData).toHaveBeenCalledTimes(1);
-    expect(viewer.setRegion).toHaveBeenLastCalledWith(2, 3);
+    expect(viewer.update).toHaveBeenCalledTimes(2);
+    expect(viewer.update).toHaveBeenLastCalledWith({
+      data: processedData,
+      currentRegion: { start: 2, end: 3 },
+      previousRegion: null,
+      showLetters: true,
+      colorScheme: 'default',
+      rowColorMap: {},
+    });
 
     await act(async () => {
       root.unmount();
@@ -111,9 +128,31 @@ describe('MSA viewer contract', () => {
     const { root } = await renderReact(React.createElement(MSAViewer));
     const viewer = viewerInstances[0];
 
-    expect(viewer.setRegion).toHaveBeenCalledWith(2, 4);
-    expect(viewer.scrollToRegion).toHaveBeenCalledWith(2, 4, { align: 'center' });
-    expect(viewer.scrollTo).not.toHaveBeenCalled();
+    expect(viewer.update).toHaveBeenCalledWith(
+      expect.objectContaining({ currentRegion: { start: 2, end: 4 } })
+    );
+    expect(viewer.centerRegion).toHaveBeenCalledWith(2, 4);
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it('executes viewport commands directly without state mailboxes', async () => {
+    const { MSAViewer } = await import('../../../../src/components/msa/MSAViewer.jsx');
+    msaContext = createContext();
+    const { root } = await renderReact(React.createElement(MSAViewer));
+    const viewer = viewerInstances[0];
+
+    connectedCommands.zoomIn();
+    connectedCommands.zoomOut();
+    connectedCommands.fitAlignment();
+    connectedCommands.centerViewportOn({ column: 12, row: 3 });
+
+    expect(viewer.zoomIn).toHaveBeenCalledTimes(1);
+    expect(viewer.zoomOut).toHaveBeenCalledTimes(1);
+    expect(viewer.fitAlignment).toHaveBeenCalledTimes(1);
+    expect(viewer.centerViewportOn).toHaveBeenCalledWith({ column: 12, row: 3 });
 
     await act(async () => {
       root.unmount();
@@ -127,8 +166,9 @@ describe('MSA viewer contract', () => {
     const { root } = await renderReact(React.createElement(MSAViewer));
     const viewer = viewerInstances[0];
 
-    expect(viewer.loadFromProcessedData).toHaveBeenCalledTimes(1);
-    expect(viewer.setPreviousRegion).toHaveBeenCalledWith(3, 4);
+    expect(viewer.update).toHaveBeenCalledWith(
+      expect.objectContaining({ previousRegion: { start: 3, end: 4 } })
+    );
 
     await act(async () => {
       root.unmount();
@@ -142,7 +182,7 @@ describe('MSA viewer contract', () => {
     const { root } = await renderReact(React.createElement(MSAViewer));
     const viewer = viewerInstances[0];
 
-    expect(viewer.loadFromProcessedData).toHaveBeenCalledWith(processedData);
+    expect(viewer.update).toHaveBeenCalledWith(expect.objectContaining({ data: processedData }));
 
     msaContext = createContext({
       processedData: null,
@@ -154,7 +194,13 @@ describe('MSA viewer contract', () => {
       root.render(React.createElement(MSAViewer));
     });
 
-    expect(viewer.clearData).toHaveBeenCalledTimes(1);
+    expect(viewer.update).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        data: null,
+        currentRegion: null,
+        previousRegion: null,
+      })
+    );
 
     await act(async () => {
       root.unmount();
@@ -291,12 +337,12 @@ describe('MSA viewer contract', () => {
 
   it('supports keyboard and pointer scrollbar controls', async () => {
     const { MSAScrollbars } = await import('../../../../src/components/msa/MSAScrollbars.jsx');
-    const scrollToPosition = vi.fn();
+    const centerViewportOn = vi.fn();
 
     msaContext = createContext({
       processedData: { ...processedData, rows: 100, cols: 100 },
       visibleRange: { r0: 10, r1: 19, c0: 10, c1: 19 },
-      scrollToPosition,
+      centerViewportOn,
     });
     const { container, root } = await renderReact(React.createElement(MSAScrollbars));
     const scrollbars = container.querySelectorAll('[role="scrollbar"]');
@@ -314,8 +360,8 @@ describe('MSA viewer contract', () => {
       );
     });
 
-    expect(scrollToPosition).toHaveBeenCalledWith({ col: 11 });
-    expect(scrollToPosition).toHaveBeenCalledWith({ row: 11 });
+    expect(centerViewportOn).toHaveBeenCalledWith({ column: 15.5 });
+    expect(centerViewportOn).toHaveBeenCalledWith({ row: 15.5 });
 
     hThumb.getBoundingClientRect = () => ({
       left: 0,
@@ -354,7 +400,7 @@ describe('MSA viewer contract', () => {
       );
     });
 
-    expect(scrollToPosition).toHaveBeenCalledWith({ col: 50 });
+    expect(centerViewportOn).toHaveBeenCalledWith({ column: 50 });
 
     await act(async () => {
       root.unmount();
@@ -369,7 +415,7 @@ describe('MSA viewer contract', () => {
     msaContext = createContext({
       processedData: { ...processedData, rows: 100, cols: 100 },
       visibleRange: { r0: 10, r1: 19, c0: 10, c1: 19 },
-      scrollToPosition: vi.fn(),
+      centerViewportOn: vi.fn(),
     });
     const { container, root } = await renderReact(React.createElement(MSAScrollbars));
     const scrollbars = container.querySelectorAll('[role="scrollbar"]');
@@ -413,12 +459,12 @@ describe('MSA viewer contract', () => {
 
   it('clamps custom scrollbar track clicks to the final row and column', async () => {
     const { MSAScrollbars } = await import('../../../../src/components/msa/MSAScrollbars.jsx');
-    const scrollToPosition = vi.fn();
+    const centerViewportOn = vi.fn();
 
     msaContext = createContext({
       processedData: { ...processedData, rows: 100, cols: 100 },
       visibleRange: { r0: 10, r1: 19, c0: 10, c1: 19 },
-      scrollToPosition,
+      centerViewportOn,
     });
     const { container, root } = await renderReact(React.createElement(MSAScrollbars));
     const scrollbars = container.querySelectorAll('[role="scrollbar"]');
@@ -445,8 +491,8 @@ describe('MSA viewer contract', () => {
       scrollbars[1].dispatchEvent(new MouseEvent('click', { clientY: 200, bubbles: true }));
     });
 
-    expect(scrollToPosition).toHaveBeenCalledWith({ col: 99 });
-    expect(scrollToPosition).toHaveBeenCalledWith({ row: 99 });
+    expect(centerViewportOn).toHaveBeenCalledWith({ column: 99 });
+    expect(centerViewportOn).toHaveBeenCalledWith({ row: 99 });
 
     await act(async () => {
       root.unmount();

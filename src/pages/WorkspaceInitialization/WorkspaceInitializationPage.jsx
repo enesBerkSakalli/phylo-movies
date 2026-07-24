@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertTriangle, CheckCircle2, CircleDashed, Database, Film, Upload } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
 import { Badge } from '../../components/ui/badge';
 import { Form } from '../../components/ui/form';
@@ -12,7 +13,8 @@ import { ExampleTab } from './components/ExampleTab.jsx';
 import { ProcessingOverlay } from './components/ProcessingOverlay.jsx';
 import { RecentRunsPanel } from './components/RecentRunsPanel.jsx';
 import { DEMO_EXAMPLE_DATASETS } from './exampleDatasets.js';
-import { APP_PREVIEW_IMAGE_URL } from '../shared/previewAssets.js';
+
+const PREVIEW_IMAGE_BASE_URL = `${import.meta.env.BASE_URL}og`;
 
 const ENGINE_STATUS = {
   ready: {
@@ -40,7 +42,9 @@ function getEngineStatus(state) {
 }
 
 export function WorkspaceInitializationPage({ demoOnly = false }) {
-  const [activeTab, setActiveTab] = React.useState(demoOnly ? 'example' : 'upload');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [showBackendAlert, setShowBackendAlert] = React.useState(false);
+  const activeTab = demoOnly || searchParams.get('tab') === 'example' ? 'example' : 'upload';
   const {
     form,
     submitting,
@@ -64,6 +68,26 @@ export function WorkspaceInitializationPage({ demoOnly = false }) {
     !demoOnly && backendStatus.state === 'unavailable' ? 'destructive' : 'secondary';
   const exampleDatasets = demoOnly ? DEMO_EXAMPLE_DATASETS : undefined;
 
+  React.useEffect(() => {
+    if (demoOnly || backendStatus.state === 'ready') {
+      setShowBackendAlert(false);
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => setShowBackendAlert(true), 750);
+    return () => window.clearTimeout(timeoutId);
+  }, [backendStatus.state, demoOnly]);
+
+  function handleTabChange(value) {
+    const nextSearchParams = new URLSearchParams(searchParams);
+    if (value === 'example') {
+      nextSearchParams.set('tab', 'example');
+    } else {
+      nextSearchParams.delete('tab');
+    }
+    setSearchParams(nextSearchParams, { replace: true });
+  }
+
   return (
     <TooltipProvider>
       <div className="fixed inset-0 overflow-y-auto overflow-x-hidden bg-background">
@@ -72,7 +96,12 @@ export function WorkspaceInitializationPage({ demoOnly = false }) {
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex min-w-0 flex-wrap items-center gap-3">
                 <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Phylo-Movies</h1>
-                <Badge variant={backendBadgeVariant} className="gap-1">
+                <Badge
+                  variant={backendBadgeVariant}
+                  className="gap-1"
+                  role="status"
+                  aria-live="polite"
+                >
                   <EngineIcon />
                   {demoOnly ? 'Generated Examples' : `Backend ${engineStatus.label}`}
                 </Badge>
@@ -80,7 +109,7 @@ export function WorkspaceInitializationPage({ demoOnly = false }) {
             </div>
           </section>
 
-          {!demoOnly && backendStatus.state !== 'ready' && (
+          {!demoOnly && showBackendAlert && backendStatus.state !== 'ready' && (
             <Alert
               variant={backendStatus.state === 'unavailable' ? 'destructive' : 'default'}
               className="mx-4 mt-4 sm:mx-6 lg:mx-8 xl:mx-10"
@@ -112,8 +141,6 @@ export function WorkspaceInitializationPage({ demoOnly = false }) {
 
           {!demoOnly && <ApplicationPreviewHero />}
 
-          {!demoOnly && <RecentRunsPanel />}
-
           {demoOnly ? (
             <section className="min-w-0 flex-1 px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6 xl:px-10">
               {alert && (
@@ -137,12 +164,12 @@ export function WorkspaceInitializationPage({ demoOnly = false }) {
           ) : (
             <Tabs
               value={activeTab}
-              onValueChange={setActiveTab}
+              onValueChange={handleTabChange}
               className="flex min-w-0 flex-col gap-0"
             >
               <section className="border-b border-border/60 px-4 py-3 sm:px-6 lg:px-8 xl:px-10">
                 <div className="flex min-w-0 justify-start">
-                  <TabsList className="grid w-full grid-cols-2 sm:w-[28rem]">
+                  <TabsList className="grid h-[50px] w-full grid-cols-2 sm:h-9 sm:w-[28rem]">
                     <TabsTrigger value="upload">New Project</TabsTrigger>
                     <TabsTrigger value="example">Example Library</TabsTrigger>
                   </TabsList>
@@ -179,6 +206,8 @@ export function WorkspaceInitializationPage({ demoOnly = false }) {
             </Tabs>
           )}
 
+          {!demoOnly && <RecentRunsPanel />}
+
           {(submitting || loadingExample) && (
             <ProcessingOverlay
               operationState={operationState}
@@ -194,11 +223,22 @@ export function WorkspaceInitializationPage({ demoOnly = false }) {
 function ApplicationPreviewHero() {
   return (
     <section className="relative overflow-hidden border-b bg-background">
-      <img
-        src={APP_PREVIEW_IMAGE_URL}
-        alt=""
-        className="absolute inset-0 h-full w-full object-cover object-center opacity-70"
-      />
+      <picture>
+        <source
+          type="image/webp"
+          srcSet={`${PREVIEW_IMAGE_BASE_URL}/phylo-movies-preview-480.webp 480w, ${PREVIEW_IMAGE_BASE_URL}/phylo-movies-preview-960.webp 960w, ${PREVIEW_IMAGE_BASE_URL}/phylo-movies-preview-1440.webp 1440w`}
+          sizes="100vw"
+        />
+        <img
+          src={`${PREVIEW_IMAGE_BASE_URL}/phylo-movies-preview-960.webp`}
+          alt=""
+          width="960"
+          height="553"
+          fetchpriority="high"
+          decoding="async"
+          className="absolute inset-0 h-full w-full object-cover object-center opacity-70"
+        />
+      </picture>
       <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-background/20" />
       <div className="relative px-4 py-8 sm:px-6 lg:px-8 xl:px-10">
         <div className="max-w-3xl space-y-4">

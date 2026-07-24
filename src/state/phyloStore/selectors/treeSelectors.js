@@ -8,7 +8,6 @@ export { selectCameraMode } from './selectCameraMode.js';
 export { selectChangePulseEnabled } from './selectChangePulseEnabled.js';
 export { selectClearMsaRowOrder } from './selectClearMsaRowOrder.js';
 export { selectClearClipboard } from './selectClearClipboard.js';
-export { selectClearMsaRegion } from './selectClearMsaRegion.js';
 export { selectCloseMsaViewer } from './selectCloseMsaViewer.js';
 export { selectClipboardTreeIndex } from './selectClipboardTreeIndex.js';
 export { selectComparisonMode } from './selectComparisonMode.js';
@@ -108,7 +107,6 @@ export { selectSetSubtreeHighlightScope } from './selectSetSubtreeHighlightScope
 export { selectSetSubtreeHighlightOpacity } from './selectSetSubtreeHighlightOpacity.js';
 export { selectSetSubtreeHighlightsEnabled } from './selectSetSubtreeHighlightsEnabled.js';
 export { selectSetMonophyleticColoring } from './selectSetMonophyleticColoring.js';
-export { selectSetMsaRegion } from './selectSetMsaRegion.js';
 export { selectSetMsaRowOrder } from './selectSetMsaRowOrder.js';
 export { selectSetMsaWindow } from './selectSetMsaWindow.js';
 export { selectSetNodeSize } from './selectSetNodeSize.js';

@@ -22,18 +22,24 @@ import {
   selectTreeController,
   useAppStore,
 } from '../../state/phyloStore/store.js';
-import { MSARegionOverrides, MSAViewActions } from './controls';
+import { MSARegionStatus } from './controls/MSARegionStatus.jsx';
+import { MSAViewActions } from './controls/MSAViewActions.jsx';
 
 export function MSAControls() {
   const { processedData, showLetters, setShowLetters, colorScheme, setColorScheme } = useMSA();
-  const treeController = useAppStore(selectTreeController);
-  const currentTree = useAppStore(selectCurrentTree);
-  const frameIndex = useAppStore(selectFrameIndex);
-  const msaRowOrder = useAppStore(selectMsaRowOrder);
-  const setMsaRowOrder = useAppStore(selectSetMsaRowOrder);
-  const clearMsaRowOrder = useAppStore(selectClearMsaRowOrder);
+  const canMatchTreeOrder = useAppStore((state) =>
+    Boolean(selectTreeController(state) && selectCurrentTree(state))
+  );
+  const canResetOrder = useAppStore((state) => {
+    const rowOrder = selectMsaRowOrder(state);
+    return Array.isArray(rowOrder) && rowOrder.length > 0;
+  });
 
   const handleMatchTreeOrder = () => {
+    const state = useAppStore.getState();
+    const treeController = selectTreeController(state);
+    const currentTree = selectCurrentTree(state);
+    const frameIndex = selectFrameIndex(state);
     if (!treeController) return;
     if (!currentTree) return;
 
@@ -53,16 +59,13 @@ export function MSAControls() {
     }
 
     if (order.length) {
-      setMsaRowOrder(order);
+      selectSetMsaRowOrder(useAppStore.getState())(order);
     }
   };
 
   const handleResetOrder = () => {
-    clearMsaRowOrder();
+    selectClearMsaRowOrder(useAppStore.getState())();
   };
-
-  const canMatchTreeOrder = Boolean(treeController && currentTree);
-  const canResetOrder = Array.isArray(msaRowOrder) && msaRowOrder.length > 0;
 
   return (
     <div
@@ -70,7 +73,7 @@ export function MSAControls() {
       role="toolbar"
       aria-label="Alignment viewer controls"
     >
-      <MSARegionOverrides />
+      <MSARegionStatus />
 
       <Separator orientation="vertical" className="h-4 mx-2 opacity-40" />
 
@@ -149,7 +152,6 @@ export function MSAControls() {
               <SelectItem value="nucleotide">Nucleotide (DNA)</SelectItem>
               <SelectItem value="purine">Purine (DNA)</SelectItem>
               <SelectItem value="identity">Identity to Consensus</SelectItem>
-              <SelectItem value="similarity">Similarity to Consensus</SelectItem>
               <SelectItem value="grayscale">Grayscale</SelectItem>
             </SelectGroup>
           </SelectContent>

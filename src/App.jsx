@@ -4,8 +4,6 @@ import { MoviePlayerBar } from './components/movie-player/MoviePlayerBar.jsx';
 import { ToolsSidebar } from './components/sidebar/ToolsSidebar.jsx';
 import { DeckGLCanvas } from './components/deckgl/DeckGLCanvas.jsx';
 import { TreeCanvasControls } from './components/deckgl/TreeCanvasControls.jsx';
-import { MsaRndWindow } from './components/msa/MsaRndWindow.jsx';
-import { MSAProvider } from './components/msa/MSAContext';
 import { TaxaColoringRndWindow } from './components/taxa-coloring/TaxaColoringRndWindow.jsx';
 import { NodeContextMenu } from './components/NodeContextMenu.jsx';
 import { TransitionInspectorPanel } from './components/TransitionInspectorPanel.jsx';
@@ -20,6 +18,7 @@ import {
   selectFileName,
   selectDatasetProvenance,
   selectInitialize,
+  selectIsMsaViewerOpen,
   selectReset,
   selectSetTaxaColoringOpen,
   useAppStore,
@@ -27,10 +26,13 @@ import {
 import { phyloData } from './services/data/dataService.js';
 import { useTreeController } from './hooks/useTreeController.js';
 
+const MsaRndWindow = React.lazy(() => import('./components/msa/MsaRndWindow.jsx'));
+
 export function App() {
   const fileName = useAppStore(selectFileName) || 'Loading...';
   const datasetProvenance = useAppStore(selectDatasetProvenance);
   const initializeStore = useAppStore(selectInitialize);
+  const isMsaViewerOpen = useAppStore(selectIsMsaViewerOpen);
   const resetStore = useAppStore(selectReset);
   const setTaxaColoringOpen = useAppStore(selectSetTaxaColoringOpen);
   const [sprAnalyticsOpen, setSprAnalyticsOpen] = React.useState(false);
@@ -132,9 +134,11 @@ export function App() {
           </SidebarInset>
         </div>
 
-        <MSAProvider>
-          <MsaRndWindow isActive={activeFloatingWindow === 'msa'} onFocus={focusMsaWindow} />
-        </MSAProvider>
+        {isMsaViewerOpen ? (
+          <React.Suspense fallback={null}>
+            <MsaRndWindow isActive={activeFloatingWindow === 'msa'} onFocus={focusMsaWindow} />
+          </React.Suspense>
+        ) : null}
         <TaxaColoringRndWindow
           isActive={activeFloatingWindow === 'taxa-coloring'}
           onFocus={focusTaxaColoringWindow}

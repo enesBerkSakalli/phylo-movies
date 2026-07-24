@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,7 +16,20 @@ import {
 } from './services/movieProcessing.js';
 
 const BACKEND_STATUS_TIMEOUT_MS = 1500;
-const BACKEND_STATUS_POLL_MS = 5000;
+const BACKEND_READY_POLL_MS = 15000;
+const BACKEND_UNAVAILABLE_POLL_MS = 30000;
+
+export function reconcileBackendStatus(current, next) {
+  const currentCapabilities = current.capabilities || [];
+  const nextCapabilities = next.capabilities || [];
+  const unchanged =
+    current.state === next.state &&
+    current.version === next.version &&
+    currentCapabilities.length === nextCapabilities.length &&
+    currentCapabilities.every((capability, index) => capability === nextCapabilities[index]);
+
+  return unchanged ? current : next;
+}
 
 /**
  * Custom hook to manage the workspace initialization upload form.
@@ -70,7 +83,6 @@ export function useWorkspaceInitializationForm({ skipBackendCheck = false } = {}
 
   useEffect(() => {
     if (skipBackendCheck) {
-      setBackendStatus({ state: 'ready', checkedAt: Date.now(), capabilities: [] });
       return undefined;
     }
 
@@ -80,10 +92,16 @@ export function useWorkspaceInitializationForm({ skipBackendCheck = false } = {}
     let pollId = null;
 
     async function checkBackendStatus() {
+      if (document.visibilityState === 'hidden') {
+        pollId = setTimeout(checkBackendStatus, BACKEND_READY_POLL_MS);
+        return;
+      }
+
       controller?.abort();
       if (timeoutId) clearTimeout(timeoutId);
       controller = new AbortController();
       timeoutId = setTimeout(() => controller.abort(), BACKEND_STATUS_TIMEOUT_MS);
+      let nextPollDelay = BACKEND_UNAVAILABLE_POLL_MS;
 
       try {
         const healthUrl = await resolveApiUrl('/health');
@@ -99,45 +117,41 @@ export function useWorkspaceInitializationForm({ skipBackendCheck = false } = {}
           throw new Error(`Backend is not ready (${payload?.status || 'unknown'})`);
         }
         if (!cancelled) {
-          setBackendStatus({
+          const nextStatus = {
             state: 'ready',
-            checkedAt: Date.now(),
             capabilities: Array.isArray(payload.capabilities) ? payload.capabilities : [],
             version: payload.version || null,
-          });
+          };
+          setBackendStatus((current) => reconcileBackendStatus(current, nextStatus));
+          nextPollDelay = BACKEND_READY_POLL_MS;
         }
       } catch {
-        if (!cancelled) setBackendStatus({ state: 'unavailable', checkedAt: Date.now() });
+        if (!cancelled) {
+          setBackendStatus((current) => reconcileBackendStatus(current, { state: 'unavailable' }));
+        }
       } finally {
         if (timeoutId) {
           clearTimeout(timeoutId);
           timeoutId = null;
         }
+        if (!cancelled) {
+          pollId = setTimeout(checkBackendStatus, nextPollDelay);
+        }
       }
     }
 
     checkBackendStatus();
-    pollId = setInterval(checkBackendStatus, BACKEND_STATUS_POLL_MS);
 
     return () => {
       cancelled = true;
-      if (pollId) clearInterval(pollId);
+      if (pollId) clearTimeout(pollId);
       if (timeoutId) clearTimeout(timeoutId);
       controller?.abort();
     };
   }, [skipBackendCheck]);
 
-  const base = useMemo(() => {
-    try {
-      if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL) {
-        return import.meta.env.BASE_URL;
-      }
-    } catch {}
-    return '/';
-  }, []);
-
-  function showAlert(message, type = 'danger', title = 'Action needed') {
-    setAlert({ type, title, message });
+  function showAlert(message, title = 'Action needed') {
+    setAlert({ title, message });
   }
 
   function clearAlert() {
@@ -154,7 +168,6 @@ export function useWorkspaceInitializationForm({ skipBackendCheck = false } = {}
     if (backendStatus.state !== 'ready') {
       showAlert(
         'Backend processing is not ready yet. Wait for Backend Connected, or start BranchArchitect with ./start.sh.',
-        'danger',
         'Backend not ready'
       );
       return;
@@ -163,7 +176,6 @@ export function useWorkspaceInitializationForm({ skipBackendCheck = false } = {}
     if (!formData.treesFile && !formData.msaFile) {
       showAlert(
         'Select a Newick tree file, an MSA file, or both before starting processing.',
-        'danger',
         'No input file selected'
       );
       return;
@@ -199,7 +211,7 @@ export function useWorkspaceInitializationForm({ skipBackendCheck = false } = {}
     } catch (err) {
       if (!isCurrentOperation(operationRef, operation) || err?.name === 'AbortError') return;
       console.error('[useWorkspaceInitializationForm] Submission error:', err);
-      showAlert(formatProcessingAlertMessage(err), 'danger', 'Dataset processing failed');
+      showAlert(formatProcessingAlertMessage(err), 'Dataset processing failed');
     } finally {
       if (isCurrentOperation(operationRef, operation)) {
         hideElectronLoading();
@@ -220,7 +232,6 @@ export function useWorkspaceInitializationForm({ skipBackendCheck = false } = {}
     if (backendStatus.state !== 'ready') {
       showAlert(
         'Examples require the BranchArchitect backend. Wait for Backend Connected, or start it with ./start.sh.',
-        'danger',
         'Backend not ready'
       );
       return;
@@ -230,7 +241,6 @@ export function useWorkspaceInitializationForm({ skipBackendCheck = false } = {}
     if (!example) {
       showAlert(
         `The example id "${exampleId}" is not registered in the example library.`,
-        'danger',
         'Example not found'
       );
       return;
@@ -299,7 +309,7 @@ export function useWorkspaceInitializationForm({ skipBackendCheck = false } = {}
     } catch (err) {
       if (!isCurrentOperation(operationRef, operation) || err?.name === 'AbortError') return;
       console.error('[useWorkspaceInitializationForm] Failed to load example:', err);
-      showAlert(formatExampleAlertMessage(example, err), 'danger', 'Example could not be loaded');
+      showAlert(formatExampleAlertMessage(example, err), 'Example could not be loaded');
     } finally {
       if (isCurrentOperation(operationRef, operation)) {
         hideElectronLoading();
@@ -317,7 +327,6 @@ export function useWorkspaceInitializationForm({ skipBackendCheck = false } = {}
     if (!example?.precomputedPayloadPath) {
       showAlert(
         `The example id "${exampleId}" does not have a generated browser payload.`,
-        'danger',
         'Generated example not found'
       );
       return;
@@ -346,11 +355,7 @@ export function useWorkspaceInitializationForm({ skipBackendCheck = false } = {}
     } catch (err) {
       if (!isCurrentOperation(operationRef, operation) || err?.name === 'AbortError') return;
       console.error('[useWorkspaceInitializationForm] Failed to open generated example:', err);
-      showAlert(
-        formatGeneratedExampleAlertMessage(example, err),
-        'danger',
-        'Example could not be opened'
-      );
+      showAlert(formatGeneratedExampleAlertMessage(example, err), 'Example could not be opened');
     } finally {
       if (isCurrentOperation(operationRef, operation)) {
         setLoadingExample(false);
@@ -377,7 +382,7 @@ export function useWorkspaceInitializationForm({ skipBackendCheck = false } = {}
     setLoadingExample(false);
     setLoadingExampleId(null);
     setOperationState({ percent: 0, message: '' });
-    showAlert('Processing was cancelled before completion.', 'danger', 'Processing cancelled');
+    showAlert('Processing was cancelled before completion.', 'Processing cancelled');
   }
 
   return {
@@ -389,16 +394,12 @@ export function useWorkspaceInitializationForm({ skipBackendCheck = false } = {}
     operationState,
     backendStatus,
     alert,
-    showAlert,
-    clearAlert,
     // actions
     handleSubmit: onSubmit,
     handleLoadExample,
     handleOpenPrecomputedExample,
     cancelOperation,
     reset,
-    // derived
-    base,
   };
 }
 

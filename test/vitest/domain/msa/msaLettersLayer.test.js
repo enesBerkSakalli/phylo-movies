@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { buildTextData, createLettersLayer } from '../../../../src/msaViewer/layers/lettersLayer.js';
+import {
+  buildTextData,
+  createLettersLayer,
+} from '../../../../src/msaViewer/layers/lettersLayer.js';
 
 describe('MSA letters layer', () => {
   it('keeps sequence id on letter data for row coloring', () => {
@@ -28,7 +31,7 @@ describe('MSA letters layer', () => {
       10,
       1
     );
-    const layer = createLettersLayer(data, 'taxa', {
+    const layer = createLettersLayer(data, 'dna', 'taxa', null, {
       'dark-taxon': '#123456',
       'light-taxon': '#f5f5f5',
     });
@@ -48,7 +51,9 @@ describe('MSA letters layer', () => {
     );
     const layer = createLettersLayer(
       data,
+      'dna',
       'taxa',
+      null,
       { 'dark-taxon': '#123456' },
       { startCol: 2, endCol: 2 },
       null
@@ -56,5 +61,19 @@ describe('MSA letters layer', () => {
 
     expect(layer.props.getColor(data[0])).toEqual([40, 40, 40, 255]);
     expect(layer.props.getColor(data[1])).toEqual([255, 255, 255, 255]);
+  });
+
+  it('uses readable text on dark identity cells', () => {
+    const data = buildTextData(
+      10,
+      [{ id: 'taxon-a', seq: 'A' }],
+      { r0: 0, r1: 0, c0: 0, c1: 0 },
+      true,
+      10,
+      1
+    );
+    const layer = createLettersLayer(data, 'protein', 'identity', 'A');
+
+    expect(layer.props.getColor(data[0])).toEqual([255, 255, 255, 255]);
   });
 });

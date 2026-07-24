@@ -12,7 +12,6 @@ import { TaxaAndHighlightsSection } from '../appearance/controls/VisualElements/
 import { FocusAndChangeEffects } from '../appearance/FocusAndChangeEffects.jsx';
 import { TreeStatsPanel } from '../TreeStatsPanel/TreeStatsPanel.tsx';
 import { TaxaGroupsLegend } from '../TreeStatsPanel/Shared/TaxaLegend';
-import AnalyticsDashboard from '../TreeStatsPanel/AnalyticsDashboard.tsx';
 import {
   Sidebar,
   SidebarHeader,
@@ -33,6 +32,8 @@ import { SPR_ANALYTICS_COPY } from '../TreeStatsPanel/AnalyticsDashboard.contrac
 import { selectTreeHydrationStats, useAppStore } from '../../state/phyloStore/store.js';
 
 const phyloTreeIcon = `${import.meta.env.BASE_URL}icons/phylo-tree-icon.svg`;
+const loadAnalyticsDashboard = () => import('../TreeStatsPanel/AnalyticsDashboard.tsx');
+const AnalyticsDashboard = React.lazy(loadAnalyticsDashboard);
 
 export function ToolsSidebar({
   fileName,
@@ -52,7 +53,7 @@ export function ToolsSidebar({
 
   return (
     <>
-      <Sidebar collapsible="icon" data-tour-id="workspace-sidebar">
+      <Sidebar id="app-sidebar" collapsible="icon" data-tour-id="workspace-sidebar">
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
@@ -124,6 +125,8 @@ export function ToolsSidebar({
                   aria-pressed={sprAnalyticsOpen}
                   isActive={sprAnalyticsOpen || isSprAnalyticsActive}
                   onClick={sprAnalyticsOpen ? onFocusSprAnalytics : onOpenSprAnalytics}
+                  onFocus={loadAnalyticsDashboard}
+                  onMouseEnter={loadAnalyticsDashboard}
                 >
                   <Activity className="text-primary" />
                   <span>{SPR_ANALYTICS_COPY.title}</span>
@@ -146,12 +149,16 @@ export function ToolsSidebar({
         <SidebarRail />
       </Sidebar>
 
-      <AnalyticsDashboard
-        isOpen={sprAnalyticsOpen}
-        isActive={isSprAnalyticsActive}
-        onClose={onCloseSprAnalytics}
-        onFocus={onFocusSprAnalytics}
-      />
+      {sprAnalyticsOpen ? (
+        <React.Suspense fallback={null}>
+          <AnalyticsDashboard
+            isOpen
+            isActive={isSprAnalyticsActive}
+            onClose={onCloseSprAnalytics}
+            onFocus={onFocusSprAnalytics}
+          />
+        </React.Suspense>
+      ) : null}
     </>
   );
 }

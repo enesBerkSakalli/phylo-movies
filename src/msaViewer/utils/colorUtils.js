@@ -3,19 +3,7 @@
  * Provides color schemes for DNA and protein sequences
  * Ported from react-alignment-viewer and other standard schemes
  */
-import { colorToRgb } from '../../services/ui/colorUtils.js';
-
-/**
- * Creates an RGBA color array
- * @param {number} r - Red component (0-255)
- * @param {number} g - Green component (0-255)
- * @param {number} b - Blue component (0-255)
- * @param {number} a - Alpha component (0-255), defaults to 255
- * @returns {number[]} RGBA color array for deck.gl
- */
-export function rgba(r, g, b, a = 255) {
-  return [r, g, b, a];
-}
+import { colorToRgb, rgba } from '../../services/ui/colorUtils.js';
 
 /**
  * Creates a grayscale color array

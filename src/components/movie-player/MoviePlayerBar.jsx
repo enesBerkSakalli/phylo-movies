@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { MovieChartSection } from './MovieChartSection/MovieChartSection.jsx';
 import { TransportControls } from './TransportControls.jsx';
@@ -9,7 +9,6 @@ import { TimelineSegmentTooltip } from '../timeline/TimelineSegmentTooltip.jsx';
 import {
   selectAnimationSpeed,
   selectBackward,
-  selectBarOptionValue,
   selectCurrentAnimationStage,
   selectForward,
   selectHoveredSegmentData,
@@ -20,7 +19,6 @@ import {
   selectMovieTimelineManager,
   selectOpenMsaViewer,
   selectSetAnimationSpeed,
-  selectSetBarOption,
   selectSetHoveredSegment,
   selectSetTooltipHovered,
   useAppStore,
@@ -41,30 +39,19 @@ export function MoviePlayerBar() {
   const backward = useAppStore(selectBackward);
   const setAnimationSpeed = useAppStore(selectSetAnimationSpeed);
   const animationSpeed = useAppStore(selectAnimationSpeed);
-  const barOptionValue = useAppStore(selectBarOptionValue);
-  const currentAnimationStage = useAppStore(selectCurrentAnimationStage);
   const hasMsa = useAppStore(selectHasMsa);
   const openMsaViewer = useAppStore(selectOpenMsaViewer);
-  const setBarOption = useAppStore(selectSetBarOption);
   const [toolbarExpanded, setToolbarExpanded] = useState(true);
 
-  const hoveredSegmentIndex = useAppStore(selectHoveredSegmentIndex);
-  const hoveredSegmentData = useAppStore(selectHoveredSegmentData);
-  const hoveredSegmentPosition = useAppStore(selectHoveredSegmentPosition);
-  const setTooltipHovered = useAppStore(selectSetTooltipHovered);
-  const setHoveredSegment = useAppStore(selectSetHoveredSegment);
   const movieTimelineManager = useAppStore(selectMovieTimelineManager);
-  const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
-  const tooltipRef = useRef(null);
   const timelineHostRef = useRef(null);
   const playerBarRef = useRef(null);
 
   const hasTimeline = Boolean(movieTimelineManager);
-  const totalSegments = hasTimeline ? (movieTimelineManager?.getSegmentCount?.() ?? 0) : 0;
-  const hasTransitionSegments = hasTimeline
-    ? (movieTimelineManager?.hasTransitionSegments?.() ?? false)
-    : false;
-  const tooltipPosition = getTimelineTooltipPosition(hoveredSegmentPosition);
+  const hasTransitionSegments = React.useMemo(
+    () => (hasTimeline ? (movieTimelineManager?.hasTransitionSegments?.() ?? false) : false),
+    [hasTimeline, movieTimelineManager]
+  );
 
   useEffect(() => {
     const container = timelineHostRef.current;
@@ -101,21 +88,6 @@ export function MoviePlayerBar() {
       layoutRoot.style.removeProperty('--movie-player-bar-height');
     };
   }, []);
-
-  const getLeafNames = useCallback(
-    (indices) => {
-      if (!leafNamesByIndex || !Array.isArray(leafNamesByIndex)) return [];
-
-      const leafNames = [];
-      for (const idx of indices) {
-        if (Number.isInteger(idx) && idx >= 0 && idx < leafNamesByIndex.length) {
-          leafNames.push(leafNamesByIndex[idx]);
-        }
-      }
-      return leafNames;
-    },
-    [leafNamesByIndex]
-  );
 
   const { open, toggleSidebar } = useSidebar();
   const handleNavigationToggle = useCallback(() => {
@@ -179,7 +151,7 @@ export function MoviePlayerBar() {
               role="group"
               aria-label={MOVIE_PLAYER_ARIA_LABELS.playbackSettings}
             >
-              {hasTimeline && <MotionStatusSlot stage={currentAnimationStage} />}
+              {hasTimeline && <MotionStatusSlot />}
 
               {toolbarExpanded && (
                 <PlaybackSpeedControl value={animationSpeed} setValue={setAnimationSpeed} />
@@ -197,7 +169,7 @@ export function MoviePlayerBar() {
                     toolbarExpanded ? 'Collapse timeline controls' : 'Expand timeline controls'
                   }
                   aria-expanded={toolbarExpanded}
-                  onClick={() => setToolbarExpanded(!toolbarExpanded)}
+                  onClick={() => setToolbarExpanded((expanded) => !expanded)}
                   className="hover:bg-accent"
                 >
                   {toolbarExpanded ? (
@@ -236,40 +208,11 @@ export function MoviePlayerBar() {
             )}
           </div>
 
-          <MovieChartSection barOptionValue={barOptionValue} onBarOptionChange={setBarOption} />
+          <MovieChartSection />
         </div>
       </div>
 
-      {hoveredSegmentIndex !== null && hoveredSegmentData && tooltipPosition && (
-        <div
-          ref={tooltipRef}
-          style={{
-            position: 'fixed',
-            left: `${tooltipPosition.x}px`,
-            top: `${tooltipPosition.y - TOOLTIP_Y_OFFSET}px`,
-            transform: 'translate(-50%, -100%)',
-            zIndex: 10000,
-            pointerEvents: 'auto',
-            minWidth: '200px',
-            maxWidth: '300px',
-          }}
-          className="animate-in fade-in-0 zoom-in-95 duration-200"
-          onMouseEnter={() => setTooltipHovered(true)}
-          onMouseLeave={() => {
-            setTooltipHovered(false);
-            setHoveredSegment(null, null);
-          }}
-        >
-          <div className="rounded-lg border bg-card p-2 shadow-lg">
-            <TimelineSegmentTooltip
-              segment={hoveredSegmentData}
-              segmentIndex={hoveredSegmentIndex}
-              totalSegments={totalSegments}
-              getLeafNames={getLeafNames}
-            />
-          </div>
-        </div>
-      )}
+      <TimelineSegmentTooltipOverlay />
     </>
   );
 }
@@ -283,6 +226,123 @@ function getTimelineTooltipPosition(position) {
   }
 
   return { x, y };
+}
+
+function clampTimelineTooltipPosition(anchor, element) {
+  if (!anchor || !element || typeof window === 'undefined') return null;
+
+  const margin = 8;
+  const bounds = element.getBoundingClientRect();
+  const availableHalfWidth = Math.max(0, (window.innerWidth - margin * 2) / 2);
+  const halfWidth = Math.min(bounds.width / 2, availableHalfWidth);
+  const minimumX = margin + halfWidth;
+  const maximumX = Math.max(minimumX, window.innerWidth - margin - halfWidth);
+  const minimumY = Math.min(window.innerHeight - margin, margin + bounds.height);
+  const maximumY = Math.max(minimumY, window.innerHeight - margin);
+
+  return {
+    x: Math.min(Math.max(anchor.x, minimumX), maximumX),
+    y: Math.min(Math.max(anchor.y - TOOLTIP_Y_OFFSET, minimumY), maximumY),
+  };
+}
+
+function positionsEqual(left, right) {
+  return left?.x === right?.x && left?.y === right?.y;
+}
+
+function TimelineSegmentTooltipOverlay() {
+  const hoveredSegmentIndex = useAppStore(selectHoveredSegmentIndex);
+  const hoveredSegmentData = useAppStore(selectHoveredSegmentData);
+  const hoveredSegmentPosition = useAppStore(selectHoveredSegmentPosition);
+  const setTooltipHovered = useAppStore(selectSetTooltipHovered);
+  const setHoveredSegment = useAppStore(selectSetHoveredSegment);
+  const movieTimelineManager = useAppStore(selectMovieTimelineManager);
+  const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
+  const tooltipRef = useRef(null);
+  const anchorPosition = getTimelineTooltipPosition(hoveredSegmentPosition);
+  const anchorX = anchorPosition?.x;
+  const anchorY = anchorPosition?.y;
+  const [tooltipPosition, setTooltipPosition] = useState(null);
+  const totalSegments = movieTimelineManager?.getSegmentCount?.() ?? 0;
+
+  const getLeafNames = useCallback(
+    (indices) => {
+      if (!Array.isArray(leafNamesByIndex)) return [];
+
+      const leafNames = [];
+      for (const index of indices) {
+        if (Number.isInteger(index) && index >= 0 && index < leafNamesByIndex.length) {
+          leafNames.push(leafNamesByIndex[index]);
+        }
+      }
+      return leafNames;
+    },
+    [leafNamesByIndex]
+  );
+
+  useLayoutEffect(() => {
+    const tooltip = tooltipRef.current;
+    if (!Number.isFinite(anchorX) || !Number.isFinite(anchorY) || !tooltip) {
+      setTooltipPosition(null);
+      return undefined;
+    }
+
+    const updatePosition = () => {
+      const nextPosition = clampTimelineTooltipPosition({ x: anchorX, y: anchorY }, tooltip);
+      setTooltipPosition((currentPosition) =>
+        positionsEqual(currentPosition, nextPosition) ? currentPosition : nextPosition
+      );
+    };
+
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    const resizeObserver =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updatePosition) : null;
+    resizeObserver?.observe(tooltip);
+
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      resizeObserver?.disconnect();
+    };
+  }, [anchorX, anchorY, hoveredSegmentIndex]);
+
+  if (hoveredSegmentIndex === null || !hoveredSegmentData || !anchorPosition) {
+    return null;
+  }
+
+  const visiblePosition = tooltipPosition ?? anchorPosition;
+
+  return (
+    <div
+      ref={tooltipRef}
+      style={{
+        position: 'fixed',
+        left: `${visiblePosition.x}px`,
+        top: `${visiblePosition.y}px`,
+        transform: 'translate(-50%, -100%)',
+        zIndex: 10000,
+        pointerEvents: 'auto',
+        minWidth: '200px',
+        maxWidth: '300px',
+        visibility: tooltipPosition ? 'visible' : 'hidden',
+      }}
+      className="animate-in fade-in-0 zoom-in-95 duration-200"
+      onMouseEnter={() => setTooltipHovered(true)}
+      onMouseLeave={() => {
+        setTooltipHovered(false);
+        setHoveredSegment(null, null);
+      }}
+    >
+      <div className="rounded-lg border bg-card p-2 shadow-lg">
+        <TimelineSegmentTooltip
+          segment={hoveredSegmentData}
+          segmentIndex={hoveredSegmentIndex}
+          totalSegments={totalSegments}
+          getLeafNames={getLeafNames}
+        />
+      </div>
+    </div>
+  );
 }
 
 function MsaPlayerBarAction({ hasMsa, onOpen }) {
@@ -304,7 +364,8 @@ function MsaPlayerBarAction({ hasMsa, onOpen }) {
   );
 }
 
-function MotionStatusSlot({ stage }) {
+function MotionStatusSlot() {
+  const stage = useAppStore(selectCurrentAnimationStage);
   const label = formatAnimationStage(stage);
   const tooltip = stage
     ? `Current topology-change phase: ${label}`

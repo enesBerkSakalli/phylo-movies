@@ -83,6 +83,14 @@ const FULL_STACK_COMMAND = `git clone --recurse-submodules https://github.com/en
 cd phylo-movies
 docker compose up --build`;
 
+function SectionCardTitle({ children, className }) {
+  return (
+    <CardTitle>
+      <h2 className={className}>{children}</h2>
+    </CardTitle>
+  );
+}
+
 export function UsageExamplesPage() {
   return (
     <div className="fixed inset-0 overflow-y-auto overflow-x-hidden bg-background">
@@ -126,10 +134,10 @@ export function UsageExamplesPage() {
 
           <Card className="min-w-0 border-muted shadow-lg">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <SectionCardTitle className="flex items-center gap-2">
                 <Film className="size-5" aria-hidden />
                 Quickest Demo
-              </CardTitle>
+              </SectionCardTitle>
               <CardDescription>Recommended first path for reviewers and new users.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
@@ -146,7 +154,7 @@ export function UsageExamplesPage() {
 
         <Card className="border-muted shadow-lg">
           <CardHeader>
-            <CardTitle>Demo Walkthrough</CardTitle>
+            <SectionCardTitle>Demo Walkthrough</SectionCardTitle>
             <CardDescription>
               A backend-free path that shows the interface with generated example movies.
             </CardDescription>
@@ -157,7 +165,7 @@ export function UsageExamplesPage() {
                 <div className="mb-3 flex size-8 items-center justify-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">
                   {index + 1}
                 </div>
-                <h2 className="text-sm font-semibold text-foreground">{step.title}</h2>
+                <h3 className="text-sm font-semibold text-foreground">{step.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                   {step.description}
                 </p>
@@ -169,7 +177,7 @@ export function UsageExamplesPage() {
         <section className="grid gap-6 lg:grid-cols-[1fr_1fr]">
           <Card className="min-w-0 border-muted shadow-lg">
             <CardHeader>
-              <CardTitle>Common Workflows</CardTitle>
+              <SectionCardTitle>Common Workflows</SectionCardTitle>
               <CardDescription>
                 These are the main ways users move from input data to a movie.
               </CardDescription>
@@ -186,7 +194,7 @@ export function UsageExamplesPage() {
                       <WorkflowIcon className="size-4" aria-hidden />
                     </div>
                     <div className="min-w-0">
-                      <h2 className="text-sm font-semibold text-foreground">{workflow.title}</h2>
+                      <h3 className="text-sm font-semibold text-foreground">{workflow.title}</h3>
                       <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                         {workflow.description}
                       </p>
@@ -202,10 +210,10 @@ export function UsageExamplesPage() {
 
           <Card className="border-muted shadow-lg">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <SectionCardTitle className="flex items-center gap-2">
                 <Terminal className="size-5" aria-hidden />
                 Run the Full App
-              </CardTitle>
+              </SectionCardTitle>
               <CardDescription>
                 Required for uploads, interpolation, and MSA-driven tree inference.
               </CardDescription>
@@ -232,7 +240,7 @@ export function UsageExamplesPage() {
 
         <Card className="border-muted shadow-lg">
           <CardHeader>
-            <CardTitle>Generated Examples You Can Open</CardTitle>
+            <SectionCardTitle>Generated Examples You Can Open</SectionCardTitle>
             <CardDescription>
               These rows are sourced from the same demo metadata used by the app.
             </CardDescription>
@@ -244,9 +252,9 @@ export function UsageExamplesPage() {
                 className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-4"
               >
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
-                  <h2 className="min-w-0 text-sm font-semibold leading-tight text-foreground">
+                  <h3 className="min-w-0 text-sm font-semibold leading-tight text-foreground">
                     {example.name}
-                  </h2>
+                  </h3>
                   {example.badge && (
                     <Badge variant="secondary" className="text-2xs">
                       {example.badge}

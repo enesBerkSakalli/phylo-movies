@@ -5,17 +5,27 @@ import { MSADeckGLViewer } from '../../../../src/msaViewer/MSADeckGLViewer.js';
 function makeViewer() {
   const viewer = Object.create(MSADeckGLViewer.prototype);
   viewer._destroyed = false;
-  viewer._postLoadRenderTimeoutId = null;
   viewer.frame = null;
+  viewer._renderedRange = null;
+  viewer._cellGroupsCache = null;
   viewer.resizeObserver = null;
   viewer.container = null;
   viewer.canvas = null;
+  viewer.options = {
+    cellSize: 12,
+    showLetters: true,
+    colorScheme: 'default',
+    rowColorMap: {},
+  };
   viewer.state = {
     deckgl: null,
     seqs: [],
+    type: 'protein',
     rows: 0,
     cols: 0,
-    selection: null,
+    consensus: null,
+    currentRegion: null,
+    previousRegion: null,
     viewState: { target: [0, 0, 0], zoom: 0 },
   };
   viewer.adjustLabelWidth = vi.fn();
@@ -30,7 +40,10 @@ describe('MSADeckGLViewer lifecycle', () => {
       new URL('../../../../src/msaViewer/MSADeckGLViewer.js', import.meta.url),
       'utf8'
     );
-    const config = readFileSync(new URL('../../../../src/msaViewer/config.js', import.meta.url), 'utf8');
+    const config = readFileSync(
+      new URL('../../../../src/msaViewer/config.js', import.meta.url),
+      'utf8'
+    );
 
     expect(source).not.toContain('msa_viewer.html');
     expect(source).not.toContain('WinBox');
@@ -44,7 +57,10 @@ describe('MSADeckGLViewer lifecycle', () => {
       new URL('../../../../src/msaViewer/MSADeckGLViewer.js', import.meta.url),
       'utf8'
     );
-    const config = readFileSync(new URL('../../../../src/msaViewer/config.js', import.meta.url), 'utf8');
+    const config = readFileSync(
+      new URL('../../../../src/msaViewer/config.js', import.meta.url),
+      'utf8'
+    );
 
     expect(source).not.toContain('_initTimeoutId');
     expect(source).not.toContain('setTimeout(() => this.initializeDeck()');
@@ -52,73 +68,131 @@ describe('MSADeckGLViewer lifecycle', () => {
   });
 
   it('attaches custom controller options to the main MSA view', () => {
-    const source = readFileSync(
-      new URL('../../../../src/msaViewer/MSADeckGLViewer.js', import.meta.url),
-      'utf8'
-    );
-    const mainViewControllerConfigs =
-      source.match(
-        /id:\s*'main'[\s\S]*?controller:\s*\{\s*type:\s*OrthographicController[\s\S]*?scrollZoom:\s*false[\s\S]*?keyboard:\s*\{\s*zoomSpeed:\s*0\.08\s*\}/g
-      ) || [];
+    const viewer = makeViewer();
+    viewer.container = { clientWidth: 800, clientHeight: 500 };
+    viewer.LABELS_WIDTH = 100;
+    viewer.AXIS_HEIGHT = 20;
 
-    expect(source).not.toMatch(/style:\s*\{\},\s*controller:\s*\{/);
-    expect(source).not.toMatch(/id:\s*'main'[\s\S]*?controller:\s*true/);
-    expect(mainViewControllerConfigs).toHaveLength(2);
+    const mainView = viewer.buildDeckViews().find((view) => view.id === 'main');
+
+    expect(mainView).toBeDefined();
+    expect(mainView.props.controller).toMatchObject({
+      dragPan: true,
+      scrollZoom: false,
+      doubleClickZoom: false,
+      keyboard: { zoomSpeed: 0.08 },
+    });
   });
 
-  it('cancels the delayed post-load render on destroy', () => {
-    vi.useFakeTimers();
+  it('updates data, presentation, and regions in one render', () => {
     const viewer = makeViewer();
 
-    viewer._applyProcessedData({
-      sequences: [
-        { id: 'taxon-a', seq: 'ACGT' },
-        { id: 'taxon-b', seq: 'ACGA' },
-      ],
-      type: 'dna',
-      rows: 2,
-      cols: 4,
+    viewer.update({
+      data: {
+        sequences: [
+          { id: 'taxon-a', seq: 'ACGT' },
+          { id: 'taxon-b', seq: 'ACGA' },
+        ],
+        consensus: 'ACGA',
+        type: 'dna',
+        rows: 2,
+        cols: 4,
+      },
+      currentRegion: { start: 1, end: 2 },
+      previousRegion: { start: 3, end: 4 },
+      showLetters: false,
+      colorScheme: 'identity',
+      rowColorMap: { 'taxon-a': '#123456' },
     });
 
     expect(viewer.render).toHaveBeenCalledTimes(1);
-    expect(viewer._postLoadRenderTimeoutId).not.toBeNull();
-
-    viewer.destroy();
-    vi.advanceTimersByTime(100);
-
-    expect(viewer.render).toHaveBeenCalledTimes(1);
-    vi.useRealTimers();
+    expect(viewer.state.currentRegion).toEqual({ startCol: 1, endCol: 2 });
+    expect(viewer.state.previousRegion).toEqual({ startCol: 3, endCol: 4 });
+    expect(viewer.state.consensus).toBe('ACGA');
+    expect(viewer.options).toMatchObject({
+      showLetters: false,
+      colorScheme: 'identity',
+      rowColorMap: { 'taxon-a': '#123456' },
+    });
   });
 
   it('defers first camera initialization until deck and container layout are ready', () => {
-    vi.useFakeTimers();
     const viewer = makeViewer();
     viewer.hasUsableContainerSize = vi.fn(() => false);
 
-    viewer._applyProcessedData({
-      sequences: [{ id: 'taxon-a', seq: 'ACGT' }],
-      type: 'dna',
-      rows: 1,
-      cols: 4,
+    viewer.update({
+      data: {
+        sequences: [{ id: 'taxon-a', seq: 'ACGT' }],
+        type: 'dna',
+        rows: 1,
+        cols: 4,
+      },
     });
 
     expect(viewer.initCameraPosition).not.toHaveBeenCalled();
     expect(viewer._hasLoadedOnce).not.toBe(true);
-
-    vi.useRealTimers();
   });
 
-  it('centers one-based MSA regions through the public region scroll API', () => {
+  it('centers one-based MSA regions through the canonical region command', () => {
     const viewer = makeViewer();
     viewer.state.seqs = [{ id: 'taxon-a', seq: 'ACGT' }];
     viewer.state.rows = 1;
     viewer.state.cols = 10;
     viewer.options = { cellSize: 12 };
-    viewer.scrollTo = vi.fn();
+    viewer.centerViewportOn = vi.fn();
 
-    viewer.scrollToRegion(2, 4, { align: 'center' });
+    viewer.centerRegion(2, 4);
 
-    expect(viewer.scrollTo).toHaveBeenCalledWith({ col: 2.5 });
+    expect(viewer.centerViewportOn).toHaveBeenCalledWith({ column: 2.5 });
+  });
+
+  it('does not expose compatibility method aliases', () => {
+    expect(MSADeckGLViewer.prototype).not.toHaveProperty('setSelection');
+    expect(MSADeckGLViewer.prototype).not.toHaveProperty('clearSelection');
+    expect(MSADeckGLViewer.prototype).not.toHaveProperty('setRegion');
+    expect(MSADeckGLViewer.prototype).not.toHaveProperty('clearRegion');
+    expect(MSADeckGLViewer.prototype).not.toHaveProperty('loadFromProcessedData');
+    expect(MSADeckGLViewer.prototype).not.toHaveProperty('_applyProcessedData');
+  });
+
+  it('reclamps and republishes viewport state after container resize', () => {
+    let resizeCallback;
+    const disconnect = vi.fn();
+    const observe = vi.fn();
+    const originalResizeObserver = globalThis.ResizeObserver;
+    globalThis.ResizeObserver = class {
+      constructor(callback) {
+        resizeCallback = callback;
+      }
+
+      disconnect() {
+        disconnect();
+      }
+
+      observe(element) {
+        observe(element);
+      }
+    };
+
+    try {
+      const viewer = makeViewer();
+      viewer.container = { clientWidth: 800, clientHeight: 500 };
+      viewer.state.seqs = [{ id: 'taxon-a', seq: 'ACGT' }];
+      viewer.adjustLabelWidth = vi.fn();
+      viewer.handleViewStateChange = vi.fn();
+
+      viewer.startResizeObserver();
+      resizeCallback();
+
+      expect(observe).toHaveBeenCalledWith(viewer.container);
+      expect(viewer.adjustLabelWidth).toHaveBeenCalledWith({ updateDeck: false });
+      expect(viewer.handleViewStateChange).toHaveBeenCalledWith(viewer.state.viewState, {
+        force: true,
+        layoutChanged: true,
+      });
+    } finally {
+      globalThis.ResizeObserver = originalResizeObserver;
+    }
   });
 
   it('updates deck once per view-state change when label width is unchanged', () => {
@@ -152,5 +226,61 @@ describe('MSADeckGLViewer lifecycle', () => {
 
     expect(setProps).toHaveBeenCalledTimes(1);
     expect(setProps.mock.calls[0][0]).toHaveProperty('viewState');
+  });
+
+  it('rebuilds numeric Deck views when container layout changes', () => {
+    const viewer = makeViewer();
+    const setProps = vi.fn();
+    viewer.container = { clientWidth: 900, clientHeight: 600 };
+    viewer.DEFAULT_LABELS_WIDTH = 20;
+    viewer.LABELS_WIDTH = 100;
+    viewer.AXIS_HEIGHT = 20;
+    viewer.MIN_ZOOM = -8;
+    viewer.MAX_ZOOM = 10;
+    viewer._labelMeasuredWidth = 100;
+    viewer.renderThrottled = vi.fn();
+    viewer.state = {
+      ...viewer.state,
+      deckgl: { setProps },
+      seqs: [{ id: 'taxon-a', seq: 'ACGT' }],
+      rows: 1,
+      cols: 4,
+      viewState: { target: [100, 100, 0], zoom: 0 },
+    };
+
+    viewer.handleViewStateChange(viewer.state.viewState, {
+      force: true,
+      layoutChanged: true,
+    });
+
+    expect(setProps).toHaveBeenCalledTimes(1);
+    expect(setProps.mock.calls[0][0].views).toHaveLength(4);
+  });
+
+  it('does not rebuild layers while panning inside the overscanned render range', () => {
+    const viewer = makeViewer();
+    const setProps = vi.fn();
+    viewer.container = { clientWidth: 800, clientHeight: 500 };
+    viewer.DEFAULT_LABELS_WIDTH = 20;
+    viewer.LABELS_WIDTH = 100;
+    viewer.AXIS_HEIGHT = 20;
+    viewer.MIN_ZOOM = -8;
+    viewer.MAX_ZOOM = 10;
+    viewer._labelMeasuredWidth = 100;
+    viewer._renderedRange = { r0: 0, r1: 9, c0: 0, c1: 99 };
+    viewer.renderThrottled = vi.fn();
+    viewer.state = {
+      ...viewer.state,
+      deckgl: { setProps },
+      seqs: Array.from({ length: 10 }, (_, row) => ({ id: `taxon-${row}`, seq: 'A'.repeat(100) })),
+      rows: 10,
+      cols: 100,
+      viewState: { target: [100, 50, 0], zoom: 0 },
+    };
+
+    viewer.handleViewStateChange({ target: [101, 50, 0], zoom: 0 });
+
+    expect(setProps).toHaveBeenCalledTimes(1);
+    expect(viewer.renderThrottled).not.toHaveBeenCalled();
   });
 });

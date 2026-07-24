@@ -219,6 +219,7 @@ describe('workspace initialization input contract', () => {
     expect(hookSource).toContain('function cancelOperation()');
     expect(hookSource).toContain('controller.abort()');
     expect(overlaySource).toContain('Cancel processing');
-    expect(overlaySource).toContain('role="dialog"');
+    expect(overlaySource).toContain('<DialogContent');
+    expect(overlaySource).toContain('<DialogTitle');
   });
 });

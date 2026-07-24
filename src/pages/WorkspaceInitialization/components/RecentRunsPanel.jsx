@@ -4,6 +4,17 @@ import { useNavigate } from 'react-router-dom';
 
 import { Badge } from '../../../components/ui/badge';
 import { Button } from '../../../components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../../../components/ui/alert-dialog';
 import { phyloData } from '../../../services/data/dataService.js';
 
 export function RecentRunsPanel() {
@@ -13,7 +24,11 @@ export function RecentRunsPanel() {
   const [error, setError] = React.useState(null);
 
   const refreshRuns = React.useCallback(async () => {
-    setRuns(await phyloData.listRuns());
+    try {
+      setRuns(await phyloData.listRuns());
+    } catch (err) {
+      setError(err?.message || 'Saved runs could not be loaded.');
+    }
   }, []);
 
   React.useEffect(() => {
@@ -47,7 +62,7 @@ export function RecentRunsPanel() {
     }
   }
 
-  if (runs.length === 0) return null;
+  if (runs.length === 0 && !error) return null;
 
   return (
     <section className="border-b border-border/60 bg-muted/20 px-4 py-4 sm:px-6 lg:px-8 xl:px-10">
@@ -60,7 +75,11 @@ export function RecentRunsPanel() {
               {runs.length}
             </Badge>
           </div>
-          {error && <p className="text-xs font-medium text-destructive">{error}</p>}
+          {error && (
+            <p className="text-xs font-medium text-destructive" role="status">
+              {error}
+            </p>
+          )}
         </div>
 
         <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-3">
@@ -98,6 +117,7 @@ export function RecentRunsPanel() {
                   type="button"
                   variant="default"
                   size="icon-sm"
+                  className="size-[44px] sm:size-8"
                   onClick={() => handleOpen(run.id)}
                   disabled={busyRunId === run.id}
                   aria-label={`Open ${run.label}`}
@@ -105,17 +125,35 @@ export function RecentRunsPanel() {
                 >
                   <Play />
                 </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => handleDelete(run.id)}
-                  disabled={busyRunId === run.id}
-                  aria-label={`Remove ${run.label}`}
-                  title={`Remove ${run.label}`}
-                >
-                  <Trash2 />
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="size-[44px] sm:size-8"
+                      disabled={busyRunId === run.id}
+                      aria-label={`Remove ${run.label}`}
+                      title={`Remove ${run.label}`}
+                    >
+                      <Trash2 />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Remove saved run?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        “{run.label}” and its locally stored data will be permanently removed.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Keep run</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDelete(run.id)}>
+                        Remove run
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </article>
           ))}

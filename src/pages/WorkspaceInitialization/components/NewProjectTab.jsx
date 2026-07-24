@@ -32,7 +32,7 @@ export function NewProjectTab({ disabled: globalDisabled, reset }) {
   const showInferenceSettings = hasMsa && !hasTrees;
   const showAdjustmentSettings = canSubmit;
   const layoutClassName = cn(
-    'animate-in grid min-w-0 gap-5 fade-in slide-in-from-bottom-2 duration-500 xl:items-start',
+    'animate-in grid min-w-0 gap-5 fade-in slide-in-from-bottom-2 duration-500 motion-reduce:animate-none xl:items-start',
     canSubmit && 'xl:grid-cols-[minmax(34rem,0.9fr)_minmax(40rem,1.1fr)]'
   );
   const compactPanelClassName = cn(
@@ -155,7 +155,6 @@ function SettingsPanel({ icon: Icon, title, summary, children }) {
 function getProcessingPath({ hasMsa, hasTrees }) {
   if (hasTrees && hasMsa) {
     return {
-      key: 'trees-msa',
       title: 'Processing path: uploaded trees with MSA context',
       description:
         'Uploaded trees drive the movie; the MSA supplies alignment context and window mapping.',
@@ -164,7 +163,6 @@ function getProcessingPath({ hasMsa, hasTrees }) {
   }
   if (hasTrees) {
     return {
-      key: 'trees-only',
       title: 'Processing path: uploaded tree series',
       description:
         'The supplied tree series is normalized and converted into interpolation frames.',
@@ -173,14 +171,12 @@ function getProcessingPath({ hasMsa, hasTrees }) {
   }
   if (hasMsa) {
     return {
-      key: 'msa-inference',
       title: 'Processing path: MSA sliding-window inference',
       description: 'MSA windows are inferred into a tree series before movie construction.',
       icon: SlidersHorizontal,
     };
   }
   return {
-    key: 'none',
     title: 'Processing path: choose input files',
     description:
       'Trees only, MSA only, and trees plus MSA are different backend paths. Select files first so the page can show only the relevant settings.',

@@ -4,7 +4,12 @@ import {
   DISTANCE_CHART_METRIC_OPTIONS,
   getDistanceChartSectionLabel,
 } from '../../DistanceChart/distanceChartLanguage.js';
-import { selectHasMsa, useAppStore } from '../../../state/phyloStore/store.js';
+import {
+  selectBarOptionValue,
+  selectHasMsa,
+  selectSetBarOption,
+  useAppStore,
+} from '../../../state/phyloStore/store.js';
 import {
   Select,
   SelectContent,
@@ -14,7 +19,9 @@ import {
   SelectValue,
 } from '../../ui/select';
 
-export function MovieChartSection({ barOptionValue, onBarOptionChange }) {
+function MovieChartSectionComponent() {
+  const barOptionValue = useAppStore(selectBarOptionValue);
+  const setBarOption = useAppStore(selectSetBarOption);
   const hasMsa = useAppStore(selectHasMsa);
 
   return (
@@ -29,8 +36,11 @@ export function MovieChartSection({ barOptionValue, onBarOptionChange }) {
         </div>
 
         <div className="shrink-0" role="group" aria-label="Chart controls">
-          <Select value={barOptionValue} onValueChange={onBarOptionChange}>
-            <SelectTrigger className="h-7 w-[176px] bg-card/95">
+          <Select value={barOptionValue} onValueChange={setBarOption}>
+            <SelectTrigger
+              className="h-7 w-[176px] bg-card/95"
+              aria-describedby="chart-select-help"
+            >
               <SelectValue placeholder="Metric" />
             </SelectTrigger>
             <SelectContent className="z-[2000]">
@@ -55,3 +65,5 @@ export function MovieChartSection({ barOptionValue, onBarOptionChange }) {
     </div>
   );
 }
+
+export const MovieChartSection = React.memo(MovieChartSectionComponent);

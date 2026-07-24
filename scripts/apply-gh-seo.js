@@ -17,6 +17,9 @@ const REPOSITORY_URL = 'https://github.com/enesBerkSakalli/phylo-movies';
 const README_URL = `${REPOSITORY_URL}#readme`;
 const RELEASES_URL = `${REPOSITORY_URL}/releases`;
 const DEMO_URL = `${SITE_ROOT}/demo/`;
+const USAGE_URL = `${SITE_ROOT}/usage/`;
+const MANUAL_URL = `${SITE_ROOT}/manual/`;
+const BIOTOOLS_URL = 'https://bio.tools/phylo-movies';
 const PUBLICATION_URL = 'https://www.biorxiv.org/content/10.64898/2026.04.01.715821v1';
 const PUBLICATION_PDF_URL = 'https://www.biorxiv.org/content/10.64898/2026.04.01.715821v1.full.pdf';
 const PUBLICATION_DOI = '10.64898/2026.04.01.715821';
@@ -58,19 +61,24 @@ const PUBLICATION_AUTHORS = [
 ];
 const PRIMARY_URL = `${SITE_ROOT}/`;
 const PAGE_TITLE = IS_DOCS_ONLY
-  ? 'Phylo-Movies | Desktop App, Phylogenetic Tree Interpolation, and Publication'
+  ? 'Phylo-Movies | Animated Phylogenetic Tree Comparison'
   : 'Phylo-Movies | Interactive Phylogenetic Tree Visualization';
 const DESCRIPTION = IS_DOCS_ONLY
-  ? 'Phylo-Movies is a desktop app and browser-based phylogenetic tree interpolation and visualization tool for sliding-window analyses, recombination detection, and rogue taxa exploration. This static site provides publication details, generated demos, demonstration videos, desktop downloads, and setup guidance.'
+  ? 'Phylo-Movies animates topology changes across phylogenetic tree series for sliding-window, recombination, bootstrap, and rogue-taxon analysis.'
   : 'Interactive phylogenetic tree visualization and tree-morphing tool for sliding-window MSA analysis, recombination detection, and rogue taxa exploration.';
 const OG_DESCRIPTION = IS_DOCS_ONLY
-  ? 'Landing page for the Phylo-Movies desktop app and web tool, with publication links, citation metadata, demonstration videos, example use cases, datasets, and full-stack setup instructions.'
+  ? 'Explore Phylo-Movies, a free desktop and web tool for animated comparison of ordered phylogenetic trees, with demos, documentation, and citation metadata.'
   : 'Visualize topological transitions between phylogenetic trees through smooth morphing animations, MSA-linked exploration, and lineage-aware analysis tools.';
-const DEMO_PAGE_TITLE = 'Phylo-Movies Browser Demo | Generated Phylogenetic Examples';
+const DEMO_PAGE_TITLE = 'Phylo-Movies Demo | Animated Phylogenetic Tree Examples';
 const DEMO_DESCRIPTION =
-  'Open generated Phylo-Movies browser examples for norovirus recombination, IQ-TREE bootstrap rogue taxa, a paper figure tree pair, MSA-linked trees, and a 1000-taxon scale-limit demo.';
+  'Open generated Phylo-Movies examples for recombination, bootstrap rogue taxa, MSA-linked trees, tree-search trajectories, and large phylogenies.';
 const DEMO_OG_DESCRIPTION =
-  'Static browser demo for Phylo-Movies with generated publication examples, precomputed JSON payloads, norovirus sliding-window trees, bootstrap tree series, and a 1000-taxon limit example.';
+  'Try precomputed Phylo-Movies examples for sliding-window phylogenetics, recombination, bootstrap tree series, MSA context, and large trees.';
+const USAGE_PAGE_TITLE = 'How to Use Phylo-Movies | Phylogenetic Tree Workflows';
+const USAGE_DESCRIPTION =
+  'Learn how to open examples, compare ordered phylogenetic trees, inspect SPR transitions, synchronize MSA windows, and export Phylo-Movies results.';
+const USAGE_OG_DESCRIPTION =
+  'A concise Phylo-Movies workflow guide for generated examples, tree-series uploads, sliding-window MSA inference, transition inspection, and export.';
 const KEYWORDS = IS_DOCS_ONLY
   ? 'phylogenetics, phylogenetic tree interpolation, phylogenetic tree visualization, tree morphing, sliding-window phylogenetics, desktop app, electron app, multiple sequence alignment, MSA, recombination detection, rogue taxa, Robinson-Foulds, computational biology, bioRxiv, scientific software'
   : 'phylogenetics, phylogenetic trees, tree visualization, tree morphing, bioinformatics, Robinson-Foulds, recombination, MSA, rogue taxa, computational biology';
@@ -220,6 +228,7 @@ const STRUCTURED_DATA = [
       PUBLICATION_DOI_URL,
       SOFTWARE_DOI_URL,
       SOFTWARE_CONCEPT_DOI_URL,
+      BIOTOOLS_URL,
       ...DEMONSTRATION_VIDEOS.map((video) => video.url),
     ],
     subjectOf: PUBLICATION_URL,
@@ -244,6 +253,7 @@ const STRUCTURED_DATA = [
       RELEASES_URL,
       SOFTWARE_DOI_URL,
       SOFTWARE_CONCEPT_DOI_URL,
+      BIOTOOLS_URL,
       ...DEMONSTRATION_VIDEOS.map((video) => video.url),
     ],
     keywords: KEYWORDS.split(',').map((keyword) => keyword.trim()),
@@ -328,6 +338,67 @@ const DEMO_STRUCTURED_DATA = [
   },
 ];
 
+const USAGE_STEPS = [
+  {
+    name: 'Open a generated example',
+    text: 'Open the browser demo and choose the Paper Figure Example for a compact first walkthrough, or a publication dataset for a larger analysis.',
+  },
+  {
+    name: 'Play and inspect tree transitions',
+    text: 'Use the timeline and playback controls to move between trees and inspect animated subtree-prune-and-regraft transitions.',
+  },
+  {
+    name: 'Review linked evidence',
+    text: 'Use tree comparison, distance plots, branch support, moved-subtree analytics, and optional MSA context to interpret each topology change.',
+  },
+  {
+    name: 'Export the current view',
+    text: 'Adjust the tree layout and styling, then export a PNG image or record WebM playback from the canvas controls.',
+  },
+];
+
+const USAGE_STRUCTURED_DATA = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: USAGE_PAGE_TITLE,
+    url: USAGE_URL,
+    description: USAGE_DESCRIPTION,
+    isPartOf: {
+      '@type': 'WebSite',
+      name: 'Phylo-Movies',
+      url: SITE_ROOT,
+    },
+    about: [
+      'Phylogenetic tree comparison',
+      'Subtree-prune-and-regraft transitions',
+      'Sliding-window phylogenetics',
+      'Multiple sequence alignment',
+      'Phylogenetic visualization',
+    ],
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'HowTo',
+    name: 'How to inspect phylogenetic tree transitions with Phylo-Movies',
+    description: USAGE_DESCRIPTION,
+    totalTime: 'PT10M',
+    tool: [
+      {
+        '@type': 'HowToTool',
+        name: 'Phylo-Movies browser demo or full application',
+      },
+    ],
+    step: USAGE_STEPS.map((step, index) => ({
+      '@type': 'HowToStep',
+      position: index + 1,
+      name: step.name,
+      text: step.text,
+      url: `${USAGE_URL}#step-${index + 1}`,
+    })),
+  },
+];
+
 function assertFileExists(filePath) {
   if (!fs.existsSync(filePath)) {
     throw new Error(`Required file not found: ${filePath}`);
@@ -383,21 +454,26 @@ function injectStaticDemoHtml(html) {
   return replaceRootHtml(html, renderStaticDemoHtml(), 'data-prerendered-demo="true"');
 }
 
+function injectStaticUsageHtml(html) {
+  return replaceRootHtml(html, renderStaticUsageHtml(), 'data-prerendered-usage="true"');
+}
+
 function renderStaticLandingHtml() {
   const videoLinks = renderVideoLinksHtml();
 
   return `      <main data-prerendered-landing="true" style="font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111827; background: #ffffff; min-height: 100vh;">
         <section style="position: relative; min-height: min(720px, calc(100vh - 32px)); overflow: hidden; border-bottom: 1px solid #e5e7eb; background: #ffffff;">
-          <img src="${HERO_IMAGE_URL}" alt="" width="1914" height="930" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; opacity: 0.65;">
+          <img src="${HERO_IMAGE_URL}" alt="Phylo-Movies workspace showing animated phylogenetic trees, a timeline, and analysis panels" width="1914" height="930" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; opacity: 0.65;">
           <div style="position: absolute; inset: 0; background: linear-gradient(90deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.90) 52%, rgba(255,255,255,0.30) 100%);"></div>
           <div style="position: relative; max-width: 960px; min-height: min(720px, calc(100vh - 32px)); margin: 0 auto; padding: 64px 24px; display: flex; align-items: center;">
             <div style="max-width: 720px;">
-              <img src="/phylo-movies/icons/phylo-tree-icon.svg" alt="" width="56" height="56" style="margin: 0 0 20px; display: block;">
+              <img src="/phylo-movies/icons/phylo-tree-icon.svg" alt="Phylo-Movies logo" width="56" height="56" style="margin: 0 0 20px; display: block;">
               <h1 style="margin: 0 0 18px; max-width: 720px; font-size: 48px; line-height: 1.08; font-weight: 760;">Phylo-Movies: Desktop App and Web Tool for Phylogenetic Tree Interpolation</h1>
               <p style="margin: 0; max-width: 720px; color: #4b5563; font-size: 18px; line-height: 1.65;">Phylo-Movies is available both as a desktop app and as a browser-based phylogenetic tree visualization and interpolation tool for sliding-window analyses, recombination detection, and rogue taxa exploration. This static page provides publication details, citation metadata, downloads, generated browser examples, and setup paths. Uploads and local example processing require the desktop app, Docker, or a source checkout.</p>
               <nav aria-label="Primary links" style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px;">
             <a href="${PUBLICATION_URL}" style="${primaryLinkStyle()}">Read Publication</a>
             <a href="${DEMO_URL}" style="${secondaryLinkStyle()}">Open Browser Demo</a>
+            <a href="${USAGE_URL}" style="${secondaryLinkStyle()}">How to Use It</a>
             <a href="${RELEASES_URL}" style="${secondaryLinkStyle()}">Download Desktop App</a>
             <a href="${README_URL}" style="${secondaryLinkStyle()}">Full README</a>
               </nav>
@@ -474,7 +550,7 @@ function renderStaticDemoHtml() {
 
   return `      <main data-prerendered-demo="true" style="font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111827; background: #ffffff; min-height: 100vh;">
         <section style="max-width: 960px; margin: 0 auto; padding: 48px 24px 32px; text-align: center;">
-          <img src="/phylo-movies/icons/phylo-tree-icon.svg" alt="" width="64" height="64" style="margin: 0 auto 16px; display: block;">
+          <img src="/phylo-movies/icons/phylo-tree-icon.svg" alt="Phylo-Movies logo" width="64" height="64" style="margin: 0 auto 16px; display: block;">
           <h1 style="margin: 0 auto 16px; max-width: 780px; font-size: 36px; line-height: 1.12; font-weight: 760;">Phylo-Movies Browser Demo: Generated Phylogenetic Examples</h1>
           <p style="margin: 0 auto; max-width: 800px; color: #4b5563; font-size: 18px; line-height: 1.65;">Open generated Phylo-Movies examples directly in the browser without backend processing. The demo includes a norovirus sliding-window recombination dataset, IQ-TREE bootstrap rogue-taxon tree series, an IQ-TREE fast-search trajectory, a paper figure example, a quick MSA-linked tree set, and a 1000-taxon scale-limit payload.</p>
           <nav aria-label="Demo links" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 24px;">
@@ -515,6 +591,52 @@ ${exampleRows}
           <div style="${gridStyle()}">
 ${videoLinks}
           </div>
+        </section>
+      </main>`;
+}
+
+function renderStaticUsageHtml() {
+  const stepCards = USAGE_STEPS.map(
+    (step, index) => `            <article id="step-${index + 1}" style="${cardStyle()}">
+              <h3 style="${subheadingStyle()}">${index + 1}. ${step.name}</h3>
+              <p style="${bodyStyle()}">${step.text}</p>
+            </article>`
+  ).join('\n');
+
+  return `      <main data-prerendered-usage="true" style="font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111827; background: #ffffff; min-height: 100vh;">
+        <section style="max-width: 960px; margin: 0 auto; padding: 48px 24px 32px;">
+          <img src="/phylo-movies/icons/phylo-tree-icon.svg" alt="Phylo-Movies logo" width="64" height="64" style="margin: 0 0 16px; display: block;">
+          <h1 style="margin: 0 0 16px; max-width: 780px; font-size: 36px; line-height: 1.12; font-weight: 760;">How to Use Phylo-Movies</h1>
+          <p style="margin: 0; max-width: 800px; color: #4b5563; font-size: 18px; line-height: 1.65;">Phylo-Movies turns an ordered phylogenetic tree series into an interactive movie. Start with a generated example, inspect subtree movements and linked evidence, then use the full application when you want to process your own trees or multiple sequence alignment.</p>
+          <nav aria-label="Usage links" style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px;">
+            <a href="${DEMO_URL}" style="${primaryLinkStyle()}">Open Generated Examples</a>
+            <a href="${MANUAL_URL}" style="${secondaryLinkStyle()}">Read the Manual</a>
+            <a href="${PRIMARY_URL}" style="${secondaryLinkStyle()}">Project Overview</a>
+          </nav>
+        </section>
+
+        <section style="${sectionStyle()}">
+          <h2 style="${headingStyle()}">Quick Browser Walkthrough</h2>
+          <p style="${bodyStyle()}">The generated examples run without the BranchArchitect backend and provide the fastest way to learn the visualization workspace.</p>
+          <div style="${gridStyle()}">
+${stepCards}
+          </div>
+        </section>
+
+        <section style="${sectionStyle()}">
+          <h2 style="${headingStyle()}">Supported Workflows</h2>
+          <div style="${gridStyle()}">
+            <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Generated Examples</h3><p style="${bodyStyle()}">Open precomputed publication and benchmark datasets directly in the browser demo.</p></article>
+            <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Ordered Tree Series</h3><p style="${bodyStyle()}">Upload Newick trees inferred elsewhere and compute animated transitions between neighboring trees.</p></article>
+            <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Sliding-Window MSA Inference</h3><p style="${bodyStyle()}">Infer trees from overlapping alignment windows, then synchronize the movie with MSA context.</p></article>
+            <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Bootstrap and Search Trajectories</h3><p style="${bodyStyle()}">Inspect recurrent moved subtrees across bootstrap replicates or topology changes during tree search.</p></article>
+          </div>
+        </section>
+
+        <section style="${sectionStyle()}">
+          <h2 style="${headingStyle()}">What to Inspect</h2>
+          <p style="${bodyStyle()}">Use the timeline to localize transitions, compare source and target placement, review SPR movements and distance metrics, inspect branch support, and connect tree changes to alignment windows when MSA data are available.</p>
+          <p style="${bodyStyle()}">For complete controls and input requirements, continue to the <a href="${MANUAL_URL}">Phylo-Movies manual</a>.</p>
         </section>
       </main>`;
 }
@@ -641,6 +763,21 @@ function applyDemoSeo(indexHtml) {
   return html;
 }
 
+function applyUsageSeo(indexHtml) {
+  let html = replaceTitleTag(indexHtml, USAGE_PAGE_TITLE);
+  html = replaceDescriptionMeta(html, USAGE_DESCRIPTION);
+  html = injectStaticUsageHtml(html);
+  const injection = buildSeoInjection({
+    pageTitle: USAGE_PAGE_TITLE,
+    ogDescription: USAGE_OG_DESCRIPTION,
+    pageUrl: USAGE_URL,
+    structuredData: USAGE_STRUCTURED_DATA,
+  });
+
+  html = injectIntoHead(html, injection);
+  return html;
+}
+
 function applySplashNoIndex(splashHtml) {
   if (!splashHtml.includes('</head>')) return splashHtml;
   if (/<meta\s+name=["']robots["']/i.test(splashHtml)) return splashHtml;
@@ -654,14 +791,15 @@ function writeRobotsTxt() {
   const content = `User-agent: *
 Allow: /
 
-Sitemap: ${SITE_ROOT}/sitemap.xml`;
+Sitemap: ${SITE_ROOT}/sitemap.xml
+Sitemap: ${SITE_ROOT}/manual/sitemap.xml`;
   writeTextFile(path.join(DIST_DIR, 'robots.txt'), content);
 }
 
 function writeSitemapXml() {
   const today = new Date().toISOString().slice(0, 10);
   const urls = IS_DOCS_ONLY
-    ? [`${SITE_ROOT}/`, DEMO_URL]
+    ? [`${SITE_ROOT}/`, DEMO_URL, USAGE_URL]
     : [`${SITE_ROOT}/`, `${SITE_ROOT}/visualization`];
 
   const entries = urls
@@ -717,6 +855,53 @@ function writeDemoIndexHtml(indexHtml) {
   writeTextFile(path.join(demoDir, 'index.html'), applyDemoSeo(indexHtml));
 }
 
+function writeUsageIndexHtml(indexHtml) {
+  const usageDir = path.join(DIST_DIR, 'usage');
+  ensureDir(usageDir);
+  writeTextFile(path.join(usageDir, 'index.html'), applyUsageSeo(indexHtml));
+}
+
+function writeLlmsTxt() {
+  const content = `# Phylo-Movies
+
+> Phylo-Movies is free, open-source scientific software for animating and inspecting topology changes across ordered phylogenetic tree series.
+
+## Primary links
+
+- Project overview: ${PRIMARY_URL}
+- Browser demo: ${DEMO_URL}
+- Usage guide: ${USAGE_URL}
+- User manual: ${MANUAL_URL}
+- Source code: ${REPOSITORY_URL}
+- Releases: ${RELEASES_URL}
+- Publication: ${PUBLICATION_DOI_URL}
+- Archived software: ${SOFTWARE_DOI_URL}
+- bio.tools registry: ${BIOTOOLS_URL}
+
+## What Phylo-Movies does
+
+Phylo-Movies compares neighboring phylogenetic trees, computes subtree-prune-and-regraft transition frames with the BranchArchitect backend, and renders the resulting changes as an interactive movie. It combines tree comparison, timeline playback, distance plots, branch-support context, moved-subtree analytics, optional multiple-sequence-alignment context, PNG export, and WebM recording.
+
+## Main research uses
+
+- Sliding-window phylogenetics and local topology change
+- Recombination-focused exploration
+- Rogue-taxon movement across bootstrap trees
+- Tree-search trajectory inspection
+- MSA-linked comparison of ordered tree series
+
+## Access and scope
+
+The browser demo contains precomputed examples and does not require a backend. Processing uploaded trees, computing interpolation frames, and running MSA-driven inference require the desktop application, Docker deployment, or a source checkout. Phylo-Movies is distributed under the MIT License and is free of charge.
+
+## Citation
+
+Publication DOI: ${PUBLICATION_DOI}
+Software DOI: ${SOFTWARE_DOI}
+`;
+  writeTextFile(path.join(DIST_DIR, 'llms.txt'), content);
+}
+
 function copySocialPreviewImage() {
   const sourceImageCandidates = [
     path.join(PROJECT_ROOT, 'src', 'public', SOCIAL_IMAGE_REL_PATH),
@@ -748,9 +933,11 @@ function main() {
   fs.writeFileSync(INDEX_PATH, updatedIndexHtml, 'utf8');
   fs.writeFileSync(SPLASH_PATH, updatedSplashHtml, 'utf8');
   writeDemoIndexHtml(indexHtml);
+  writeUsageIndexHtml(indexHtml);
   writeRobotsTxt();
   writeSitemapXml();
   writeWebManifest();
+  writeLlmsTxt();
   copySocialPreviewImage();
 
   console.log(`Applied GitHub Pages SEO assets to: ${DIST_DIR}`);

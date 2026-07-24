@@ -9,13 +9,11 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const storeState = vi.hoisted(() => ({ current: {} }));
 
 vi.mock('../../../../src/state/phyloStore/store.js', () => ({
-  selectClearMsaRegion: (state) => state.clearMsaRegion,
   selectHasMsa: (state) => state.hasMsa,
   selectMsaPreviousRegion: (state) => state.msaPreviousRegion,
   selectMsaRegion: (state) => state.msaRegion,
   selectMsaRowOrder: (state) => state.msaRowOrder,
   selectMsaSequences: (state) => state.msaSequences,
-  selectSetMsaRegion: (state) => state.setMsaRegion,
   selectTaxaColorVersion: (state) => state.taxaColorVersion,
   selectTaxaGrouping: (state) => state.taxaGrouping,
   useAppStore: (selector) => selector(storeState.current),
@@ -44,8 +42,6 @@ describe('MSA context row colors', () => {
         'taxon-b': 'ACGT',
       },
       msaRegion: null,
-      setMsaRegion: vi.fn(),
-      clearMsaRegion: vi.fn(),
       msaPreviousRegion: null,
       msaRowOrder: null,
       taxaColorVersion: 0,

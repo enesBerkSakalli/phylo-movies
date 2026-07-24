@@ -117,8 +117,8 @@ export function useTreeController() {
       const msaColumnCount = getMsaColumnCount(state.msaSequences);
       if (!state.syncMSAEnabled || !msaColumnCount) {
         if (force) {
-          state.clearMsaRegion?.();
-          state.clearMsaPreviousRegion?.();
+          state.clearMsaRegion();
+          state.clearMsaPreviousRegion();
         }
         return;
       }

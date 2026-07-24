@@ -86,7 +86,6 @@ const useCursorData = ({ barOptionValue, timelineCursor, inputFrameIndices, poin
 export function DistanceChart() {
   const {
     barOptionValue,
-    timelineCursor,
     inputFrameIndices,
     hasMsa,
     msaStepSize,
@@ -99,7 +98,6 @@ export function DistanceChart() {
   } = useAppStore(
     useShallow((state) => ({
       barOptionValue: selectBarOptionValue(state),
-      timelineCursor: selectTimelineCursor(state),
       inputFrameIndices: selectInputFrameIndices(state),
       hasMsa: selectHasMsa(state),
       msaStepSize: selectMsaStepSize(state),
@@ -110,6 +108,16 @@ export function DistanceChart() {
       scaleList: selectScaleList(state),
       goToPosition: selectGoToPosition(state),
     }))
+  );
+  const timelineCursor = useAppStore(
+    useShallow((state) => {
+      const cursor = selectTimelineCursor(state);
+      return {
+        sourceFrameIndex: cursor?.sourceFrameIndex ?? null,
+        sourceInputTreeIndex: cursor?.sourceInputTreeIndex ?? null,
+        inputTreeIndex: cursor?.inputTreeIndex ?? null,
+      };
+    })
   );
 
   const { points, yMax, hasData } = useSeriesData({

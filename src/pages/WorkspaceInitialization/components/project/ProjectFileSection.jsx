@@ -22,6 +22,9 @@ export function ProjectFileSection({ treesFile, msaFile, setTreesFile, setMsaFil
           id="trees-input"
           label="Trees (.nwk, .newick, .tree)"
           description="Newick tree file (optional if MSA provided)"
+          accept={{
+            'text/plain': ['.nwk', '.newick', '.tree', '.trees', '.tre'],
+          }}
           disabled={disabled}
           value={treesFile}
           onFileSelect={setTreesFile}

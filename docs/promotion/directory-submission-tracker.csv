@@ -1,0 +1,9 @@
+directory,fit,priority,status,destination_url,submission_url,owner,submitted_on,live_url,next_action
+Zenodo,Software archive and DOI,1,live,https://doi.org/10.5281/zenodo.20488923,https://zenodo.org/,maintainers,,https://doi.org/10.5281/zenodo.20488923,Keep release metadata synchronized
+GitHub,Source discovery and releases,1,live,https://github.com/enesBerkSakalli/phylo-movies,https://github.com/,maintainers,,https://github.com/enesBerkSakalli/phylo-movies,Maintain description topics homepage and releases
+bio.tools,Bioinformatics software registry,1,live,https://enesberksakalli.github.io/phylo-movies/,https://bio.tools/,maintainers,,https://bio.tools/phylo-movies,Keep release and EDAM metadata synchronized
+Research Software Directory,Research software discovery and citation,2,not started,https://enesberksakalli.github.io/phylo-movies/,https://research-software-directory.org/,maintainers,,,Create account and import DOI and contributor metadata
+Software Heritage,Long-term source archive,2,to verify,https://github.com/enesBerkSakalli/phylo-movies,https://archive.softwareheritage.org/save/,maintainers,,,Confirm archive coverage and record SWHID
+OpenEBench,Bioinformatics benchmarking and quality monitoring,3,evaluate,https://enesberksakalli.github.io/phylo-movies/,https://openebench.bsc.es/,maintainers,,,Confirm that available benchmarks satisfy registry scope
+SciCrunch RRID,Stable research-resource identifier,3,evaluate,https://enesberksakalli.github.io/phylo-movies/,https://scicrunch.org/resources,maintainers,,,Check eligibility and duplicate records before registration
+Wikidata,Entity and knowledge-graph discovery,4,defer,https://enesberksakalli.github.io/phylo-movies/,https://www.wikidata.org/,maintainers,,,Reassess after independent publication and registry records are live

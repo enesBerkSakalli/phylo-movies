@@ -63,11 +63,11 @@ export function deriveSynchronizedViewStates({ mainViewState, labelsWidth, axisH
   };
 }
 
-export function getScrollViewState({ currentViewState, cellSize, row, col }) {
+export function getCenteredViewState({ currentViewState, cellSize, row, column }) {
   const target = normalizeTarget(currentViewState?.target);
 
-  if (col !== undefined && col !== null) {
-    target[0] = Number(col) * cellSize + cellSize / 2;
+  if (column !== undefined && column !== null) {
+    target[0] = Number(column) * cellSize + cellSize / 2;
   }
 
   if (row !== undefined && row !== null) {

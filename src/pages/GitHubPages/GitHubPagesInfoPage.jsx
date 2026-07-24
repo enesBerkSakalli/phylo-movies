@@ -18,6 +18,7 @@ const PREPRINT_URL = 'https://www.biorxiv.org/content/10.64898/2026.04.01.715821
 const PREPRINT_DOI_URL = 'https://doi.org/10.64898/2026.04.01.715821';
 const PREPRINT_PDF_URL = 'https://www.biorxiv.org/content/10.64898/2026.04.01.715821v1.full.pdf';
 const SOFTWARE_DOI_URL = 'https://doi.org/10.5281/zenodo.20488923';
+const BIOTOOLS_URL = 'https://bio.tools/phylo-movies';
 const DEMONSTRATION_VIDEOS = [
   {
     title: 'Installation and small example',
@@ -153,6 +154,14 @@ const DOCKER_QUICKSTART = `git clone --recurse-submodules https://github.com/ene
 cd phylo-movies
 docker compose up --build`;
 
+function SectionCardTitle({ children }) {
+  return (
+    <CardTitle>
+      <h2>{children}</h2>
+    </CardTitle>
+  );
+}
+
 export function GitHubPagesInfoPage() {
   return (
     <div className="fixed inset-0 overflow-y-auto overflow-x-hidden bg-background">
@@ -160,13 +169,13 @@ export function GitHubPagesInfoPage() {
         <section className="relative left-1/2 right-1/2 -mx-[50vw] mb-8 min-h-[min(720px,calc(100vh-32px))] w-screen overflow-hidden border-b bg-background">
           <img
             src={APP_PREVIEW_IMAGE_URL}
-            alt=""
+            alt="Phylo-Movies workspace showing animated phylogenetic trees, a timeline, and analysis panels"
             className="absolute inset-0 h-full w-full object-cover object-center opacity-65"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-background/25" />
           <div className="relative mx-auto flex min-h-[min(720px,calc(100vh-32px))] max-w-4xl items-center px-4 py-16 sm:px-6 lg:px-8">
             <div className="max-w-2xl space-y-5">
-              <img src={phyloTreeIcon} alt="" className="size-14" />
+              <img src={phyloTreeIcon} alt="Phylo-Movies logo" className="size-14" />
               <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">
                 Phylo-Movies: Desktop App and Web Tool for Phylogenetic Tree Interpolation
               </h1>
@@ -208,7 +217,7 @@ export function GitHubPagesInfoPage() {
         <div className="container mx-auto max-w-4xl space-y-8 px-4 sm:px-6 lg:px-8">
           <Card className="shadow-lg border-muted">
             <CardHeader>
-              <CardTitle>Choose How to Use Phylo-Movies</CardTitle>
+              <SectionCardTitle>Choose How to Use Phylo-Movies</SectionCardTitle>
               <CardDescription>
                 Pick the package or setup path that matches your workflow.
               </CardDescription>
@@ -230,7 +239,7 @@ export function GitHubPagesInfoPage() {
 
           <Card className="shadow-lg border-muted">
             <CardHeader>
-              <CardTitle>Desktop Download Matrix</CardTitle>
+              <SectionCardTitle>Desktop Download Matrix</SectionCardTitle>
               <CardDescription>
                 Release artifacts are published on GitHub Releases for the main desktop targets.
               </CardDescription>
@@ -270,7 +279,7 @@ export function GitHubPagesInfoPage() {
 
           <Card className="shadow-lg border-muted">
             <CardHeader>
-              <CardTitle>Publication</CardTitle>
+              <SectionCardTitle>Publication</SectionCardTitle>
               <CardDescription>
                 Method details, benchmarks, and case studies are described in the current bioRxiv
                 preprint.
@@ -310,8 +319,7 @@ export function GitHubPagesInfoPage() {
               <div className="rounded-lg border bg-muted p-4 text-xs leading-relaxed text-foreground">
                 Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026).{' '}
                 <em>Phylo-Movies: Animating Phylogenetic Trees from Sliding-Window Analyses</em>.
-                bioRxiv.
-                doi:10.64898/2026.04.01.715821
+                bioRxiv. doi:10.64898/2026.04.01.715821
               </div>
               <div className="rounded-lg border bg-muted p-4 text-xs leading-relaxed text-foreground">
                 Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026).{' '}
@@ -345,7 +353,7 @@ export function GitHubPagesInfoPage() {
 
           <Card className="shadow-lg border-muted">
             <CardHeader>
-              <CardTitle>Demonstration Videos</CardTitle>
+              <SectionCardTitle>Demonstration Videos</SectionCardTitle>
               <CardDescription>
                 The manuscript videos show installation, MSA synchronisation, norovirus, and
                 bootstrap rogue-taxon workflows.
@@ -368,7 +376,7 @@ export function GitHubPagesInfoPage() {
 
           <Card className="shadow-lg border-muted">
             <CardHeader>
-              <CardTitle>What the Tool Does</CardTitle>
+              <SectionCardTitle>What the Tool Does</SectionCardTitle>
               <CardDescription>
                 Phylo-Movies helps inspect topological changes across phylogenetic trees across
                 desktop and browser-based workflows, including sliding-window and bootstrap
@@ -405,13 +413,18 @@ export function GitHubPagesInfoPage() {
                     Publication
                   </a>
                 </Button>
+                <Button variant="outline" asChild>
+                  <a href={BIOTOOLS_URL} target="_blank" rel="noopener noreferrer">
+                    bio.tools Registry
+                  </a>
+                </Button>
               </div>
             </CardContent>
           </Card>
 
           <Card className="shadow-lg border-muted">
             <CardHeader>
-              <CardTitle>Browser Demo</CardTitle>
+              <SectionCardTitle>Browser Demo</SectionCardTitle>
               <CardDescription>
                 The static GitHub Pages build includes generated publication examples that open the
                 visualization workspace without a backend.
@@ -435,7 +448,7 @@ export function GitHubPagesInfoPage() {
 
           <Card className="shadow-lg border-muted">
             <CardHeader>
-              <CardTitle>Key Use Cases</CardTitle>
+              <SectionCardTitle>Key Use Cases</SectionCardTitle>
               <CardDescription>
                 Common analysis tasks supported by the desktop and full-stack application.
               </CardDescription>
@@ -452,7 +465,7 @@ export function GitHubPagesInfoPage() {
 
           <Card className="shadow-lg border-muted">
             <CardHeader>
-              <CardTitle>How It Works</CardTitle>
+              <SectionCardTitle>How It Works</SectionCardTitle>
               <CardDescription>
                 The application converts ordered phylogenetic inputs into inspectable animated
                 transitions.
@@ -472,7 +485,7 @@ export function GitHubPagesInfoPage() {
 
           <Card className="shadow-lg border-muted">
             <CardHeader>
-              <CardTitle>Run the full application</CardTitle>
+              <SectionCardTitle>Run the full application</SectionCardTitle>
               <CardDescription>
                 Recommended path for complete functionality is Docker full-stack deployment.
               </CardDescription>
@@ -490,7 +503,7 @@ export function GitHubPagesInfoPage() {
 
           <Card className="shadow-lg border-muted">
             <CardHeader>
-              <CardTitle>Frequently Asked Questions</CardTitle>
+              <SectionCardTitle>Frequently Asked Questions</SectionCardTitle>
               <CardDescription>
                 These entries are also mirrored in machine-readable FAQ schema for search engines
                 and AI retrieval systems.

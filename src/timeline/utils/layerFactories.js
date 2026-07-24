@@ -1,7 +1,7 @@
 import { PathLayer, ScatterplotLayer } from '@deck.gl/layers';
 import { COORDINATE_SYSTEM } from '@deck.gl/core';
 import { msToX } from '../math/coordinateUtils.js';
-import { rgba } from '../../msaViewer/utils/colorUtils.js';
+import { rgba } from '../../services/ui/colorUtils.js';
 
 // ==========================================================================
 // DEVICE PIXEL RATIO HELPERS

@@ -38,6 +38,25 @@ const toNumericFontSize = (size) => {
 };
 
 export function GeometryDimensionsSection() {
+  return (
+    <Collapsible asChild className="group/collapsible">
+      <SidebarMenuItem>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton tooltip="Geometry and labels">
+            <Circle className="text-primary" />
+            <span>Geometry & Labels</span>
+            <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <GeometryDimensionsContent />
+        </CollapsibleContent>
+      </SidebarMenuItem>
+    </Collapsible>
+  );
+}
+
+function GeometryDimensionsContent() {
   const nodeSize = useAppStore(selectNodeSize);
   const strokeWidth = useAppStore(selectStrokeWidth);
   const fontSize = useAppStore(selectFontSize);
@@ -73,33 +92,20 @@ export function GeometryDimensionsSection() {
   };
 
   return (
-    <Collapsible asChild className="group/collapsible">
-      <SidebarMenuItem>
-        <CollapsibleTrigger asChild>
-          <SidebarMenuButton tooltip="Geometry and labels">
-            <Circle className="text-primary" />
-            <span>Geometry & Labels</span>
-            <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-          </SidebarMenuButton>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <GeometryDimensions
-            nodeSize={nodeSize}
-            setNodeSize={setNodeSize}
-            strokeWidth={strokeWidth}
-            setStrokeWidth={setStrokeWidth}
-            fontSizeNumber={fontSizeNumber}
-            setFontSize={setFontSize}
-            treeController={treeController}
-            labelsVisible={labelsVisible}
-            onToggleLabels={handleToggleLabels}
-            branchAnnotationLabelKey={branchAnnotationLabelKey}
-            branchAnnotationOptions={branchAnnotationOptions}
-            onChangeBranchAnnotationLabelKey={handleChangeBranchAnnotationLabelKey}
-          />
-        </CollapsibleContent>
-      </SidebarMenuItem>
-    </Collapsible>
+    <GeometryDimensions
+      nodeSize={nodeSize}
+      setNodeSize={setNodeSize}
+      strokeWidth={strokeWidth}
+      setStrokeWidth={setStrokeWidth}
+      fontSizeNumber={fontSizeNumber}
+      setFontSize={setFontSize}
+      treeController={treeController}
+      labelsVisible={labelsVisible}
+      onToggleLabels={handleToggleLabels}
+      branchAnnotationLabelKey={branchAnnotationLabelKey}
+      branchAnnotationOptions={branchAnnotationOptions}
+      onChangeBranchAnnotationLabelKey={handleChangeBranchAnnotationLabelKey}
+    />
   );
 }
 

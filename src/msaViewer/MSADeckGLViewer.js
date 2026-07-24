@@ -4,12 +4,17 @@
 
 import { Deck, OrthographicView, OrthographicController } from '@deck.gl/core';
 import { calculateConsensus } from './utils/dataUtils.js';
-import { createCellsLayer, buildCellData } from './layers/cellsLayer.js';
 import {
-  createSelectionBorderLayer,
-  createPreviousSelectionBorderLayer,
-  buildSelectionBorder,
-} from './layers/selectionBorderLayer.js';
+  buildCellData,
+  createCellsLayers,
+  getCellSampling,
+  groupCellDataBySize,
+} from './layers/cellsLayer.js';
+import {
+  createCurrentRegionBorderLayer,
+  createPreviousRegionBorderLayer,
+  buildRegionBorder,
+} from './layers/regionBorderLayer.js';
 import { createLettersLayer, buildTextData } from './layers/lettersLayer.js';
 import { createRowLabelsLayer, buildRowLabels } from './layers/rowLabelsLayer.js';
 import { createColumnAxisLayer, buildColumnAxis } from './layers/columnAxisLayer.js';
@@ -17,11 +22,51 @@ import { DEFAULT_MSA_VIEWER_OPTIONS, MSA_VIEWER_CONSTANTS } from './config.js';
 import { clampViewState, getVisibleRange, getZoomScale } from './viewportUtils.js';
 import {
   deriveSynchronizedViewStates,
+  getCenteredViewState,
   getFitAlignmentViewState,
   getInitialAlignmentViewState,
-  getScrollViewState,
 } from './cameraUtils.js';
 import { normalizeViewerRegion, resolveRegionTargetColumn } from './regionUtils.js';
+
+function normalizeRegionOrNull(region, columnCount) {
+  if (!region) return null;
+  return normalizeViewerRegion(
+    region.startCol ?? region.start,
+    region.endCol ?? region.end,
+    columnCount
+  );
+}
+
+function regionsEqual(left, right) {
+  if (left === right) return true;
+  return Boolean(left && right && left.startCol === right.startCol && left.endCol === right.endCol);
+}
+
+function rangesEqual(left, right) {
+  return Boolean(
+    left &&
+    right &&
+    left.r0 === right.r0 &&
+    left.r1 === right.r1 &&
+    left.c0 === right.c0 &&
+    left.c1 === right.c1
+  );
+}
+
+function rangeContains(outer, inner) {
+  return Boolean(
+    outer &&
+    inner &&
+    outer.r0 <= inner.r0 &&
+    outer.r1 >= inner.r1 &&
+    outer.c0 <= inner.c0 &&
+    outer.c1 >= inner.c1
+  );
+}
+
+function samplingEqual(left, right) {
+  return Boolean(left && right && left.rowStep === right.rowStep && left.colStep === right.colStep);
+}
 
 export class MSADeckGLViewer {
   constructor(container, options = {}) {
@@ -40,8 +85,8 @@ export class MSADeckGLViewer {
       type: 'protein',
       rows: 0,
       cols: 0,
-      selection: null,
-      previousSelection: null,
+      currentRegion: null,
+      previousRegion: null,
       // Main view state
       viewState: { target: [0, 0, 0], zoom: 0 },
     };
@@ -55,7 +100,8 @@ export class MSADeckGLViewer {
 
     this.frame = null;
     this._destroyed = false;
-    this._postLoadRenderTimeoutId = null;
+    this._renderedRange = null;
+    this._cellGroupsCache = null;
     this._initialLayoutObserver = null;
     this.resizeObserver = null; // ResizeObserver for container resize handling
     this._labelMeasuredWidth = this.DEFAULT_LABELS_WIDTH; // raw text-based width before zoom scaling
@@ -78,6 +124,9 @@ export class MSADeckGLViewer {
     if (!this._ctx2d) {
       const canvas = document.createElement('canvas');
       this._ctx2d = canvas.getContext('2d');
+      if (!this._ctx2d) {
+        return String(text || '').length * 6;
+      }
       this._ctx2d.font =
         '10px system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial';
     }
@@ -128,7 +177,10 @@ export class MSADeckGLViewer {
    * Handle view state changes from deck.gl
    * @param {Object} viewState - The new view state
    */
-  handleViewStateChange(viewState) {
+  handleViewStateChange(
+    viewState,
+    { force = false, layoutChanged = false, scheduleRender = true } = {}
+  ) {
     // Handle both single view state and composite view state updates
     // When using multiple views, deck.gl might pass { main: ..., labels: ... } or just the changed one
 
@@ -153,6 +205,7 @@ export class MSADeckGLViewer {
 
     // 3. Infinite Loop Prevention (Equality Check)
     if (
+      !force &&
       oldViewState.zoom === activeClamped.zoom &&
       oldViewState.target[0] === activeClamped.target[0] &&
       oldViewState.target[1] === activeClamped.target[1]
@@ -180,32 +233,39 @@ export class MSADeckGLViewer {
       const deckProps = {
         viewState: this.buildSynchronizedViewStates(activeClamped),
       };
-      if (labelWidthChanged) {
+      if (labelWidthChanged || layoutChanged) {
         deckProps.views = this.buildDeckViews();
       }
       this.state.deckgl.setProps(deckProps);
     }
 
-    // Only render if we have data
-    if (this.hasSequences()) {
+    const range = this.hasSequences()
+      ? getVisibleRange(
+          activeClamped,
+          {
+            containerWidth: this.container.clientWidth,
+            containerHeight: this.container.clientHeight,
+            labelsWidth: this.LABELS_WIDTH,
+            axisHeight: this.AXIS_HEIGHT,
+          },
+          this.options.cellSize,
+          this.state.rows,
+          this.state.cols
+        )
+      : null;
+
+    // Pan and inertia only update deck view state while the overscanned layer range still covers
+    // the viewport. Zoom always refreshes labels; cell data remains cached when sampling is stable.
+    if (
+      scheduleRender &&
+      this.hasSequences() &&
+      (oldViewState.zoom !== activeClamped.zoom || !rangeContains(this._renderedRange, range))
+    ) {
       this.renderThrottled();
     }
 
     // Dispatch custom event for view updates
     if (this.onViewStateChange) {
-      // Calculate visible range to pass along
-      const range = getVisibleRange(
-        activeClamped,
-        {
-          containerWidth: this.container.clientWidth,
-          containerHeight: this.container.clientHeight,
-          labelsWidth: this.LABELS_WIDTH,
-          axisHeight: this.AXIS_HEIGHT,
-        },
-        this.options.cellSize,
-        this.state.rows,
-        this.state.cols
-      );
       this.onViewStateChange({
         viewState: activeClamped,
         range,
@@ -234,20 +294,6 @@ export class MSADeckGLViewer {
       target,
       zoom: zoom - 0.2,
     });
-  }
-
-  /**
-   * Reset view to fit the entire MSA alignment
-   */
-  resetView() {
-    if (this.hasSequences()) {
-      this.fitToMSA();
-    } else {
-      this.handleViewStateChange({
-        target: [0, 0, 0],
-        zoom: -1,
-      });
-    }
   }
 
   /**
@@ -309,64 +355,11 @@ export class MSADeckGLViewer {
       canvas,
       width: '100%',
       height: '100%',
-      useDevicePixels: true,
+      useDevicePixels: 1,
       glOptions: {
         antialias: true,
-        preserveDrawingBuffer: true,
       },
-      views: [
-        // Top-Left Corner: Filler for background
-        new OrthographicView({
-          id: 'corner',
-          x: 0,
-          y: 0,
-          width: this.LABELS_WIDTH,
-          height: this.AXIS_HEIGHT,
-          flipY: true,
-          controller: false,
-          clear: { color: [248, 248, 248, 1] },
-        }),
-        // Left panel: Fixed width, shows Row Labels
-        new OrthographicView({
-          id: 'labels',
-          x: 0,
-          y: this.AXIS_HEIGHT,
-          width: this.LABELS_WIDTH,
-          height: `calc(100% - ${this.AXIS_HEIGHT}px)`,
-          flipY: true,
-          controller: false, // Passive, synced via code
-          clear: { color: [248, 248, 248, 1] }, // Light gray background
-        }),
-        // Top panel: Fixed height, shows Column Axis
-        new OrthographicView({
-          id: 'axis',
-          x: this.LABELS_WIDTH,
-          y: 0,
-          width: `calc(100% - ${this.LABELS_WIDTH}px)`,
-          height: this.AXIS_HEIGHT,
-          flipY: true,
-          controller: false,
-          clear: { color: [248, 248, 248, 1] },
-        }),
-        // Right panel: Takes remaining width, shows Main Grid
-        new OrthographicView({
-          id: 'main',
-          x: this.LABELS_WIDTH,
-          y: this.AXIS_HEIGHT,
-          width: `calc(100% - ${this.LABELS_WIDTH}px)`,
-          height: `calc(100% - ${this.AXIS_HEIGHT}px)`,
-          flipY: true,
-          controller: {
-            type: OrthographicController,
-            dragPan: true,
-            inertia: true,
-            scrollZoom: false, // Custom wheel handler handles pan/zoom
-            doubleClickZoom: false,
-            keyboard: { zoomSpeed: 0.08 },
-          },
-          clear: { color: [255, 255, 255, 1] },
-        }),
-      ],
+      views: this.buildDeckViews(),
       // Filter layers to ensuring they render only in their assigned view
       layerFilter: ({ layer, viewport }) => {
         return layer.props.viewId === viewport.id;
@@ -405,9 +398,11 @@ export class MSADeckGLViewer {
     this.resizeObserver?.disconnect();
     this.resizeObserver = new ResizeObserver(() => {
       if (this.hasSequences()) {
-        this.adjustLabelWidth();
-        // Do NOT call fitToMSA here to avoid unwanted auto-zoom
-        this.render();
+        this.adjustLabelWidth({ updateDeck: false });
+        this.handleViewStateChange(this.state.viewState, {
+          force: true,
+          layoutChanged: true,
+        });
       }
     });
     this.resizeObserver.observe(this.container);
@@ -417,58 +412,74 @@ export class MSADeckGLViewer {
   // DATA LOADING
   // =======================================================================
 
-  loadFromProcessedData(processedData) {
-    return this._applyProcessedData(processedData);
-  }
-
-  clearData() {
-    this.state.seqs = [];
-    this.state.type = 'protein';
-    this.state.rows = 0;
-    this.state.cols = 0;
-    this.state.consensus = null;
-    this.state.selection = null;
-    this.state.previousSelection = null;
-    this._hasLoadedOnce = false;
-    this.render();
-  }
-
-  _applyProcessedData(processedData) {
-    if (!processedData || this._destroyed) {
+  update({
+    data,
+    currentRegion = null,
+    previousRegion = null,
+    showLetters,
+    colorScheme,
+    rowColorMap,
+  }) {
+    if (this._destroyed) {
       return false;
     }
 
-    // Preserve current selection if column count is compatible
-    const prevSelection = this.state.selection;
-    const prevCols = this.state.cols;
-
-    this.state.seqs = processedData.sequences;
-    this.state.type = processedData.type;
-    this.state.rows = processedData.rows;
-    this.state.cols = processedData.cols;
-    this.state.consensus = calculateConsensus(this.state.seqs);
-
-    // Dynamic Label Width Adjustment
-    this.adjustLabelWidth();
-
-    // Restore selection if still valid for new data, otherwise clear it
-    if (prevSelection && prevCols === this.state.cols) {
-      this.state.selection = prevSelection;
-    } else {
-      this.state.selection = null;
+    let changed = false;
+    const dataChanged = this._processedData !== data;
+    const previousColorScheme = this.options.colorScheme;
+    if (dataChanged) {
+      this._processedData = data;
+      changed = true;
+      if (data) {
+        this.state.seqs = data.sequences;
+        this.state.type = data.type;
+        this.state.rows = data.rows;
+        this.state.cols = data.cols;
+        this.state.consensus = data.consensus ?? calculateConsensus(data.sequences);
+        this.adjustLabelWidth({ updateDeck: false });
+        this.initializeCameraIfReady();
+      } else {
+        this.state.seqs = [];
+        this.state.type = 'protein';
+        this.state.rows = 0;
+        this.state.cols = 0;
+        this.state.consensus = null;
+        this._hasLoadedOnce = false;
+      }
+      this.invalidateRenderCache();
     }
 
-    this.initializeCameraIfReady();
-
-    this.render();
-    if (this._postLoadRenderTimeoutId) {
-      clearTimeout(this._postLoadRenderTimeoutId);
+    const nextCurrentRegion = normalizeRegionOrNull(currentRegion, this.state.cols);
+    const nextPreviousRegion = normalizeRegionOrNull(previousRegion, this.state.cols);
+    if (!regionsEqual(this.state.currentRegion, nextCurrentRegion)) {
+      this.state.currentRegion = nextCurrentRegion;
+      changed = true;
     }
-    this._postLoadRenderTimeoutId = setTimeout(() => {
-      this._postLoadRenderTimeoutId = null;
+    if (!regionsEqual(this.state.previousRegion, nextPreviousRegion)) {
+      this.state.previousRegion = nextPreviousRegion;
+      changed = true;
+    }
+
+    if (showLetters !== undefined && this.options.showLetters !== showLetters) {
+      this.options.showLetters = showLetters;
+      changed = true;
+    }
+    if (colorScheme !== undefined && this.options.colorScheme !== colorScheme) {
+      this.options.colorScheme = colorScheme;
+      changed = true;
+      if ((previousColorScheme === 'taxa') !== (colorScheme === 'taxa')) {
+        this.invalidateCellCache();
+      }
+    }
+    if (rowColorMap !== undefined && this.options.rowColorMap !== rowColorMap) {
+      this.options.rowColorMap = rowColorMap;
+      changed = true;
+    }
+
+    if (changed) {
       this.render();
-    }, 100);
-    return true;
+    }
+    return changed;
   }
 
   /**
@@ -478,20 +489,23 @@ export class MSADeckGLViewer {
   initCameraPosition() {
     if (!this.container) return;
 
-    this.handleViewStateChange({
-      main: getInitialAlignmentViewState({
-        containerWidth: this.container.clientWidth,
-        containerHeight: this.container.clientHeight,
-        labelsWidth: this.LABELS_WIDTH,
-        axisHeight: this.AXIS_HEIGHT,
-      }),
-    });
+    this.handleViewStateChange(
+      {
+        main: getInitialAlignmentViewState({
+          containerWidth: this.container.clientWidth,
+          containerHeight: this.container.clientHeight,
+          labelsWidth: this.LABELS_WIDTH,
+          axisHeight: this.AXIS_HEIGHT,
+        }),
+      },
+      { scheduleRender: false }
+    );
   }
 
   /**
    * Fit the camera to show the entire MSA alignment
    */
-  fitToMSA() {
+  fitAlignment() {
     if (!this.hasSequences() || !this.container) return;
 
     const newViewState = getFitAlignmentViewState({
@@ -503,26 +517,7 @@ export class MSADeckGLViewer {
       rows: this.state.rows,
       cols: this.state.cols,
     });
-    this.handleViewStateChange({
-      main: { ...newViewState, transitionDuration: 400 },
-    });
-  }
-
-  // =======================================================================
-  // SELECTION MANAGEMENT
-  // =======================================================================
-
-  setSelection(startCol, endCol) {
-    const region = normalizeViewerRegion(startCol, endCol, this.state.cols);
-    if (!region) return;
-
-    this.state.selection = region;
-    this.render();
-  }
-
-  clearSelection() {
-    this.state.selection = null;
-    this.render();
+    this.handleViewStateChange({ main: newViewState });
   }
 
   // =======================================================================
@@ -541,24 +536,28 @@ export class MSADeckGLViewer {
     }
 
     const cs = this.options.cellSize;
+    const visibleRange = this.getVisibleRange();
+    const sampling = this.getCellSampling(visibleRange);
+    const renderRange = this.getRenderRange(visibleRange, sampling);
 
-    const cellsLayer = this.buildCellsLayer(cs);
-    const previousSelectionLayer = this.buildPreviousSelectionBorderLayer(cs);
-    const selectionLayer = this.buildSelectionBorderLayer(cs);
-    const lettersLayer = this.buildLettersLayer(cs);
-    const rowLabelsLayer = this.buildRowLabelsLayer(cs);
-    const columnAxisLayer = this.buildColumnAxisLayer(cs);
+    const cellsLayers = this.buildCellsLayers(cs, renderRange, sampling);
+    const previousRegionLayer = this.buildPreviousRegionBorderLayer(cs);
+    const currentRegionLayer = this.buildCurrentRegionBorderLayer(cs);
+    const lettersLayer = this.buildLettersLayer(cs, renderRange);
+    const rowLabelsLayer = this.buildRowLabelsLayer(cs, renderRange);
+    const columnAxisLayer = this.buildColumnAxisLayer(cs, renderRange);
 
     const layers = [
-      cellsLayer.clone({ id: 'cells', viewId: 'main' }),
-      previousSelectionLayer.clone({ id: 'previousSelectionBorder', viewId: 'main' }),
-      selectionLayer.clone({ id: 'selectionBorder', viewId: 'main' }),
-      lettersLayer.clone({ id: 'letters', viewId: 'main' }),
-      rowLabelsLayer.clone({ id: 'rowLabels', viewId: 'labels' }),
-      columnAxisLayer.clone({ id: 'columnAxis', viewId: 'axis' }),
+      ...cellsLayers,
+      previousRegionLayer,
+      currentRegionLayer,
+      lettersLayer,
+      rowLabelsLayer,
+      columnAxisLayer,
     ];
 
     this.state.deckgl.setProps({ layers });
+    this._renderedRange = renderRange;
   }
 
   renderThrottled() {
@@ -612,12 +611,12 @@ export class MSADeckGLViewer {
   // =======================================================================
 
   /**
-   * Build the cells polygon layer for the MAIN view (culled)
+   * Build instanced cell layers for the MAIN view (culled)
    * @param {number} cellSize - Size of each cell
-   * @returns {PolygonLayer} The cells layer
+   * @returns {ColumnLayer[]} The cell layers
    */
-  buildCellsLayer(cellSize) {
-    const visibleRange = getVisibleRange(
+  getVisibleRange() {
+    return getVisibleRange(
       this.state.viewState,
       {
         containerWidth: this.container.clientWidth,
@@ -625,58 +624,112 @@ export class MSADeckGLViewer {
         labelsWidth: this.LABELS_WIDTH,
         axisHeight: this.AXIS_HEIGHT,
       },
-      cellSize,
+      this.options.cellSize,
       this.state.rows,
       this.state.cols
     );
-    const cellData = buildCellData(
-      cellSize,
-      this.state.seqs,
-      visibleRange,
-      this.options.MAX_CELLS,
-      {
-        preserveRows: this.options.colorScheme === 'taxa',
-      }
-    );
-    return createCellsLayer(
-      cellData,
+  }
+
+  getCellSampling(visibleRange) {
+    return getCellSampling(visibleRange, this.options.MAX_CELLS, {
+      preserveRows: this.options.colorScheme === 'taxa',
+    });
+  }
+
+  getRenderRange(visibleRange, sampling) {
+    if (
+      this._cellGroupsCache &&
+      samplingEqual(this._cellGroupsCache.sampling, sampling) &&
+      rangeContains(this._cellGroupsCache.range, visibleRange)
+    ) {
+      return this._cellGroupsCache.range;
+    }
+
+    const visibleRows = visibleRange.r1 - visibleRange.r0 + 1;
+    const visibleColumns = visibleRange.c1 - visibleRange.c0 + 1;
+    const rowPadding = Math.max(sampling.rowStep, Math.ceil(visibleRows / 4));
+    const columnPadding = Math.max(sampling.colStep, Math.ceil(visibleColumns / 4));
+
+    return {
+      r0: Math.max(0, visibleRange.r0 - rowPadding),
+      r1: Math.min(this.state.rows - 1, visibleRange.r1 + rowPadding),
+      c0: Math.max(0, visibleRange.c0 - columnPadding),
+      c1: Math.min(this.state.cols - 1, visibleRange.c1 + columnPadding),
+    };
+  }
+
+  buildCellsLayers(cellSize, renderRange, sampling) {
+    if (
+      !this._cellGroupsCache ||
+      !samplingEqual(this._cellGroupsCache.sampling, sampling) ||
+      !rangesEqual(this._cellGroupsCache.range, renderRange)
+    ) {
+      const cellData = buildCellData(
+        cellSize,
+        this.state.seqs,
+        renderRange,
+        this.options.MAX_CELLS,
+        {
+          preserveRows: this.options.colorScheme === 'taxa',
+          consensus: this.state.consensus,
+          sampling,
+        }
+      );
+      this._cellGroupsCache = {
+        range: renderRange,
+        sampling,
+        groups: groupCellDataBySize(cellData),
+      };
+    }
+
+    return createCellsLayers(
+      this._cellGroupsCache.groups,
       this.state.type,
-      this.state.selection,
+      this.state.currentRegion,
       this.options.colorScheme,
       this.state.consensus,
-      this.state.previousSelection,
+      this.state.previousRegion,
       this.options.rowColorMap
     );
   }
 
-  /**
-   * Build the selection border polygon layer
-   * @param {number} cellSize - Size of each cell
-   * @returns {PolygonLayer} The selection border layer
-   */
-  buildSelectionBorderLayer(cellSize) {
-    const borderData = buildSelectionBorder(
-      cellSize,
-      this.state.selection,
-      this.state.rows,
-      this.state.cols
-    );
-    return createSelectionBorderLayer(borderData);
+  invalidateCellCache() {
+    this._cellGroupsCache = null;
+  }
+
+  invalidateRenderCache() {
+    this._renderedRange = null;
+    this.invalidateCellCache();
   }
 
   /**
-   * Build the previous selection border polygon layer (behind current)
+   * Build the current region border polygon layer
    * @param {number} cellSize - Size of each cell
-   * @returns {PolygonLayer} The previous selection border layer
+   * @returns {PolygonLayer} The current region border layer
    */
-  buildPreviousSelectionBorderLayer(cellSize) {
-    const borderData = buildSelectionBorder(
+  buildCurrentRegionBorderLayer(cellSize) {
+    const borderData = buildRegionBorder(
       cellSize,
-      this.state.previousSelection,
+      this.state.currentRegion,
       this.state.rows,
       this.state.cols
     );
-    return createPreviousSelectionBorderLayer(borderData);
+    return createCurrentRegionBorderLayer(borderData);
+  }
+
+  /**
+   * Build the previous region border polygon layer (behind current)
+   * @param {number} cellSize - Size of each cell
+   * @returns {PolygonLayer} The previous region border layer
+   */
+  buildPreviousRegionBorderLayer(cellSize) {
+    const borderData = buildRegionBorder(
+      cellSize,
+      this.state.previousRegion,
+      this.state.rows,
+      this.state.cols
+    );
+    return createPreviousRegionBorderLayer(borderData);
   }
 
   /**
@@ -684,19 +737,7 @@ export class MSADeckGLViewer {
    * @param {number} cellSize - Size of each cell
    * @returns {TextLayer} The letters layer
    */
-  buildLettersLayer(cellSize) {
-    const visibleRange = getVisibleRange(
-      this.state.viewState,
-      {
-        containerWidth: this.container.clientWidth,
-        containerHeight: this.container.clientHeight,
-        labelsWidth: this.LABELS_WIDTH,
-        axisHeight: this.AXIS_HEIGHT,
-      },
-      cellSize,
-      this.state.rows,
-      this.state.cols
-    );
+  buildLettersLayer(cellSize, visibleRange) {
     const zoomScale = getZoomScale(this.state.viewState.zoom);
     const textData = buildTextData(
       cellSize,
@@ -708,29 +749,19 @@ export class MSADeckGLViewer {
     );
     return createLettersLayer(
       textData,
+      this.state.type,
       this.options.colorScheme,
+      this.state.consensus,
       this.options.rowColorMap,
-      this.state.selection,
-      this.state.previousSelection
+      this.state.currentRegion,
+      this.state.previousRegion
     );
   } /**
    * Build the row labels text layer
    * @param {number} cellSize - Size of each cell
    * @returns {TextLayer} The row labels layer
    */
-  buildRowLabelsLayer(cellSize) {
-    const visibleRange = getVisibleRange(
-      this.state.viewState,
-      {
-        containerWidth: this.container.clientWidth,
-        containerHeight: this.container.clientHeight,
-        labelsWidth: this.LABELS_WIDTH,
-        axisHeight: this.AXIS_HEIGHT,
-      },
-      cellSize,
-      this.state.rows,
-      this.state.cols
-    );
+  buildRowLabelsLayer(cellSize, visibleRange) {
     // Pass LABELS_WIDTH to calculate alignment
     const labelsData = buildRowLabels(
       cellSize,
@@ -749,19 +780,7 @@ export class MSADeckGLViewer {
    * @param {number} cellSize - Size of each cell
    * @returns {TextLayer} The column axis layer
    */
-  buildColumnAxisLayer(cellSize) {
-    const visibleRange = getVisibleRange(
-      this.state.viewState,
-      {
-        containerWidth: this.container.clientWidth,
-        containerHeight: this.container.clientHeight,
-        labelsWidth: this.LABELS_WIDTH,
-        axisHeight: this.AXIS_HEIGHT,
-      },
-      cellSize,
-      this.state.rows,
-      this.state.cols
-    );
+  buildColumnAxisLayer(cellSize, visibleRange) {
     const zoomScale = getZoomScale(this.state.viewState.zoom);
     const axisData = buildColumnAxis(
       cellSize,
@@ -774,84 +793,30 @@ export class MSADeckGLViewer {
     return createColumnAxisLayer(axisData, zoomScale);
   }
 
-  // =======================================================================
-  // PUBLIC API
-  // =======================================================================
-
-  setCellSize(size) {
-    this.options.cellSize = size;
-    this.render();
-  }
-
-  setShowLetters(show) {
-    this.options.showLetters = show;
-    this.render();
-  }
-
   /**
-   * Set the color scheme
-   * @param {string} scheme - The color scheme name
+   * Center the viewport on a zero-based row and/or column.
    */
-  setColorScheme(scheme) {
-    this.options.colorScheme = scheme;
-    this.render();
-  }
-
-  setRowColorMap(map) {
-    this.options.rowColorMap = map || {};
-    this.render();
-  }
-
-  // Public API for region selection
-  setRegion(startCol, endCol) {
-    this.setSelection(startCol, endCol);
-  }
-
-  clearRegion() {
-    this.clearSelection();
-  }
-
-  // Public API for previous region selection
-  setPreviousRegion(startCol, endCol) {
-    const region = normalizeViewerRegion(startCol, endCol, this.state.cols);
-    if (!region) return;
-
-    this.state.previousSelection = region;
-    this.render();
-  }
-
-  clearPreviousRegion() {
-    this.state.previousSelection = null;
-    this.render();
-  }
-
-  /**
-   * Scroll to a specific row and/or column position
-   * Used by external scrollbar controls
-   * @param {Object} options - { row, col } - row and/or column indices to scroll to
-   */
-  scrollTo({ row, col }) {
+  centerViewportOn({ row, column }) {
     if (!this.hasSequences()) return;
 
     this.handleViewStateChange(
-      getScrollViewState({
+      getCenteredViewState({
         currentViewState: this.state.viewState,
         cellSize: this.options.cellSize,
         row,
-        col,
+        column,
       })
     );
   }
 
-  scrollToRegion(startCol, endCol, options = {}) {
+  centerRegion(startCol, endCol) {
     if (!this.hasSequences()) return;
 
-    const align = options.align || 'center';
     const region = normalizeViewerRegion(startCol, endCol, this.state.cols);
-    const targetCol = resolveRegionTargetColumn(region, align);
-    if (!Number.isFinite(targetCol)) return;
+    const targetColumn = resolveRegionTargetColumn(region, 'center');
+    if (!Number.isFinite(targetColumn)) return;
 
-    this.scrollTo({ col: Math.max(0, targetCol) });
+    this.centerViewportOn({ column: Math.max(0, targetColumn) });
   }
 
   initializeCameraIfReady() {
@@ -871,7 +836,7 @@ export class MSADeckGLViewer {
   /**
    * Adjust LABELS_WIDTH based on the longest sequence ID
    */
-  adjustLabelWidth() {
+  adjustLabelWidth({ updateDeck = true } = {}) {
     if (!this.hasSequences()) return;
 
     let maxWidth = 0;
@@ -883,24 +848,7 @@ export class MSADeckGLViewer {
     // Add minimal padding (1px each side) and store the unscaled width
     const calculatedWidth = Math.max(this.DEFAULT_LABELS_WIDTH, maxWidth + 2);
     this._labelMeasuredWidth = calculatedWidth;
-    this.updateLabelWidthForZoom(getZoomScale(this.state.viewState.zoom));
-  }
-
-  /**
-   * Update deck.gl views after LABELS_WIDTH changes.
-   */
-  updateViewsWithLabelWidth(labelsViewState, axisViewState, cornerViewState) {
-    if (!this.container || !this.state.deckgl) return;
-
-    this.state.deckgl.setProps({
-      views: this.buildDeckViews(),
-      viewState: {
-        main: this.state.viewState,
-        labels: labelsViewState,
-        axis: axisViewState,
-        corner: cornerViewState,
-      },
-    });
+    this.updateLabelWidthForZoom(getZoomScale(this.state.viewState.zoom), { updateDeck });
   }
 
   buildDeckViews() {
@@ -991,7 +939,15 @@ export class MSADeckGLViewer {
     };
 
     if (updateDeck) {
-      this.updateViewsWithLabelWidth(labelsViewState, axisViewState, cornerViewState);
+      this.state.deckgl?.setProps({
+        views: this.buildDeckViews(),
+        viewState: {
+          main: this.state.viewState,
+          labels: labelsViewState,
+          axis: axisViewState,
+          corner: cornerViewState,
+        },
+      });
     }
 
     return labelWidthChanged;
@@ -1002,11 +958,6 @@ export class MSADeckGLViewer {
 
     this._initialLayoutObserver?.disconnect();
     this._initialLayoutObserver = null;
-
-    if (this._postLoadRenderTimeoutId) {
-      clearTimeout(this._postLoadRenderTimeoutId);
-      this._postLoadRenderTimeoutId = null;
-    }
 
     if (this.frame) {
       cancelAnimationFrame(this.frame);

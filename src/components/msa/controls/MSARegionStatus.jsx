@@ -1,7 +1,7 @@
 import React from 'react';
 import { useMSA } from '../useMSA.js';
 
-export function MSARegionOverrides() {
+export function MSARegionStatus() {
   const { msaRegion } = useMSA();
   const regionLabel = msaRegion ? `${msaRegion.start}-${msaRegion.end}` : 'None';
 

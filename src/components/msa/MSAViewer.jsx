@@ -11,7 +11,7 @@ import {
 import { AppTooltip } from '../ui/app-tooltip';
 import { Button } from '../ui/button';
 import { MSADeckGLViewer } from '../../msaViewer/MSADeckGLViewer';
-import { useMSA } from './useMSA.js';
+import { useMSA, useMSAViewport, useSetMSAVisibleRange } from './useMSA.js';
 import { MSAScrollbars } from './MSAScrollbars';
 import {
   buildMsaWindowOverlapStatus,
@@ -25,137 +25,54 @@ import {
   formatMsaTreeStatusTooltip,
 } from './msaViewportStatus.js';
 
+function rangesEqual(left, right) {
+  if (left === right) return true;
+  return Boolean(
+    left &&
+    right &&
+    left.r0 === right.r0 &&
+    left.r1 === right.r1 &&
+    left.c0 === right.c0 &&
+    left.c1 === right.c1
+  );
+}
+
 export function MSAViewer() {
   const {
     processedData,
     msaRegion,
     msaPreviousRegion,
     showLetters,
-    viewAction,
     colorScheme,
-    setVisibleRange,
     rowColorMap,
-    visibleRange,
-    scrollAction,
+    connectViewerCommands,
   } = useMSA();
+  const setVisibleRange = useSetMSAVisibleRange();
   const syncMSAEnabled = useAppStore(selectSyncMsaEnabled);
-  const timelineCursor = useAppStore(selectTimelineCursor);
-  const msaStepSize = useAppStore(selectMsaStepSize);
-  const msaWindowSize = useAppStore(selectMsaWindowSize);
-  const msaColumnCount = useAppStore(selectMsaColumnCount);
-  const windowStatus = buildMsaWindowStatus(
-    timelineCursor,
-    msaStepSize,
-    msaWindowSize,
-    msaColumnCount
-  );
-  const overlapStatus = buildMsaWindowOverlapStatus(
-    timelineCursor,
-    msaStepSize,
-    msaWindowSize,
-    msaColumnCount
-  );
-  const treeStatus = buildMsaTreeStatus(timelineCursor);
   const [layoutMetrics, setLayoutMetrics] = useState(null);
-  const [statusClipped, setStatusClipped] = useState(false);
   const containerRef = useRef(null);
   const viewerRef = useRef(null);
   const pendingRangeRef = useRef(null);
+  const publishedRangeRef = useRef(null);
   const rangeFrameRef = useRef(null);
-  const latestViewerInputsRef = useRef({
-    showLetters,
-    colorScheme,
-    rowColorMap,
-    setVisibleRange,
-    msaRegion,
-    msaPreviousRegion,
-    syncMSAEnabled,
-  });
+  const setVisibleRangeRef = useRef(setVisibleRange);
 
   useEffect(() => {
-    latestViewerInputsRef.current = {
-      showLetters,
-      colorScheme,
-      rowColorMap,
-      setVisibleRange,
-      msaRegion,
-      msaPreviousRegion,
-      syncMSAEnabled,
-    };
-  }, [
-    showLetters,
-    colorScheme,
-    rowColorMap,
-    setVisibleRange,
-    msaRegion,
-    msaPreviousRegion,
-    syncMSAEnabled,
-  ]);
-
-  // Handle view actions (zoom/reset)
-  useEffect(() => {
-    if (!viewAction || !viewerRef.current) return;
-
-    switch (viewAction.action) {
-      case 'ZOOM_IN':
-        viewerRef.current.zoomIn();
-        break;
-      case 'ZOOM_OUT':
-        viewerRef.current.zoomOut();
-        break;
-      case 'RESET':
-        viewerRef.current.resetView();
-        break;
-      default:
-        break;
-    }
-  }, [viewAction]);
-
-  // Handle scroll actions from scrollbar overlays
-  useEffect(() => {
-    if (!scrollAction || !viewerRef.current) return;
-
-    const { row, col } = scrollAction;
-    viewerRef.current.scrollTo({ row, col });
-  }, [scrollAction]);
-
-  // Keep viewer in sync with external region updates
-  useEffect(() => {
-    if (msaRegion) {
-      if (viewerRef.current) {
-        viewerRef.current.setRegion(msaRegion.start, msaRegion.end);
-
-        if (syncMSAEnabled) {
-          viewerRef.current.scrollToRegion(msaRegion.start, msaRegion.end, { align: 'center' });
-        }
-      }
-    } else {
-      viewerRef.current?.clearRegion();
-    }
-  }, [msaRegion, syncMSAEnabled]);
-
-  // Keep viewer in sync with previous region updates
-  useEffect(() => {
-    if (msaPreviousRegion) {
-      if (viewerRef.current) {
-        viewerRef.current.setPreviousRegion(msaPreviousRegion.start, msaPreviousRegion.end);
-      }
-    } else {
-      viewerRef.current?.clearPreviousRegion();
-    }
-  }, [msaPreviousRegion]);
+    setVisibleRangeRef.current = setVisibleRange;
+  }, [setVisibleRange]);
 
   // Initialize DeckGL viewer once
   useEffect(() => {
     if (!containerRef.current || viewerRef.current) return undefined;
 
-    const { showLetters, colorScheme, rowColorMap } = latestViewerInputsRef.current;
-    const viewer = new MSADeckGLViewer(containerRef.current, {
-      showLetters,
-      colorScheme,
-      rowColorMap,
-    });
+    const viewer = new MSADeckGLViewer(containerRef.current);
     viewerRef.current = viewer;
+    const disconnectViewerCommands = connectViewerCommands({
+      zoomIn: () => viewer.zoomIn(),
+      zoomOut: () => viewer.zoomOut(),
+      fitAlignment: () => viewer.fitAlignment(),
+      centerViewportOn: (position) => viewer.centerViewportOn(position),
+    });
 
     viewer.onViewStateChange = ({ range, layoutMetrics }) => {
       if (layoutMetrics) {
@@ -176,8 +93,9 @@ export function MSAViewer() {
             rangeFrameRef.current = null;
             const pendingRange = pendingRangeRef.current;
             pendingRangeRef.current = null;
-            if (pendingRange) {
-              latestViewerInputsRef.current.setVisibleRange(pendingRange);
+            if (pendingRange && !rangesEqual(publishedRangeRef.current, pendingRange)) {
+              publishedRangeRef.current = pendingRange;
+              setVisibleRangeRef.current(pendingRange);
             }
           });
         }
@@ -190,108 +108,113 @@ export function MSAViewer() {
         rangeFrameRef.current = null;
       }
       pendingRangeRef.current = null;
+      publishedRangeRef.current = null;
+      disconnectViewerCommands();
       viewer.destroy();
       viewerRef.current = null;
     };
-  }, []);
+  }, [connectViewerCommands]);
 
-  // Load/refresh data into existing viewer
   useEffect(() => {
     const viewer = viewerRef.current;
     if (!viewer) return;
+
+    viewer.update({
+      data: processedData,
+      currentRegion: msaRegion,
+      previousRegion: msaPreviousRegion,
+      showLetters,
+      colorScheme,
+      rowColorMap,
+    });
+
     if (!processedData) {
       if (rangeFrameRef.current !== null) {
         cancelAnimationFrame(rangeFrameRef.current);
         rangeFrameRef.current = null;
       }
       pendingRangeRef.current = null;
-      viewer.clearData();
-      latestViewerInputsRef.current.setVisibleRange(null);
+      publishedRangeRef.current = null;
+      setVisibleRangeRef.current(null);
       setLayoutMetrics(null);
-      return;
     }
-    // Use preprocessed data to avoid re-parsing and keep order intact
-    viewer.loadFromProcessedData(processedData);
-    const { msaRegion, msaPreviousRegion, syncMSAEnabled } = latestViewerInputsRef.current;
-    if (msaRegion) {
-      viewer.setRegion(msaRegion.start, msaRegion.end);
-      if (syncMSAEnabled) {
-        viewer.scrollToRegion(msaRegion.start, msaRegion.end, { align: 'center' });
-      }
-    } else {
-      viewer.clearRegion();
-    }
-    if (msaPreviousRegion) {
-      viewer.setPreviousRegion(msaPreviousRegion.start, msaPreviousRegion.end);
-    } else {
-      viewer.clearPreviousRegion();
-    }
-  }, [processedData]);
+  }, [colorScheme, msaPreviousRegion, msaRegion, processedData, rowColorMap, showLetters]);
 
-  // Toggle letters without recreating viewer
   useEffect(() => {
     const viewer = viewerRef.current;
-    if (viewer) {
-      viewer.setShowLetters(showLetters);
-      viewer.render?.();
+    if (viewer && processedData && syncMSAEnabled && msaRegion) {
+      viewer.centerRegion(msaRegion.start, msaRegion.end);
     }
-  }, [showLetters]);
-
-  // Update color scheme
-  useEffect(() => {
-    const viewer = viewerRef.current;
-    if (viewer) {
-      viewer.setColorScheme(colorScheme);
-    }
-  }, [colorScheme]);
-
-  // Update row label colors (group/taxon colors)
-  useEffect(() => {
-    const viewer = viewerRef.current;
-    if (viewer) {
-      viewer.setRowColorMap(rowColorMap);
-    }
-  }, [rowColorMap]);
+  }, [msaRegion, processedData, syncMSAEnabled]);
 
   return (
     <div className="msa-rnd-body relative flex-1 min-h-0 bg-background" ref={containerRef}>
-      {visibleRange && Number.isFinite(visibleRange.r0) && Number.isFinite(visibleRange.c0) && (
-        <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex justify-end">
-          {statusClipped ? (
-            <MSAStatusClipButton clipped onToggle={() => setStatusClipped(false)} />
-          ) : (
-            <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-end gap-1.5 rounded-md border border-border/60 bg-background/85 px-2 py-1.5 text-[11px] text-foreground shadow-md backdrop-blur-sm tabular-nums">
-              <span>
-                Rows: {visibleRange.r0 + 1}-{visibleRange.r1 + 1}
-              </span>
+      <MSAStatusOverlay />
+      <MSAScrollbars layoutMetrics={layoutMetrics} />
+    </div>
+  );
+}
+
+function MSAStatusOverlay() {
+  const { visibleRange } = useMSAViewport();
+  const timelineCursor = useAppStore(selectTimelineCursor);
+  const msaStepSize = useAppStore(selectMsaStepSize);
+  const msaWindowSize = useAppStore(selectMsaWindowSize);
+  const msaColumnCount = useAppStore(selectMsaColumnCount);
+  const [statusClipped, setStatusClipped] = useState(false);
+
+  if (!visibleRange || !Number.isFinite(visibleRange.r0) || !Number.isFinite(visibleRange.c0)) {
+    return null;
+  }
+
+  const windowStatus = buildMsaWindowStatus(
+    timelineCursor,
+    msaStepSize,
+    msaWindowSize,
+    msaColumnCount
+  );
+  const overlapStatus = buildMsaWindowOverlapStatus(
+    timelineCursor,
+    msaStepSize,
+    msaWindowSize,
+    msaColumnCount
+  );
+  const treeStatus = buildMsaTreeStatus(timelineCursor);
+
+  return (
+    <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex justify-end">
+      {statusClipped ? (
+        <MSAStatusClipButton clipped onToggle={() => setStatusClipped(false)} />
+      ) : (
+        <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-end gap-1.5 rounded-md border border-border/60 bg-background/85 px-2 py-1.5 text-[11px] text-foreground shadow-md backdrop-blur-sm tabular-nums">
+          <span>
+            Rows: {visibleRange.r0 + 1}-{visibleRange.r1 + 1}
+          </span>
+          <span className="text-muted-foreground/60">|</span>
+          <span>
+            Cols: {visibleRange.c0 + 1}-{visibleRange.c1 + 1}
+          </span>
+          {windowStatus && (
+            <>
               <span className="text-muted-foreground/60">|</span>
-              <span>
-                Cols: {visibleRange.c0 + 1}-{visibleRange.c1 + 1}
-              </span>
-              {windowStatus && (
-                <>
-                  <span className="text-muted-foreground/60">|</span>
-                  <MSAWindowStatus status={windowStatus} />
-                </>
-              )}
-              {treeStatus && (
-                <>
-                  <span className="text-muted-foreground/60">|</span>
-                  <MSATreeStatus status={treeStatus} />
-                </>
-              )}
-              {overlapStatus && (
-                <>
-                  <span className="text-muted-foreground/60">|</span>
-                  <MSAWindowOverlapStatus status={overlapStatus} />
-                </>
-              )}
-              <MSAStatusClipButton clipped={false} onToggle={() => setStatusClipped(true)} />
-            </div>
+              <MSAWindowStatus status={windowStatus} />
+            </>
           )}
+          {treeStatus && (
+            <>
+              <span className="text-muted-foreground/60">|</span>
+              <MSATreeStatus status={treeStatus} />
+            </>
+          )}
+          {overlapStatus && (
+            <>
+              <span className="text-muted-foreground/60">|</span>
+              <MSAWindowOverlapStatus status={overlapStatus} />
+            </>
+          )}
+          <MSAStatusClipButton clipped={false} onToggle={() => setStatusClipped(true)} />
         </div>
       )}
-      <MSAScrollbars layoutMetrics={layoutMetrics} />
     </div>
   );
 }

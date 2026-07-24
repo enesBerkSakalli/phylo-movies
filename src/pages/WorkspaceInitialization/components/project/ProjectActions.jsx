@@ -17,7 +17,7 @@ export function ProjectActions({ disabled, reset, canSubmit, className }) {
         size="sm"
         onClick={reset}
         disabled={disabled}
-        className="w-full px-4 sm:w-auto"
+        className="h-[44px] w-full px-4 sm:h-8 sm:w-auto"
       >
         Reset form
       </Button>
@@ -25,7 +25,7 @@ export function ProjectActions({ disabled, reset, canSubmit, className }) {
         type="submit"
         size="sm"
         disabled={disabled || !canSubmit}
-        className="w-full px-6 sm:w-auto"
+        className="h-[44px] w-full px-6 sm:h-8 sm:w-auto"
       >
         <Rocket data-icon="inline-start" />
         Create visualization

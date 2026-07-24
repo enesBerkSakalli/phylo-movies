@@ -5,7 +5,7 @@ import { AppTooltip } from '../../ui/app-tooltip';
 import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 
 export function MSAViewActions() {
-  const { triggerViewAction } = useMSA();
+  const { zoomIn, zoomOut, fitAlignment } = useMSA();
 
   return (
     <>
@@ -13,7 +13,7 @@ export function MSAViewActions() {
         <Button
           variant="ghost"
           size="icon-xs"
-          onClick={() => triggerViewAction('ZOOM_IN')}
+          onClick={zoomIn}
           aria-label="Zoom in alignment"
           className="text-muted-foreground hover:bg-background/80 hover:text-foreground"
         >
@@ -24,7 +24,7 @@ export function MSAViewActions() {
         <Button
           variant="ghost"
           size="icon-xs"
-          onClick={() => triggerViewAction('ZOOM_OUT')}
+          onClick={zoomOut}
           aria-label="Zoom out alignment"
           className="text-muted-foreground hover:bg-background/80 hover:text-foreground"
         >
@@ -35,7 +35,7 @@ export function MSAViewActions() {
         <Button
           variant="ghost"
           size="icon-xs"
-          onClick={() => triggerViewAction('RESET')}
+          onClick={fitAlignment}
           aria-label="Reset alignment view"
           className="text-muted-foreground hover:bg-background/80 hover:text-foreground"
         >

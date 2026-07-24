@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   deriveSynchronizedViewStates,
+  getCenteredViewState,
   getInitialAlignmentViewState,
   getFitAlignmentViewState,
-  getScrollViewState,
 } from '../../../../src/msaViewer/cameraUtils.js';
 
 describe('MSA viewer camera utilities', () => {
@@ -51,11 +51,11 @@ describe('MSA viewer camera utilities', () => {
 
   it('scrolls only the requested axes while preserving zoom', () => {
     expect(
-      getScrollViewState({
+      getCenteredViewState({
         currentViewState: { target: [10, 20, 0], zoom: 2 },
         cellSize: 12,
         row: 3,
-        col: 5,
+        column: 5,
       })
     ).toEqual({
       target: [66, 42, 0],

@@ -31,30 +31,6 @@ import {
  * to prevent visual jitter during animation playback.
  */
 export const TreeStatsPanel: React.FC = () => {
-  // Zustand state: Use granular selectors to minimize re-renders
-  const timelineCursor = useAppStore(selectTimelineCursor);
-  const treeList = useAppStore(selectActiveTreeList);
-  const scaleList = useAppStore(selectScaleList);
-  const maxScale = useAppStore(selectMaxScale);
-  const branchTransformation = useAppStore(selectBranchTransformation);
-
-  // Compute scale metrics and histogram (memoized)
-  const {
-    formattedCurrent,
-    formattedMax,
-    progress: scaleRatio,
-    histogramBins,
-    histogramMax,
-    histogramStats,
-  } = useScaleMetrics({
-    sourceFrameIndex: timelineCursor?.sourceFrameIndex ?? 0,
-    treeList,
-    scaleList,
-    maxScale,
-  });
-
-  const showBranchLengths = branchTransformation !== 'ignore' && histogramBins.length > 0;
-
   return (
     <Collapsible asChild className="group/collapsible">
       <SidebarMenuItem>
@@ -66,27 +42,58 @@ export const TreeStatsPanel: React.FC = () => {
           </SidebarMenuButton>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <SidebarMenuSub>
-            <SidebarMenuSubItem>
-              <div className="flex flex-col gap-4 px-2 py-2">
-                <CurrentScaleDisplay
-                  formattedCurrent={formattedCurrent}
-                  formattedMax={formattedMax}
-                  magnitudeFactor={scaleRatio}
-                />
-
-                {showBranchLengths ? (
-                  <BranchLengthHistogram
-                    bins={histogramBins}
-                    maxCount={histogramMax}
-                    stats={histogramStats}
-                  />
-                ) : null}
-              </div>
-            </SidebarMenuSubItem>
-          </SidebarMenuSub>
+          <TreeStatsPanelBody />
         </CollapsibleContent>
       </SidebarMenuItem>
     </Collapsible>
+  );
+};
+
+const selectSourceFrameIndex = (state: Parameters<typeof selectTimelineCursor>[0]) =>
+  selectTimelineCursor(state)?.sourceFrameIndex ?? 0;
+
+const TreeStatsPanelBody: React.FC = () => {
+  const sourceFrameIndex = useAppStore(selectSourceFrameIndex);
+  const treeList = useAppStore(selectActiveTreeList);
+  const scaleList = useAppStore(selectScaleList);
+  const maxScale = useAppStore(selectMaxScale);
+  const branchTransformation = useAppStore(selectBranchTransformation);
+
+  const {
+    formattedCurrent,
+    formattedMax,
+    progress: scaleRatio,
+    histogramBins,
+    histogramMax,
+    histogramStats,
+  } = useScaleMetrics({
+    sourceFrameIndex,
+    treeList,
+    scaleList,
+    maxScale,
+  });
+
+  const showBranchLengths = branchTransformation !== 'ignore' && histogramBins.length > 0;
+
+  return (
+    <SidebarMenuSub>
+      <SidebarMenuSubItem>
+        <div className="flex flex-col gap-4 px-2 py-2">
+          <CurrentScaleDisplay
+            formattedCurrent={formattedCurrent}
+            formattedMax={formattedMax}
+            magnitudeFactor={scaleRatio}
+          />
+
+          {showBranchLengths ? (
+            <BranchLengthHistogram
+              bins={histogramBins}
+              maxCount={histogramMax}
+              stats={histogramStats}
+            />
+          ) : null}
+        </div>
+      </SidebarMenuSubItem>
+    </SidebarMenuSub>
   );
 };

@@ -13,6 +13,15 @@ const sidebars = {
     },
     {
       type: 'category',
+      label: 'Research Use Cases',
+      items: [
+        'use-cases/sliding-window-phylogenetics',
+        'use-cases/recombination-analysis',
+        'use-cases/rogue-taxa-bootstrap-trees',
+      ],
+    },
+    {
+      type: 'category',
       label: 'Feature Reference',
       items: [
         'feature-reference/index',

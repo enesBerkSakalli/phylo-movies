@@ -29,6 +29,7 @@ export function getKeyboardScrollTarget({ axis, key, rangeStart, rangeEnd, itemC
   if (!itemCount) return null;
 
   const visibleItems = Math.max(1, rangeEnd - rangeStart + 1);
+  const rangeCenter = (rangeStart + rangeEnd) / 2;
   let target;
 
   if (key === 'Home') {
@@ -36,41 +37,41 @@ export function getKeyboardScrollTarget({ axis, key, rangeStart, rangeEnd, itemC
   } else if (key === 'End') {
     target = itemCount - 1;
   } else if (axis === 'horizontal') {
-    target = getHorizontalKeyboardTarget(key, rangeStart, visibleItems);
+    target = getHorizontalKeyboardTarget(key, rangeCenter, visibleItems);
   } else if (axis === 'vertical') {
-    target = getVerticalKeyboardTarget(key, rangeStart, visibleItems);
+    target = getVerticalKeyboardTarget(key, rangeCenter, visibleItems);
   }
 
   return Number.isFinite(target) ? clamp(target, 0, itemCount - 1) : null;
 }
 
-function getHorizontalKeyboardTarget(key, rangeStart, visibleItems) {
+function getHorizontalKeyboardTarget(key, rangeCenter, visibleItems) {
   switch (key) {
     case 'ArrowLeft':
-      return rangeStart - 1;
+      return rangeCenter - 1;
     case 'ArrowRight':
-      return rangeStart + 1;
+      return rangeCenter + 1;
     case 'PageUp':
     case 'PageLeft':
-      return rangeStart - visibleItems;
+      return rangeCenter - visibleItems;
     case 'PageDown':
     case 'PageRight':
-      return rangeStart + visibleItems;
+      return rangeCenter + visibleItems;
     default:
       return null;
   }
 }
 
-function getVerticalKeyboardTarget(key, rangeStart, visibleItems) {
+function getVerticalKeyboardTarget(key, rangeCenter, visibleItems) {
   switch (key) {
     case 'ArrowUp':
-      return rangeStart - 1;
+      return rangeCenter - 1;
     case 'ArrowDown':
-      return rangeStart + 1;
+      return rangeCenter + 1;
     case 'PageUp':
-      return rangeStart - visibleItems;
+      return rangeCenter - visibleItems;
     case 'PageDown':
-      return rangeStart + visibleItems;
+      return rangeCenter + visibleItems;
     default:
       return null;
   }

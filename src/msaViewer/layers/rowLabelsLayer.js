@@ -78,6 +78,7 @@ export function buildRowLabels(
 export function createRowLabelsLayer(labelsData) {
   return new TextLayer({
     id: 'rowLabels',
+    viewId: 'labels',
     data: labelsData,
     pickable: true,
     getText: (d) => d.text,

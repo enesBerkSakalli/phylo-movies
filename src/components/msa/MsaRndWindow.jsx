@@ -2,7 +2,6 @@ import React from 'react';
 import { Rnd } from 'react-rnd';
 import {
   selectCloseMsaViewer,
-  selectIsMsaViewerOpen,
   selectMsaWindow,
   selectSetMsaWindow,
   useAppStore,
@@ -23,6 +22,7 @@ import {
   FLOATING_WINDOW_SURFACE_CLASS,
   getFloatingWindowLayerClass,
 } from '../ui/floating-window-layer.js';
+import { MSAProvider } from './MSAContext.jsx';
 
 const MSA_WINDOW_BOUNDS = {
   minWidth: 840,
@@ -88,15 +88,12 @@ function MSAWindowContent() {
   );
 }
 
-export function MsaRndWindow({ isActive = false, onFocus } = {}) {
-  const isOpen = useAppStore(selectIsMsaViewerOpen);
+function MsaRndWindowSurface({ isActive = false, onFocus } = {}) {
   const msaWindow = useAppStore(selectMsaWindow);
   const setMsaWindow = useAppStore(selectSetMsaWindow);
   const fittedWindow = fitMsaWindowRect(msaWindow);
 
   React.useEffect(() => {
-    if (!isOpen) return undefined;
-
     const fitWindow = () => {
       const currentRect = useAppStore.getState().msaWindow;
       const nextRect = fitMsaWindowRect(currentRect);
@@ -108,13 +105,11 @@ export function MsaRndWindow({ isActive = false, onFocus } = {}) {
     fitWindow();
     window.addEventListener('resize', fitWindow);
     return () => window.removeEventListener('resize', fitWindow);
-  }, [isOpen, setMsaWindow]);
+  }, [setMsaWindow]);
 
   React.useEffect(() => {
-    if (isOpen) onFocus?.();
-  }, [isOpen, onFocus]);
-
-  if (!isOpen) return null;
+    onFocus?.();
+  }, [onFocus]);
 
   return (
     <Rnd
@@ -155,4 +150,10 @@ export function MsaRndWindow({ isActive = false, onFocus } = {}) {
   );
 }
 
-export default MsaRndWindow;
+export default function MsaRndWindow(props) {
+  return (
+    <MSAProvider>
+      <MsaRndWindowSurface {...props} />
+    </MSAProvider>
+  );
+}

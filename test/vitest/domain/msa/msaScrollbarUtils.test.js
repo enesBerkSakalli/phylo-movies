@@ -4,6 +4,8 @@ import {
   getKeyboardScrollTarget,
   getTrackClickTarget,
 } from '../../../../src/components/msa/scrollbarUtils.js';
+import { getCenteredViewState } from '../../../../src/msaViewer/cameraUtils.js';
+import { getVisibleRange } from '../../../../src/msaViewer/viewportUtils.js';
 
 describe('MSA scrollbar utilities', () => {
   it('calculates capped thumb geometry from visible range', () => {
@@ -71,10 +73,10 @@ describe('MSA scrollbar utilities', () => {
       itemCount: 100,
     };
 
-    expect(getKeyboardScrollTarget(context)).toBe(20);
+    expect(getKeyboardScrollTarget(context)).toBe(24.5);
     expect(getKeyboardScrollTarget({ ...context, key: 'Home' })).toBe(0);
     expect(getKeyboardScrollTarget({ ...context, key: 'End' })).toBe(99);
-    expect(getKeyboardScrollTarget({ ...context, key: 'ArrowLeft' })).toBe(9);
+    expect(getKeyboardScrollTarget({ ...context, key: 'ArrowLeft' })).toBe(13.5);
     expect(getKeyboardScrollTarget({ ...context, key: 'ArrowUp' })).toBeNull();
   });
 
@@ -87,8 +89,34 @@ describe('MSA scrollbar utilities', () => {
       itemCount: 100,
     };
 
-    expect(getKeyboardScrollTarget(context)).toBe(0);
-    expect(getKeyboardScrollTarget({ ...context, key: 'ArrowDown' })).toBe(11);
+    expect(getKeyboardScrollTarget(context)).toBe(4.5);
+    expect(getKeyboardScrollTarget({ ...context, key: 'ArrowDown' })).toBe(15.5);
     expect(getKeyboardScrollTarget({ ...context, key: 'ArrowRight' })).toBeNull();
+  });
+
+  it('moves the rendered viewport right when ArrowRight is pressed', () => {
+    const layout = {
+      containerWidth: 240,
+      containerHeight: 240,
+      labelsWidth: 72,
+      axisHeight: 24,
+    };
+    const currentViewState = { target: [612, 60, 0], zoom: 0 };
+    const before = getVisibleRange(currentViewState, layout, 12, 10, 100);
+    const column = getKeyboardScrollTarget({
+      axis: 'horizontal',
+      key: 'ArrowRight',
+      rangeStart: before.c0,
+      rangeEnd: before.c1,
+      itemCount: 100,
+    });
+    const nextViewState = getCenteredViewState({
+      currentViewState,
+      cellSize: 12,
+      column,
+    });
+    const after = getVisibleRange(nextViewState, layout, 12, 10, 100);
+
+    expect(after.c0).toBeGreaterThan(before.c0);
   });
 });

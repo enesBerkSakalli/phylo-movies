@@ -159,4 +159,45 @@ describe('legacy module aliases', () => {
     expect(readmeSource).not.toContain('/home');
     expect(existsSync(join(repoRoot, 'src', 'css', 'home.css'))).toBe(false);
   });
+
+  it('keeps the MSA module free of compatibility aliases and alternate exports', () => {
+    const msaDirectories = [
+      join(repoRoot, 'src', 'components', 'msa'),
+      join(repoRoot, 'src', 'msaViewer'),
+    ];
+    const msaFiles = msaDirectories.flatMap(collectSourceFiles);
+    const forbiddenTerms = [
+      ['set', 'Selection'].join(''),
+      ['clear', 'Selection'].join(''),
+      ['loadFrom', 'ProcessedData'].join(''),
+      ['_apply', 'ProcessedData'].join(''),
+      ['MSARegion', 'Overrides'].join(''),
+      ['view', 'Action'].join(''),
+      ['scroll', 'Action'].join(''),
+      ['scrollTo', 'Position'].join(''),
+      ['Similarity', ' to Consensus'].join(''),
+    ];
+    const violations = msaFiles.flatMap((file) => {
+      const source = readFileSync(file, 'utf8');
+      return forbiddenTerms
+        .filter((term) => source.includes(term))
+        .map((term) => `${relative(repoRoot, file)}: ${term}`);
+    });
+
+    expect(violations).toEqual([]);
+    expect(existsSync(join(repoRoot, 'src', 'components', 'msa', 'controls', 'index.js'))).toBe(
+      false
+    );
+    expect(
+      existsSync(join(repoRoot, 'src', 'msaViewer', 'layers', 'selectionBorderLayer.js'))
+    ).toBe(false);
+
+    const dualExportFiles = msaFiles.filter((file) => {
+      const source = readFileSync(file, 'utf8');
+      return (
+        /\bexport\s+default\b/.test(source) && /\bexport\s+(?:function|class|const)\b/.test(source)
+      );
+    });
+    expect(dualExportFiles.map((file) => relative(repoRoot, file))).toEqual([]);
+  });
 });

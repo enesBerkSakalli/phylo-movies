@@ -63,6 +63,7 @@ export function buildColumnAxis(
 export function createColumnAxisLayer(axisData, _zoomScale) {
   return new TextLayer({
     id: 'columnAxis',
+    viewId: 'axis',
     data: axisData,
     pickable: false,
     getText: (d) => d.text,

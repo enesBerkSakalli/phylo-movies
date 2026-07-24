@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
-import { useMSA } from './useMSA.js';
+import { useMSA, useMSAViewport } from './useMSA.js';
 import { MSA_VIEWER_CONSTANTS } from '../../msaViewer/config.js';
 import {
   calculateScrollbarGeometry,
@@ -12,7 +12,8 @@ import {
  * and allow clicking/dragging to control the DeckGL view state.
  */
 export function MSAScrollbars({ layoutMetrics = null }) {
-  const { processedData, visibleRange, scrollToPosition } = useMSA();
+  const { processedData, centerViewportOn } = useMSA();
+  const { visibleRange } = useMSAViewport();
 
   const [isDraggingH, setIsDraggingH] = useState(false);
   const [isDraggingV, setIsDraggingV] = useState(false);
@@ -41,7 +42,7 @@ export function MSAScrollbars({ layoutMetrics = null }) {
   // Handle horizontal track click
   const handleHTrackClick = useCallback(
     (e) => {
-      if (!hTrackRef.current || !scrollToPosition || !cols) return;
+      if (!hTrackRef.current || !cols) return;
       const rect = hTrackRef.current.getBoundingClientRect();
       const targetCol = getTrackClickTarget({
         pointerClientPosition: e.clientX,
@@ -49,15 +50,15 @@ export function MSAScrollbars({ layoutMetrics = null }) {
         trackSize: rect.width,
         itemCount: cols,
       });
-      scrollToPosition({ col: targetCol });
+      centerViewportOn({ column: targetCol });
     },
-    [cols, scrollToPosition]
+    [centerViewportOn, cols]
   );
 
   // Handle vertical track click
   const handleVTrackClick = useCallback(
     (e) => {
-      if (!vTrackRef.current || !scrollToPosition || !rows) return;
+      if (!vTrackRef.current || !rows) return;
       const rect = vTrackRef.current.getBoundingClientRect();
       const targetRow = getTrackClickTarget({
         pointerClientPosition: e.clientY,
@@ -65,14 +66,14 @@ export function MSAScrollbars({ layoutMetrics = null }) {
         trackSize: rect.height,
         itemCount: rows,
       });
-      scrollToPosition({ row: targetRow });
+      centerViewportOn({ row: targetRow });
     },
-    [rows, scrollToPosition]
+    [centerViewportOn, rows]
   );
 
   const handleHKeyDown = useCallback(
     (e) => {
-      if (!scrollToPosition || !cols) return;
+      if (!cols) return;
 
       const targetCol = getKeyboardScrollTarget({
         axis: 'horizontal',
@@ -84,14 +85,14 @@ export function MSAScrollbars({ layoutMetrics = null }) {
       if (targetCol === null) return;
 
       e.preventDefault();
-      scrollToPosition({ col: targetCol });
+      centerViewportOn({ column: targetCol });
     },
-    [c0, c1, cols, scrollToPosition]
+    [c0, c1, centerViewportOn, cols]
   );
 
   const handleVKeyDown = useCallback(
     (e) => {
-      if (!scrollToPosition || !rows) return;
+      if (!rows) return;
 
       const targetRow = getKeyboardScrollTarget({
         axis: 'vertical',
@@ -103,9 +104,9 @@ export function MSAScrollbars({ layoutMetrics = null }) {
       if (targetRow === null) return;
 
       e.preventDefault();
-      scrollToPosition({ row: targetRow });
+      centerViewportOn({ row: targetRow });
     },
-    [r0, r1, rows, scrollToPosition]
+    [centerViewportOn, r0, r1, rows]
   );
 
   // Handle horizontal thumb drag
@@ -128,7 +129,7 @@ export function MSAScrollbars({ layoutMetrics = null }) {
           trackSize: rect.width,
           itemCount: cols,
         });
-        scrollToPosition?.({ col: targetCol });
+        centerViewportOn({ column: targetCol });
       };
 
       const onPointerUp = () => {
@@ -147,7 +148,7 @@ export function MSAScrollbars({ layoutMetrics = null }) {
       window.addEventListener('pointercancel', onPointerUp);
       activeDragCleanupRef.current = onPointerUp;
     },
-    [cols, scrollToPosition]
+    [centerViewportOn, cols]
   );
 
   // Handle vertical thumb drag
@@ -170,7 +171,7 @@ export function MSAScrollbars({ layoutMetrics = null }) {
           trackSize: rect.height,
           itemCount: rows,
         });
-        scrollToPosition?.({ row: targetRow });
+        centerViewportOn({ row: targetRow });
       };
 
       const onPointerUp = () => {
@@ -189,7 +190,7 @@ export function MSAScrollbars({ layoutMetrics = null }) {
       window.addEventListener('pointercancel', onPointerUp);
       activeDragCleanupRef.current = onPointerUp;
     },
-    [rows, scrollToPosition]
+    [centerViewportOn, rows]
   );
 
   // Early return AFTER all hooks have been called
@@ -265,5 +266,3 @@ export function MSAScrollbars({ layoutMetrics = null }) {
     </>
   );
 }
-
-export default MSAScrollbars;

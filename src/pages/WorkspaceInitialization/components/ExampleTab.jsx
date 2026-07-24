@@ -11,6 +11,12 @@ import {
 } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '../../../components/ui/accordion';
 import { EXAMPLE_DATASETS } from '../exampleDatasets.js';
 
 export function ExampleTab({
@@ -81,48 +87,28 @@ export function ExampleTab({
                   <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                     {example.description}
                   </p>
-                  {example.provenance && (
-                    <div className="mt-2 space-y-1 text-2xs leading-relaxed text-muted-foreground">
-                      <p>
-                        <span className="font-semibold text-foreground/70">Tree source:</span>{' '}
-                        {example.provenance.treeSource}
-                      </p>
-                      <p>
-                        <span className="font-semibold text-foreground/70">Settings:</span>{' '}
-                        {formatExampleSettings(example.provenance.settings)}
-                      </p>
-                    </div>
-                  )}
                   {(example.sourceTruthFile ||
                     example.regenerationGuide ||
-                    generatedArtifacts.length > 0) && (
-                    <div className="mt-2 space-y-1 text-2xs leading-relaxed text-muted-foreground">
-                      {example.sourceTruthFile && (
-                        <p>
-                          <span className="font-semibold text-foreground/70">Source truth:</span>{' '}
-                          <ExampleArtifactLink artifact={example.sourceTruthFile} />
-                        </p>
-                      )}
-                      {example.regenerationGuide && (
-                        <p>
-                          <span className="font-semibold text-foreground/70">Regenerate:</span>{' '}
-                          <ExampleArtifactLink artifact={example.regenerationGuide} />
-                        </p>
-                      )}
-                      {generatedArtifacts.length > 0 && (
-                        <div className="flex min-w-0 flex-wrap gap-x-3 gap-y-1">
-                          <span className="font-semibold text-foreground/70">
-                            Generated artifacts:
-                          </span>
-                          {generatedArtifacts.map((metadataFile) => (
-                            <ExampleArtifactLink
-                              key={metadataFile.filePath}
-                              artifact={metadataFile}
+                    generatedArtifacts.length > 0 ||
+                    example.provenance) && (
+                    <>
+                      <div className="hidden lg:block">
+                        <ExampleDetails example={example} generatedArtifacts={generatedArtifacts} />
+                      </div>
+                      <Accordion type="single" collapsible className="mt-2 lg:hidden">
+                        <AccordionItem value="details">
+                          <AccordionTrigger className="py-2 text-xs">
+                            Dataset details
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <ExampleDetails
+                              example={example}
+                              generatedArtifacts={generatedArtifacts}
                             />
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      </Accordion>
+                    </>
                   )}
                   {example.runtimeWarning && (
                     <p className="mt-2 text-2xs font-medium leading-relaxed text-amber-700 dark:text-amber-300">
@@ -163,7 +149,7 @@ export function ExampleTab({
                 </div>
               </div>
 
-              <div className="grid grid-cols-[4.5rem_2rem_2rem] items-center justify-end gap-2 lg:justify-self-end">
+              <div className="grid grid-cols-[4.5rem_2.5rem_2.5rem] items-center justify-end gap-2 lg:grid-cols-[4.5rem_2rem_2rem] lg:justify-self-end">
                 <Button
                   variant="default"
                   size="sm"
@@ -174,10 +160,13 @@ export function ExampleTab({
                       ? 'Start BranchArchitect before loading examples'
                       : undefined
                   }
-                  className="w-[4.5rem]"
+                  className="h-[44px] w-[4.5rem] sm:h-8"
                 >
                   {isLoading ? (
-                    <Loader2 className="animate-spin" data-icon="inline-start" />
+                    <Loader2
+                      className="animate-spin motion-reduce:animate-none"
+                      data-icon="inline-start"
+                    />
                   ) : (
                     <Play data-icon="inline-start" />
                   )}
@@ -186,6 +175,7 @@ export function ExampleTab({
                 <Button
                   variant="outline"
                   size="icon-sm"
+                  className="size-[44px] sm:size-8"
                   asChild
                   title={`Download ${example.fileName}`}
                 >
@@ -201,6 +191,7 @@ export function ExampleTab({
                   <Button
                     variant="outline"
                     size="icon-sm"
+                    className="size-[44px] sm:size-8"
                     asChild
                     title={`Download ${example.msaFileName}`}
                   >
@@ -213,12 +204,53 @@ export function ExampleTab({
                     </a>
                   </Button>
                 )}
-                {!example.msaFilePath && <span className="size-8" aria-hidden="true" />}
+                {!example.msaFilePath && (
+                  <span className="size-[44px] sm:size-8" aria-hidden="true" />
+                )}
               </div>
             </div>
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function ExampleDetails({ example, generatedArtifacts }) {
+  return (
+    <div className="mt-2 space-y-1 text-2xs leading-relaxed text-muted-foreground">
+      {example.provenance && (
+        <>
+          <p>
+            <span className="font-semibold text-foreground/70">Tree source:</span>{' '}
+            {example.provenance.treeSource}
+          </p>
+          <p>
+            <span className="font-semibold text-foreground/70">Settings:</span>{' '}
+            {formatExampleSettings(example.provenance.settings)}
+          </p>
+        </>
+      )}
+      {example.sourceTruthFile && (
+        <p>
+          <span className="font-semibold text-foreground/70">Source truth:</span>{' '}
+          <ExampleArtifactLink artifact={example.sourceTruthFile} />
+        </p>
+      )}
+      {example.regenerationGuide && (
+        <p>
+          <span className="font-semibold text-foreground/70">Regenerate:</span>{' '}
+          <ExampleArtifactLink artifact={example.regenerationGuide} />
+        </p>
+      )}
+      {generatedArtifacts.length > 0 && (
+        <div className="flex min-w-0 flex-wrap gap-x-3 gap-y-1">
+          <span className="font-semibold text-foreground/70">Generated artifacts:</span>
+          {generatedArtifacts.map((metadataFile) => (
+            <ExampleArtifactLink key={metadataFile.filePath} artifact={metadataFile} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

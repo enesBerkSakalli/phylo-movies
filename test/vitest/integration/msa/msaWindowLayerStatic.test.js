@@ -60,13 +60,8 @@ describe('MSA window layering', () => {
       path.join(process.cwd(), 'src/components/msa/MSAControls.jsx'),
       'utf8'
     );
-    const controlsIndexSource = fs.readFileSync(
-      path.join(process.cwd(), 'src/components/msa/controls/index.js'),
-      'utf8'
-    );
 
     expect(controlsSource).not.toContain('MSAVisibleRange');
-    expect(controlsIndexSource).not.toContain('MSAVisibleRange');
   });
 
   it('keeps tree context icons in the viewer status badge', () => {
@@ -122,7 +117,7 @@ describe('MSA window layering', () => {
 
   it('renders MSA region as read-only toolbar context', () => {
     const source = fs.readFileSync(
-      path.join(process.cwd(), 'src/components/msa/controls/MSARegionOverrides.jsx'),
+      path.join(process.cwd(), 'src/components/msa/controls/MSARegionStatus.jsx'),
       'utf8'
     );
 

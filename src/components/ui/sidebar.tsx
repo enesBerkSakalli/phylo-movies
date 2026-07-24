@@ -136,6 +136,7 @@ function SidebarProvider({
 }
 
 function Sidebar({
+  id,
   side = 'left',
   variant = 'sidebar',
   collapsible = 'offcanvas',
@@ -152,6 +153,7 @@ function Sidebar({
   if (collapsible === 'none') {
     return (
       <div
+        id={id}
         data-slot="sidebar"
         className={cn(
           'bg-sidebar text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col',
@@ -168,6 +170,7 @@ function Sidebar({
     return (
       <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
         <SheetContent
+          id={id}
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
@@ -211,6 +214,7 @@ function Sidebar({
         )}
       />
       <div
+        id={id}
         data-slot="sidebar-container"
         className={cn(
           'fixed top-0 bottom-[var(--movie-player-bar-height,0px)] z-10 hidden w-(--sidebar-width) transition-[left,right,width,bottom] duration-200 ease-linear md:flex',

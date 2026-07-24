@@ -1,11 +1,23 @@
 /**
  * Cells Layer Module
- * Creates the main cells polygon layer for MSA visualization
+ * Creates the main instanced cell layers for MSA visualization
  */
 
-import { PolygonLayer } from '@deck.gl/layers';
+import { ColumnLayer } from '@deck.gl/layers';
 import { getColorScheme } from '../utils/colorUtils.js';
 import { colorToRgb } from '../../services/ui/colorUtils.js';
+
+export function getCellSampling(visibleRange, maxCells, { preserveRows = false } = {}) {
+  const { r0, r1, c0, c1 } = visibleRange;
+  const rowCount = Math.max(0, r1 - r0 + 1);
+  const columnCount = Math.max(0, c1 - c0 + 1);
+  const step = Math.max(1, Math.ceil(Math.sqrt((rowCount * columnCount) / maxCells)));
+
+  return {
+    rowStep: preserveRows ? 1 : step,
+    colStep: preserveRows ? Math.max(1, Math.ceil((rowCount * columnCount) / maxCells)) : step,
+  };
+}
 
 /**
  * Build cell data for the MSA visualization
@@ -22,11 +34,10 @@ export function buildCellData(cellSize, sequences, visibleRange, maxCells, optio
   }
 
   const { r0, r1, c0, c1 } = visibleRange;
-  const nR = r1 - r0 + 1;
-  const nC = c1 - c0 + 1;
-  const step = Math.max(1, Math.ceil(Math.sqrt((nR * nC) / maxCells)));
-  const rowStep = options.preserveRows ? 1 : step;
-  const colStep = options.preserveRows ? Math.max(1, Math.ceil((nR * nC) / maxCells)) : step;
+  const sampling =
+    options.sampling ||
+    getCellSampling(visibleRange, maxCells, { preserveRows: options.preserveRows });
+  const { rowStep, colStep } = sampling;
   const data = [];
 
   for (let r = r0; r <= r1; r += rowStep) {
@@ -40,21 +51,21 @@ export function buildCellData(cellSize, sequences, visibleRange, maxCells, optio
       const w = cellSize * Math.min(colStep, c1 - c + 1);
       const h = cellSize * Math.min(rowStep, r1 - r + 1);
 
+      const isAggregate = rowStep > 1 || colStep > 1;
+      const aggregate = isAggregate
+        ? summarizeBlock(sequences, r, c, rowStep, colStep, r1, c1, options.consensus)
+        : null;
+
       data.push({
         kind: 'cell',
         row: r,
         col: c,
         seqId: seq.id,
-        ch:
-          rowStep === 1 && colStep === 1
-            ? seq.seq[c] || '-'
-            : getDominantResidue(sequences, r, c, rowStep, colStep, r1, c1),
-        polygon: [
-          [x, y],
-          [x + w, y],
-          [x + w, y + h],
-          [x, y + h],
-        ],
+        ch: aggregate?.dominantResidue ?? seq.seq[c] ?? '-',
+        identityMatchFraction: aggregate?.identityMatchFraction ?? null,
+        position: [x + w / 2, y + h / 2, 0],
+        width: w,
+        height: h,
       });
     }
   }
@@ -62,10 +73,42 @@ export function buildCellData(cellSize, sequences, visibleRange, maxCells, optio
   return data;
 }
 
-function getDominantResidue(sequences, startRow, startCol, rowStep, colStep, maxRow, maxCol) {
+export function groupCellDataBySize(cellData) {
+  const groups = new Map();
+
+  for (const cell of cellData) {
+    const key = `${cell.width}:${cell.height}`;
+    let group = groups.get(key);
+    if (!group) {
+      group = {
+        key,
+        width: cell.width,
+        height: cell.height,
+        data: [],
+      };
+      groups.set(key, group);
+    }
+    group.data.push(cell);
+  }
+
+  return [...groups.values()];
+}
+
+function summarizeBlock(
+  sequences,
+  startRow,
+  startCol,
+  rowStep,
+  colStep,
+  maxRow,
+  maxCol,
+  consensus
+) {
   const counts = new Map();
   let bestChar = '-';
   let bestCount = 0;
+  let identityMatches = 0;
+  let comparableResidues = 0;
 
   for (let r = startRow; r <= Math.min(maxRow, startRow + rowStep - 1); r++) {
     const seq = sequences[r]?.seq;
@@ -79,10 +122,25 @@ function getDominantResidue(sequences, startRow, startCol, rowStep, colStep, max
         bestChar = ch;
         bestCount = count;
       }
+
+      const consensusChar = consensus?.[c];
+      if (isComparableResidue(ch) && isComparableResidue(consensusChar)) {
+        comparableResidues++;
+        if (ch === consensusChar) {
+          identityMatches++;
+        }
+      }
     }
   }
 
-  return bestChar;
+  return {
+    dominantResidue: bestChar,
+    identityMatchFraction: comparableResidues > 0 ? identityMatches / comparableResidues : 0,
+  };
+}
+
+function isComparableResidue(residue) {
+  return Boolean(residue && residue !== '-' && residue !== ' ');
 }
 
 export function getTaxaCellColor(seqId, rowColorMap = {}) {
@@ -90,16 +148,14 @@ export function getTaxaCellColor(seqId, rowColorMap = {}) {
   return rowColor ? [...colorToRgb(rowColor), 255] : [255, 255, 255, 255];
 }
 
-export function applySelectionTint(baseColor, col, selection, previousSelection) {
-  const inCurrentSelection =
-    selection && col >= selection.startCol - 1 && col <= selection.endCol - 1;
+export function applyRegionTint(baseColor, col, currentRegion, previousRegion) {
+  const inCurrentRegion =
+    currentRegion && col >= currentRegion.startCol - 1 && col <= currentRegion.endCol - 1;
 
-  const inPreviousSelection =
-    previousSelection &&
-    col >= previousSelection.startCol - 1 &&
-    col <= previousSelection.endCol - 1;
+  const inPreviousRegion =
+    previousRegion && col >= previousRegion.startCol - 1 && col <= previousRegion.endCol - 1;
 
-  if ((selection || previousSelection) && !inCurrentSelection && !inPreviousSelection) {
+  if ((currentRegion || previousRegion) && !inCurrentRegion && !inPreviousRegion) {
     return [
       baseColor[0] * 0.3 + 180,
       baseColor[1] * 0.3 + 180,
@@ -108,7 +164,7 @@ export function applySelectionTint(baseColor, col, selection, previousSelection)
     ];
   }
 
-  if (inPreviousSelection && !inCurrentSelection) {
+  if (inPreviousRegion && !inCurrentRegion) {
     return [
       baseColor[0] * 0.7 + 60,
       baseColor[1] * 0.7 + 60,
@@ -120,68 +176,103 @@ export function applySelectionTint(baseColor, col, selection, previousSelection)
   return baseColor;
 }
 
+export function getCellBackgroundColor(
+  datum,
+  {
+    sequenceType,
+    currentRegion = null,
+    colorScheme = 'default',
+    consensus = null,
+    previousRegion = null,
+    rowColorMap = {},
+  }
+) {
+  let baseColor;
+
+  if (colorScheme === 'taxa') {
+    baseColor = getTaxaCellColor(datum.seqId, rowColorMap);
+  } else if (colorScheme === 'identity' && consensus) {
+    const exactMatch = datum.ch === consensus[datum.col] && isComparableResidue(datum.ch);
+    const matchFraction = Number.isFinite(datum.identityMatchFraction)
+      ? datum.identityMatchFraction
+      : exactMatch
+        ? 1
+        : 0;
+    baseColor = identityColor(matchFraction);
+  } else {
+    baseColor = getColorScheme(colorScheme, sequenceType)(datum.ch);
+  }
+
+  return applyRegionTint(baseColor, datum.col, currentRegion, previousRegion);
+}
+
+function identityColor(matchFraction) {
+  const ratio = Math.max(0, Math.min(1, matchFraction));
+  return [
+    Math.round(255 * (1 - ratio)),
+    Math.round(255 * (1 - ratio)),
+    Math.round(255 - 75 * ratio),
+    255,
+  ];
+}
+
 /**
- * Creates the cells polygon layer
- * @param {Array} cellData - The cell data from buildCellData
+ * Creates instanced rectangle layers grouped by cell dimensions.
+ * Aggregated edge cells may have smaller dimensions, so each size uses one shared mesh.
+ * @param {Array} cellGroups - The groups from groupCellDataBySize
  * @param {string} sequenceType - Either 'dna' or 'protein'
- * @param {Object} selection - Current selection state
+ * @param {Object} currentRegion - Current region state
  * @param {string} colorScheme - Color scheme name
  * @param {string} consensus - The consensus sequence (optional)
- * @param {Object} previousSelection - Previous selection state (optional)
+ * @param {Object} previousRegion - Previous region state (optional)
  * @param {Object} rowColorMap - Optional map of taxon id -> color string
- * @returns {PolygonLayer} The cells layer
+ * @returns {ColumnLayer[]} The cell layers
  */
-export function createCellsLayer(
-  cellData,
+export function createCellsLayers(
+  cellGroups,
   sequenceType,
-  selection,
+  currentRegion,
   colorScheme = 'default',
   consensus = null,
-  previousSelection = null,
+  previousRegion = null,
   rowColorMap = {}
 ) {
-  const colorFn = getColorScheme(colorScheme, sequenceType);
-
-  return new PolygonLayer({
-    id: 'cells',
-    data: cellData,
-    pickable: true,
-    autoHighlight: true,
-    extruded: false,
-    stroked: false,
-    filled: true,
-    getPolygon: (d) => d.polygon,
-    getFillColor: (d) => {
-      let baseColor;
-
-      if (colorScheme === 'taxa') {
-        baseColor = getTaxaCellColor(d.seqId, rowColorMap);
-      } else if (colorScheme === 'identity' && consensus) {
-        const consensusChar = consensus[d.col];
-        // Dark blue for match, white for mismatch
-        if (d.ch === consensusChar && d.ch !== '-' && d.ch !== ' ') {
-          baseColor = [0, 0, 180, 255];
-        } else {
-          baseColor = [255, 255, 255, 255];
-        }
-      } else if (colorScheme === 'similarity' && consensus) {
-        // Simple similarity: Match = Dark Blue, Mismatch = White
-        // Ideally this would use BLOSUM scores, but for now we'll use Identity as a base
-        // and maybe expand later.
-        const consensusChar = consensus[d.col];
-        if (d.ch === consensusChar && d.ch !== '-' && d.ch !== ' ') {
-          baseColor = [0, 0, 180, 255];
-        } else {
-          baseColor = [255, 255, 255, 255];
-        }
-      } else {
-        baseColor = colorFn(d.ch);
-      }
-
-      return applySelectionTint(baseColor, d.col, selection, previousSelection);
-    },
-    updateTriggers: {
-      getFillColor: [colorScheme, selection, previousSelection, consensus, rowColorMap],
-    },
-  });
+  return cellGroups.map(
+    ({ key, width, height, data }) =>
+      new ColumnLayer({
+        id: `cells-${key}`,
+        viewId: 'main',
+        data,
+        pickable: true,
+        autoHighlight: true,
+        diskResolution: 4,
+        vertices: [
+          [-width / 2, -height / 2],
+          [width / 2, -height / 2],
+          [width / 2, height / 2],
+          [-width / 2, height / 2],
+        ],
+        radius: 1,
+        radiusUnits: 'common',
+        offset: [0, 0],
+        extruded: false,
+        stroked: false,
+        filled: true,
+        material: false,
+        getPosition: (datum) => datum.position,
+        getElevation: 0,
+        getFillColor: (datum) =>
+          getCellBackgroundColor(datum, {
+            sequenceType,
+            currentRegion,
+            colorScheme,
+            consensus,
+            previousRegion,
+            rowColorMap,
+          }),
+        updateTriggers: {
+          getFillColor: [colorScheme, currentRegion, previousRegion, consensus, rowColorMap],
+        },
+      })
+  );
 }

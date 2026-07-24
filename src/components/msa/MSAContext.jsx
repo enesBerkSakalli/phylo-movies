@@ -1,27 +1,23 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import {
-  selectClearMsaRegion,
   selectHasMsa,
   selectMsaPreviousRegion,
   selectMsaRegion,
   selectMsaRowOrder,
   selectMsaSequences,
-  selectSetMsaRegion,
   selectTaxaColorVersion,
   selectTaxaGrouping,
   useAppStore,
 } from '../../state/phyloStore/store.js';
-import { processMsaSequences } from '../../msaViewer/utils/dataUtils';
+import { calculateConsensus, processMsaSequences } from '../../msaViewer/utils/dataUtils.js';
 import { SYSTEM_TREE_COLORS } from '../../constants/TreeColors';
 import { getTaxonColor } from '../../treeColoring/utils/GroupingUtils';
-import { MSAContext } from './MSAContextValue.js';
+import { MSAContext, MSAViewportContext, MSAViewportDispatchContext } from './MSAContextValue.js';
 
 export function MSAProvider({ children }) {
   const hasMsa = useAppStore(selectHasMsa);
   const msaSequences = useAppStore(selectMsaSequences);
   const msaRegion = useAppStore(selectMsaRegion);
-  const setMsaRegion = useAppStore(selectSetMsaRegion);
-  const clearMsaRegion = useAppStore(selectClearMsaRegion);
   const msaPreviousRegion = useAppStore(selectMsaPreviousRegion);
   const msaRowOrder = useAppStore(selectMsaRowOrder);
   const taxaGrouping = useAppStore(selectTaxaGrouping);
@@ -29,67 +25,77 @@ export function MSAProvider({ children }) {
 
   const [showLetters, setShowLetters] = useState(true);
   const [colorScheme, setColorScheme] = useState('default');
-  const [viewAction, setViewAction] = useState(null);
   const [visibleRange, setVisibleRange] = useState(null);
-  const [scrollAction, setScrollAction] = useState(null);
+  const viewerCommandsRef = useRef(null);
 
-  const triggerViewAction = useCallback((action) => {
-    setViewAction({ action, id: Date.now() });
+  const connectViewerCommands = useCallback((commands) => {
+    viewerCommandsRef.current = commands;
+    return () => {
+      if (viewerCommandsRef.current === commands) {
+        viewerCommandsRef.current = null;
+      }
+    };
   }, []);
 
-  // Trigger a scroll to a specific row/col position from scrollbars
-  const scrollToPosition = useCallback((position) => {
-    setScrollAction({ ...position, id: Date.now() });
+  const zoomIn = useCallback(() => {
+    viewerCommandsRef.current?.zoomIn();
   }, []);
 
-  const systemTreeColors = useMemo(
-    () => ({
-      version: taxaColorVersion,
-      colors: { ...SYSTEM_TREE_COLORS },
-    }),
-    [taxaColorVersion]
-  );
+  const zoomOut = useCallback(() => {
+    viewerCommandsRef.current?.zoomOut();
+  }, []);
 
-  // Process data
-  const processedData = useMemo(() => {
+  const fitAlignment = useCallback(() => {
+    viewerCommandsRef.current?.fitAlignment();
+  }, []);
+
+  const centerViewportOn = useCallback((position) => {
+    viewerCommandsRef.current?.centerViewportOn(position);
+  }, []);
+
+  const parsedData = useMemo(() => {
     if (!hasMsa || !msaSequences) return null;
     try {
       const parsed = processMsaSequences(msaSequences);
       if (!parsed) return null;
-
-      // Apply optional row ordering based on msaRowOrder (taxon IDs)
-      if (Array.isArray(msaRowOrder) && msaRowOrder.length) {
-        const seqMap = new Map(parsed.sequences.map((s) => [s.id, s]));
-        const reordered = [];
-
-        // First: add in requested order when present
-        msaRowOrder.forEach((id) => {
-          const seq = seqMap.get(id);
-          if (seq) {
-            reordered.push(seq);
-            seqMap.delete(id);
-          }
-        });
-
-        // Then: append any remaining sequences not in the order list
-        seqMap.forEach((seq) => reordered.push(seq));
-
-        return {
-          ...parsed,
-          sequences: reordered,
-          rows: reordered.length,
-        };
-      }
-
-      return parsed;
+      return {
+        ...parsed,
+        consensus: calculateConsensus(parsed.sequences),
+      };
     } catch (err) {
       console.warn('[MSA Context] Failed to process MSA data:', err);
       return null;
     }
-  }, [hasMsa, msaSequences, msaRowOrder]);
+  }, [hasMsa, msaSequences]);
+
+  const processedData = useMemo(() => {
+    if (!parsedData || !Array.isArray(msaRowOrder) || msaRowOrder.length === 0) {
+      return parsedData;
+    }
+
+    const seqMap = new Map(parsedData.sequences.map((sequence) => [sequence.id, sequence]));
+    const sequences = [];
+
+    for (const id of msaRowOrder) {
+      const sequence = seqMap.get(id);
+      if (sequence) {
+        sequences.push(sequence);
+        seqMap.delete(id);
+      }
+    }
+
+    seqMap.forEach((sequence) => sequences.push(sequence));
+    return {
+      ...parsedData,
+      sequences,
+      rows: sequences.length,
+    };
+  }, [parsedData, msaRowOrder]);
 
   // Map each taxon id to its assigned color (group/csv/taxon coloring)
   const rowColorMap = useMemo(() => {
+    // The color manager may update in place; its version is the cache invalidation signal.
+    void taxaColorVersion;
     if (!processedData?.sequences) return {};
     const map = {};
     const systemKeys = ['subtreeHighlightColor', 'pivotEdgeColor', 'strokeColor', 'defaultColor'];
@@ -99,54 +105,54 @@ export function MSAProvider({ children }) {
       let color = getTaxonColor(id, taxaGrouping, null);
 
       if (!color) {
-        if (!systemKeys.includes(id) && systemTreeColors.colors[id]) {
-          color = systemTreeColors.colors[id];
+        if (!systemKeys.includes(id) && SYSTEM_TREE_COLORS[id]) {
+          color = SYSTEM_TREE_COLORS[id];
         }
       }
 
       if (color) map[id] = color;
     });
     return map;
-  }, [processedData, taxaGrouping, systemTreeColors]);
+  }, [processedData, taxaColorVersion, taxaGrouping]);
 
   const value = useMemo(
     () => ({
       processedData,
       msaRegion,
-      setMsaRegion,
-      clearMsaRegion,
       msaPreviousRegion,
       showLetters,
       setShowLetters,
       colorScheme,
       setColorScheme,
-      viewAction,
-      triggerViewAction,
-      visibleRange,
-      setVisibleRange,
       rowColorMap,
-      scrollAction,
-      scrollToPosition,
+      connectViewerCommands,
+      zoomIn,
+      zoomOut,
+      fitAlignment,
+      centerViewportOn,
     }),
     [
       processedData,
       msaRegion,
-      setMsaRegion,
-      clearMsaRegion,
       msaPreviousRegion,
       showLetters,
-      setShowLetters,
       colorScheme,
-      setColorScheme,
-      viewAction,
-      triggerViewAction,
-      visibleRange,
-      setVisibleRange,
       rowColorMap,
-      scrollAction,
-      scrollToPosition,
+      connectViewerCommands,
+      zoomIn,
+      zoomOut,
+      fitAlignment,
+      centerViewportOn,
     ]
   );
 
-  return <MSAContext.Provider value={value}>{children}</MSAContext.Provider>;
+  const viewportValue = useMemo(() => ({ visibleRange, setVisibleRange }), [visibleRange]);
+
+  return (
+    <MSAContext.Provider value={value}>
+      <MSAViewportDispatchContext.Provider value={setVisibleRange}>
+        <MSAViewportContext.Provider value={viewportValue}>{children}</MSAViewportContext.Provider>
+      </MSAViewportDispatchContext.Provider>
+    </MSAContext.Provider>
+  );
 }

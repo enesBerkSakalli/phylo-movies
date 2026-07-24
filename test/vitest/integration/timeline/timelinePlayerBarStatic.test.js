@@ -96,7 +96,10 @@ describe('movie timeline player bar semantics', () => {
     expect(managerSource).toContain('buildTimelineStatusSnapshot');
     expect(statusStripSource).toContain('selectMovieTimelineManager');
     expect(playerBarSource).toContain('selectCurrentAnimationStage');
-    expect(playerBarSource).toContain('MotionStatusSlot');
+    expect(playerBarSource).toContain('<MotionStatusSlot />');
+    expect(playerBarSource).toContain(
+      'function MotionStatusSlot() {\n  const stage = useAppStore(selectCurrentAnimationStage);'
+    );
     expect(playerBarSource).toContain('data-motion-status="stable"');
     expect(playerBarSource).toContain('No topology-change motion is active.');
     expect(statusStripSource).not.toContain('selectCurrentAnimationStage');
@@ -129,12 +132,42 @@ describe('movie timeline player bar semantics', () => {
     const playbackSettingsPosition = playerBarSource.indexOf(
       'aria-label={MOVIE_PLAYER_ARIA_LABELS.playbackSettings}'
     );
-    const motionStatusPosition = playerBarSource.indexOf(
-      '<MotionStatusSlot stage={currentAnimationStage} />'
-    );
+    const motionStatusPosition = playerBarSource.indexOf('<MotionStatusSlot />');
 
     expect(timelineStatusPosition).toBeLessThan(msaActionPosition);
     expect(msaActionPosition).toBeLessThan(playbackSettingsPosition);
     expect(playbackSettingsPosition).toBeLessThan(motionStatusPosition);
+  });
+
+  it('isolates high-frequency timeline and chart state from the player shell', () => {
+    const playerBarSource = readRepoFile('src', 'components', 'movie-player', 'MoviePlayerBar.jsx');
+    const chartSectionSource = readRepoFile(
+      'src',
+      'components',
+      'movie-player',
+      'MovieChartSection',
+      'MovieChartSection.jsx'
+    );
+    const distanceChartSource = readRepoFile(
+      'src',
+      'components',
+      'DistanceChart',
+      'DistanceChart.jsx'
+    );
+
+    expect(playerBarSource).toContain('<TimelineSegmentTooltipOverlay />');
+    expect(playerBarSource).toContain('<MovieChartSection />');
+    expect(playerBarSource).not.toContain(
+      '<MovieChartSection barOptionValue={barOptionValue} onBarOptionChange={setBarOption} />'
+    );
+    expect(chartSectionSource).toContain(
+      'export const MovieChartSection = React.memo(MovieChartSectionComponent)'
+    );
+    expect(chartSectionSource).toContain('aria-describedby="chart-select-help"');
+    expect(distanceChartSource).toContain('sourceFrameIndex: cursor?.sourceFrameIndex ?? null');
+    expect(distanceChartSource).toContain(
+      'sourceInputTreeIndex: cursor?.sourceInputTreeIndex ?? null'
+    );
+    expect(distanceChartSource).not.toContain('timelineCursor: selectTimelineCursor(state)');
   });
 });

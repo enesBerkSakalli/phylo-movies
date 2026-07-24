@@ -1,5 +1,9 @@
 const NUMBER_TOKEN_PATTERN = /^[+-]?(?:\d+\.?\d*|\.\d+)$/;
 
+export function rgba(r, g, b, a = 255) {
+  return [r, g, b, a];
+}
+
 function clampByte(value) {
   const number = Number(value);
   if (!Number.isFinite(number)) return 0;

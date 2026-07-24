@@ -23,6 +23,49 @@ describe('tools sidebar structure', () => {
     );
   });
 
+  it('loads moved-subtree analytics only when requested', () => {
+    const sidebarSource = source('src/components/sidebar/ToolsSidebar.jsx');
+
+    expect(sidebarSource).not.toContain(
+      "import AnalyticsDashboard from '../TreeStatsPanel/AnalyticsDashboard.tsx'"
+    );
+    expect(sidebarSource).toContain(
+      "const loadAnalyticsDashboard = () => import('../TreeStatsPanel/AnalyticsDashboard.tsx')"
+    );
+    expect(sidebarSource).toContain(
+      'const AnalyticsDashboard = React.lazy(loadAnalyticsDashboard)'
+    );
+    expect(sidebarSource).toContain('onFocus={loadAnalyticsDashboard}');
+    expect(sidebarSource).toContain('onMouseEnter={loadAnalyticsDashboard}');
+    expect(sidebarSource).toContain('{sprAnalyticsOpen ? (');
+  });
+
+  it('mounts expensive sidebar calculations only inside open collapsible content', () => {
+    const treeStatsSource = source('src/components/TreeStatsPanel/TreeStatsPanel.tsx');
+    const visualStyleSource = source(
+      'src/components/appearance/controls/VisualStyle/VisualStyle.jsx'
+    );
+
+    expect(treeStatsSource).toContain('<TreeStatsPanelBody />');
+    expect(treeStatsSource.indexOf('<TreeStatsPanelBody />')).toBeLessThan(
+      treeStatsSource.indexOf('const TreeStatsPanelBody')
+    );
+    expect(treeStatsSource).toContain(
+      'const sourceFrameIndex = useAppStore(selectSourceFrameIndex)'
+    );
+    expect(treeStatsSource).not.toContain(
+      'const timelineCursor = useAppStore(selectTimelineCursor)'
+    );
+
+    expect(visualStyleSource).toContain('<GeometryDimensionsContent />');
+    expect(visualStyleSource.indexOf('<GeometryDimensionsContent />')).toBeLessThan(
+      visualStyleSource.indexOf('function GeometryDimensionsContent()')
+    );
+    expect(visualStyleSource.indexOf('function GeometryDimensionsContent()')).toBeLessThan(
+      visualStyleSource.indexOf('getAvailableBranchAnnotationOptions(activeTreeList)')
+    );
+  });
+
   it('does not keep the legacy MSA nav button component', () => {
     const legacyPath = join(repoRoot, 'src/components/nav/ButtonsMSA.jsx');
     const sidebarSource = source('src/components/sidebar/ToolsSidebar.jsx');
@@ -60,13 +103,14 @@ describe('tools sidebar structure', () => {
     const sidebarSource = source('src/components/sidebar/ToolsSidebar.jsx');
 
     expect(sidebarSource).toContain(
-      "const phyloTreeIcon = `${import.meta.env.BASE_URL}icons/phylo-tree-icon.svg`"
+      'const phyloTreeIcon = `${import.meta.env.BASE_URL}icons/phylo-tree-icon.svg`'
     );
     expect(sidebarSource).toContain('src={phyloTreeIcon}');
     expect(sidebarSource).toContain('aria-label="Phylo-Movies"');
     expect(sidebarSource).not.toContain("'/icons/phylo-tree-icon.svg'");
     expect(sidebarSource).not.toContain('Film');
     expect(sidebarSource).not.toContain('bg-primary text-primary-foreground');
+    expect(sidebarSource).toContain('<Sidebar id="app-sidebar"');
   });
 
   it('keeps app icon paths aware of the deployed base path', () => {
@@ -74,14 +118,12 @@ describe('tools sidebar structure', () => {
     expect(source('src/index.html')).toContain('%BASE_URL%icons/favicon-32.png');
     expect(source('src/index.html')).toContain('%BASE_URL%icons/favicon-16.png');
     expect(source('src/index.html')).toContain('%BASE_URL%icons/apple-touch-icon.png');
-    expect(source('src/pages/Splash/splash.html')).toContain(
-      '%BASE_URL%icons/phylo-tree-icon.svg'
-    );
+    expect(source('src/pages/Splash/splash.html')).toContain('%BASE_URL%icons/phylo-tree-icon.svg');
     expect(source('src/pages/Splash/SplashApp.jsx')).toContain(
-      "const phyloTreeIcon = `${import.meta.env.BASE_URL}icons/phylo-tree-icon.svg`"
+      'const phyloTreeIcon = `${import.meta.env.BASE_URL}icons/phylo-tree-icon.svg`'
     );
     expect(source('src/pages/GitHubPages/GitHubPagesInfoPage.jsx')).toContain(
-      "const phyloTreeIcon = `${import.meta.env.BASE_URL}icons/phylo-tree-icon.svg`"
+      'const phyloTreeIcon = `${import.meta.env.BASE_URL}icons/phylo-tree-icon.svg`'
     );
 
     const appShellFiles = [
@@ -111,9 +153,7 @@ describe('tools sidebar structure', () => {
     expect(source('scripts/prepare-manual-assets.mjs')).toContain(
       "'src', 'public', 'icons', 'phylo-tree-icon.svg'"
     );
-    expect(source('scripts/prepare-manual-assets.mjs')).toContain(
-      "'manual', 'static', 'icons'"
-    );
+    expect(source('scripts/prepare-manual-assets.mjs')).toContain("'manual', 'static', 'icons'");
     expect(manualConfig).toContain("favicon: 'icons/phylo-tree-icon.svg'");
     expect(manualConfig).toContain("alt: 'Phylo-Movies'");
     expect(manualConfig).toContain("src: 'icons/phylo-tree-icon.svg'");

@@ -113,13 +113,6 @@ export const FileUploadZone = React.forwardRef<HTMLDivElement, FileUploadZonePro
       if (!disabled) open();
     };
 
-    const handleBrowseKeyDown = (e: React.KeyboardEvent) => {
-      if (disabled || (e.key !== 'Enter' && e.key !== ' ')) return;
-      e.preventDefault();
-      e.stopPropagation();
-      open();
-    };
-
     const handleRootClick = () => {
       if (!disabled) open();
     };
@@ -167,9 +160,9 @@ export const FileUploadZone = React.forwardRef<HTMLDivElement, FileUploadZonePro
                   type="button"
                   disabled={disabled}
                   onClick={handleBrowseClick}
-                  onKeyDown={handleBrowseKeyDown}
                   className={cn(
                     buttonVariants({ variant: 'outline', size: 'sm' }),
+                    'h-[44px] sm:h-8',
                     disabled && 'pointer-events-none'
                   )}
                 >
@@ -179,7 +172,7 @@ export const FileUploadZone = React.forwardRef<HTMLDivElement, FileUploadZonePro
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="size-8 shrink-0"
+                  className="size-[44px] shrink-0 sm:size-8"
                   onClick={handleClear}
                   disabled={disabled}
                   aria-label="Clear selected file"
@@ -206,9 +199,9 @@ export const FileUploadZone = React.forwardRef<HTMLDivElement, FileUploadZonePro
                 type="button"
                 disabled={disabled}
                 onClick={handleBrowseClick}
-                onKeyDown={handleBrowseKeyDown}
                 className={cn(
                   buttonVariants({ variant: 'outline', size: 'sm' }),
+                  'h-[44px] sm:h-8',
                   disabled && 'pointer-events-none'
                 )}
               >

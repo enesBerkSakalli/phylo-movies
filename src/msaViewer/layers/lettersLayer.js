@@ -4,7 +4,7 @@
  */
 
 import { TextLayer } from '@deck.gl/layers';
-import { applySelectionTint, getTaxaCellColor } from './cellsLayer.js';
+import { getCellBackgroundColor } from './cellsLayer.js';
 import { getReadableTextColor } from '../../services/ui/colorUtils.js';
 
 /**
@@ -44,6 +44,7 @@ export function buildTextData(
           kind: 'text',
           position: [c * cellSize + cellSize / 2, r * cellSize + cellSize / 2, 0],
           text: ch,
+          ch,
           col: c,
           seqId: seq.id,
           cellSize, // Pass cellSize for getSize in 'common' units
@@ -58,21 +59,26 @@ export function buildTextData(
 /**
  * Creates the letters text layer
  * @param {Array} textData - The text data from buildTextData
+ * @param {string} sequenceType - Either 'dna' or 'protein'
  * @param {string} colorScheme - Color scheme name
+ * @param {string} consensus - Consensus sequence
  * @param {Object} rowColorMap - Optional map of taxon id -> color string
- * @param {Object} selection - Current selection state
- * @param {Object} previousSelection - Previous selection state
+ * @param {Object} currentRegion - Current region state
+ * @param {Object} previousRegion - Previous region state
  * @returns {TextLayer} The letters layer
  */
 export function createLettersLayer(
   textData,
+  sequenceType,
   colorScheme = 'default',
+  consensus = null,
   rowColorMap = {},
-  selection = null,
-  previousSelection = null
+  currentRegion = null,
+  previousRegion = null
 ) {
   return new TextLayer({
     id: 'letters',
+    viewId: 'main',
     data: textData,
     pickable: false,
     getText: (d) => d.text,
@@ -81,18 +87,22 @@ export function createLettersLayer(
     getSize: (d) => d.cellSize * 0.65, // 65% of cell height for breathing room
     sizeMinPixels: 6, // Readability floor
     sizeMaxPixels: 16, // Aesthetic ceiling
-    getColor: (d) => {
-      if (colorScheme !== 'taxa') return [0, 0, 0, 255];
-      const baseColor = getTaxaCellColor(d.seqId, rowColorMap);
-      return getReadableTextColor(
-        applySelectionTint(baseColor, d.col, selection, previousSelection)
-      );
-    },
+    getColor: (datum) =>
+      getReadableTextColor(
+        getCellBackgroundColor(datum, {
+          sequenceType,
+          currentRegion,
+          colorScheme,
+          consensus,
+          previousRegion,
+          rowColorMap,
+        })
+      ),
     getTextAnchor: 'middle',
     getAlignmentBaseline: 'center',
     fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
     updateTriggers: {
-      getColor: [colorScheme, rowColorMap, selection, previousSelection],
+      getColor: [sequenceType, colorScheme, consensus, rowColorMap, currentRegion, previousRegion],
     },
   });
 }
