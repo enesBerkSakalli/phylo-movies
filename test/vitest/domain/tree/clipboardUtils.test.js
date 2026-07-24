@@ -46,6 +46,7 @@ describe('ClipboardUtils', () => {
       layerManager: {
         createClipboardLayers: vi.fn(() => [{ id: 'clipboard-tree-layer' }]),
       },
+      _createLayerRenderContext: vi.fn(() => ({ taxaCount: 0 })),
       _lastLayerData: {
         nodes: [{ id: 'main-node', position: [0, 0, 0], radius: 2 }],
         labels: [],

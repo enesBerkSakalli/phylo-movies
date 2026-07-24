@@ -8,6 +8,8 @@ import { AnimationRunner } from './systems/AnimationRunner.js';
 import { InterpolationRenderer } from './systems/InterpolationRenderer.js';
 import { createPlaybackProgressSynchronizer } from './systems/PlaybackProgressSynchronizer.js';
 import { StaticRenderer } from './systems/StaticRenderer.js';
+import { createLayerRenderContext } from './systems/LayerRenderContext.js';
+import { resetTaxonColorCache } from './systems/tree_color/monophyleticColoring.js';
 import { TreeLayoutController } from './TreeLayoutController.js';
 import { selectActiveTreeList, useAppStore } from '../state/phyloStore/store.js';
 import { TreeNodeInteractionHandler } from './interaction/TreeNodeInteractionHandler.js';
@@ -39,6 +41,13 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     // Core components
     this.dataConverter = new DeckGLTreeLayerDataFactory();
     this.layerManager = new LayerManager();
+    this.layerManager.layerStyles.handleRenderContextChange(this._createLayerRenderContext());
+    this._layerStylesUnsubscribe = useAppStore.subscribe((state, previousState) => {
+      this.layerManager?.layerStyles?.handleRenderContextChange(
+        createLayerRenderContext(state),
+        createLayerRenderContext(previousState)
+      );
+    });
     this.treeInterpolator = new TreeInterpolator();
     this.interpolationCache = new InterpolationCache({
       calculateLayout: this.calculateLayout.bind(this),
@@ -422,6 +431,8 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     this._renderInFlight = false;
     this.deckContext?.destroy();
     this.deckContext = null;
+    this._layerStylesUnsubscribe?.();
+    this._layerStylesUnsubscribe = null;
     this.layerManager?.destroy();
     this.layerManager = null;
     this.comparisonRenderer = null;
@@ -701,12 +712,17 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
   _updateLayersEfficiently(interpolatedFrameData) {
     if (this._destroyed || !this.deckContext) return;
 
+    resetTaxonColorCache();
+
     // Inject current zoom level for dynamic label halo scaling
     if (interpolatedFrameData) {
       interpolatedFrameData.zoom = this.deckContext?.getViewState()?.zoom;
     }
     this._lastLayerData = interpolatedFrameData || null;
-    const layers = this.layerManager.updateLayersWithData(interpolatedFrameData);
+    const layers = this.layerManager.updateLayersWithData(
+      interpolatedFrameData,
+      this._createLayerRenderContext(interpolatedFrameData)
+    );
 
     // Add clipboard layers if clipboard is active
     const clipboardLayers = getClipboardLayers(this);
@@ -718,6 +734,10 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     if (this._destroyed) return;
     this.resetInterpolationCaches();
     this.scheduleRenderAllElements();
+  }
+
+  _createLayerRenderContext(layerData = {}) {
+    return createLayerRenderContext(useAppStore.getState(), layerData);
   }
 
   _handleLayerDataChange() {

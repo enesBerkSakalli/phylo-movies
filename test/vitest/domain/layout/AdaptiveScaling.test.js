@@ -42,7 +42,7 @@ describe('Adaptive Visual Scaling', () => {
       const layerStyles = new LayerStyles();
       const cached = layerStyles.getCachedState({
         metricScale: 0.25,
-        leafNamesByIndex: [],
+        taxaCount: 0,
       });
 
       expect(cached.metricScale).toBeCloseTo(0.25);
@@ -53,7 +53,7 @@ describe('Adaptive Visual Scaling', () => {
     it('should leave visual scale unchanged for sparse trees', () => {
       const layerStyles = new LayerStyles();
       const cached = layerStyles.getCachedState({
-        leafNamesByIndex: new Array(25),
+        taxaCount: 25,
       });
 
       expect(cached.visualScale).toBeCloseTo(1);
@@ -63,7 +63,7 @@ describe('Adaptive Visual Scaling', () => {
     it('should reduce visual scale for dense trees', () => {
       const layerStyles = new LayerStyles();
       const cached = layerStyles.getCachedState({
-        leafNamesByIndex: new Array(200),
+        taxaCount: 200,
       });
 
       expect(cached.visualScale).toBeCloseTo(Math.pow(50 / 200, 0.6));

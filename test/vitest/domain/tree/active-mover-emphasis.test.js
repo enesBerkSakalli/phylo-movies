@@ -47,7 +47,7 @@ describe('active mover emphasis', () => {
   it('caches subtree highlight scope and taxa count for style helpers', () => {
     const layerStyles = new LayerStyles();
     const cached = layerStyles.getCachedState({
-      leafNamesByIndex: new Array(200),
+      taxaCount: 200,
       subtreeHighlightScope: 'all',
       getColorManager: () => ({ highlightedSubtreeSets: [] }),
     });

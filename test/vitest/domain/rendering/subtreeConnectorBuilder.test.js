@@ -258,6 +258,7 @@ const makeColorManager = (overrides = {}) => ({
   isNodeHistorySubtree: () => false,
   isMonophyleticColoringEnabled: () => false,
   getNodeColor: () => '#10b981',
+  getNodeBaseColor: () => '#10b981',
   ...overrides,
 });
 
@@ -1166,6 +1167,20 @@ describe('SubtreeConnectorBuilder', function () {
     expect(connectors[0].isCurrentlyMoving).toBe(false);
     expect(connectors[0].width).toBe(1.5);
     expect(connectors[0].color[3]).toBe(Math.round(0.25 * 255));
+  });
+
+  it('uses the configured highlight color for moving connectors', function () {
+    const connectors = buildSubtreeConnectors(
+      buildOptions({
+        affectedSubtreesBySplit: { '[99]': [[10]] },
+        subtreeHighlightTracking: [[[10]]],
+        highlightColorMode: 'solid',
+        subtreeHighlightColor: '#010203',
+      })
+    );
+
+    expect(connectors).toHaveLength(1);
+    expect(connectors[0].color).toEqual([1, 2, 3, 255]);
   });
 
   it('keeps moving connectors active when subtree highlight coloring is disabled', function () {

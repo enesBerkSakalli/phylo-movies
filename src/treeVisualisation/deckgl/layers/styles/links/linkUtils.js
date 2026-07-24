@@ -1,5 +1,5 @@
 import { colorToRgb } from '../../../../../services/ui/colorUtils.js';
-import { resolveSubtreeHighlightRgb } from '../highlightColorResolver.js';
+import { resolveSubtreeHighlightRgb } from '../../../colors/highlightColorResolver.js';
 
 export const EXPANDING_LIFECYCLE_COLOR = [34, 197, 94];
 export const COLLAPSING_LIFECYCLE_COLOR = [245, 158, 11];

@@ -81,7 +81,13 @@ function createClipboardVisualOverlay(controller, treeIndex, treeData) {
   const gap = 50;
   const yOffset = mainTreeBounds.minY - clipboardBounds.maxY - gap + clipboardOffsetY;
 
-  const treeLayers = controller.layerManager.createClipboardLayers(layerData, 0, xOffset, yOffset);
+  const treeLayers = controller.layerManager.createClipboardLayers(
+    layerData,
+    controller._createLayerRenderContext(layerData),
+    0,
+    xOffset,
+    yOffset
+  );
   const labelData = createClipboardLabelData(
     treeIndex,
     clipboardBounds,

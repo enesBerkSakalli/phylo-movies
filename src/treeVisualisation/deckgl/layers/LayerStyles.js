@@ -1,8 +1,5 @@
-import { useAppStore } from '../../../state/phyloStore/store.js';
-import { selectLeafNamesByIndex } from '../../../state/phyloStore/selectors/treeSelectors.js';
 import { SYSTEM_TREE_COLORS } from '../../../constants/TreeColors.js';
 import { calculateTaxaVisualScale } from '../../utils/visualScale.js';
-import { resetTaxonColorCache } from '../../systems/tree_color/monophyleticColoring.js';
 import {
   getLinkColor as resolveLinkColor,
   getLinkDashArray as resolveLinkDashArray,
@@ -31,14 +28,14 @@ import { getReadableMetricScale } from './styles/readableMetricScale.js';
 
 /**
  * LayerStyles - Centralized style management for Deck.gl layers
- * Gets ColorManager from store for consistent coloring across all renderers
+ * Receives a controller-built render context for consistent coloring across all renderers.
  *
- * Performance: Use getCachedState() to get a snapshot of store state and colorManager
+ * Performance: Use getCachedState() to get a snapshot of render state and colorManager
  * at the start of a render cycle, then pass that to accessor methods to avoid
  * repeated store access per-item.
  */
 export class LayerStyles {
-  constructor() {
+  constructor(initialRenderContext = null) {
     // Cache for performance
     this._cache = {
       strokeWidth: null,
@@ -57,30 +54,29 @@ export class LayerStyles {
     this.onLayerDataChange = null;
     this.onPaintChange = null;
 
-    const initialState = useAppStore.getState();
-    this._cache.strokeWidth = initialState.strokeWidth;
-    this._cache.fontSize = initialState.fontSize;
-    this._cache.nodeSize = initialState.nodeSize;
-    this._nodeHelpers.nodeSize = initialState.nodeSize ?? 1;
-
-    // Subscribe to store changes
-    this._setupStoreSubscription();
+    this._renderContext = initialRenderContext;
+    this._updateCachedStyleValues(initialRenderContext);
   }
 
   /**
    * Get cached state for the current render cycle
    * Call this once at the start of layer creation, then pass to accessors
-   * @param {Object} [renderState] - Layer render state from LayerManager
+   * @param {Object} [renderState] - Controller-built layer render context
    * @returns {Object} { state, colorManager }
    */
-  getCachedState(renderState = null) {
+  getCachedState(renderState = this._renderContext) {
     if (!this._renderCache) {
-      const state = renderState || useAppStore.getState();
+      if (!renderState) {
+        throw new Error('LayerStyles requires a LayerRenderContext');
+      }
+
+      this._renderContext = renderState;
+      const state = renderState;
       const colorManager = state.getColorManager?.();
       const pulseEnabled = state.changePulseEnabled ?? true;
       const metricScale = Number.isFinite(state.metricScale) ? state.metricScale : 1;
       const readableMetricScale = getReadableMetricScale({ metricScale });
-      const taxaCount = selectLeafNamesByIndex(state).length;
+      const taxaCount = state.taxaCount ?? 0;
       const visualScale = this._calculateVisualScale(state);
       // Use ColorManager as single source of truth for subtree highlight data
       // This ensures correct highlighting during scrubbing when ColorManager is updated
@@ -122,82 +118,83 @@ export class LayerStyles {
    */
   clearRenderCache() {
     this._renderCache = null;
-    // Also reset the taxon color cache used by monophyletic coloring
-    resetTaxonColorCache();
   }
 
   /**
-   * Set up store subscription for reactive updates
-   * @private
+   * Receive a context change from the controller-owned store subscription.
+   * @param {Object} state - Current layer render context
+   * @param {Object} [prevState] - Previous layer render context
    */
-  _setupStoreSubscription() {
-    this.unsubscribe = useAppStore.subscribe((state, prevState) => {
-      let layoutChanged = false;
-      let layerDataChanged = false;
-      let paintChanged = false;
-      const labelOffsets = state.styleConfig?.labelOffsets || {};
-      const prevLabelOffsets = prevState.styleConfig?.labelOffsets || {};
+  handleRenderContextChange(state, prevState = null) {
+    this._renderContext = state;
+    this._updateCachedStyleValues(state);
+    if (!prevState) {
+      this._renderCache = null;
+      return;
+    }
 
-      if (
-        labelOffsets.DEFAULT !== prevLabelOffsets.DEFAULT ||
-        labelOffsets.EXTENSION !== prevLabelOffsets.EXTENSION
-      ) {
-        layoutChanged = true;
-      }
+    let layoutChanged = false;
+    let layerDataChanged = false;
+    let paintChanged = false;
+    const labelOffsets = state.styleConfig?.labelOffsets || {};
+    const prevLabelOffsets = prevState.styleConfig?.labelOffsets || {};
 
-      // Update cache when relevant values change
-      if (state.strokeWidth !== prevState.strokeWidth) {
-        this._cache.strokeWidth = state.strokeWidth;
-        layerDataChanged = true;
-      }
-      if (state.fontSize !== prevState.fontSize) {
-        this._cache.fontSize = state.fontSize;
-        layerDataChanged = true;
-      }
-      if (state.nodeSize !== prevState.nodeSize) {
-        this._cache.nodeSize = state.nodeSize;
-        layerDataChanged = true;
-      }
-      if (state.branchAnnotationLabelKey !== prevState.branchAnnotationLabelKey) {
-        layerDataChanged = true;
-      }
+    if (
+      labelOffsets.DEFAULT !== prevLabelOffsets.DEFAULT ||
+      labelOffsets.EXTENSION !== prevLabelOffsets.EXTENSION
+    ) {
+      layoutChanged = true;
+    }
 
-      if (
-        state.dimmingEnabled !== prevState.dimmingEnabled ||
-        state.dimmingOpacity !== prevState.dimmingOpacity ||
-        state.subtreeDimmingEnabled !== prevState.subtreeDimmingEnabled ||
-        state.subtreeDimmingOpacity !== prevState.subtreeDimmingOpacity ||
-        state.subtreeHighlightsEnabled !== prevState.subtreeHighlightsEnabled ||
-        state.subtreeHighlightOpacity !== prevState.subtreeHighlightOpacity ||
-        state.pivotEdgeDashingEnabled !== prevState.pivotEdgeDashingEnabled ||
-        state.upcomingChangesEnabled !== prevState.upcomingChangesEnabled ||
-        state.highlightColorMode !== prevState.highlightColorMode ||
-        state.subtreeHighlightColor !== prevState.subtreeHighlightColor ||
-        state.linkConnectionOpacity !== prevState.linkConnectionOpacity ||
-        state.changePulseEnabled !== prevState.changePulseEnabled ||
-        state.changePulsePhase !== prevState.changePulsePhase ||
-        state.colorVersion !== prevState.colorVersion ||
-        state.taxaColorVersion !== prevState.taxaColorVersion
-      ) {
-        paintChanged = true;
-      }
+    if (
+      state.strokeWidth !== prevState.strokeWidth ||
+      state.fontSize !== prevState.fontSize ||
+      state.nodeSize !== prevState.nodeSize ||
+      state.branchAnnotationLabelKey !== prevState.branchAnnotationLabelKey ||
+      state.taxaCount !== prevState.taxaCount
+    ) {
+      layerDataChanged = true;
+    }
 
-      if (selectLeafNamesByIndex(state).length !== selectLeafNamesByIndex(prevState).length) {
-        layerDataChanged = true;
-      }
+    if (
+      state.dimmingEnabled !== prevState.dimmingEnabled ||
+      state.dimmingOpacity !== prevState.dimmingOpacity ||
+      state.subtreeDimmingEnabled !== prevState.subtreeDimmingEnabled ||
+      state.subtreeDimmingOpacity !== prevState.subtreeDimmingOpacity ||
+      state.subtreeHighlightsEnabled !== prevState.subtreeHighlightsEnabled ||
+      state.subtreeHighlightOpacity !== prevState.subtreeHighlightOpacity ||
+      state.pivotEdgeDashingEnabled !== prevState.pivotEdgeDashingEnabled ||
+      state.upcomingChangesEnabled !== prevState.upcomingChangesEnabled ||
+      state.highlightColorMode !== prevState.highlightColorMode ||
+      state.subtreeHighlightColor !== prevState.subtreeHighlightColor ||
+      state.linkConnectionOpacity !== prevState.linkConnectionOpacity ||
+      state.changePulseEnabled !== prevState.changePulseEnabled ||
+      state.changePulsePhase !== prevState.changePulsePhase ||
+      state.colorVersion !== prevState.colorVersion ||
+      state.taxaColorVersion !== prevState.taxaColorVersion
+    ) {
+      paintChanged = true;
+    }
 
-      // Notify listeners when styles change
-      if (layoutChanged || layerDataChanged || paintChanged) {
-        this._renderCache = null;
-      }
-      if (layoutChanged && this.onLayoutChange) {
-        this.onLayoutChange();
-      } else if (layerDataChanged && this.onLayerDataChange) {
-        this.onLayerDataChange();
-      } else if (paintChanged && this.onPaintChange) {
-        this.onPaintChange();
-      }
-    });
+    if (layoutChanged || layerDataChanged || paintChanged) {
+      this._renderCache = null;
+    }
+    if (layoutChanged && this.onLayoutChange) {
+      this.onLayoutChange();
+    } else if (layerDataChanged && this.onLayerDataChange) {
+      this.onLayerDataChange();
+    } else if (paintChanged && this.onPaintChange) {
+      this.onPaintChange();
+    }
+  }
+
+  _updateCachedStyleValues(state) {
+    if (!state) return;
+
+    this._cache.strokeWidth = state.strokeWidth;
+    this._cache.fontSize = state.fontSize;
+    this._cache.nodeSize = state.nodeSize;
+    this._nodeHelpers.nodeSize = state.nodeSize ?? 1;
   }
 
   /**
@@ -356,7 +353,7 @@ export class LayerStyles {
   }
 
   /**
-   * Get label size from store (optionally per-label for subtree highlighting)
+   * Get label size from render state (optionally per-label for subtree highlighting)
    * @param {Object} label - Optional label data for dynamic sizing
    * @param {Object} cached - Optional cached state
    * @returns {number} Label size in pixels
@@ -373,18 +370,18 @@ export class LayerStyles {
    * @private
    */
   _calculateDensityScale(state) {
-    const taxaCount = selectLeafNamesByIndex(state).length || 10;
+    const taxaCount = state.taxaCount || 10;
     // Scale inversely to taxa count: 10 taxa -> 1.0, 100 taxa -> 0.1 (clamped to 0.3)
     return Math.max(0.3, Math.min(1.0, 10 / taxaCount));
   }
 
   _calculateVisualScale(state) {
-    const taxaCount = selectLeafNamesByIndex(state).length;
+    const taxaCount = state.taxaCount ?? 0;
     return calculateTaxaVisualScale(taxaCount);
   }
 
   /**
-   * Base stroke width from cache/store
+   * Base stroke width from the render cache
    * @private
    */
   _getBaseStrokeWidth() {
@@ -420,11 +417,7 @@ export class LayerStyles {
    * Clean up resources
    */
   destroy() {
-    if (this.unsubscribe) {
-      this.unsubscribe();
-      this.unsubscribe = null;
-    }
-
-    // No need to destroy ColorManager since it belongs to the store
+    this._renderCache = null;
+    this._renderContext = null;
   }
 }

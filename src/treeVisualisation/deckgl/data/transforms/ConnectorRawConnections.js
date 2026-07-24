@@ -12,6 +12,8 @@ export function buildRawConnectorConnections(params) {
     colorManager,
     subtreeHighlightsEnabled,
     linkConnectionOpacity,
+    highlightColorMode,
+    subtreeHighlightColor,
   } = params;
   const rightLeavesBySplitKey = indexConnectorLeavesBySplitKey(rightPositions);
   const connections = [];
@@ -34,6 +36,8 @@ export function buildRawConnectorConnections(params) {
       colorManager,
       subtreeHighlightsEnabled,
       linkConnectionOpacity,
+      highlightColorMode,
+      subtreeHighlightColor,
     });
 
     connections.push(createRawConnectorConnectionFromCandidate(candidate, visualState));

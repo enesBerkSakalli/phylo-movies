@@ -1,17 +1,6 @@
 [
   {
     "type": "dependency",
-    "from": "src/treeVisualisation/deckgl/data/transforms/ComparisonColorUtils.js",
-    "to": "src/treeVisualisation/deckgl/layers/styles/highlightColorResolver.js",
-    "unresolvedTo": "../../layers/styles/highlightColorResolver.js",
-    "dependencyTypes": ["local", "import"],
-    "rule": {
-      "severity": "error",
-      "name": "layer-internals-are-owned"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/treeVisualisation/deckgl/utils/GeometryUtils.js",
     "to": "src/treeVisualisation/deckgl/layers/config/layerConfigs.js",
     "unresolvedTo": "../layers/config/layerConfigs.js",

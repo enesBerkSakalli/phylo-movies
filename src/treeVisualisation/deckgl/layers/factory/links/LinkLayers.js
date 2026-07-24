@@ -5,7 +5,6 @@
  * - Leaf Extensions
  */
 import { hasLifecycleHighlightedLinks } from '../../styles/links/linkUtils.js';
-import { selectLeafNamesByIndex } from '../../../../../state/phyloStore/selectors/treeSelectors.js';
 import { safeDeckPath } from '../../../utils/pathFormat.js';
 
 // ============================================================================
@@ -108,7 +107,7 @@ export function getLinksLayerProps(links, state, layerStyles) {
   } = state || {};
 
   const cached = layerStyles.getCachedState(state);
-  const taxaCount = (selectLeafNamesByIndex(state || {}) ?? []).length;
+  const taxaCount = state?.taxaCount ?? 0;
 
   return {
     data: links,

@@ -136,7 +136,7 @@ describe('tree highlight state', () => {
       expect(cached.subtreeHighlightOpacity).toBe(0.5);
       expect(cached.highlightColorMode).toBe('solid');
     } finally {
-      layerStyles.unsubscribe?.();
+      layerStyles.destroy();
     }
   });
 
@@ -168,24 +168,25 @@ describe('tree highlight state', () => {
     }
   });
 
-  it('invalidates layer data when the branch value label field changes', () => {
-    const previousKey = useAppStore.getState().branchAnnotationLabelKey;
-    const nextKey =
-      previousKey === 'support.bootstrap.value'
+  it('invalidates layer data when the render context branch value label field changes', () => {
+    const previousContext = { branchAnnotationLabelKey: 'support.bootstrap.value', taxaCount: 0 };
+    const nextContext = {
+      branchAnnotationLabelKey:
+        previousContext.branchAnnotationLabelKey === 'support.bootstrap.value'
         ? 'support.ufboot.value'
-        : 'support.bootstrap.value';
+        : 'support.bootstrap.value',
+      taxaCount: 0,
+    };
     const layerStyles = new LayerStyles();
     const onLayerDataChange = vi.fn();
 
     try {
       layerStyles.setStyleChangeCallback({ onLayerDataChange });
-
-      useAppStore.getState().setBranchAnnotationLabelKey(nextKey);
+      layerStyles.handleRenderContextChange(nextContext, previousContext);
 
       expect(onLayerDataChange).toHaveBeenCalledOnce();
     } finally {
       layerStyles.destroy();
-      useAppStore.setState({ branchAnnotationLabelKey: previousKey });
     }
   });
 

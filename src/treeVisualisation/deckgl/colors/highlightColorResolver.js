@@ -1,5 +1,5 @@
-import { SYSTEM_TREE_COLORS } from '../../../../constants/TreeColors.js';
-import { colorToRgb, getContrastingHighlightColor } from '../../../../services/ui/colorUtils.js';
+import { SYSTEM_TREE_COLORS } from '../../../constants/TreeColors.js';
+import { colorToRgb, getContrastingHighlightColor } from '../../../services/ui/colorUtils.js';
 
 export function resolveSubtreeHighlightRgb({
   baseColor,

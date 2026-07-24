@@ -5,7 +5,6 @@
  * Maintains LayerStyles instance for consistent styling across layers.
  */
 import { LayerStyles } from './LayerStyles.js';
-import { useAppStore } from '../../../state/phyloStore/store.js';
 import { createClipboardLayers } from './factory/clipboard/ClipboardLayerFactory.js';
 import { createTreeLayerSet } from './factory/LayerSetFactory.js';
 import { measureFrameStep } from '../../performance/frameInstrumentation.js';
@@ -31,22 +30,15 @@ export class LayerManager {
    * @param {Object} data - Tree data containing nodes, links, labels, extensions
    * @returns {Array} Array of deck.gl layers
    */
-  createTreeLayers(data) {
+  createTreeLayers(data, renderContext) {
     const { nodes, links, labels, extensions = [], connectors = [] } = data;
-    const storeState = useAppStore.getState();
-
-    const state = {
-      ...storeState,
-      metricScale: Number.isFinite(data?.metricScale) ? data.metricScale : 1,
-      zoom: data?.zoom ?? storeState.viewState?.zoom, // Prefer zoom from data/overrides, fallback to store
-    };
 
     // Clear render cache before creating layers (ensures fresh state snapshot)
     this.layerStyles.clearRenderCache();
 
     const filteredLayers = createTreeLayerSet({
       data: { nodes, links, labels, extensions, connectors: connectors || [] },
-      state,
+      state: renderContext,
       layerStyles: this.layerStyles,
     });
 
@@ -65,9 +57,9 @@ export class LayerManager {
    * @param {Object} interpolatedData - New data to apply to layers
    * @returns {Array} New layers (deck.gl will handle updates internally)
    */
-  updateLayersWithData(interpolatedData) {
+  updateLayersWithData(interpolatedData, renderContext) {
     return measureFrameStep('layerManager.updateLayersWithData', () =>
-      this.createTreeLayers(interpolatedData)
+      this.createTreeLayers(interpolatedData, renderContext)
     );
   }
 
@@ -83,18 +75,22 @@ export class LayerManager {
    * @param {number} yOffset - Y-axis offset for clipboard position (default: 0)
    * @returns {Array} Array of deck.gl layers with offsets applied
    */
-  createClipboardLayers(data, zOffset = DEFAULT_CLIPBOARD_Z_OFFSET, xOffset = 0, yOffset = 0) {
+  createClipboardLayers(
+    data,
+    renderContext,
+    zOffset = DEFAULT_CLIPBOARD_Z_OFFSET,
+    xOffset = 0,
+    yOffset = 0
+  ) {
     // Optimization: Use modelMatrix/GPU for offsetting instead of CPU cloning
     const modelMatrix = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, xOffset, yOffset, zOffset, 1];
-
-    const state = useAppStore.getState();
 
     this.layerStyles.clearRenderCache();
 
     const { nodes, links, labels, extensions = [], connectors = [] } = data;
     const layers = createClipboardLayers({
       data: { nodes, links, labels, extensions, connectors },
-      state,
+      state: renderContext,
       layerStyles: this.layerStyles,
       modelMatrix,
     });

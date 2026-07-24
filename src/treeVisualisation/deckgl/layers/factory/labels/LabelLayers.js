@@ -1,7 +1,6 @@
 /**
  * Factory for labels layer
  */
-import { selectLeafNamesByIndex } from '../../../../../state/phyloStore/selectors/treeSelectors.js';
 import {
   getHistoryOffset,
   addZOffset,
@@ -10,7 +9,7 @@ import {
 
 export function getLabelsLayerProps(labels, state, layerStyles) {
   const { taxaColorVersion, colorVersion, fontSize, highlightColorMode } = state || {};
-  const taxaCount = selectLeafNamesByIndex(state).length;
+  const taxaCount = state?.taxaCount ?? 0;
 
   // Get cached state once for all accessors
   const cached = layerStyles.getCachedState(state);

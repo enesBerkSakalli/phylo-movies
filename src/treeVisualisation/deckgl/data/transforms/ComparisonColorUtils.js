@@ -1,7 +1,6 @@
 import { colorToRgb } from '../../../../services/ui/colorUtils.js';
-import { getBaseNodeColor } from '../../../systems/tree_color/index.js';
 import { SYSTEM_TREE_COLORS } from '../../../../constants/TreeColors.js';
-import { resolveSubtreeHighlightRgb } from '../../layers/styles/highlightColorResolver.js';
+import { resolveSubtreeHighlightRgb } from '../../colors/highlightColorResolver.js';
 
 /**
  * Compute RGBA color for a connector based on movement state and colorManager.
@@ -15,11 +14,8 @@ export function computeConnectionColor(
   highlightColorMode = 'solid',
   subtreeHighlightColor = SYSTEM_TREE_COLORS.subtreeHighlightColor
 ) {
-  const monophyleticEnabled = colorManager?.isMonophyleticColoringEnabled?.() ?? true;
   const fallbackHex = SYSTEM_TREE_COLORS.pivotEdgeColor;
-  const baseColorHex =
-    colorManager?.getNodeBaseColor?.(colorEntry) ||
-    getBaseNodeColor(colorEntry, monophyleticEnabled);
+  const baseColorHex = colorManager?.getNodeBaseColor?.(colorEntry);
   let rgb;
 
   if (isMoving && subtreeHighlightsEnabled) {

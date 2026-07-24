@@ -1,7 +1,6 @@
 /**
  * Factory for nodes layer
  */
-import { selectLeafNamesByIndex } from '../../../../../state/phyloStore/selectors/treeSelectors.js';
 import { HOVER_HIGHLIGHT_COLOR, MIN_NODE_RADIUS } from '../../config/layerConfigs.js';
 import { getNodeHistoryZOffset } from '../../../utils/GeometryUtils.js';
 
@@ -27,7 +26,7 @@ export function getNodesLayerProps(nodes = [], state, layerStyles) {
     highlightColorMode,
     metricScale,
   } = state || {};
-  const taxaCount = (selectLeafNamesByIndex(state || {}) ?? []).length;
+  const taxaCount = state?.taxaCount ?? 0;
 
   // Get cached state once for all accessors
   const cached = layerStyles.getCachedState(state);

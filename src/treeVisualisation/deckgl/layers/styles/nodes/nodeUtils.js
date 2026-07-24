@@ -1,6 +1,6 @@
 import { colorToRgb } from '../../../../../services/ui/colorUtils.js';
 import { SYSTEM_TREE_COLORS } from '../../../../../constants/TreeColors.js';
-import { resolveSubtreeHighlightRgb } from '../highlightColorResolver.js';
+import { resolveSubtreeHighlightRgb } from '../../../colors/highlightColorResolver.js';
 
 /**
  * Gets the pivot edge color (blue) for nodes.

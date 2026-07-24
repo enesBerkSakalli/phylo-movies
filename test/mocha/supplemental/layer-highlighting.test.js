@@ -274,7 +274,7 @@ describe('Layer Highlighting Configuration', () => {
       getPulseOpacity: () => 1.0,
       getColorManager: () => createMockColorManager(),
     };
-    layerStyles = new LayerStyles();
+    layerStyles = new LayerStyles(mockStoreState);
   });
 
   describe('autoHighlight configuration', () => {
@@ -665,7 +665,7 @@ describe('LayerStyles.getCachedState() - ColorManager as Single Source of Truth'
   let layerStyles;
 
   beforeEach(() => {
-    layerStyles = new LayerStyles();
+    layerStyles = new LayerStyles(mockStoreState);
   });
 
   afterEach(() => {
@@ -947,7 +947,7 @@ describe('Scrubbing Highlighting Integration', () => {
   let layerStyles;
 
   beforeEach(() => {
-    layerStyles = new LayerStyles();
+    layerStyles = new LayerStyles(mockStoreState);
   });
 
   afterEach(() => {

@@ -3,7 +3,6 @@
  * - Leaf Extensions (Dotted lines from leaves to alignment edge)
  */
 import { addZOffsetToPath, getNodeHistoryZOffset } from '../../../utils/GeometryUtils.js';
-import { selectLeafNamesByIndex } from '../../../../../state/phyloStore/selectors/treeSelectors.js';
 import { safeDeckPath } from '../../../utils/pathFormat.js';
 
 // ============================================================================
@@ -17,7 +16,7 @@ import { safeDeckPath } from '../../../utils/pathFormat.js';
 export function getExtensionsLayerProps(extensions, state, layerStyles) {
   const { taxaColorVersion, colorVersion, strokeWidth, highlightColorMode, metricScale } =
     state || {};
-  const taxaCount = (selectLeafNamesByIndex(state || {}) ?? []).length;
+  const taxaCount = state?.taxaCount ?? 0;
   const cached = layerStyles.getCachedState(state);
 
   return {
