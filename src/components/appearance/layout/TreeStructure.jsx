@@ -44,7 +44,7 @@ export function TreeStructure() {
             <span className="text-[11px] font-medium uppercase tracking-wider">Branch Lengths</span>
           </div>
           <Select value={branchTransformation || 'none'} onValueChange={handleBranchOptionChange}>
-            <SelectTrigger className="h-8 text-xs">
+            <SelectTrigger className="h-8 w-full min-w-0 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -64,9 +64,8 @@ export function TreeStructure() {
             </SelectContent>
           </Select>
           <p className="text-[11px] leading-snug text-muted-foreground">
-            Original scale preserves proportional input branch lengths. Readable scale applies one
-            global transform. Animation scale normalizes each tree for stable motion, so it is not
-            absolute evolutionary scale.
+            Animation scale normalizes each tree for stable motion; it is not an absolute
+            evolutionary scale.
           </p>
 
           <div className="flex items-center gap-2 text-muted-foreground">
@@ -77,7 +76,7 @@ export function TreeStructure() {
             value={linkGeometryMode || 'radial-elbow'}
             onValueChange={handleLinkGeometryChange}
           >
-            <SelectTrigger className="h-8 text-xs">
+            <SelectTrigger className="h-8 w-full min-w-0 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

@@ -11,7 +11,7 @@ describe('tree layout store invalidation', () => {
   it('resets interpolation caches and renders when branch transformation changes', () => {
     const controller = {
       _lastFocusedTreeIndex: 0,
-      layerManager: { comparisonRenderer: { resetAutoFit: vi.fn() } },
+      resetComparisonAutoFit: vi.fn(),
       resetInterpolationCaches: vi.fn(),
       renderAllElements: vi.fn(),
     };
@@ -24,7 +24,7 @@ describe('tree layout store invalidation', () => {
 
     expect(controller.resetInterpolationCaches).toHaveBeenCalledOnce();
     expect(controller._lastFocusedTreeIndex).toBeNull();
-    expect(controller.layerManager.comparisonRenderer.resetAutoFit).toHaveBeenCalledOnce();
+    expect(controller.resetComparisonAutoFit).toHaveBeenCalledOnce();
     expect(controller.renderAllElements).toHaveBeenCalledOnce();
   });
 
@@ -46,7 +46,7 @@ describe('tree layout store invalidation', () => {
 
   it('resets comparison auto-fit once when linked comparison views change', () => {
     const controller = {
-      layerManager: { comparisonRenderer: { resetAutoFit: vi.fn() } },
+      resetComparisonAutoFit: vi.fn(),
       renderAllElements: vi.fn(),
     };
     useAppStore.setState({
@@ -60,7 +60,7 @@ describe('tree layout store invalidation', () => {
     useAppStore.getState().setViewsConnected(true);
 
     expect(useAppStore.getState().viewsConnected).toBe(true);
-    expect(controller.layerManager.comparisonRenderer.resetAutoFit).toHaveBeenCalledOnce();
+    expect(controller.resetComparisonAutoFit).toHaveBeenCalledOnce();
     expect(controller.renderAllElements).toHaveBeenCalledOnce();
   });
 });

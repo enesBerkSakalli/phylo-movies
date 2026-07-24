@@ -19,13 +19,9 @@ class MockDeckGLTreeAnimationController {
     this.renderTimelineProgress = vi.fn(() => Promise.resolve());
     this.renderAllElements = vi.fn(() => Promise.resolve());
     this.resetInterpolationCaches = vi.fn();
+    this.resetComparisonAutoFit = vi.fn();
     this.initializeUniformScaling = vi.fn();
     this.destroy = vi.fn();
-    this.layerManager = {
-      comparisonRenderer: {
-        resetAutoFit: vi.fn(),
-      },
-    };
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     controllerInstance = this;
   }
@@ -218,12 +214,12 @@ describe('useTreeController static render scheduling', () => {
   it('clears the single-tree auto-fit sentinel when comparison mode changes', async () => {
     const { root } = await renderHookHarness();
     controllerInstance._lastFocusedTreeIndex = 0;
-    controllerInstance.layerManager.comparisonRenderer.resetAutoFit.mockClear();
+    controllerInstance.resetComparisonAutoFit.mockClear();
 
     updateStore({ comparisonMode: true });
 
     expect(controllerInstance._lastFocusedTreeIndex).toBeNull();
-    expect(controllerInstance.layerManager.comparisonRenderer.resetAutoFit).toHaveBeenCalledOnce();
+    expect(controllerInstance.resetComparisonAutoFit).toHaveBeenCalledOnce();
 
     await act(async () => {
       root.unmount();

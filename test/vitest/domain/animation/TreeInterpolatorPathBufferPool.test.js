@@ -90,6 +90,31 @@ describe('TreeInterpolator path buffer pool correctness', () => {
     expect(lateSnapshot).toHaveLength(earlySnapshot.length);
   });
 
+  it('reuses interpolated link records across animation frames', () => {
+    const interpolator = new TreeInterpolator();
+    const from = {
+      max_radius: 120,
+      nodes: [],
+      links: [link('a', 10, 40, 0, 0)],
+      labels: [],
+      extensions: [],
+    };
+    const to = {
+      max_radius: 120,
+      nodes: [],
+      links: [link('a', 10, 80, 0, Math.PI / 2)],
+      labels: [],
+      extensions: [],
+    };
+
+    const earlyLink = interpolator.interpolateTreeData(from, to, 0.1).links[0];
+    const earlyPolarData = earlyLink.polarData;
+    const lateLink = interpolator.interpolateTreeData(from, to, 0.9).links[0];
+
+    expect(lateLink).toBe(earlyLink);
+    expect(lateLink.polarData).toBe(earlyPolarData);
+  });
+
   it('does not emit non-finite animated path coordinates for invalid polar endpoints', () => {
     const interpolator = new PolarPathInterpolator();
 

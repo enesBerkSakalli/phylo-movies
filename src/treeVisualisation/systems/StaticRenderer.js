@@ -78,7 +78,7 @@ export class StaticRenderer {
     const leftIdx = Number.isInteger(leftIndex) ? leftIndex : frameIndex;
     const rightIdx = Number.isInteger(rightIndex) ? rightIndex : computedRight;
 
-    return this.controller.layerManager.renderComparisonStatic(leftIdx, rightIdx);
+    return this.controller.comparisonRenderer.renderStatic(leftIdx, rightIdx);
   }
 
   /*

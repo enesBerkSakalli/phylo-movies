@@ -46,6 +46,17 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-expressions': 'warn',
       'no-unused-vars': 'off',
       'no-empty': ['warn', { allowEmptyCatch: true }],
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/*', '~/*', '#/*', 'src/*'],
+              message: 'Path aliases are forbidden. Use a relative import.',
+            },
+          ],
+        },
+      ],
       'no-prototype-builtins': 'warn',
       'no-unused-expressions': 'warn',
       'no-useless-assignment': 'warn',

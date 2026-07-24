@@ -11,20 +11,15 @@ export class CanvasRecorder {
     videoBitsPerSecond = 2500000, // 2.5 Mbps for good quality
     autoSave = false,
     filename = null,
-    backgroundColor = '#FFFFFF', // Force white background for video
   } = {}) {
     this.framerate = framerate;
     this.mimeType = mimeType;
     this.videoBitsPerSecond = videoBitsPerSecond;
     this.autoSave = autoSave;
     this.filename = filename;
-    this.backgroundColor = backgroundColor;
 
     this.mediaRecorder = null;
     this.canvas = null;
-    this.proxyCanvas = null;
-    this.proxyCtx = null;
-    this.renderLoopId = null;
     this.stream = null;
     this.recordedChunks = [];
     this.isRecording = false;
@@ -41,8 +36,6 @@ export class CanvasRecorder {
         'Visualization canvas is not available yet. Wait until the tree finishes rendering, then start recording again.'
       );
     }
-    this.deck =
-      treeController?.deckContext?.getDeck?.() || treeController?.deckContext?.deck || null;
     return canvas;
   }
 
@@ -99,42 +92,12 @@ export class CanvasRecorder {
     };
   }
 
-  _startRenderLoop() {
-    const render = () => {
-      if (!this.isRecording) return;
-
-      // 1. Clear with solid background
-      this.proxyCtx.fillStyle = this.backgroundColor;
-      this.proxyCtx.fillRect(0, 0, this.proxyCanvas.width, this.proxyCanvas.height);
-
-      // 2. Draw source canvas onto proxy
-      // WebGL canvas must have preserveDrawingBuffer: true for this to work
-      this.proxyCtx.drawImage(this.canvas, 0, 0);
-
-      this.renderLoopId = requestAnimationFrame(render);
-    };
-
-    this.renderLoopId = requestAnimationFrame(render);
-  }
-
   async start() {
     if (this.isRecording) return;
 
     try {
       this.canvas = this._resolveCanvas();
-
-      // Create a proxy canvas to handle background color
-      // This is necessary because MediaRecorder interprets transparency as black
-      this.proxyCanvas = document.createElement('canvas');
-      this.proxyCanvas.width = this.canvas.width;
-      this.proxyCanvas.height = this.canvas.height;
-      this.proxyCtx = this.proxyCanvas.getContext('2d');
-
-      // Start render loop to composite frames
-      this._startRenderLoop();
-
-      // Use proxy canvas for stream capture
-      this.stream = this.proxyCanvas.captureStream(this.framerate);
+      this.stream = this.canvas.captureStream(this.framerate);
 
       if (!this.stream || this.stream.getTracks().length === 0) {
         throw new Error(
@@ -159,11 +122,6 @@ export class CanvasRecorder {
     if (!this.isRecording || !this.mediaRecorder) return null;
 
     this.isRecording = false;
-
-    if (this.renderLoopId) {
-      cancelAnimationFrame(this.renderLoopId);
-      this.renderLoopId = null;
-    }
 
     return new Promise((resolve, reject) => {
       this.mediaRecorder.onstop = async () => {
@@ -198,11 +156,6 @@ export class CanvasRecorder {
   }
 
   _cleanup() {
-    if (this.renderLoopId) {
-      cancelAnimationFrame(this.renderLoopId);
-      this.renderLoopId = null;
-    }
-
     if (this.stream) {
       this.stream.getTracks().forEach((track) => track.stop());
       this.stream = null;
@@ -210,8 +163,6 @@ export class CanvasRecorder {
 
     this.mediaRecorder = null;
     this.canvas = null;
-    this.proxyCanvas = null;
-    this.proxyCtx = null;
     this.recordedChunks = [];
   }
 

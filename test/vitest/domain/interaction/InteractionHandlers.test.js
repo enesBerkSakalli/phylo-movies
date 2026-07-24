@@ -25,11 +25,7 @@ describe('InteractionHandlers', () => {
 
     const controller = {
       _resizeRenderScheduled: false,
-      layerManager: {
-        comparisonRenderer: {
-          resetAutoFit: vi.fn(),
-        },
-      },
+      resetComparisonAutoFit: vi.fn(),
       renderAllElements: vi.fn(() => Promise.resolve()),
     };
 
@@ -40,7 +36,7 @@ describe('InteractionHandlers', () => {
     await vi.advanceTimersByTimeAsync(16);
 
     expect(controller._resizeRenderScheduled).toBe(false);
-    expect(controller.layerManager.comparisonRenderer.resetAutoFit).toHaveBeenCalledOnce();
+    expect(controller.resetComparisonAutoFit).toHaveBeenCalledOnce();
     expect(controller.renderAllElements).toHaveBeenCalledOnce();
   });
 
@@ -54,11 +50,7 @@ describe('InteractionHandlers', () => {
       _resizeRenderScheduled: false,
       _lastFocusedTreeIndex: 3,
       _hasUserViewportInteraction: true,
-      layerManager: {
-        comparisonRenderer: {
-          resetAutoFit,
-        },
-      },
+      resetComparisonAutoFit: resetAutoFit,
       renderAllElements: vi.fn(() => Promise.resolve()),
     };
 

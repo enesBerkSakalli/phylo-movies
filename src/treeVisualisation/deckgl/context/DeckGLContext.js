@@ -91,10 +91,10 @@ export class DeckGLContext {
       views: [this.views[this.cameraMode]],
       viewState: initialViewState,
       _backgroundColor: [255, 255, 255, 255],
-      useDevicePixels: true,
+      useDevicePixels: 1,
       glOptions: {
         antialias: true,
-        preserveDrawingBuffer: true,
+        preserveDrawingBuffer: false,
       },
       onViewStateChange: ({ viewState, viewId }) => this._handleViewStateChange(viewState, viewId),
       onClick: (info, event) => this._handleClick(info, event),

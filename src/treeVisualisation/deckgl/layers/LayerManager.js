@@ -6,7 +6,6 @@
  */
 import { LayerStyles } from './LayerStyles.js';
 import { useAppStore } from '../../../state/phyloStore/store.js';
-import { ComparisonModeRenderer } from '../../comparison/ComparisonModeRenderer.js';
 import { createClipboardLayers } from './factory/clipboard/ClipboardLayerFactory.js';
 import { createTreeLayerSet } from './factory/LayerSetFactory.js';
 import { measureFrameStep } from '../../performance/frameInstrumentation.js';
@@ -21,7 +20,6 @@ export class LayerManager {
   constructor() {
     // Initialize LayerStyles for consistent styling
     this.layerStyles = new LayerStyles();
-    this.comparisonRenderer = null;
   }
 
   // ==========================================================================
@@ -104,33 +102,6 @@ export class LayerManager {
     this.layerStyles.clearRenderCache();
 
     return layers;
-  }
-
-  // ==========================================================================
-  // PUBLIC API: Comparison Mode
-  // ==========================================================================
-
-  setComparisonContext(controller) {
-    this.comparisonRenderer = controller ? new ComparisonModeRenderer(controller) : null;
-  }
-
-  renderComparisonStatic(leftIndex, rightIndex) {
-    if (!this.comparisonRenderer) return null;
-    return this.comparisonRenderer.renderStatic(leftIndex, rightIndex);
-  }
-
-  renderComparisonAnimated({
-    interpolatedData,
-    rightTree,
-    rightIndex,
-    activeTreeIndex,
-    isCancelled,
-  }) {
-    if (!this.comparisonRenderer) return null;
-    return this.comparisonRenderer.renderAnimated(interpolatedData, rightTree, rightIndex, {
-      activeTreeIndex,
-      isCancelled,
-    });
   }
 
   // ==========================================================================

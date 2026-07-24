@@ -3,9 +3,7 @@ import {
   normalizePosition3,
   polarToPosition,
   positionFromPolar,
-  positionToPolar,
 } from '../../utils/polarGeometry.js';
-import { measureFrameStep } from '../../performance/frameInstrumentation.js';
 import { twoPointFloat32Path } from '../utils/pathFormat.js';
 import { pointsMatch } from './pointUtils.js';
 
@@ -16,6 +14,7 @@ export class PolarLinkInterpolator {
     this.elementMatcher = elementMatcher;
     this.pathInterpolator = pathInterpolator;
     this.nodeInterpolator = nodeInterpolator;
+    this._datumPool = new Map();
   }
 
   interpolateLinks(fromLinks, toLinks, timeFactor, options = {}) {
@@ -277,18 +276,19 @@ export class PolarLinkInterpolator {
   }
 
   _createLinkDatumFromPositions(link, sourcePosition, targetPosition, options = {}) {
-    const { polarData, radialLength } = measureFrameStep('link.datumAssembly', () => {
-      const sourcePolar = positionToPolar(sourcePosition);
-      const targetPolar = positionToPolar(targetPosition);
-      return {
-        radialLength: Math.max(0, targetPolar.radius - sourcePolar.radius),
-        polarData: {
-          ...link.polarData,
-          source: sourcePolar,
-          target: targetPolar,
-        },
-      };
-    });
+    const poolKey = link?.id ?? link?.splitKey ?? null;
+    const result = poolKey == null ? {} : (this._datumPool.get(poolKey) ?? {});
+    const polarData = result.polarData || {};
+    const sourcePolar = polarData.source || {};
+    const targetPolar = polarData.target || {};
+    Object.assign(polarData, link.polarData);
+    Object.assign(sourcePolar, link.polarData?.source);
+    Object.assign(targetPolar, link.polarData?.target);
+    writePolarFromPosition(sourcePolar, sourcePosition);
+    writePolarFromPosition(targetPolar, targetPosition);
+    polarData.source = sourcePolar;
+    polarData.target = targetPolar;
+    const radialLength = Math.max(0, targetPolar.radius - sourcePolar.radius);
 
     const path =
       options.linkGeometryMode === 'straight'
@@ -298,8 +298,7 @@ export class PolarLinkInterpolator {
             pathPoolKey: link?.id != null ? `link:${link.id}` : null,
           });
 
-    return measureFrameStep('link.datumSpread', () => ({
-      ...link,
+    Object.assign(result, link, {
       path,
       sourcePosition,
       targetPosition,
@@ -307,7 +306,9 @@ export class PolarLinkInterpolator {
       radialLength,
       lifecycle: options.lifecycle || LINK_LIFECYCLES.UNCHANGED,
       transitionPhase: options.transitionPhase ?? 1,
-    }));
+    });
+    if (poolKey != null) this._datumPool.set(poolKey, result);
+    return result;
   }
 
   _attachChildSourcesToRenderedParents(links, options = {}) {
@@ -348,6 +349,10 @@ export class PolarLinkInterpolator {
     }
 
     return result ?? links;
+  }
+
+  resetCache() {
+    this._datumPool.clear();
   }
 }
 
@@ -427,6 +432,15 @@ function linkEndpointPosition(link, endpoint) {
 function linkEndpointNodeId(entry, endpoint) {
   const idField = endpoint === 'source' ? 'sourceId' : 'targetId';
   return entry.toLink?.[idField] || entry.fromLink?.[idField] || null;
+}
+
+function writePolarFromPosition(target, position) {
+  const x = Number(position?.[0]);
+  const y = Number(position?.[1]);
+  const finiteX = Number.isFinite(x) ? x : 0;
+  const finiteY = Number.isFinite(y) ? y : 0;
+  target.angle = Math.atan2(finiteY, finiteX);
+  target.radius = Math.hypot(finiteX, finiteY);
 }
 
 function shouldAttachLifecycleEndpoints(parentLifecycle, childLifecycle) {

@@ -106,13 +106,15 @@ export class InterpolationRenderer {
         );
         if (isControllerDestroyed(this.controller)) return;
         if (isRenderCancelled(options)) return;
-        await this.controller.layerManager.renderComparisonAnimated({
+        await this.controller.comparisonRenderer.renderAnimated(
           interpolatedData,
           rightTree,
-          rightIndex: rightTreeIndex,
-          activeTreeIndex: transitionFrame.comparisonActiveTreeIndex,
-          isCancelled: options.isCancelled,
-        });
+          rightTreeIndex,
+          {
+            activeTreeIndex: transitionFrame.comparisonActiveTreeIndex,
+            isCancelled: options.isCancelled,
+          }
+        );
         return;
       }
     }

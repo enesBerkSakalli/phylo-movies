@@ -40,7 +40,7 @@ export const createComparisonViewSlice = (set, get) => ({
     const state = get();
     if (!state.comparisonMode) return;
 
-    state.treeController?.layerManager?.comparisonRenderer?.resetAutoFit?.();
+    state.treeController?.resetComparisonAutoFit?.();
     renderTreeController(state);
   },
 

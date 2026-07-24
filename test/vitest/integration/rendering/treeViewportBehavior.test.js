@@ -185,8 +185,8 @@ describe('tree viewport behavior', () => {
       _destroyed: false,
       ready: true,
       deckContext: { deck: {} },
-      layerManager: {
-        renderComparisonStatic: vi.fn(),
+      comparisonRenderer: {
+        renderStatic: vi.fn(),
       },
     };
 
@@ -198,7 +198,7 @@ describe('tree viewport behavior', () => {
       });
 
       expect(useAppStore.getState().currentAnimationStage).toBe(null);
-      expect(controller.layerManager.renderComparisonStatic).toHaveBeenCalledWith(0, 1);
+      expect(controller.comparisonRenderer.renderStatic).toHaveBeenCalledWith(0, 1);
     } finally {
       useAppStore.getState().reset();
     }
@@ -220,8 +220,8 @@ describe('tree viewport behavior', () => {
       _destroyed: false,
       ready: true,
       deckContext: { deck: {} },
-      layerManager: {
-        renderComparisonStatic: vi.fn(),
+      comparisonRenderer: {
+        renderStatic: vi.fn(),
       },
     };
 
@@ -234,7 +234,7 @@ describe('tree viewport behavior', () => {
       });
 
       expect(useAppStore.getState().currentAnimationStage).toBe('REORDER');
-      expect(controller.layerManager.renderComparisonStatic).toHaveBeenCalledWith(0, 1);
+      expect(controller.comparisonRenderer.renderStatic).toHaveBeenCalledWith(0, 1);
     } finally {
       useAppStore.getState().reset();
     }
@@ -269,8 +269,8 @@ describe('tree viewport behavior', () => {
         dataTo: { nodes: [{ id: 'node-a' }] },
         transitionChangeModel: null,
       })),
-      layerManager: {
-        renderComparisonStatic: vi.fn(),
+      comparisonRenderer: {
+        renderStatic: vi.fn(),
       },
     };
 
@@ -363,7 +363,7 @@ describe('tree viewport behavior', () => {
       _resizeRenderScheduled: false,
       _lastFocusedTreeIndex: 0,
       _hasUserViewportInteraction: false,
-      layerManager: { comparisonRenderer: { resetAutoFit: vi.fn() } },
+      resetComparisonAutoFit: vi.fn(),
       renderAllElements: vi.fn(),
     };
 
@@ -384,7 +384,7 @@ describe('tree viewport behavior', () => {
       _resizeRenderScheduled: false,
       _lastFocusedTreeIndex: 0,
       _hasUserViewportInteraction: false,
-      layerManager: { comparisonRenderer: { resetAutoFit: vi.fn() } },
+      resetComparisonAutoFit: vi.fn(),
       calculateLayout: vi.fn(() => ({ layoutTree: {}, max_radius: 10 })),
       _getConsistentRadii: vi.fn(() => ({ extensionRadius: 905, labelRadius: 925 })),
       dataConverter: {
@@ -429,7 +429,7 @@ describe('tree viewport behavior', () => {
       _resizeRenderScheduled: false,
       _lastFocusedTreeIndex: 0,
       _hasUserViewportInteraction: true,
-      layerManager: { comparisonRenderer: { resetAutoFit } },
+      resetComparisonAutoFit: resetAutoFit,
       renderAllElements: vi.fn(),
     };
 

@@ -222,6 +222,25 @@ describe('tools sidebar structure', () => {
     expect(sidebarSource).not.toContain('flex min-h-0 flex-1 flex-col gap-2 overflow-auto');
   });
 
+  it('keeps sidebar targets comfortable without sacrificing desktop density', () => {
+    const sidebarSource = source('src/components/ui/sidebar.tsx');
+
+    expect(sidebarSource).toContain('in-data-[mobile=true]:h-12');
+    expect(sidebarSource).toContain('group-data-[collapsible=icon]:size-10!');
+    expect(sidebarSource).toContain('relative flex w-full min-w-0 flex-col p-1.5');
+    expect(sidebarSource).toContain('flex h-7 shrink-0 items-center');
+    expect(sidebarSource).toContain('group-data-[collapsible=icon]:-mt-7');
+  });
+
+  it('contains tree-layout selects within the sidebar submenu', () => {
+    const treeStructureSource = source('src/components/appearance/layout/TreeStructure.jsx');
+    const containedSelectTriggers = treeStructureSource.match(
+      /<SelectTrigger className="h-8 w-full min-w-0 text-xs">/g
+    );
+
+    expect(containedSelectTriggers).toHaveLength(2);
+  });
+
   it('uses one expandable-tool chevron convention', () => {
     const expandableToolFiles = [
       'src/components/sidebar/MsaSidebarSection.jsx',

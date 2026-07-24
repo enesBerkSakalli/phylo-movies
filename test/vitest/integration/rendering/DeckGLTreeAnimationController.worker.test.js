@@ -410,7 +410,8 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     controller.height = 600;
     controller.interpolationCache = { buildInterpolationInputs };
     controller.treeInterpolator = { interpolateTreeData };
-    controller.layerManager = { renderComparisonAnimated, destroy: vi.fn() };
+    controller.comparisonRenderer = { renderAnimated: renderComparisonAnimated };
+    controller.layerManager = { destroy: vi.fn() };
     controller.animationRunner = { stop: vi.fn() };
     controller._syncInterpolatorRootAngle = vi.fn();
     controller._getLinkGeometryMode = vi.fn(() => 'radial-elbow');
@@ -435,9 +436,12 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
       })
     );
     expect(renderComparisonAnimated).toHaveBeenCalledWith(
+      interpolatedData,
+      { id: 'right-tree' },
+      1,
       expect.objectContaining({
-        interpolatedData,
-        rightIndex: 1,
+        activeTreeIndex: 1,
+        isCancelled: null,
       })
     );
   });

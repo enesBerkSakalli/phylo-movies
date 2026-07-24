@@ -3,6 +3,7 @@ import { DeckGLContext } from './deckgl/context/DeckGLContext.js';
 import { LayerManager } from './deckgl/layers/LayerManager.js';
 import { TreeInterpolator } from './deckgl/interpolation/TreeInterpolator.js';
 import { InterpolationCache } from './deckgl/interpolation/InterpolationCache.js';
+import { ComparisonModeRenderer } from './comparison/ComparisonModeRenderer.js';
 import { AnimationRunner } from './systems/AnimationRunner.js';
 import { InterpolationRenderer } from './systems/InterpolationRenderer.js';
 import { createPlaybackProgressSynchronizer } from './systems/PlaybackProgressSynchronizer.js';
@@ -100,10 +101,8 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     // Drag state
     this._dragState = null;
 
-    // Comparison mode renderer (owned by LayerManager)
-    this.layerManager.setComparisonContext(this);
-
     // Renderers
+    this.comparisonRenderer = new ComparisonModeRenderer(this);
     this.interpolationRenderer = new InterpolationRenderer(this);
     this.staticRenderer = new StaticRenderer(this);
 
@@ -391,6 +390,10 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     this.deckContext?.resetView?.();
   }
 
+  resetComparisonAutoFit() {
+    this.comparisonRenderer?.resetAutoFit();
+  }
+
   startAnimation() {
     if (!this.animationsEnabled) return;
     const { play } = useAppStore.getState();
@@ -421,6 +424,7 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     this.deckContext = null;
     this.layerManager?.destroy();
     this.layerManager = null;
+    this.comparisonRenderer = null;
     this.layoutWorker?.terminate();
     this.layoutWorker = null;
     this._layoutPrefetchTokens?.clear();
@@ -601,10 +605,7 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
 
     if (isRenderCancelled(isCancelled)) return;
 
-    await this.layerManager.renderComparisonAnimated({
-      interpolatedData,
-      rightTree,
-      rightIndex: rightTreeIndex,
+    await this.comparisonRenderer.renderAnimated(interpolatedData, rightTree, rightTreeIndex, {
       activeTreeIndex: transitionFrame.comparisonActiveTreeIndex,
       isCancelled,
     });

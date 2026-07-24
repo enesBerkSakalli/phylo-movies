@@ -15,7 +15,7 @@ function invalidateTreeLayout(get) {
   if (!controller) return;
 
   controller._lastFocusedTreeIndex = null;
-  controller.layerManager?.comparisonRenderer?.resetAutoFit?.();
+  controller.resetComparisonAutoFit?.();
   Promise.resolve(controller.renderAllElements()).catch((error) => {
     console.warn('[treeLayout] Failed to render layout update:', error);
   });

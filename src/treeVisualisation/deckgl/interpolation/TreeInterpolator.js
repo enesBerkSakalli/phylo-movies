@@ -330,6 +330,7 @@ export class TreeInterpolator {
    */
   resetCaches() {
     this.pathInterpolator?.resetPathBufferPool?.();
+    this.linkInterpolator?.resetCache?.();
     this.labelInterpolator?.resetCache?.();
     this.extensionInterpolator?.resetCache?.();
     this._elementMapCache = new WeakMap();

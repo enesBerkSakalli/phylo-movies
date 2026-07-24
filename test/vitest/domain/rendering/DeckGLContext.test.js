@@ -127,6 +127,16 @@ describe('DeckGLContext view state handling', () => {
     expect(deckProps.views[0].props.controller).toEqual(context.getControllerConfig());
   });
 
+  it('uses a CSS-pixel drawing buffer without preserving rendered frames', () => {
+    const context = new DeckGLContext(document.createElement('div'));
+
+    context.initialize();
+
+    const deckProps = Deck.mock.calls.at(-1)[0];
+    expect(deckProps.useDevicePixels).toBe(1);
+    expect(deckProps.glOptions.preserveDrawingBuffer).toBe(false);
+  });
+
   it('zooms the active view around its current target', () => {
     const context = createContext();
     context.viewStates[VIEW_IDS.ORTHO].zoom = 1;

@@ -162,7 +162,7 @@ export function useTreeController() {
           if (ctrl) {
             ctrl._lastFocusedTreeIndex = null;
           }
-          ctrl?.layerManager?.comparisonRenderer?.resetAutoFit?.();
+          ctrl?.resetComparisonAutoFit?.();
         }
         ensureController();
         scheduleRender();
