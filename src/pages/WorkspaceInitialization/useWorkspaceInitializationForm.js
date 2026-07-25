@@ -198,16 +198,14 @@ export function useWorkspaceInitializationForm({ skipBackendCheck = false } = {}
       );
       if (!isCurrentOperation(operationRef, operation)) return;
 
-      // Finalize saving
-      await finalizeMovieData(resultData, formData, (progress) =>
-        setOperationStateIfCurrent(operationRef, operation, progress, setOperationState)
+      await finalizeAndNavigate(
+        resultData,
+        formData,
+        operationRef,
+        operation,
+        setOperationState,
+        navigate
       );
-      if (!isCurrentOperation(operationRef, operation)) return;
-
-      // Brief delay to show completion sentiment
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      if (!isCurrentOperation(operationRef, operation)) return;
-      navigate('/visualization');
     } catch (err) {
       if (!isCurrentOperation(operationRef, operation) || err?.name === 'AbortError') return;
       console.error('[useWorkspaceInitializationForm] Submission error:', err);
@@ -296,16 +294,14 @@ export function useWorkspaceInitializationForm({ skipBackendCheck = false } = {}
       // Set the file name for display
       resultData.file_name = example.fileName;
 
-      // Finalize saving
-      await finalizeMovieData(resultData, formData, (progress) =>
-        setOperationStateIfCurrent(operationRef, operation, progress, setOperationState)
+      await finalizeAndNavigate(
+        resultData,
+        formData,
+        operationRef,
+        operation,
+        setOperationState,
+        navigate
       );
-      if (!isCurrentOperation(operationRef, operation)) return;
-
-      // Brief delay to show completion
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      if (!isCurrentOperation(operationRef, operation)) return;
-      navigate('/visualization');
     } catch (err) {
       if (!isCurrentOperation(operationRef, operation) || err?.name === 'AbortError') return;
       console.error('[useWorkspaceInitializationForm] Failed to load example:', err);
@@ -482,4 +478,29 @@ function setOperationStateIfCurrent(operationRef, operation, progress, setOperat
   if (isCurrentOperation(operationRef, operation)) {
     setOperationState(progress);
   }
+}
+
+/**
+ * Shared epilogue for the submit and load-example flows: persist the movie
+ * data, hold briefly to show completion, then navigate - bailing out at each
+ * step if a newer operation has superseded this one.
+ */
+async function finalizeAndNavigate(
+  resultData,
+  formData,
+  operationRef,
+  operation,
+  setOperationState,
+  navigate
+) {
+  await finalizeMovieData(resultData, formData, (progress) =>
+    setOperationStateIfCurrent(operationRef, operation, progress, setOperationState)
+  );
+  if (!isCurrentOperation(operationRef, operation)) return;
+
+  // Brief delay to show completion sentiment
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  if (!isCurrentOperation(operationRef, operation)) return;
+
+  navigate('/visualization');
 }

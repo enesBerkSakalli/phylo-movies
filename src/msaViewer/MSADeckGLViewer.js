@@ -242,12 +242,7 @@ export class MSADeckGLViewer {
     const range = this.hasSequences()
       ? getVisibleRange(
           activeClamped,
-          {
-            containerWidth: this.container.clientWidth,
-            containerHeight: this.container.clientHeight,
-            labelsWidth: this.LABELS_WIDTH,
-            axisHeight: this.AXIS_HEIGHT,
-          },
+          this._getViewportDimensions(),
           this.options.cellSize,
           this.state.rows,
           this.state.cols
@@ -618,16 +613,23 @@ export class MSADeckGLViewer {
   getVisibleRange() {
     return getVisibleRange(
       this.state.viewState,
-      {
-        containerWidth: this.container.clientWidth,
-        containerHeight: this.container.clientHeight,
-        labelsWidth: this.LABELS_WIDTH,
-        axisHeight: this.AXIS_HEIGHT,
-      },
+      this._getViewportDimensions(),
       this.options.cellSize,
       this.state.rows,
       this.state.cols
     );
+  }
+
+  /**
+   * Container/label/axis dimensions used to compute the visible cell range.
+   */
+  _getViewportDimensions() {
+    return {
+      containerWidth: this.container.clientWidth,
+      containerHeight: this.container.clientHeight,
+      labelsWidth: this.LABELS_WIDTH,
+      axisHeight: this.AXIS_HEIGHT,
+    };
   }
 
   getCellSampling(visibleRange) {

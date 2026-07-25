@@ -1,6 +1,6 @@
 import { colorToRgb } from '../../../../../../services/ui/colorUtils.js';
 import { SYSTEM_TREE_COLORS } from '../../../../../../constants/TreeColors.js';
-import { calculateFlightDashArray } from '../dashUtils.js';
+import { resolveChangeDashArray } from '../dashUtils.js';
 import { applyDimmingWithCache } from '../../dimmingUtils.js';
 import { getSubtreeHighlightRgb } from '../linkUtils.js';
 import { getActiveMoverEmphasis } from '../../activeMoverEmphasis.js';
@@ -15,27 +15,7 @@ const PIVOT_GLOW_MIN_OPACITY = 160;
 const PIVOT_GLOW_OPACITY_RANGE = 80;
 
 export function getLinkOutlineDashArray(link, cached) {
-  const { dashingEnabled, upcomingChangesEnabled } = cached;
-  const highlight = resolveTreeElementHighlight(link, cached, 'link');
-
-  // Done: solid
-  if (upcomingChangesEnabled && highlight.role === TREE_HIGHLIGHT_ROLE.COMPLETED_CHANGE) {
-    return null;
-  }
-
-  // Next: dotted
-  if (upcomingChangesEnabled && highlight.role === TREE_HIGHLIGHT_ROLE.UPCOMING_CHANGE) {
-    _outlineDashOut[0] = 3;
-    _outlineDashOut[1] = 6;
-    return _outlineDashOut;
-  }
-
-  // Current: dashed (when enabled)
-  if (dashingEnabled && highlight.role === TREE_HIGHLIGHT_ROLE.PIVOT_EDGE) {
-    return calculateFlightDashArray(link.path);
-  }
-
-  return null;
+  return resolveChangeDashArray(link, cached, _outlineDashOut);
 }
 
 export function getLinkOutlineColor(link, cached) {

@@ -9,10 +9,10 @@ import {
   FormItem,
   FormLabel,
 } from '../../../../components/ui/form';
-import { Checkbox } from '../../../../components/ui/checkbox';
 import { Switch } from '../../../../components/ui/switch';
 import { cn } from '../../../../lib/utils';
 import { TreeInferenceOptionGroup } from './TreeInferenceOptionGroup.jsx';
+import { LabeledCheckboxField } from './LabeledCheckboxField.jsx';
 
 export function SubstitutionModelSection({ hasMsa, disabled }) {
   const { control } = useFormContext();
@@ -67,33 +67,13 @@ export function SubstitutionModelSection({ hasMsa, disabled }) {
         )}
       />
 
-      <FormField
+      <LabeledCheckboxField
         control={control}
         name="useGamma"
-        render={({ field }) => (
-          <FormItem className="flex items-start gap-3">
-            <FormControl>
-              <Checkbox
-                checked={field.value}
-                onCheckedChange={field.onChange}
-                disabled={disabled || !hasMsa}
-              />
-            </FormControl>
-            <div className="flex flex-col gap-1 leading-none">
-              <FormLabel
-                className={cn(
-                  'cursor-pointer text-sm font-normal',
-                  !hasMsa && 'text-muted-foreground'
-                )}
-              >
-                Gamma Rate Heterogeneity
-              </FormLabel>
-              <FormDescription className="text-2xs leading-tight">
-                Adds site-rate variation.
-              </FormDescription>
-            </div>
-          </FormItem>
-        )}
+        label="Gamma Rate Heterogeneity"
+        description="Adds site-rate variation."
+        disabled={disabled || !hasMsa}
+        muted={!hasMsa}
       />
     </TreeInferenceOptionGroup>
   );

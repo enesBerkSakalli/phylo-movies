@@ -6,10 +6,7 @@ const repoRoot = process.cwd();
 
 describe('layout factory contract', () => {
   it('uses explicit dimensions instead of DOM container lookup compatibility', () => {
-    const layoutFiles = [
-      'src/treeVisualisation/layout/RadialTreeLayout.js',
-      'src/treeVisualisation/layout/TidyTreeLayout.js',
-    ];
+    const layoutFiles = ['src/treeVisualisation/layout/TidyTreeLayout.js'];
 
     const violations = [];
     for (const file of layoutFiles) {

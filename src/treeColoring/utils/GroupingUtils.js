@@ -251,15 +251,13 @@ export function applyColoringData(colorData, leaveOrder, defaultColorMap) {
 
     leaveOrder.forEach((taxon) => {
       const group = getGroupForTaxon(taxon, separators, colorData.strategyType, options);
-      // Ensure string lookup for group color (handles numeric-like group names)
-      const groupKey = group != null ? String(group) : null;
-      const groupColor = groupKey != null ? groupColorMap[groupKey] : null;
-
-      if (groupColor) {
-        newColorMap[taxon] = groupColor;
-      } else {
-        newColorMap[taxon] = safeDefaultColorMap[taxon] || fallbackColor;
-      }
+      newColorMap[taxon] = resolveGroupColorForTaxon(
+        group,
+        taxon,
+        groupColorMap,
+        safeDefaultColorMap,
+        fallbackColor
+      );
     });
   } else if (colorData.mode === 'csv') {
     // CSV-based group coloring
@@ -276,21 +274,29 @@ export function applyColoringData(colorData, leaveOrder, defaultColorMap) {
     };
 
     leaveOrder.forEach((taxon) => {
-      // Get group from CSV mapping
       const group = getGroup(taxon);
-      // Ensure string lookup for group color
-      const groupKey = group != null ? String(group) : null;
-      const groupColor = groupKey != null ? groupColorMap[groupKey] : null;
-
-      if (groupColor) {
-        newColorMap[taxon] = groupColor;
-      } else {
-        newColorMap[taxon] = safeDefaultColorMap[taxon] || fallbackColor;
-      }
+      newColorMap[taxon] = resolveGroupColorForTaxon(
+        group,
+        taxon,
+        groupColorMap,
+        safeDefaultColorMap,
+        fallbackColor
+      );
     });
   }
 
   return newColorMap;
+}
+
+/**
+ * Resolves the color for a taxon given its resolved group: the group's
+ * assigned color, falling back to the default color map, then the fallback.
+ * Group keys are stringified for lookup since group names can be numeric-like.
+ */
+function resolveGroupColorForTaxon(group, taxon, groupColorMap, safeDefaultColorMap, fallbackColor) {
+  const groupKey = group != null ? String(group) : null;
+  const groupColor = groupKey != null ? groupColorMap[groupKey] : null;
+  return groupColor || safeDefaultColorMap[taxon] || fallbackColor;
 }
 
 /**

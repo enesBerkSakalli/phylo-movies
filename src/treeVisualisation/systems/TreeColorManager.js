@@ -26,6 +26,15 @@ import {
   getLinkSplitIndices,
   getSplitIndices,
 } from '../../domain/tree/splits.js';
+import { toSubtreeSets } from '../../state/phyloStore/internal/changeTracking.helpers.js';
+
+/**
+ * Normalizes a subtree-groups input (array of Sets/arrays, or a single bare
+ * Set) into the array-of-Sets shape every update* method below stores.
+ */
+function normalizeSubtreeGroups(value) {
+  return toSubtreeSets(value instanceof Set ? [value] : value);
+}
 
 export class TreeColorManager {
   constructor(colorData = null) {
@@ -118,15 +127,8 @@ export class TreeColorManager {
    * Pre-converts to Sets and builds a union index for O(1) rejection in hot paths.
    */
   updateHighlightedSubtrees(highlightedSubtrees) {
-    let subtrees = [];
-    if (Array.isArray(highlightedSubtrees)) {
-      subtrees = highlightedSubtrees;
-    } else if (highlightedSubtrees instanceof Set) {
-      subtrees = [highlightedSubtrees];
-    }
-
     // Cache as Sets immediately to avoid recreation in render checks
-    this.highlightedSubtreeSets = subtrees.map((s) => (s instanceof Set ? s : new Set(s)));
+    this.highlightedSubtreeSets = normalizeSubtreeGroups(highlightedSubtrees);
 
     // Build union of all highlighted leaf indices for fast O(1) rejection
     // A node can only be in a subtree if ALL its leaves are in this union
@@ -136,6 +138,20 @@ export class TreeColorManager {
         this._highlightedLeavesUnion.add(leafIdx);
       }
     }
+  }
+
+  /**
+   * Fast rejection: true only if every leaf in `splits` is in the highlighted
+   * union (a necessary but not sufficient condition for subtree membership).
+   */
+  _hasAllLeavesInHighlightedUnion(splits) {
+    if (!splits?.length) return false;
+    for (let i = 0; i < splits.length; i++) {
+      if (!this._highlightedLeavesUnion.has(splits[i])) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
@@ -149,14 +165,7 @@ export class TreeColorManager {
       return false;
     }
     const splits = getSplitIndices(nodeData);
-    if (!splits?.length) return false;
-
-    // Fast rejection: if any leaf is NOT in union, node can't be in any subtree
-    for (let i = 0; i < splits.length; i++) {
-      if (!this._highlightedLeavesUnion.has(splits[i])) {
-        return false;
-      }
-    }
+    if (!this._hasAllLeavesInHighlightedUnion(splits)) return false;
 
     // All leaves are in union - do full subset check against individual subtrees
     return isNodeInSubtree(nodeData, this.highlightedSubtreeSets);
@@ -172,14 +181,7 @@ export class TreeColorManager {
       return false;
     }
     const splits = getLinkSplitIndices(linkData);
-    if (!splits?.length) return false;
-
-    // Fast rejection: if any leaf is NOT in union, link can't be in any subtree
-    for (let i = 0; i < splits.length; i++) {
-      if (!this._highlightedLeavesUnion.has(splits[i])) {
-        return false;
-      }
-    }
+    if (!this._hasAllLeavesInHighlightedUnion(splits)) return false;
 
     // All leaves are in union - do full subset check
     return isLinkInSubtree(linkData, this.highlightedSubtreeSets);
@@ -189,54 +191,19 @@ export class TreeColorManager {
    * Update history subtrees (already moved during this transition)
    */
   updateHistorySubtrees(subtrees) {
-    let history = [];
-    if (Array.isArray(subtrees)) {
-      history = subtrees;
-    } else if (subtrees instanceof Set) {
-      history = [subtrees];
-    }
-
-    this.historySubtrees = history.map((s) => (s instanceof Set ? s : new Set(s)));
+    this.historySubtrees = normalizeSubtreeGroups(subtrees);
   }
 
   updateSourceEdgeLeaves(sourceEdges) {
-    let edges = [];
-    if (Array.isArray(sourceEdges)) {
-      edges = sourceEdges;
-    } else if (sourceEdges instanceof Set) {
-      edges = [sourceEdges];
-    }
-    this.sourceEdgeLeaves = edges.map((s) => (s instanceof Set ? s : new Set(s)));
+    this.sourceEdgeLeaves = normalizeSubtreeGroups(sourceEdges);
   }
 
   updateDestinationEdgeLeaves(destEdges) {
-    let edges = [];
-    if (Array.isArray(destEdges)) {
-      edges = destEdges;
-    } else if (destEdges instanceof Set) {
-      edges = [destEdges];
-    }
-    this.destinationEdgeLeaves = edges.map((s) => (s instanceof Set ? s : new Set(s)));
+    this.destinationEdgeLeaves = normalizeSubtreeGroups(destEdges);
   }
 
   updateActiveMoverSubtrees(subtree) {
-    if (subtree instanceof Set) {
-      this.activeMoverSubtrees = [subtree];
-    } else if (Array.isArray(subtree)) {
-      if (subtree.length > 0 && typeof subtree[0] === 'number') {
-        this.activeMoverSubtrees = [new Set(subtree)];
-      } else {
-        this.activeMoverSubtrees = subtree
-          .map((entry) => {
-            if (entry instanceof Set) return entry;
-            if (Array.isArray(entry)) return new Set(entry);
-            return null;
-          })
-          .filter(Boolean);
-      }
-    } else {
-      this.activeMoverSubtrees = [];
-    }
+    this.activeMoverSubtrees = normalizeSubtreeGroups(subtree);
   }
 
   /**

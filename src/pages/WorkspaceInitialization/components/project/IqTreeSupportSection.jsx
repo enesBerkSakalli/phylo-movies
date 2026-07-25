@@ -10,7 +10,6 @@ import {
   FormLabel,
   FormMessage,
 } from '../../../../components/ui/form';
-import { Checkbox } from '../../../../components/ui/checkbox';
 import { Input } from '../../../../components/ui/input';
 import {
   Select,
@@ -22,6 +21,7 @@ import {
 } from '../../../../components/ui/select';
 import { cn } from '../../../../lib/utils';
 import { TreeInferenceOptionGroup } from './TreeInferenceOptionGroup.jsx';
+import { LabeledCheckboxField } from './LabeledCheckboxField.jsx';
 import {
   IQTREE_REPLICATE_COUNT_MAX,
   IQTREE_SH_ALRT_REPLICATE_COUNT_MIN,
@@ -103,33 +103,17 @@ export function IqTreeSupportSection({
             )}
           </div>
 
-          <FormField
+          <LabeledCheckboxField
             control={control}
             name="iqtreeBnni"
-            render={({ field }) => (
-              <FormItem className="flex items-start gap-3">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    disabled={disabled || !hasMsa}
-                  />
-                </FormControl>
-                <div className="flex flex-col gap-1 leading-none">
-                  <FormLabel
-                    className={cn(
-                      'cursor-pointer text-sm font-normal',
-                      !hasMsa && 'text-muted-foreground'
-                    )}
-                  >
-                    Bootstrap NNI
-                  </FormLabel>
-                  <FormDescription className="text-2xs leading-tight">
-                    Enables IQ-TREE <code>-bnni</code>.
-                  </FormDescription>
-                </div>
-              </FormItem>
-            )}
+            label="Bootstrap NNI"
+            description={
+              <>
+                Enables IQ-TREE <code>-bnni</code>.
+              </>
+            }
+            disabled={disabled || !hasMsa}
+            muted={!hasMsa}
           />
         </>
       )}

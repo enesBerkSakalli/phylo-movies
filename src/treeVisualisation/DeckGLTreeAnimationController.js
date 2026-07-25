@@ -459,16 +459,11 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
 
     const state = useAppStore.getState();
     const treeList = selectActiveTreeList(state);
-    const treeData =
-      state.ensureTreeHydrated?.(treeIndex) ??
-      useAppStore.getState().treeList?.[treeIndex] ??
-      treeList?.[treeIndex] ??
-      null;
+    const treeData = state.ensureTreeHydrated?.(treeIndex) ?? treeList?.[treeIndex] ?? null;
 
     // Bounds check
     if (!treeData) return;
 
-    const latestState = useAppStore.getState();
     const {
       branchTransformation,
       layoutAngleDegrees,
@@ -476,14 +471,14 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
       layoutProjectionMode,
       hyperbolicProjectionStrength,
       styleConfig,
-    } = latestState;
+    } = state;
     const offsets = styleConfig?.labelOffsets || { DEFAULT: 20, EXTENSION: 5 };
-    const linkGeometryMode = this._getLinkGeometryMode(latestState);
+    const linkGeometryMode = this._getLinkGeometryMode(state);
 
     // Ensure uniform scaling is initialized before dispatching to worker
     this.initializeUniformScaling(branchTransformation);
-    const layoutCacheKey = this._createLayoutCacheKey(treeIndex, latestState);
-    const requestToken = this._createLayoutRequestToken(treeIndex, latestState, layoutCacheKey);
+    const layoutCacheKey = this._createLayoutCacheKey(treeIndex, state);
+    const requestToken = this._createLayoutRequestToken(treeIndex, state, layoutCacheKey);
     if (this._layoutPrefetchTokens.get(treeIndex) === requestToken) return;
 
     this._layoutPrefetchTokens.set(treeIndex, requestToken);

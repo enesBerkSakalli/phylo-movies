@@ -24,7 +24,6 @@ import {
 
 /**
  * Tidy tree layout with radial projection and branch-length radii.
- * API-compatible with RadialTreeLayout for minimal integration changes.
  */
 export class TidyTreeLayout {
   constructor(root) {

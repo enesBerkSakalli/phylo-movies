@@ -10,14 +10,13 @@ import {
   FormMessage,
 } from '../../../../components/ui/form';
 import { Input } from '../../../../components/ui/input';
-import { cn } from '../../../../lib/utils';
 import {
   STEP_MAX,
   STEP_MIN,
   WINDOW_MAX,
   WINDOW_MIN,
 } from '../../workspaceInitializationFormModel.js';
-import { MsaRequiredBadge } from './MsaRequiredBadge.jsx';
+import { MsaGatedFormSection } from './MsaGatedFormSection.jsx';
 
 export function SlidingWindowSection({ hasMsa, hasTrees = false, disabled, embedded = false }) {
   const { control } = useFormContext();
@@ -26,29 +25,14 @@ export function SlidingWindowSection({ hasMsa, hasTrees = false, disabled, embed
     : 'Window and stride used to infer one tree per MSA slice.';
 
   return (
-    <section
-      className={cn(
-        'flex min-w-0 flex-col gap-4 transition-colors',
-        embedded ? '' : 'rounded-md border p-4',
-        !embedded && (!hasMsa ? 'border-dashed bg-muted/30' : 'bg-card')
-      )}
+    <MsaGatedFormSection
+      icon={SlidersHorizontal}
+      title="Overlapping Sliding Windows"
+      badgeDescription="Sliding window settings only apply when an MSA file is uploaded."
+      description={description}
+      hasMsa={hasMsa}
+      embedded={embedded}
     >
-      {!embedded && (
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <SlidersHorizontal
-              className={cn('size-4', !hasMsa ? 'text-muted-foreground' : 'text-primary')}
-            />
-            <h3 className="text-sm font-semibold">Overlapping Sliding Windows</h3>
-          </div>
-          {!hasMsa && (
-            <MsaRequiredBadge description="Sliding window settings only apply when an MSA file is uploaded." />
-          )}
-        </div>
-      )}
-
-      <p className="text-2xs text-muted-foreground leading-relaxed">{description}</p>
-
       <FormField
         control={control}
         name="windowSize"
@@ -106,6 +90,6 @@ export function SlidingWindowSection({ hasMsa, hasTrees = false, disabled, embed
           </FormItem>
         )}
       />
-    </section>
+    </MsaGatedFormSection>
   );
 }

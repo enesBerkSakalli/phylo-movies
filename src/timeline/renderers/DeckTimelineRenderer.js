@@ -335,11 +335,7 @@ export class DeckTimelineRenderer {
    */
   zoomIn(pct) {
     const span = this._rangeEnd - this._rangeStart;
-    const newSpan = Math.max(1, span * (1 - pct));
-    const center = (this._rangeStart + this._rangeEnd) / 2;
-    this._rangeStart = Math.max(0, center - newSpan / 2);
-    this._rangeEnd = Math.min(this._totalDuration, center + newSpan / 2);
-    this._scheduleUpdate();
+    this._setZoomedSpan(Math.max(1, span * (1 - pct)));
   }
 
   /**
@@ -348,7 +344,14 @@ export class DeckTimelineRenderer {
    */
   zoomOut(pct) {
     const span = this._rangeEnd - this._rangeStart;
-    const newSpan = Math.min(this._totalDuration, span * (1 + pct));
+    this._setZoomedSpan(Math.min(this._totalDuration, span * (1 + pct)));
+  }
+
+  /**
+   * Applies a new visible-range span, centered on the current view.
+   * @param {number} newSpan - The new span, already clamped by the caller.
+   */
+  _setZoomedSpan(newSpan) {
     const center = (this._rangeStart + this._rangeEnd) / 2;
     this._rangeStart = Math.max(0, center - newSpan / 2);
     this._rangeEnd = Math.min(this._totalDuration, center + newSpan / 2);

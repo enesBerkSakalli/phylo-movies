@@ -6,13 +6,6 @@ const linkUtilsMock = {
   getSubtreeHighlightRgb: () => [255, 0, 0],
 };
 
-const visualHighlightsMock = {
-  isLinkVisuallyHighlighted: (link, cm) => {
-    // Mimic the logic: marked OR activeEdge
-    return cm.isPivotEdge(link);
-  },
-};
-
 const dashUtilsMock = {
   calculateFlightDashArray: () => [5, 5],
 };
@@ -31,7 +24,6 @@ const { getLinkOutlineWidth } = proxyquire(
   '../../../src/treeVisualisation/deckgl/layers/styles/links/outline/linkOutlineStyles.js',
   {
     '../linkUtils.js': linkUtilsMock,
-    '../../../../../systems/tree_color/visualHighlights.js': visualHighlightsMock,
     '../dashUtils.js': dashUtilsMock,
     '../../dimmingUtils.js': dimmingUtilsMock,
     '../../../../../../services/ui/colorUtils.js': colorUtilsMock,

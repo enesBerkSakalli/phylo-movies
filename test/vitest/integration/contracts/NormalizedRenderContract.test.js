@@ -25,7 +25,6 @@ import {
   calculateBranchLengthRadii,
 } from '../../../../src/treeVisualisation/layout/LayoutBaseUtils.js';
 import { TidyTreeLayout } from '../../../../src/treeVisualisation/layout/TidyTreeLayout.js';
-import { RadialTreeLayout } from '../../../../src/treeVisualisation/layout/RadialTreeLayout.js';
 
 const repoRoot = process.cwd();
 
@@ -237,12 +236,9 @@ describe('normalized render contract', () => {
     };
 
     const tidyLayout = new TidyTreeLayout(tree);
-    const radialLayout = new RadialTreeLayout(tree);
 
     expect(tidyLayout.root.id).toEqual(expect.stringMatching(/^node-/));
     expect(tidyLayout.root.children[0].id).toEqual(expect.stringMatching(/^node-/));
-    expect(radialLayout.root.id).toEqual(expect.stringMatching(/^node-/));
-    expect(radialLayout.root.children[0].id).toEqual(expect.stringMatching(/^node-/));
   });
 
   it('uses prepared layout node ids for radius preservation', () => {

@@ -1,6 +1,6 @@
 import { colorToRgb } from '../../../../../../services/ui/colorUtils.js';
 import { SYSTEM_TREE_COLORS } from '../../../../../../constants/TreeColors.js';
-import { calculateFlightDashArray } from '../dashUtils.js';
+import { resolveChangeDashArray } from '../dashUtils.js';
 import { applyDimmingWithCache } from '../../dimmingUtils.js';
 import { getInnerLinkColor, getSubtreeHighlightRgb } from '../linkUtils.js';
 import { resolveTreeElementHighlight, TREE_HIGHLIGHT_ROLE } from '../../highlightResolver.js';
@@ -95,27 +95,5 @@ export function getLinkColor(link, cached, helpers) {
 }
 
 export function getLinkDashArray(link, cached) {
-  const { dashingEnabled, upcomingChangesEnabled } = cached;
-  const highlight = resolveTreeElementHighlight(link, cached, 'link');
-
-  // History mode line styles
-  // Done: SOLID (no dashing) - completed, stable
-  if (upcomingChangesEnabled && highlight.role === TREE_HIGHLIGHT_ROLE.COMPLETED_CHANGE) {
-    return null; // Solid line for completed
-  }
-
-  // Next: DOTTED (small dots) - future, anticipation
-  if (upcomingChangesEnabled && highlight.role === TREE_HIGHLIGHT_ROLE.UPCOMING_CHANGE) {
-    // Small dots pattern
-    _dashOut[0] = 3;
-    _dashOut[1] = 6;
-    return _dashOut; // Short on, longer off = dotted
-  }
-
-  // Current: DASHED (when dashing enabled) - active, in progress
-  if (dashingEnabled && highlight.role === TREE_HIGHLIGHT_ROLE.PIVOT_EDGE) {
-    return calculateFlightDashArray(link.path);
-  }
-
-  return null; // Solid line for everything else
+  return resolveChangeDashArray(link, cached, _dashOut);
 }

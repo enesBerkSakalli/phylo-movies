@@ -40,6 +40,38 @@ type TreePayloadDictionaries = {
   splitDefinitions: number[][];
 };
 
+/**
+ * Validates the name/length/split_indices fields shared by the expanded
+ * TreeNode and payload-only TreeNode validators.
+ */
+function validateTreeNodeNameLengthAndSplits(
+  value: Record<string, unknown>,
+  fieldName: string,
+  treeDictionaries: TreePayloadDictionaries
+): { name: string; length: number; splitIndices: number[] } {
+  const name = validateTreeNodeName(
+    value.name,
+    value.name_ref,
+    fieldName,
+    treeDictionaries.treeNameDefinitions
+  );
+
+  assertFiniteNumber(value.length, `${fieldName}.length`);
+  const length = value.length;
+
+  const splitIndices = validateTreeNodeSplitIndices(
+    value.split_indices,
+    value.split_ref,
+    fieldName,
+    treeDictionaries.splitDefinitions
+  );
+  if (splitIndices.length === 0) {
+    throw new Error(`Invalid phyloMovieData payload: ${fieldName}.split_indices must not be empty`);
+  }
+
+  return { name, length, splitIndices };
+}
+
 function validateTreeNode(
   value: unknown,
   fieldName: string,
@@ -65,24 +97,11 @@ function validateTreeNode(
     'children',
   ]);
 
-  const name = validateTreeNodeName(
-    value.name,
-    value.name_ref,
+  const { name, length, splitIndices } = validateTreeNodeNameLengthAndSplits(
+    value,
     fieldName,
-    treeDictionaries.treeNameDefinitions
+    treeDictionaries
   );
-
-  assertFiniteNumber(value.length, `${fieldName}.length`);
-
-  const splitIndices = validateTreeNodeSplitIndices(
-    value.split_indices,
-    value.split_ref,
-    fieldName,
-    treeDictionaries.splitDefinitions
-  );
-  if (splitIndices.length === 0) {
-    throw new Error(`Invalid phyloMovieData payload: ${fieldName}.split_indices must not be empty`);
-  }
 
   const children = requiredArray(value.children, `${fieldName}.children`);
   const validatedChildren = children.map((child, index) =>
@@ -108,7 +127,7 @@ function validateTreeNode(
 
   return {
     name,
-    length: value.length,
+    length,
     split_indices: splitIndices,
     ...(annotations === undefined ? {} : { annotations }),
     children: validatedChildren,
@@ -141,18 +160,7 @@ function validateTreePayloadNode(
     'children',
   ]);
 
-  validateTreeNodeName(value.name, value.name_ref, fieldName, treeDictionaries.treeNameDefinitions);
-  assertFiniteNumber(value.length, `${fieldName}.length`);
-
-  const splitIndices = validateTreeNodeSplitIndices(
-    value.split_indices,
-    value.split_ref,
-    fieldName,
-    treeDictionaries.splitDefinitions
-  );
-  if (splitIndices.length === 0) {
-    throw new Error(`Invalid phyloMovieData payload: ${fieldName}.split_indices must not be empty`);
-  }
+  validateTreeNodeNameLengthAndSplits(value, fieldName, treeDictionaries);
 
   const children = requiredArray(value.children, `${fieldName}.children`);
   children.forEach((child, index) =>
@@ -177,19 +185,17 @@ function validateTreePayloadNode(
   );
 }
 
-function validateTupleTreeNode(
+/**
+ * Validates the [length, name_ref, split_ref] leading fields shared by the
+ * expanded and payload-only tuple TreeNode validators.
+ */
+function validateTupleTreeNodeLengthNameAndSplits(
   value: unknown[],
   fieldName: string,
-  annotationDefinitions: AnnotationDefinition[],
   treeDictionaries: TreePayloadDictionaries
-): TreeNode {
-  if (value.length !== 5) {
-    throw new Error(
-      `Invalid phyloMovieData payload: ${fieldName} tuple node must be [length, name_ref, split_ref, annotation_values, children]`
-    );
-  }
-
+): { name: string; length: number; splitIndices: number[] } {
   assertFiniteNumber(value[0], `${fieldName}[0]`);
+  const length = value[0];
   const name = validateTreeNodeName(
     undefined,
     value[1],
@@ -205,6 +211,26 @@ function validateTupleTreeNode(
   if (splitIndices.length === 0) {
     throw new Error(`Invalid phyloMovieData payload: ${fieldName}.split_indices must not be empty`);
   }
+  return { name, length, splitIndices };
+}
+
+function validateTupleTreeNode(
+  value: unknown[],
+  fieldName: string,
+  annotationDefinitions: AnnotationDefinition[],
+  treeDictionaries: TreePayloadDictionaries
+): TreeNode {
+  if (value.length !== 5) {
+    throw new Error(
+      `Invalid phyloMovieData payload: ${fieldName} tuple node must be [length, name_ref, split_ref, annotation_values, children]`
+    );
+  }
+
+  const { name, length, splitIndices } = validateTupleTreeNodeLengthNameAndSplits(
+    value,
+    fieldName,
+    treeDictionaries
+  );
 
   const children = requiredArray(value[4], `${fieldName}[4]`);
   const validatedChildren = children.map((child, index) =>
@@ -228,7 +254,7 @@ function validateTupleTreeNode(
 
   return {
     name,
-    length: value[0],
+    length,
     split_indices: splitIndices,
     ...(annotations === undefined ? {} : { annotations }),
     children: validatedChildren,
@@ -247,17 +273,7 @@ function validateTupleTreePayloadNode(
     );
   }
 
-  assertFiniteNumber(value[0], `${fieldName}[0]`);
-  validateTreeNodeName(undefined, value[1], fieldName, treeDictionaries.treeNameDefinitions);
-  const splitIndices = validateTreeNodeSplitIndices(
-    undefined,
-    value[2],
-    fieldName,
-    treeDictionaries.splitDefinitions
-  );
-  if (splitIndices.length === 0) {
-    throw new Error(`Invalid phyloMovieData payload: ${fieldName}.split_indices must not be empty`);
-  }
+  validateTupleTreeNodeLengthNameAndSplits(value, fieldName, treeDictionaries);
 
   const children = requiredArray(value[4], `${fieldName}[4]`);
   children.forEach((child, index) =>
@@ -515,6 +531,43 @@ export function validateSplitDefinitions(value: unknown): number[][] {
   });
 }
 
+/**
+ * Validates the label/role/value_type fields shared by AnnotationDefinition
+ * and AnnotationField payloads.
+ */
+function validateAnnotationLabelRoleAndType(
+  value: Record<string, unknown>,
+  fieldName: string
+): { label: string; role: string; valueType: AnnotationValueType } {
+  if (typeof value.label !== 'string' || value.label.length === 0) {
+    throw new Error(
+      `Invalid phyloMovieData payload: ${fieldName}.label must be a non-empty string`
+    );
+  }
+  if (typeof value.role !== 'string' || value.role.length === 0) {
+    throw new Error(`Invalid phyloMovieData payload: ${fieldName}.role must be a non-empty string`);
+  }
+  const valueType = validateAnnotationValueType(value.value_type, `${fieldName}.value_type`);
+  return { label: value.label, role: value.role, valueType };
+}
+
+/**
+ * Validates the optional unit/analysis fields shared by AnnotationDefinition
+ * and AnnotationField payloads.
+ */
+function validateAnnotationUnitAndAnalysis(
+  value: Record<string, unknown>,
+  fieldName: string
+): { unit?: string; analysis?: AnnotationAnalysis } {
+  const unit =
+    value.unit === undefined ? undefined : validateRequiredString(value.unit, `${fieldName}.unit`);
+  const analysis =
+    value.analysis === undefined
+      ? undefined
+      : validateAnnotationAnalysis(value.analysis, `${fieldName}.analysis`);
+  return { unit, analysis };
+}
+
 function validateAnnotationDefinition(value: unknown, fieldName: string): AnnotationDefinition {
   assertRecord(value, fieldName);
   assertExactRecordKeys(value, fieldName, [
@@ -537,28 +590,15 @@ function validateAnnotationDefinition(value: unknown, fieldName: string): Annota
   if (path.join('.') !== value.key) {
     throw new Error(`Invalid phyloMovieData payload: ${fieldName}.path must match key`);
   }
-  if (typeof value.label !== 'string' || value.label.length === 0) {
-    throw new Error(
-      `Invalid phyloMovieData payload: ${fieldName}.label must be a non-empty string`
-    );
-  }
-  if (typeof value.role !== 'string' || value.role.length === 0) {
-    throw new Error(`Invalid phyloMovieData payload: ${fieldName}.role must be a non-empty string`);
-  }
-  const valueType = validateAnnotationValueType(value.value_type, `${fieldName}.value_type`);
-  const unit =
-    value.unit === undefined ? undefined : validateRequiredString(value.unit, `${fieldName}.unit`);
-  const analysis =
-    value.analysis === undefined
-      ? undefined
-      : validateAnnotationAnalysis(value.analysis, `${fieldName}.analysis`);
+  const { label, role, valueType } = validateAnnotationLabelRoleAndType(value, fieldName);
+  const { unit, analysis } = validateAnnotationUnitAndAnalysis(value, fieldName);
 
   return {
     key: value.key,
     path,
-    label: value.label,
+    label,
     value_type: valueType,
-    role: value.role,
+    role,
     ...(unit === undefined ? {} : { unit }),
     ...(analysis === undefined ? {} : { analysis }),
   };
@@ -589,31 +629,16 @@ function validateAnnotationField(
     throw new Error(`Invalid phyloMovieData payload: ${fieldName}.path must match field key`);
   }
 
-  if (typeof value.label !== 'string' || value.label.length === 0) {
-    throw new Error(
-      `Invalid phyloMovieData payload: ${fieldName}.label must be a non-empty string`
-    );
-  }
-  if (typeof value.role !== 'string' || value.role.length === 0) {
-    throw new Error(`Invalid phyloMovieData payload: ${fieldName}.role must be a non-empty string`);
-  }
-
-  const valueType = validateAnnotationValueType(value.value_type, `${fieldName}.value_type`);
+  const { label, role, valueType } = validateAnnotationLabelRoleAndType(value, fieldName);
   const annotationValue = validateAnnotationValue(value.value, valueType, `${fieldName}.value`);
-
-  const unit =
-    value.unit === undefined ? undefined : validateRequiredString(value.unit, `${fieldName}.unit`);
-  const analysis =
-    value.analysis === undefined
-      ? undefined
-      : validateAnnotationAnalysis(value.analysis, `${fieldName}.analysis`);
+  const { unit, analysis } = validateAnnotationUnitAndAnalysis(value, fieldName);
 
   return {
     path,
-    label: value.label,
+    label,
     value: annotationValue,
     value_type: valueType,
-    role: value.role,
+    role,
     ...(unit === undefined ? {} : { unit }),
     ...(analysis === undefined ? {} : { analysis }),
   };

@@ -2,16 +2,8 @@ import React from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Gauge } from 'lucide-react';
 
-import {
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-} from '../../../../components/ui/form';
-import { Checkbox } from '../../../../components/ui/checkbox';
-import { cn } from '../../../../lib/utils';
 import { TreeInferenceOptionGroup } from './TreeInferenceOptionGroup.jsx';
+import { LabeledCheckboxField } from './LabeledCheckboxField.jsx';
 
 export function IqTreeSearchSection({ hasMsa, disabled, supportsUfboot }) {
   const { control } = useFormContext();
@@ -22,35 +14,17 @@ export function IqTreeSearchSection({ hasMsa, disabled, supportsUfboot }) {
       title="Search strategy"
       description={supportsUfboot ? 'UFBoot disables fast search.' : 'Speed versus thoroughness.'}
     >
-      <FormField
+      <LabeledCheckboxField
         control={control}
         name="iqtreeFastSearch"
-        render={({ field }) => (
-          <FormItem className="flex items-start gap-3">
-            <FormControl>
-              <Checkbox
-                checked={field.value}
-                onCheckedChange={field.onChange}
-                disabled={disabled || !hasMsa || supportsUfboot}
-              />
-            </FormControl>
-            <div className="flex flex-col gap-1 leading-none">
-              <FormLabel
-                className={cn(
-                  'cursor-pointer text-sm font-normal',
-                  (!hasMsa || supportsUfboot) && 'text-muted-foreground'
-                )}
-              >
-                IQ-TREE Fast Search
-              </FormLabel>
-              <FormDescription className="text-2xs leading-tight">
-                {supportsUfboot
-                  ? 'UFBoot disables IQ-TREE -fast.'
-                  : 'Use IQ-TREE -fast for responsive runs.'}
-              </FormDescription>
-            </div>
-          </FormItem>
-        )}
+        label="IQ-TREE Fast Search"
+        description={
+          supportsUfboot
+            ? 'UFBoot disables IQ-TREE -fast.'
+            : 'Use IQ-TREE -fast for responsive runs.'
+        }
+        disabled={disabled || !hasMsa || supportsUfboot}
+        muted={!hasMsa || supportsUfboot}
       />
     </TreeInferenceOptionGroup>
   );

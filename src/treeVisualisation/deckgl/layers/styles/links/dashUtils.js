@@ -1,3 +1,5 @@
+import { resolveTreeElementHighlight, TREE_HIGHLIGHT_ROLE } from '../highlightResolver.js';
+
 // Reusable output buffers to avoid per-call array allocations
 const _flightDashOut = [0, 0];
 
@@ -59,4 +61,38 @@ export function calculateFlightDashArray(path) {
   _flightDashOut[0] = dotSize;
   _flightDashOut[1] = gapSize;
   return _flightDashOut;
+}
+
+/**
+ * Resolves the dash pattern for a link's change-history state (shared by the
+ * inner line and outline styles, which only differ in which reusable output
+ * buffer they write into).
+ *
+ * @param {Object} link - Link data
+ * @param {Object} cached - Cached render state
+ * @param {[number, number]} outputBuffer - Caller-owned 2-element buffer to reuse
+ * @returns {[number, number] | Float32Array | null} Dash array, or null for a solid line
+ */
+export function resolveChangeDashArray(link, cached, outputBuffer) {
+  const { dashingEnabled, upcomingChangesEnabled } = cached;
+  const highlight = resolveTreeElementHighlight(link, cached, 'link');
+
+  // Done: SOLID (no dashing) - completed, stable
+  if (upcomingChangesEnabled && highlight.role === TREE_HIGHLIGHT_ROLE.COMPLETED_CHANGE) {
+    return null;
+  }
+
+  // Next: DOTTED (small dots) - future, anticipation
+  if (upcomingChangesEnabled && highlight.role === TREE_HIGHLIGHT_ROLE.UPCOMING_CHANGE) {
+    outputBuffer[0] = 3;
+    outputBuffer[1] = 6;
+    return outputBuffer; // Short on, longer off = dotted
+  }
+
+  // Current: DASHED (when dashing enabled) - active, in progress
+  if (dashingEnabled && highlight.role === TREE_HIGHLIGHT_ROLE.PIVOT_EDGE) {
+    return calculateFlightDashArray(link.path);
+  }
+
+  return null; // Solid line for everything else
 }

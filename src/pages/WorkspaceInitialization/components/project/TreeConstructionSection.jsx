@@ -1,8 +1,7 @@
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Trees } from 'lucide-react';
-import { cn } from '../../../../lib/utils';
-import { MsaRequiredBadge } from './MsaRequiredBadge.jsx';
+import { MsaGatedFormSection } from './MsaGatedFormSection.jsx';
 import { TreeInferenceEngineField } from './TreeInferenceEngineField.jsx';
 import { IqTreeSearchSection } from './IqTreeSearchSection.jsx';
 import { SubstitutionModelSection } from './SubstitutionModelSection.jsx';
@@ -19,29 +18,15 @@ export function TreeConstructionSection({ hasMsa, disabled, embedded = false }) 
   const supportsShAlrt = ['sh_alrt', 'sh_alrt_ufboot'].includes(iqtreeSupportMode);
 
   return (
-    <section
-      className={cn(
-        'flex min-w-0 flex-col gap-4 transition-colors',
-        embedded ? '' : 'rounded-md border p-4',
-        !embedded && (!hasMsa ? 'border-dashed bg-muted/30' : 'bg-card')
-      )}
+    <MsaGatedFormSection
+      icon={Trees}
+      title="Tree Inference"
+      badgeDescription="Inference settings only apply when an MSA file is uploaded."
+      description="Engine and inference options for each MSA window."
+      footnote="Upload an MSA to infer trees here. If you upload precomputed trees only, this section is skipped."
+      hasMsa={hasMsa}
+      embedded={embedded}
     >
-      {!embedded && (
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Trees className={cn('size-4', !hasMsa ? 'text-muted-foreground' : 'text-primary')} />
-            <h3 className="text-sm font-semibold">Tree Inference</h3>
-          </div>
-          {!hasMsa && (
-            <MsaRequiredBadge description="Inference settings only apply when an MSA file is uploaded." />
-          )}
-        </div>
-      )}
-
-      <p className="text-2xs text-muted-foreground leading-relaxed">
-        Engine and inference options for each MSA window.
-      </p>
-
       <TreeInferenceEngineField hasMsa={hasMsa} disabled={disabled} isFastTree={isFastTree} />
 
       <div className="flex flex-col gap-3">
@@ -67,13 +52,6 @@ export function TreeConstructionSection({ hasMsa, disabled, embedded = false }) 
 
         {isFastTree && <FastTreeOptionsSection hasMsa={hasMsa} disabled={disabled} />}
       </div>
-
-      {!embedded && (
-        <p className="text-2xs text-muted-foreground italic leading-tight">
-          Upload an MSA to infer trees here. If you upload precomputed trees only, this section is
-          skipped.
-        </p>
-      )}
-    </section>
+    </MsaGatedFormSection>
   );
 }
