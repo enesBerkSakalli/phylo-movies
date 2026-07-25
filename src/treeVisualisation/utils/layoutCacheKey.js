@@ -6,7 +6,7 @@ import {
 import {
   LAYOUT_PROJECTION_MODES,
   normalizeLayoutProjectionMode,
-} from '../layout/hyperbolicProjection.js';
+} from '../layout/hyperbolicProjection/index.js';
 
 const datasetIds = new WeakMap();
 let nextDatasetId = 1;

@@ -3,7 +3,7 @@ import { LinkDataBuilder } from './builders/data/links/LinkDataBuilder.js';
 import { NodeDataBuilder } from './builders/data/nodes/NodeDataBuilder.js';
 import { LabelDataBuilder } from './builders/data/labels/LabelDataBuilder.js';
 import { ExtensionDataBuilder } from './builders/data/extensions/ExtensionDataBuilder.js';
-import { LAYOUT_PROJECTION_MODES } from '../layout/hyperbolicProjection.js';
+import { LAYOUT_PROJECTION_MODES } from '../layout/hyperbolicProjection/index.js';
 
 export class DeckGLTreeLayerDataFactory {
   constructor() {

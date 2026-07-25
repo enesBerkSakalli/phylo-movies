@@ -1,0 +1,10 @@
+export const H3_K = 2;
+export const H3_HEMISPHERE_AREA_SCALE = 7.2;
+export const H3_LEAF_AREA = 0.005;
+export const H3_EPSILON = 1e-10;
+export const H3_STABLE_DISPLAY_MIN_LEAVES = 8;
+export const H3_STABLE_DISPLAY_RADIUS_SCALE = 1.65;
+export const H3_MAX_STABLE_DISPLAY_UNIT_RADIUS = 0.95;
+export const H3_ROOT_DIRECTION = Object.freeze([1, 0, 0]);
+export const H3_ORIGIN4 = Object.freeze([0, 0, 0, 1]);
+export const H3_IDENTITY4 = Object.freeze([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);

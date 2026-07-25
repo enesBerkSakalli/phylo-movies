@@ -6,7 +6,7 @@ import {
   applyWalrus3dProjection,
   normalizeHyperbolicProjectionStrength,
   normalizeLayoutProjectionMode,
-} from '../../../../src/treeVisualisation/layout/hyperbolicProjection.js';
+} from '../../../../src/treeVisualisation/layout/hyperbolicProjection/index.js';
 
 function makeRoot() {
   const root = hierarchy({

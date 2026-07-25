@@ -16,7 +16,7 @@ import {
   LAYOUT_PROJECTION_MODES,
   applyLayoutProjection,
   normalizeLayoutProjectionMode,
-} from './layout/hyperbolicProjection.js';
+} from './layout/hyperbolicProjection/index.js';
 import {
   calculateLabelAngleSpan,
   calculateReadableLabelRadii,

@@ -24,7 +24,7 @@ import {
   useAppStore,
 } from '../../../../state/phyloStore/store.js';
 import { getAvailableBranchAnnotationOptions } from '../../../../domain/tree/branchSupportIndex.js';
-import { LAYOUT_PROJECTION_MODES } from '../../../../treeVisualisation/layout/hyperbolicProjection.js';
+import { LAYOUT_PROJECTION_MODES } from '../../../../treeVisualisation/layout/hyperbolicProjection/index.js';
 import { SidebarMenuItem, SidebarMenuButton } from '../../../ui/sidebar';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../../../ui/collapsible';
 import { ChevronDown, Circle, RotateCw } from 'lucide-react';

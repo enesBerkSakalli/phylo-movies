@@ -5,7 +5,7 @@ import { TreeNodeInteractionHandler } from '../../../../src/treeVisualisation/in
 import { useAppStore } from '../../../../src/state/phyloStore/store.js';
 import { createLayoutResult } from '../../../../src/treeVisualisation/layout/LayoutResultAdapter.js';
 import { assignLayoutNodeIds } from '../../../../src/treeVisualisation/layout/LayoutBaseUtils.js';
-import { LAYOUT_PROJECTION_MODES } from '../../../../src/treeVisualisation/layout/hyperbolicProjection.js';
+import { LAYOUT_PROJECTION_MODES } from '../../../../src/treeVisualisation/layout/hyperbolicProjection/index.js';
 
 function makeLayoutTree() {
   const root = hierarchy({

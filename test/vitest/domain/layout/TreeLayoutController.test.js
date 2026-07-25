@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useAppStore } from '../../../../src/state/phyloStore/store.js';
 import { TreeLayoutController } from '../../../../src/treeVisualisation/TreeLayoutController.js';
-import { LAYOUT_PROJECTION_MODES } from '../../../../src/treeVisualisation/layout/hyperbolicProjection.js';
+import { LAYOUT_PROJECTION_MODES } from '../../../../src/treeVisualisation/layout/hyperbolicProjection/index.js';
 
 describe('TreeLayoutController radii', () => {
   const initialState = useAppStore.getState();

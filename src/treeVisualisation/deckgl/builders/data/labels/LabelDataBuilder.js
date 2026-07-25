@@ -7,7 +7,7 @@ import {
   positionFromPolar,
   shouldFlipLabel,
 } from '../../../../utils/polarGeometry.js';
-import { LAYOUT_PROJECTION_MODES } from '../../../../layout/hyperbolicProjection.js';
+import { LAYOUT_PROJECTION_MODES } from '../../../../layout/hyperbolicProjection/index.js';
 
 /**
  * LabelDataBuilder - Generates label data for tree leaves

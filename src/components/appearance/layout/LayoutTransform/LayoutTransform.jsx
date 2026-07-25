@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from '../../../ui/select';
 import { Compass } from 'lucide-react';
-import { LAYOUT_PROJECTION_MODES } from '../../../../treeVisualisation/layout/hyperbolicProjection.js';
+import { LAYOUT_PROJECTION_MODES } from '../../../../treeVisualisation/layout/hyperbolicProjection/index.js';
 
 export function LayoutTransform({
   layoutAngleDegrees,

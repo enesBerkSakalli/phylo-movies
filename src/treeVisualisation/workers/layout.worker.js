@@ -4,7 +4,7 @@ import {
   LAYOUT_PROJECTION_MODES,
   applyLayoutProjection,
   normalizeLayoutProjectionMode,
-} from '../layout/hyperbolicProjection.js';
+} from '../layout/hyperbolicProjection/index.js';
 import { DeckGLTreeLayerDataFactory } from '../deckgl/DeckGLTreeLayerDataFactory.js';
 import { transformBranchLengths } from '../../domain/tree/branchTransform.js';
 import {

@@ -3,7 +3,7 @@ import {
   DEFAULT_LAYOUT_PROJECTION_MODE,
   normalizeHyperbolicProjectionStrength,
   normalizeLayoutProjectionMode,
-} from '../../../../treeVisualisation/layout/hyperbolicProjection.js';
+} from '../../../../treeVisualisation/layout/hyperbolicProjection/index.js';
 
 export const DEFAULT_BRANCH_TRANSFORMATION = 'normalized-sqrt';
 
