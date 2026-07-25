@@ -50,6 +50,7 @@
     ],
     "files": [
       "main.js",
+      "lib/**/*",
       "preload.js",
       "splash-preload.js",
       "build/icon.png",
