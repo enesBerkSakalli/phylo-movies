@@ -5,10 +5,17 @@ import { FileStack, GitBranch, SlidersHorizontal, Trees } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '../../../components/ui/alert';
 import { ProjectFileSection } from './project/ProjectFileSection.jsx';
 import { SlidingWindowSection } from './project/SlidingWindowSection.jsx';
-import { TreeConstructionSection } from './project/TreeConstructionSection.jsx';
 import { TreeAdjustmentSection } from './project/TreeAdjustmentSection.jsx';
 import { ProjectActions } from './project/ProjectActions.jsx';
 import { cn } from '../../../lib/utils';
+
+// Engine/model subforms (IQ-TREE, FastTree, substitution model) only matter once an
+// MSA is uploaded, so they're split out of the initial workspace bundle.
+const TreeConstructionSection = React.lazy(() =>
+  import('./project/TreeConstructionSection.jsx').then((module) => ({
+    default: module.TreeConstructionSection,
+  }))
+);
 
 export function NewProjectTab({ disabled: globalDisabled, reset }) {
   const { watch, setValue } = useFormContext();
@@ -114,7 +121,18 @@ export function NewProjectTab({ disabled: globalDisabled, reset }) {
                   iqtreeSupportMode,
                 })}
               >
-                <TreeConstructionSection hasMsa={hasMsa} disabled={globalDisabled} embedded />
+                <React.Suspense
+                  fallback={
+                    <div
+                      className="text-2xs text-muted-foreground/70"
+                      role="status"
+                    >
+                      Loading tree inference settings…
+                    </div>
+                  }
+                >
+                  <TreeConstructionSection hasMsa={hasMsa} disabled={globalDisabled} embedded />
+                </React.Suspense>
               </SettingsPanel>
             )}
           </div>
