@@ -48,9 +48,9 @@ export const TaxaGroupsLegend: React.FC = () => {
       <Collapsible className="group/taxa-legend">
         <CollapsibleTrigger asChild>
           <SidebarMenuButton tooltip="Taxa Color Groups">
-            <Palette className="size-4 text-primary" />
+            <Palette className="text-primary" />
             <span className="font-medium">Taxa Color Groups</span>
-            <ChevronDown className="ml-auto size-4 transition-transform group-data-[state=open]/taxa-legend:rotate-180" />
+            <ChevronDown className="ml-auto transition-transform group-data-[state=open]/taxa-legend:rotate-180" />
           </SidebarMenuButton>
         </CollapsibleTrigger>
         <CollapsibleContent>

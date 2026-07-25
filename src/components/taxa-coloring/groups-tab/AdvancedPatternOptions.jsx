@@ -103,7 +103,7 @@ export function AdvancedPatternOptions({
                 />
                 {regexError && <p className="text-xs text-destructive">{regexError}</p>}
                 <Alert>
-                  <Info className="h-4 w-4" />
+                  <Info />
                   <AlertDescription className="text-xs">
                     Use capture group (parentheses) to extract the group name. Example:{' '}
                     <code className="font-mono bg-muted px-1 rounded">^([A-Z][a-z]+)</code> extracts

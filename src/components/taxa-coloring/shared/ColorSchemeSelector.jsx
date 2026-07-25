@@ -26,14 +26,14 @@ export function ColorSchemeSelector({
           </div>
           <CollapsibleTrigger asChild>
             <Button size="sm" variant="secondary" className="h-7 text-[11px] shrink-0">
-              <Palette className="mr-2 size-3.5" />
+              <Palette data-icon="inline-start" />
               {open ? (
                 <>
-                  Hide <ChevronUp className="ml-1 size-3" />
+                  Hide <ChevronUp data-icon="inline-end" />
                 </>
               ) : (
                 <>
-                  Browse Palettes <ChevronDown className="ml-1 size-3" />
+                  Browse Palettes <ChevronDown data-icon="inline-end" />
                 </>
               )}
             </Button>

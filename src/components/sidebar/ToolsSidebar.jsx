@@ -84,7 +84,7 @@ export function ToolsSidebar({
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton tooltip="Change dataset" onClick={handleReturnHome}>
-                  <ArrowLeft className="size-4" />
+                  <ArrowLeft />
                   <span>Change Dataset</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>

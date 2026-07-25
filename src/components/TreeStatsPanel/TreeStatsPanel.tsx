@@ -36,9 +36,9 @@ export const TreeStatsPanel: React.FC = () => {
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton tooltip="Tree Metrics">
-            <BarChart3 className="size-4 text-primary" />
+            <BarChart3 className="text-primary" />
             <span>Tree Metrics</span>
-            <ChevronDown className="ml-auto size-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
           </SidebarMenuButton>
         </CollapsibleTrigger>
         <CollapsibleContent>

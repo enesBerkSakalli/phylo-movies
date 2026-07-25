@@ -57,10 +57,10 @@ export function SeparatorInput({ separators = [], onChange, detectedSeparators =
             <Button
               variant="ghost"
               size="icon"
-              className="h-4 w-4 p-0 hover:bg-transparent"
+              className="size-4 p-0 hover:bg-transparent"
               onClick={() => removeSeparator(idx)}
             >
-              <X className="h-3 w-3" />
+              <X className="size-3" />
             </Button>
           </Badge>
         ))}

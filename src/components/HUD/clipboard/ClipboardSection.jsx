@@ -52,7 +52,7 @@ export function ClipboardSection({
             <Button
               variant="ghost"
               size="icon"
-              className="h-5 w-5 hover:bg-accent rounded-sm"
+              className="size-5 hover:bg-accent rounded-sm"
               onClick={handlePreviousInputTree}
               disabled={!hasInputTrees}
               aria-label="Pin previous input tree as an overlay reference"
@@ -72,7 +72,7 @@ export function ClipboardSection({
             <Button
               variant="ghost"
               size="icon"
-              className="h-5 w-5 hover:bg-accent rounded-sm"
+              className="size-5 hover:bg-accent rounded-sm"
               onClick={handleNextInputTree}
               disabled={!hasInputTrees}
               aria-label="Pin next input tree as an overlay reference"
@@ -86,7 +86,7 @@ export function ClipboardSection({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-5 w-5 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-sm ml-1"
+                className="size-5 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-sm ml-1"
                 onClick={onClear}
                 aria-label="Hide pinned tree"
               >

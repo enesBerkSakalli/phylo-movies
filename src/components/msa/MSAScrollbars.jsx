@@ -260,7 +260,7 @@ export function MSAScrollbars({ layoutMetrics = null }) {
 
       {/* Corner piece to fill gap between scrollbars */}
       <div
-        className="absolute bottom-0 right-0 w-3 h-3 bg-muted/50 border-l border-t border-border z-20"
+        className="absolute bottom-0 right-0 size-3 bg-muted/50 border-l border-t border-border z-20"
         aria-hidden="true"
       />
     </>

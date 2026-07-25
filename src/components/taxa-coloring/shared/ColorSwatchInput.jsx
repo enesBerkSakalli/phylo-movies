@@ -51,7 +51,7 @@ export function ColorSwatchInput({ label, color, onChange }) {
               type="button"
               variant="outline"
               size="icon"
-              className="h-7 w-7 border border-input/60 shadow-sm hover:scale-110 transition-transform duration-200"
+              className="size-7 border border-input/60 shadow-sm hover:scale-110 transition-transform duration-200"
               style={{ backgroundColor: displayColor }}
               aria-label={`Select color for ${label}`}
             />
@@ -69,7 +69,7 @@ export function ColorSwatchInput({ label, color, onChange }) {
                         type="button"
                         size="icon"
                         variant="ghost"
-                        className="h-5 w-5 border border-input p-0 hover:scale-110 transition-transform active:scale-95"
+                        className="size-5 border border-input p-0 hover:scale-110 transition-transform active:scale-95"
                         style={{ backgroundColor: c }}
                         aria-label={`Apply ${c} to ${label}`}
                         onClick={() => {

@@ -167,7 +167,7 @@ function MovingSubtreesSection({ subtreeGroups, isExpanded, onToggleExpanded }) 
           <Button
             variant="ghost"
             size="icon"
-            className="h-4 w-4 p-0 hover:bg-transparent"
+            className="size-4 p-0 hover:bg-transparent"
             aria-label={isExpanded ? 'Collapse affected subtrees' : 'Expand affected subtrees'}
             title={isExpanded ? 'Collapse affected subtrees' : 'Expand affected subtrees'}
             onClick={(e) => {
