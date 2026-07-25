@@ -61,7 +61,7 @@
     "manual:dev": "npm --prefix manual run start",
     "generate:brand": "node scripts/generate-brand-icons.mjs",
     "check:brand": "node scripts/check-brand-assets.mjs",
-    "check:architecture": "depcruise src --config .dependency-cruiser.cjs --ignore-known .dependency-cruiser-known-violations.json",
+    "check:architecture": "depcruise src --config .dependency-cruiser.cjs",
     "check:electron-frontend-dist": "node scripts/check-electron-frontend-dist.mjs",
     "version:sync": "node scripts/sync-release-version.mjs",
     "version:check": "node scripts/sync-release-version.mjs --check",

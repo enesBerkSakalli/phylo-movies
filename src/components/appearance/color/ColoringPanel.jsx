@@ -42,7 +42,7 @@ import { Button } from '../../ui/button';
 import { Separator } from '../../ui/separator';
 import { SYSTEM_TREE_COLORS } from '../../../constants/TreeColors.js';
 
-export function ColoringPanel({ onOpenTaxaColoring }) {
+export function ColoringPanel({ onOpenTaxaColoring, onPreloadTaxaColoring }) {
   const monophyletic = useAppStore(selectMonophyleticColoringEnabled);
   const pivotEdgesEnabled = useAppStore(selectPivotEdgesEnabled);
   const treeController = useAppStore(selectTreeController);
@@ -113,6 +113,8 @@ export function ColoringPanel({ onOpenTaxaColoring }) {
           id="taxa-coloring-button"
           type="button"
           onClick={openTaxaColoring}
+          onMouseEnter={onPreloadTaxaColoring}
+          onFocus={onPreloadTaxaColoring}
           disabled={!hasTaxa}
           aria-label={
             hasTaxa

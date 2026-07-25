@@ -86,6 +86,18 @@ describe('tree viewport behavior', () => {
     controller.destroy();
   });
 
+  it('loads the workspace tour only after the user targets its launcher', () => {
+    const source = readFileSync(
+      join(process.cwd(), 'src/features/tours/TourLauncher.jsx'),
+      'utf8'
+    );
+
+    expect(source).not.toContain("from './workspaceTour.js'");
+    expect(source).toContain("const loadWorkspaceTour = () => import('./workspaceTour.js')");
+    expect(source).toContain('onMouseEnter={preloadWorkspaceTour}');
+    expect(source).toContain('onFocus={preloadWorkspaceTour}');
+  });
+
   it('automatic static fit uses branch geometry while still rendering labels', () => {
     const node = { id: 'node-1', position: [0, 0, 0] };
     const label = {

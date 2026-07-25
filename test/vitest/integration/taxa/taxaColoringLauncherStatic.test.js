@@ -19,15 +19,20 @@ describe('taxa coloring launcher', () => {
     expect(appSource).toContain('openTaxaColoringWindow');
     expect(appSource).toContain("setActiveFloatingWindow('taxa-coloring')");
     expect(appSource).toContain('setTaxaColoringOpen(true)');
+    expect(appSource).toContain('const loadTaxaColoringRndWindow');
+    expect(appSource).toContain('const TaxaColoringRndWindow = React.lazy');
+    expect(appSource).toContain('isTaxaColoringOpen ?');
     expect(appSource).toContain('onOpenTaxaColoring={openTaxaColoringWindow}');
+    expect(appSource).toContain('onPreloadTaxaColoring={preloadTaxaColoringWindow}');
     expect(sidebarSource).toContain('onOpenTaxaColoring');
-    expect(sidebarSource).toContain(
-      '<TaxaAndHighlightsSection onOpenTaxaColoring={onOpenTaxaColoring} />'
-    );
+    expect(sidebarSource).toContain('<TaxaAndHighlightsSection');
+    expect(sidebarSource).toContain('onOpenTaxaColoring={onOpenTaxaColoring}');
+    expect(sidebarSource).toContain('onPreloadTaxaColoring={onPreloadTaxaColoring}');
     expect(taxaHighlightsSource).toContain('onOpenTaxaColoring');
-    expect(taxaHighlightsSource).toContain(
-      '<ColoringPanel onOpenTaxaColoring={onOpenTaxaColoring} />'
-    );
+    expect(taxaHighlightsSource).toContain('onPreloadTaxaColoring');
+    expect(taxaHighlightsSource).toContain('<ColoringPanel');
+    expect(taxaHighlightsSource).toContain('onOpenTaxaColoring={onOpenTaxaColoring}');
+    expect(taxaHighlightsSource).toContain('onPreloadTaxaColoring={onPreloadTaxaColoring}');
   });
 
   it('uses a visible compact shadcn button instead of the legacy helper block', () => {
@@ -38,6 +43,8 @@ describe('taxa coloring launcher', () => {
     expect(sourceText).toContain('disabled={!hasTaxa}');
     expect(sourceText).not.toContain('variant="secondary"');
     expect(sourceText).not.toContain('Set colors for taxa or groups in a separate window.');
+    expect(sourceText).toContain('onMouseEnter={onPreloadTaxaColoring}');
+    expect(sourceText).toContain('onFocus={onPreloadTaxaColoring}');
   });
 
   it('labels the icon-only close button', () => {

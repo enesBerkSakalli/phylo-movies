@@ -1,5 +1,4 @@
 import React from 'react';
-import { DistanceChart } from '../../DistanceChart/DistanceChart.jsx';
 import {
   DISTANCE_CHART_METRIC_OPTIONS,
   getDistanceChartSectionLabel,
@@ -19,10 +18,17 @@ import {
   SelectValue,
 } from '../../ui/select';
 
+const loadDistanceChart = () =>
+  import('../../DistanceChart/DistanceChart.jsx').then((module) => ({
+    default: module.DistanceChart,
+  }));
+const DistanceChart = React.lazy(loadDistanceChart);
+
 function MovieChartSectionComponent() {
   const barOptionValue = useAppStore(selectBarOptionValue);
   const setBarOption = useAppStore(selectSetBarOption);
   const hasMsa = useAppStore(selectHasMsa);
+  const [chartExpanded, setChartExpanded] = React.useState(false);
 
   return (
     <div
@@ -31,9 +37,15 @@ function MovieChartSectionComponent() {
       aria-label="Input-tree metric chart"
     >
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-        <div className="min-w-0 truncate text-2xs font-medium uppercase tracking-wider text-muted-foreground">
-          {getDistanceChartSectionLabel(barOptionValue, hasMsa)}
-        </div>
+        <button
+          type="button"
+          aria-expanded={chartExpanded}
+          aria-controls="distance-chart-panel"
+          onClick={() => setChartExpanded((expanded) => !expanded)}
+          className="min-w-0 truncate text-left text-2xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground"
+        >
+          {chartExpanded ? 'Hide' : 'Show'} {getDistanceChartSectionLabel(barOptionValue, hasMsa)}
+        </button>
 
         <div className="shrink-0" role="group" aria-label="Chart controls">
           <Select value={barOptionValue} onValueChange={setBarOption}>
@@ -59,9 +71,19 @@ function MovieChartSectionComponent() {
         </div>
       </div>
 
-      <div className="mt-0.5 h-[50px] w-full min-w-0">
-        <DistanceChart />
-      </div>
+      {chartExpanded ? (
+        <div id="distance-chart-panel" className="mt-0.5 h-[50px] w-full min-w-0">
+          <React.Suspense
+            fallback={
+              <div className="flex h-full items-center text-xs text-muted-foreground/50" role="status">
+                Loading chart…
+              </div>
+            }
+          >
+            <DistanceChart />
+          </React.Suspense>
+        </div>
+      ) : null}
     </div>
   );
 }

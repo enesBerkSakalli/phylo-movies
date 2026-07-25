@@ -2,7 +2,16 @@ import React from 'react';
 import { HelpCircle } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { AppTooltip } from '../../components/ui/app-tooltip';
-import { startWorkspaceTour } from './workspaceTour.js';
+
+const loadWorkspaceTour = () => import('./workspaceTour.js');
+
+function preloadWorkspaceTour() {
+  void loadWorkspaceTour();
+}
+
+function startWorkspaceTour() {
+  void loadWorkspaceTour().then((module) => module.startWorkspaceTour());
+}
 
 export function TourLauncher() {
   return (
@@ -13,6 +22,8 @@ export function TourLauncher() {
         size="icon-xs"
         aria-label="Start workspace tour"
         onClick={startWorkspaceTour}
+        onMouseEnter={preloadWorkspaceTour}
+        onFocus={preloadWorkspaceTour}
       >
         <HelpCircle aria-hidden />
       </Button>

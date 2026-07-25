@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getNodesLayerProps } from '../../../../src/treeVisualisation/deckgl/layers/factory/nodes/NodeLayers.js';
-import { HISTORY_NODE_Z_OFFSET } from '../../../../src/treeVisualisation/deckgl/layers/config/layerConfigs.js';
+import { HISTORY_NODE_Z_OFFSET } from '../../../../src/treeVisualisation/deckgl/constants/zOffsets.js';
 import { getNodeLineWidth } from '../../../../src/treeVisualisation/deckgl/layers/styles/nodes/nodeWidthStyles.js';
 
 describe('NodeLayers accessors', () => {

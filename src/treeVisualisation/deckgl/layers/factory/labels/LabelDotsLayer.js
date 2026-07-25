@@ -1,8 +1,8 @@
 /**
  * Factory for label dots layer - shows dots instead of text labels
  */
-import { LAYER_ID_PREFIX } from '../../config/layerConfigs.js';
 import { ScatterplotLayer } from '@deck.gl/layers';
+import { LAYER_ID_PREFIX } from '../../../constants/layerIds.js';
 import { getHistoryOffset, addZOffset } from '../../styles/labels/labelUtils.js';
 
 // Scale factor to convert font size to dot radius (adjust as needed)

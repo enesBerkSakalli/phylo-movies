@@ -1,5 +1,5 @@
 import { TextLayer } from '@deck.gl/layers';
-import { CLIPBOARD_LAYER_ID_PREFIX } from '../deckgl/layers/config/layerConfigs.js';
+import { CLIPBOARD_LAYER_ID_PREFIX } from '../deckgl/constants/layerIds.js';
 import { selectInputFrameIndices, useAppStore } from '../../state/phyloStore/store.js';
 import { calculateLabelBounds, calculateNodeBounds, mergeBounds } from './TreeBoundsUtils.js';
 

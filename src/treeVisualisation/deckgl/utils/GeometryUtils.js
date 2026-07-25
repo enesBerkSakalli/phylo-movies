@@ -2,7 +2,7 @@
  * Geometry manipulation utilities for DeckGL layers.
  * Provides optimized methods for path transformation and coordinate manipulation.
  */
-import { HISTORY_NODE_Z_OFFSET, HISTORY_LABEL_Z_OFFSET } from '../layers/config/layerConfigs.js';
+import { HISTORY_NODE_Z_OFFSET, HISTORY_LABEL_Z_OFFSET } from '../constants/zOffsets.js';
 
 /**
  * Returns the history Z-offset for a node if applicable.

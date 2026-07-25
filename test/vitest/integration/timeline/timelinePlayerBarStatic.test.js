@@ -164,6 +164,9 @@ describe('movie timeline player bar semantics', () => {
       'export const MovieChartSection = React.memo(MovieChartSectionComponent)'
     );
     expect(chartSectionSource).toContain('aria-describedby="chart-select-help"');
+    expect(chartSectionSource).toContain('const DistanceChart = React.lazy(loadDistanceChart)');
+    expect(chartSectionSource).toContain('aria-expanded={chartExpanded}');
+    expect(chartSectionSource).toContain('chartExpanded ? (');
     expect(distanceChartSource).toContain('sourceFrameIndex: cursor?.sourceFrameIndex ?? null');
     expect(distanceChartSource).toContain(
       'sourceInputTreeIndex: cursor?.sourceInputTreeIndex ?? null'

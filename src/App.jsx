@@ -4,7 +4,6 @@ import { MoviePlayerBar } from './components/movie-player/MoviePlayerBar.jsx';
 import { ToolsSidebar } from './components/sidebar/ToolsSidebar.jsx';
 import { DeckGLCanvas } from './components/deckgl/DeckGLCanvas.jsx';
 import { TreeCanvasControls } from './components/deckgl/TreeCanvasControls.jsx';
-import { TaxaColoringRndWindow } from './components/taxa-coloring/TaxaColoringRndWindow.jsx';
 import { NodeContextMenu } from './components/NodeContextMenu.jsx';
 import { TransitionInspectorPanel } from './components/TransitionInspectorPanel.jsx';
 import { Toaster } from './components/ui/sonner';
@@ -21,18 +20,22 @@ import {
   selectIsMsaViewerOpen,
   selectReset,
   selectSetTaxaColoringOpen,
+  selectTaxaColoringOpen,
   useAppStore,
 } from './state/phyloStore/store.js';
 import { phyloData } from './services/data/dataService.js';
 import { useTreeController } from './hooks/useTreeController.js';
 
 const MsaRndWindow = React.lazy(() => import('./components/msa/MsaRndWindow.jsx'));
+const loadTaxaColoringRndWindow = () => import('./components/taxa-coloring/TaxaColoringRndWindow.jsx');
+const TaxaColoringRndWindow = React.lazy(loadTaxaColoringRndWindow);
 
 export function App() {
   const fileName = useAppStore(selectFileName) || 'Loading...';
   const datasetProvenance = useAppStore(selectDatasetProvenance);
   const initializeStore = useAppStore(selectInitialize);
   const isMsaViewerOpen = useAppStore(selectIsMsaViewerOpen);
+  const isTaxaColoringOpen = useAppStore(selectTaxaColoringOpen);
   const resetStore = useAppStore(selectReset);
   const setTaxaColoringOpen = useAppStore(selectSetTaxaColoringOpen);
   const [sprAnalyticsOpen, setSprAnalyticsOpen] = React.useState(false);
@@ -61,6 +64,9 @@ export function App() {
     setTaxaColoringOpen(true);
     setActiveFloatingWindow('taxa-coloring');
   }, [setTaxaColoringOpen]);
+  const preloadTaxaColoringWindow = React.useCallback(() => {
+    void loadTaxaColoringRndWindow();
+  }, []);
   const closeSprAnalyticsWindow = React.useCallback(() => {
     setSprAnalyticsOpen(false);
     setActiveFloatingWindow((activeWindow) =>
@@ -121,6 +127,7 @@ export function App() {
             onCloseSprAnalytics={closeSprAnalyticsWindow}
             onFocusSprAnalytics={focusSprAnalyticsWindow}
             onOpenTaxaColoring={openTaxaColoringWindow}
+            onPreloadTaxaColoring={preloadTaxaColoringWindow}
           />
 
           <SidebarInset className="min-w-0 overflow-hidden">
@@ -139,10 +146,14 @@ export function App() {
             <MsaRndWindow isActive={activeFloatingWindow === 'msa'} onFocus={focusMsaWindow} />
           </React.Suspense>
         ) : null}
-        <TaxaColoringRndWindow
-          isActive={activeFloatingWindow === 'taxa-coloring'}
-          onFocus={focusTaxaColoringWindow}
-        />
+        {isTaxaColoringOpen ? (
+          <React.Suspense fallback={null}>
+            <TaxaColoringRndWindow
+              isActive={activeFloatingWindow === 'taxa-coloring'}
+              onFocus={focusTaxaColoringWindow}
+            />
+          </React.Suspense>
+        ) : null}
 
         <MoviePlayerBar />
         <NodeContextMenu />
