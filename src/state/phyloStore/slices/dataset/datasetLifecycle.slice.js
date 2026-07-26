@@ -1,10 +1,7 @@
 import { MovieTimelineManager } from '../../../../timeline/core/MovieTimelineManager.js';
 import { hydrateMovieTreeAtIndex } from '../../../../domain/backend/treeHydration.js';
+import { createTreeDatasetInitialState } from './treeDataset.slice.js';
 
-const EMPTY_PAIR_METRICS = Object.freeze({
-  rows: Object.freeze([]),
-  semantics: Object.freeze({}),
-});
 const LARGE_DATASET_LABEL_TAXA_THRESHOLD = 300;
 
 export const createDatasetLifecycleSlice = (set, get, store) => ({
@@ -23,19 +20,8 @@ export const createDatasetLifecycleSlice = (set, get, store) => ({
     resetComparison();
 
     set({
-      treeList: [],
-      treePayloadList: [],
-      treeHydrationSource: null,
-      treeHydrationVersion: 0,
-      timelineFrames: [],
-      leafNamesByIndex: [],
-      fileName: null,
-      datasetProvenance: null,
+      ...createTreeDatasetInitialState(),
       datasetVersion: (get().datasetVersion ?? 0) + 1,
-      pairMetrics: EMPTY_PAIR_METRICS,
-      pairs: [],
-      subtreeHighlightTracking: [],
-      temporalEvents: [],
       movieTimelineManager: null,
       timelineCursor: null,
       selectedTimelineSegmentIndex: null,

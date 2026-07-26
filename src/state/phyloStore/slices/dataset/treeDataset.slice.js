@@ -2,36 +2,40 @@ import { selectTreeContext } from '../../selectors/treeSelectors.js';
 import { hydrateMovieTreeAtIndex } from '../../../../domain/backend/treeHydration.js';
 import { selectInputFrameIndicesFromRows } from '../../../../timeline/data/timelineFrameIndex.js';
 
-const EMPTY_PAIR_METRICS = Object.freeze({
+export const EMPTY_PAIR_METRICS = Object.freeze({
   rows: Object.freeze([]),
   semantics: Object.freeze({}),
 });
 
+/**
+ * The dataset fields this slice owns, as a plain object. Shared with
+ * datasetLifecycle.slice.js's reset() so the two can't drift out of sync.
+ */
+export function createTreeDatasetInitialState() {
+  return {
+    // STATE: Core Data
+    treeList: [],
+    treePayloadList: [],
+    treeHydrationSource: null,
+    treeHydrationVersion: 0,
+    timelineFrames: [],
+    leafNamesByIndex: [],
+    fileName: null,
+    datasetProvenance: null,
+    datasetVersion: 0,
+
+    // STATE: Distances & Scales
+    pairMetrics: EMPTY_PAIR_METRICS,
+
+    // STATE: Change Tracking
+    pairs: [],
+    subtreeHighlightTracking: [],
+    temporalEvents: [],
+  };
+}
+
 export const createTreeDatasetSlice = (set, get) => ({
-  // ==========================================================================
-  // STATE: Core Data
-  // ==========================================================================
-  treeList: [],
-  treePayloadList: [],
-  treeHydrationSource: null,
-  treeHydrationVersion: 0,
-  timelineFrames: [],
-  leafNamesByIndex: [],
-  fileName: null,
-  datasetProvenance: null,
-  datasetVersion: 0,
-
-  // ==========================================================================
-  // STATE: Distances & Scales
-  // ==========================================================================
-  pairMetrics: EMPTY_PAIR_METRICS,
-
-  // ==========================================================================
-  // STATE: Change Tracking
-  // ==========================================================================
-  pairs: [],
-  subtreeHighlightTracking: [],
-  temporalEvents: [],
+  ...createTreeDatasetInitialState(),
 
   ensureTreeHydrated: (index) => {
     return get().ensureTreesHydrated?.([index])?.[0] ?? null;
