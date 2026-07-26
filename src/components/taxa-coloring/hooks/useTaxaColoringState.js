@@ -4,6 +4,7 @@ import { generateGroups } from '../../../treeColoring/utils/GroupingUtils.js';
 import { syncGroupColors } from '../utils/colorManagement.js';
 import { useCSVState } from './useCSVState.js';
 import { toHexMap } from '../../../services/ui/colorUtils.js';
+import { SYSTEM_TREE_COLORS } from '../../../constants/TreeColors.js';
 
 const GROUP_NAME_COLLATOR = new Intl.Collator(undefined, {
   numeric: true,
@@ -232,7 +233,7 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
   const resetToDefault = useCallback(
     function resetToDefault() {
       // Clear everything across all modes - reset to standard system default
-      const defaultColor = '#000000';
+      const defaultColor = SYSTEM_TREE_COLORS.defaultColor;
       taxaNames.forEach((name) => {
         mgr.taxaColorMap[name] = defaultColor;
       });

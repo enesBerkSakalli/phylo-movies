@@ -388,14 +388,14 @@ function MSATreeStatus({ status }) {
         className="inline-flex w-[7rem] shrink-0 items-center justify-center gap-1 rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-primary"
         aria-label={`${tooltip}; ${label}`}
       >
-        <GitBranch className="size-3.5 shrink-0" aria-hidden />
+        <GitBranch className="size-3 shrink-0" aria-hidden />
         <span className="min-w-[1.25rem] shrink-0 text-center font-semibold leading-none">
           {sourceLabel}
         </span>
         {status.kind === 'transition' && (
           <>
             <ArrowRight className="size-3 shrink-0 text-muted-foreground" aria-hidden />
-            <GitBranch className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+            <GitBranch className="size-3 shrink-0 text-muted-foreground" aria-hidden />
             <span className="min-w-[1.25rem] shrink-0 text-center font-semibold leading-none text-muted-foreground">
               {targetLabel}
             </span>

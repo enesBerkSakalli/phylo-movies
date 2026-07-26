@@ -93,7 +93,7 @@ export function TaxaColoringRndWindow({ isActive = false, onFocus } = {}) {
     const currentTaxaMap = taxaGrouping?.taxaColorMap || {};
 
     taxaNames.forEach((taxon) => {
-      map[taxon] = currentTaxaMap[taxon] || SYSTEM_TREE_COLORS.defaultColor || '#000000';
+      map[taxon] = currentTaxaMap[taxon] || SYSTEM_TREE_COLORS.defaultColor;
     });
     return map;
   }, [taxaNames, taxaGrouping]);

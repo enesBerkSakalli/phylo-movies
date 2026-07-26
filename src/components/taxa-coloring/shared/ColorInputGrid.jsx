@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { ColorSwatchInput } from './ColorSwatchInput.jsx';
 import { rgbToHex } from '../../../services/ui/colorUtils.js';
+import { SYSTEM_TREE_COLORS } from '../../../constants/TreeColors.js';
 
 const ITEM_NAME_COLLATOR = new Intl.Collator(undefined, {
   numeric: true,
@@ -23,7 +24,7 @@ export function ColorInputGrid({ items, isGroup, colorManager, onColorChange }) 
         const name = isGroup ? item.name : item;
         const label = isGroup ? `${name} (${item.count})` : name;
         const colorMap = isGroup ? colorManager.groupColorMap : colorManager.taxaColorMap;
-        let currentColor = colorMap?.[name] || '#000000';
+        let currentColor = colorMap?.[name] || SYSTEM_TREE_COLORS.defaultColor;
 
         if (Array.isArray(currentColor)) {
           currentColor = rgbToHex(currentColor);

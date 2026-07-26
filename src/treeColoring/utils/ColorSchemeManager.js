@@ -126,6 +126,18 @@ export class ColorSchemeManager {
     return new Color('srgb', [rgb[0] / 255, rgb[1] / 255, rgb[2] / 255]);
   }
 
+  /**
+   * Convert a Color object to a gamut-clamped [r, g, b] byte array.
+   */
+  _colorToClampedRgb(color) {
+    const srgb = color.to('srgb').toGamut({ space: 'srgb' });
+    return [
+      Math.max(0, Math.min(255, Math.round(srgb.coords[0] * 255))),
+      Math.max(0, Math.min(255, Math.round(srgb.coords[1] * 255))),
+      Math.max(0, Math.min(255, Math.round(srgb.coords[2] * 255))),
+    ];
+  }
+
   _orderPaletteForMaxDistance(palette, k) {
     // Filter duplicates based on string representation
     const uniquePalette = [];
@@ -239,14 +251,7 @@ export class ColorSchemeManager {
 
     // Return the chosen colors (converted back to [r,g,b] from potentially modified Color objects)
     // Use toGamut to clamp out-of-gamut colors to valid sRGB range
-    return chosenIndices.map((i) => {
-      const srgb = colorObjs[i].to('srgb').toGamut({ space: 'srgb' });
-      return [
-        Math.max(0, Math.min(255, Math.round(srgb.coords[0] * 255))),
-        Math.max(0, Math.min(255, Math.round(srgb.coords[1] * 255))),
-        Math.max(0, Math.min(255, Math.round(srgb.coords[2] * 255))),
-      ];
-    });
+    return chosenIndices.map((i) => this._colorToClampedRgb(colorObjs[i]));
   }
 
   // =====================
@@ -285,12 +290,7 @@ export class ColorSchemeManager {
 
       if (contrast >= targetLc) {
         // Clamp to sRGB gamut to avoid out-of-range values
-        const srgb = color.to('srgb').toGamut({ space: 'srgb' });
-        return [
-          Math.max(0, Math.min(255, Math.round(srgb.coords[0] * 255))),
-          Math.max(0, Math.min(255, Math.round(srgb.coords[1] * 255))),
-          Math.max(0, Math.min(255, Math.round(srgb.coords[2] * 255))),
-        ];
+        return this._colorToClampedRgb(color);
       }
 
       attempts++;
@@ -309,12 +309,7 @@ export class ColorSchemeManager {
     }
 
     // Clamp to sRGB gamut to avoid out-of-range values
-    const srgb = color.to('srgb').toGamut({ space: 'srgb' });
-    return [
-      Math.max(0, Math.min(255, Math.round(srgb.coords[0] * 255))),
-      Math.max(0, Math.min(255, Math.round(srgb.coords[1] * 255))),
-      Math.max(0, Math.min(255, Math.round(srgb.coords[2] * 255))),
-    ];
+    return this._colorToClampedRgb(color);
   }
 
   reset() {

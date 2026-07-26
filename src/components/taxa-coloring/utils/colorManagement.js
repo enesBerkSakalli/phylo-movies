@@ -1,5 +1,8 @@
-// Default color for groups and taxa (black)
-const DEFAULT_COLOR = [0, 0, 0];
+import { colorToRgb } from '../../../services/ui/colorUtils.js';
+import { SYSTEM_TREE_COLORS } from '../../../constants/TreeColors.js';
+
+// Default color for groups and taxa, matching the app-wide system default.
+const DEFAULT_COLOR = colorToRgb(SYSTEM_TREE_COLORS.defaultColor);
 
 // Synchronize group colors with current groups
 export function syncGroupColors(colorManager, groups) {
