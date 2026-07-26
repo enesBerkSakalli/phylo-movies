@@ -32,7 +32,6 @@ export interface ScaleMetrics {
 export interface TreeNode {
   length?: number;
   children?: TreeNode[];
-  [key: string]: unknown;
 }
 
 export interface ScaleListItem {

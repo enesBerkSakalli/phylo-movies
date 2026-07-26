@@ -3,7 +3,7 @@ import type { SprMovedSubtreeRecurrence, SprMoveEventRow } from './types';
 import { formatInputTreePair } from './sprMoveJumpTarget';
 import { buildSprMoveWindowRange, type SprMoveWindowRangeOptions } from './sprMoveWindowRange';
 
-const escapeCsvValue = (value: unknown): string => {
+const escapeCsvValue = (value: string | number | boolean | null | undefined): string => {
   const str = value === null || value === undefined ? '' : String(value);
   if (/[",\n\r]/.test(str)) {
     return `"${str.replace(/"/g, '""')}"`;

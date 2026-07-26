@@ -2,13 +2,14 @@
 
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { act, Simulate } from 'react-dom/test-utils';
+import { act } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '../../../../src/components/ui/collapsible.tsx';
+import { simulateClick } from '../../../helpers/domEvents.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -56,15 +57,15 @@ describe('sidebar disclosure behavior', () => {
     expect(treeLayout.getAttribute('aria-expanded')).toBe('false');
 
     await act(async () => {
-      Simulate.click(branchLengths);
-      Simulate.click(treeLayout);
+      simulateClick(branchLengths);
+      simulateClick(treeLayout);
     });
 
     expect(branchLengths.getAttribute('aria-expanded')).toBe('true');
     expect(treeLayout.getAttribute('aria-expanded')).toBe('true');
 
     await act(async () => {
-      Simulate.click(branchLengths);
+      simulateClick(branchLengths);
     });
 
     expect(branchLengths.getAttribute('aria-expanded')).toBe('false');

@@ -6,6 +6,7 @@ let cachedTreeList = null;
 let cachedInputFrameIndices = null;
 let cachedScaleList = [];
 
+/** @param {import('../../../types/store').AppStoreState} state */
 export const selectScaleList = (state) => {
   const treeList = selectActiveTreeList(state);
   const treePayloadList = state.treePayloadList;

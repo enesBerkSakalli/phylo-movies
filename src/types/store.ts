@@ -57,7 +57,7 @@ export interface MovieTimelineManagerRuntime {
   getSegment?: (segmentIndex: number) => unknown;
   getSegmentCount?: () => number;
   getCursorAtMovieTime?: (movieTimeMs: number) => TimelineCursorState | null;
-  resolveFrameAtTimelineProgress?: (timelineProgress: number) => unknown | null;
+  resolveFrameAtTimelineProgress?: (timelineProgress: number) => unknown;
   hasTransitionSegments?: () => boolean;
   mount?: (container: HTMLElement) => void;
   scrubController?: { isScrubbing?: boolean };
@@ -123,9 +123,27 @@ export interface PlaybackSeekOptions {
   timelineProgress?: number | null;
 }
 
+export interface TaxaGrouping {
+  mode?: string;
+  separators?: unknown;
+  strategyType?: string | null;
+  segmentIndex?: number;
+  useRegex?: boolean;
+  regexPattern?: string | null;
+  csvTaxaMap?: Record<string, string> | null;
+  groupColorMap?: Record<string, string> | null;
+  taxaColorMap?: Record<string, string> | null;
+  csvGroups?: unknown;
+  groups?: unknown;
+  csvColumn?: string | null;
+  csvData?: unknown;
+  csvFileName?: string | null;
+}
+
 export interface AppStoreState {
   // From treeDataset.slice
   treeList: Array<TreeNode | undefined>;
+  treePayloadList: Array<TreeNode | undefined>;
   timelineFrames: TimelineFrame[];
   leafNamesByIndex: string[];
   fileName: string | null;
@@ -186,7 +204,7 @@ export interface AppStoreState {
 
   // From taxonomyColoring.slice
   monophyleticColoringEnabled: boolean;
-  taxaGrouping: Record<string, unknown>;
+  taxaGrouping: TaxaGrouping | null;
   taxaColorVersion: number;
 
   // From treeHighlightOpacity.slice
@@ -215,7 +233,7 @@ export interface AppStoreState {
 
   // From subtreeSelection.slice
   subtreeHighlightScope: string;
-  manuallyMarkedNodes: unknown[];
+  manuallyMarkedNodes: number[];
 
   // From treeHighlightState.slice
   pivotEdgesEnabled: boolean;
@@ -309,7 +327,7 @@ export interface AppStoreState {
 
   setTaxaColoringOpen: (isOpen: boolean) => void;
   setTaxaColoringWindow: (partial: Partial<FloatingWindowRect>) => void;
-  setTaxaGrouping: (grouping: Record<string, unknown>) => void;
+  setTaxaGrouping: (grouping: TaxaGrouping | null) => void;
   setMonophyleticColoring: (enabled: boolean) => void;
 
   setSubtreeHighlightOpacity: (opacity: number) => void;
@@ -350,7 +368,7 @@ export interface AppStoreState {
     dest: unknown[];
   };
   setSubtreeHighlightScope: (scope: string) => void;
-  setManuallyMarkedNodes: (nodeIds: unknown[]) => void;
+  setManuallyMarkedNodes: (nodeIds: number[]) => void;
 
   setDimmingEnabled: (enabled: boolean) => void;
   setDimmingOpacity: (opacity: number) => void;

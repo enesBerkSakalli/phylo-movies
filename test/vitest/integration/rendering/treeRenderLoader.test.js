@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { act } from 'react-dom/test-utils';
+import { act } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;

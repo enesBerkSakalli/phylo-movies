@@ -121,7 +121,7 @@ export function validatePhyloMovieData(
       annotation_definitions: annotationDefinitions,
       tree_name_definitions: treeNameDefinitions,
       split_definitions: splitDefinitions,
-    } as PhyloMovieTransportData;
+    };
   }
 
   return validatedData as PhyloMovieData;
@@ -134,7 +134,7 @@ export function hydrateMovieTreeAtIndex(
   return hydrateMovieTreePayloadAtIndex(
     movieData,
     treeIndex
-  ) as PhyloMovieData['interpolated_trees'][number];
+  );
 }
 
 function optionalString(value: unknown, fieldName: string): string | undefined {

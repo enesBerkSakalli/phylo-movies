@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { act, Simulate } from 'react-dom/test-utils';
+import { act } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SprMoveEventTable } from '../../../../src/components/TreeStatsPanel/SubtreeAnalytics/SprMoveEventTable';
 import type { SprMoveEventRow } from '../../../../src/components/TreeStatsPanel/SubtreeAnalytics/types';
+import { simulateChange } from '../../../helpers/domEvents.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -207,8 +208,7 @@ describe('SPR move event table rendering', () => {
     expect(input).not.toBeNull();
 
     await act(async () => {
-      input!.value = 'AB933743-P4';
-      Simulate.change(input!);
+      simulateChange(input!, 'AB933743-P4');
     });
 
     expect(container.textContent).toContain('1 / 2 SPR moves');

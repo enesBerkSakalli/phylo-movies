@@ -139,6 +139,10 @@ function compareAnnotationOptions(left, right) {
   return leftPath.localeCompare(rightPath);
 }
 
+/**
+ * @param {unknown[]} trees
+ * @returns {Array<{ value: string, label: string, path: string[], role: string }>}
+ */
 export function getAvailableBranchAnnotationOptions(trees = []) {
   const optionsByKey = new Map();
   const treeList = Array.isArray(trees) ? trees : [];

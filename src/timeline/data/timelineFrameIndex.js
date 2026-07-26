@@ -6,6 +6,7 @@ function getFrameViewIndex(frameRow) {
   return frameRow.frame_index;
 }
 
+/** @returns {number[]} */
 export function selectInputFrameIndicesFromRows(frameRows) {
   return frameRows.filter(isInputFrameRow).map(getFrameViewIndex);
 }

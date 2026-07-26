@@ -194,9 +194,7 @@ const formatBranchValueClass = (
 };
 
 const formatBranchValue = (
-  branchValue:
-    | SprMoveEventRow['sourceMovedSubtreeBranchValue']
-    | SprMoveEventRow['sourceParentBranchValue']
+  branchValue: SprMoveEventRow['sourceMovedSubtreeBranchValue']
 ): string => {
   const value = branchValue?.displayValue;
   return typeof value === 'string' && value.length > 0 ? value : '-';
@@ -219,7 +217,6 @@ const resolveRowBranchValueLabel = (
   selectedLabel: string,
   ...values: Array<
     | SprMoveEventRow['sourceMovedSubtreeBranchValue']
-    | SprMoveEventRow['sourceParentBranchValue']
     | null
     | undefined
   >
@@ -227,9 +224,7 @@ const resolveRowBranchValueLabel = (
 
 const formatBranchValueTitlePart = (
   label: string,
-  value:
-    | SprMoveEventRow['sourceMovedSubtreeBranchValue']
-    | SprMoveEventRow['sourceParentBranchValue']
+  value: SprMoveEventRow['sourceMovedSubtreeBranchValue']
 ): string => {
   const formattedValue = formatBranchValue(value);
   return value?.label

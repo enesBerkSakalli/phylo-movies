@@ -32,9 +32,11 @@ export const TaxaGroupsLegend: React.FC = () => {
   const namedGroups = mode === 'csv' ? csvGroups : mode === 'groups' ? groups : null;
   const groupNames = Array.isArray(namedGroups)
     ? namedGroups
-        .map((group: { name?: unknown } | string) =>
-          typeof group === 'string' ? group : String(group.name ?? '')
-        )
+        .map((group: { name?: unknown } | string) => {
+          if (typeof group === 'string') return group;
+          const { name } = group;
+          return typeof name === 'string' || typeof name === 'number' ? String(name) : '';
+        })
         .filter(Boolean)
         .sort((a, b) => GROUP_NAME_COLLATOR.compare(a, b))
     : Object.keys(groupColorMap || {}).sort((a, b) => GROUP_NAME_COLLATOR.compare(a, b));

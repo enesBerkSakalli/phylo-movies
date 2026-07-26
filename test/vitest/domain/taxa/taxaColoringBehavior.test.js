@@ -2,8 +2,9 @@
 
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { act, Simulate } from 'react-dom/test-utils';
+import { act } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { simulateButtonPress, simulateChange, simulateClick } from '../../../helpers/domEvents.js';
 import { ColorSwatchInput } from '../../../../src/components/taxa-coloring/shared/ColorSwatchInput.jsx';
 import { TaxaColoringWindow } from '../../../../src/components/taxa-coloring/TaxaColoringWindow.jsx';
 import { TaxaColoringRndWindow } from '../../../../src/components/taxa-coloring/TaxaColoringRndWindow.jsx';
@@ -162,7 +163,7 @@ describe('ColorSwatchInput', () => {
 
     const trigger = document.querySelector('button[aria-label="Select color for TaxonA"]');
     await act(async () => {
-      Simulate.click(trigger);
+      simulateClick(trigger);
     });
 
     return { onChange };
@@ -175,13 +176,13 @@ describe('ColorSwatchInput', () => {
     );
 
     await act(async () => {
-      Simulate.change(textInput, { target: { value: '#' } });
+      simulateChange(textInput, '#');
     });
 
     expect(onChange).not.toHaveBeenCalled();
 
     await act(async () => {
-      Simulate.change(textInput, { target: { value: '#123456' } });
+      simulateChange(textInput, '#123456');
     });
 
     expect(onChange).toHaveBeenCalledWith('#123456');
@@ -194,7 +195,7 @@ describe('ColorSwatchInput', () => {
     expect(swatch).not.toBeNull();
 
     await act(async () => {
-      Simulate.click(swatch);
+      simulateClick(swatch);
     });
 
     expect(onChange).toHaveBeenCalledWith(expect.stringMatching(/^#[0-9A-Fa-f]{6}$/));
@@ -269,11 +270,7 @@ describe('TaxaColoringWindow palette application', () => {
     }
 
     await act(async () => {
-      if (Simulate.pointerDown) {
-        Simulate.pointerDown(button, { button: 0, ctrlKey: false });
-      }
-      Simulate.mouseDown(button, { button: 0, ctrlKey: false });
-      Simulate.click(button);
+      simulateButtonPress(button);
     });
   }
 
@@ -411,7 +408,7 @@ describe('TaxaColoringRndWindow palette application', () => {
     }
 
     await act(async () => {
-      Simulate.click(button);
+      simulateClick(button);
     });
   }
 

@@ -14,6 +14,7 @@ function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
+/** @returns {{ width: number, height: number }} */
 export function getBrowserViewportSize() {
   if (typeof window === 'undefined') return DEFAULT_VIEWPORT;
 

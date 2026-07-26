@@ -304,7 +304,7 @@ const AnalyticsDashboardBody = () => {
 
   const sprOptions = useMemo(
     () => ({
-      pairMetrics,
+      pairMetrics: pairMetrics ?? { rows: [], semantics: {} },
       temporalEvents,
       branchSupportIndex,
       interpolatedTrees,
@@ -334,9 +334,9 @@ const AnalyticsDashboardBody = () => {
   const sprSummary = analyticsModel?.summary ?? null;
 
   const handleBranchValueSelectionChange = React.useCallback(
-    async (valueKey: string) => {
+    (valueKey: string) => {
       setBranchAnnotationLabelKey(valueKey);
-      await treeController?.renderAllElements();
+      treeController?.renderAllElements?.();
     },
     [setBranchAnnotationLabelKey, treeController]
   );

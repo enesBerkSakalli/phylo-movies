@@ -33,6 +33,8 @@ export function formatScaleValue(value, decimals = 3) {
 
 /**
  * Creates a lookup map from scale list entries for O(1) access by frame index.
+ * @param {Array<{index?: number, value?: number} | number> | null | undefined} scaleList
+ * @returns {Map<number, number>}
  */
 export function buildScaleLookup(scaleList) {
   const map = new Map();
