@@ -349,5 +349,3 @@ function formatSubtreeNames(names) {
   if (names.length <= 3) return names.join(', ');
   return `${names.slice(0, 2).join(', ')} +${names.length - 2}`;
 }
-
-export default TransitionInspectorPanel;

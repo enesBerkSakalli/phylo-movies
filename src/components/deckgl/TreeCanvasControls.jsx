@@ -119,5 +119,3 @@ export function TreeCanvasControls() {
     </div>
   );
 }
-
-export default TreeCanvasControls;

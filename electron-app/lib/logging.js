@@ -47,4 +47,4 @@ process.on('unhandledRejection', (reason) => {
   earlyLog(`unhandledRejection: ${reason && reason.stack ? reason.stack : String(reason)}`);
 });
 
-module.exports = { earlyLog, logToFile };
+module.exports = { logToFile };

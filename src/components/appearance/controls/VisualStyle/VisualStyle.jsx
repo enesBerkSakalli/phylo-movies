@@ -167,5 +167,3 @@ export function VisualStyle() {
     </>
   );
 }
-
-export default VisualStyle;

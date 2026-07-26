@@ -66,5 +66,3 @@ export function ViewModeSection() {
     </Collapsible>
   );
 }
-
-export default ViewModeSection;

@@ -200,5 +200,3 @@ function MsaWindowConfigStatus({ msaWindowSize, msaStepSize }) {
     </AppTooltip>
   );
 }
-
-export default TimelineStatusStrip;

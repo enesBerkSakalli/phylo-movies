@@ -40,4 +40,3 @@ const DeckGLCanvas = React.memo(function DeckGLCanvas() {
 });
 
 export { DeckGLCanvas };
-export default DeckGLCanvas;

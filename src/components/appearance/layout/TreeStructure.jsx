@@ -91,5 +91,3 @@ export function TreeStructure() {
     </SidebarMenuSub>
   );
 }
-
-export default TreeStructure;

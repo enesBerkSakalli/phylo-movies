@@ -213,5 +213,3 @@ export function GeometryDimensions({
     </SidebarMenuSub>
   );
 }
-
-export default GeometryDimensions;

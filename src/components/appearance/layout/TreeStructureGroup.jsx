@@ -21,5 +21,3 @@ export function TreeStructureGroup() {
     </Collapsible>
   );
 }
-
-export default TreeStructureGroup;

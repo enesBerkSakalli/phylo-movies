@@ -136,5 +136,3 @@ export function LayoutTransform({
     </SidebarMenuSub>
   );
 }
-
-export default LayoutTransform;

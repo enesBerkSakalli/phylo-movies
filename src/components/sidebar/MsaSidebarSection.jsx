@@ -94,5 +94,3 @@ export function MsaSidebarSection() {
     </Collapsible>
   );
 }
-
-export default MsaSidebarSection;

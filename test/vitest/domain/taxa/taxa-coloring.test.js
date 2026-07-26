@@ -6,7 +6,6 @@ import { describe, it, expect } from 'vitest';
 import {
   generateGroups,
   getGroupForTaxon,
-  applyColoringData,
   detectBestSeparators,
 } from '../../../../src/treeColoring/utils/GroupingUtils.js';
 
@@ -132,103 +131,6 @@ describe('GroupingUtils', () => {
     });
   });
 
-  describe('applyColoringData', () => {
-    const leaveOrder = ['Species_A_1', 'Species_A_2', 'Species_B_1'];
-    const defaultColorMap = { defaultColor: '#000000' };
-
-    it('should apply taxa mode coloring', () => {
-      const colorData = {
-        mode: 'taxa',
-        taxaColorMap: {
-          Species_A_1: '#FF0000',
-          Species_A_2: '#00FF00',
-        },
-      };
-
-      const result = applyColoringData(colorData, leaveOrder, defaultColorMap);
-
-      expect(result['Species_A_1']).toBe('#FF0000');
-      expect(result['Species_A_2']).toBe('#00FF00');
-      // Species_B_1 not in taxaColorMap, should not be in result
-    });
-
-    it('should apply groups mode coloring', () => {
-      const colorData = {
-        mode: 'groups',
-        separators: ['_'],
-        strategyType: 'prefix',
-        groupColorMap: {
-          Species: '#FF0000',
-        },
-      };
-
-      const result = applyColoringData(colorData, leaveOrder, defaultColorMap);
-
-      expect(result['Species_A_1']).toBe('#FF0000');
-      expect(result['Species_A_2']).toBe('#FF0000');
-      expect(result['Species_B_1']).toBe('#FF0000');
-    });
-
-    it('should apply csv mode coloring with Map', () => {
-      const csvTaxaMap = new Map([
-        ['Species_A_1', 'GroupA'],
-        ['Species_A_2', 'GroupA'],
-        ['Species_B_1', 'GroupB'],
-      ]);
-
-      const colorData = {
-        mode: 'csv',
-        csvTaxaMap,
-        groupColorMap: {
-          GroupA: '#FF0000',
-          GroupB: '#00FF00',
-        },
-      };
-
-      const result = applyColoringData(colorData, leaveOrder, defaultColorMap);
-
-      expect(result['Species_A_1']).toBe('#FF0000');
-      expect(result['Species_A_2']).toBe('#FF0000');
-      expect(result['Species_B_1']).toBe('#00FF00');
-    });
-
-    it('should apply csv mode coloring with Object (serialized state)', () => {
-      // This tests the fix for Issue 3: Object instead of Map
-      const csvTaxaMap = {
-        Species_A_1: 'GroupA',
-        Species_A_2: 'GroupA',
-        Species_B_1: 'GroupB',
-      };
-
-      const colorData = {
-        mode: 'csv',
-        csvTaxaMap,
-        groupColorMap: {
-          GroupA: '#FF0000',
-          GroupB: '#00FF00',
-        },
-      };
-
-      const result = applyColoringData(colorData, leaveOrder, defaultColorMap);
-
-      expect(result['Species_A_1']).toBe('#FF0000');
-      expect(result['Species_A_2']).toBe('#FF0000');
-      expect(result['Species_B_1']).toBe('#00FF00');
-    });
-
-    it('should fall back to default color when group is missing', () => {
-      const colorData = {
-        mode: 'groups',
-        separators: ['_'],
-        strategyType: 'prefix',
-        groupColorMap: {}, // No colors defined
-      };
-
-      const result = applyColoringData(colorData, leaveOrder, defaultColorMap);
-
-      expect(result['Species_A_1']).toBe('#000000');
-    });
-  });
 });
 
 describe('Group State Persistence', () => {

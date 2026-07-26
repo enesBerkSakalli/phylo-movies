@@ -462,38 +462,7 @@ function validateCompactAnnotationValuesPayload(
   fieldName: string,
   annotationDefinitions: AnnotationDefinition[]
 ): void {
-  if (annotationDefinitions.length === 0) {
-    throw new Error(`Invalid phyloMovieData payload: ${fieldName} requires annotation_definitions`);
-  }
-
-  const rows = requiredArray(value, fieldName);
-  const seenDefinitionIndexes = new Set<number>();
-  rows.forEach((row, index) => {
-    const rowFieldName = `${fieldName}[${index}]`;
-    const tuple = requiredArray(row, rowFieldName);
-    if (tuple.length !== 2) {
-      throw new Error(
-        `Invalid phyloMovieData payload: ${rowFieldName} must be [definition, value]`
-      );
-    }
-    const definitionIndex = validateInteger(tuple[0], `${rowFieldName}[0]`);
-    if (definitionIndex < 0 || definitionIndex >= annotationDefinitions.length) {
-      throw new Error(
-        `Invalid phyloMovieData payload: ${rowFieldName}[0] must reference annotation_definitions`
-      );
-    }
-    if (seenDefinitionIndexes.has(definitionIndex)) {
-      throw new Error(
-        `Invalid phyloMovieData payload: ${rowFieldName}[0] duplicates annotation field ${annotationDefinitions[definitionIndex].key}`
-      );
-    }
-    seenDefinitionIndexes.add(definitionIndex);
-    validateAnnotationValue(
-      tuple[1],
-      annotationDefinitions[definitionIndex].value_type,
-      `${rowFieldName}[1]`
-    );
-  });
+  validateCompactAnnotationValues(value, fieldName, annotationDefinitions);
 }
 
 export function validateAnnotationDefinitions(value: unknown): AnnotationDefinition[] {
@@ -767,18 +736,6 @@ export function validateTreePayloadList(
     )
   );
   return trees;
-}
-
-export function hydrateTreePayloadNode(
-  value: unknown,
-  fieldName: string,
-  annotationDefinitions: AnnotationDefinition[] = [],
-  treeDictionaries: TreePayloadDictionaries = {
-    treeNameDefinitions: [],
-    splitDefinitions: [],
-  }
-): TreeNode {
-  return validateTreeNode(value, fieldName, annotationDefinitions, treeDictionaries);
 }
 
 export function validateMsa(value: unknown): MsaData {

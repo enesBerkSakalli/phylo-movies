@@ -8,6 +8,59 @@ import {
 } from './scrollbarUtils.js';
 
 /**
+ * Starts a pointer-capture drag on a scrollbar thumb: tracks pointer moves
+ * against the track's bounds along one axis, calling `centerViewportOn` with
+ * the resolved item index, until pointer-up releases the drag.
+ */
+function startThumbDrag({
+  event,
+  trackRef,
+  itemCount,
+  setDragging,
+  activeDragCleanupRef,
+  getClientPosition,
+  getTrackBounds,
+  centerViewportOn,
+  axisKey,
+}) {
+  event.preventDefault();
+  event.stopPropagation();
+  setDragging(true);
+
+  const track = trackRef.current;
+  if (!track) return;
+
+  event.currentTarget?.setPointerCapture?.(event.pointerId);
+
+  const onPointerMove = (moveEvent) => {
+    const { trackStart, trackSize } = getTrackBounds(track.getBoundingClientRect());
+    const target = getTrackClickTarget({
+      pointerClientPosition: getClientPosition(moveEvent),
+      trackStart,
+      trackSize,
+      itemCount,
+    });
+    centerViewportOn({ [axisKey]: target });
+  };
+
+  const onPointerUp = () => {
+    setDragging(false);
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+    window.removeEventListener('pointercancel', onPointerUp);
+    if (activeDragCleanupRef.current === onPointerUp) {
+      activeDragCleanupRef.current = null;
+    }
+  };
+
+  activeDragCleanupRef.current?.();
+  window.addEventListener('pointermove', onPointerMove);
+  window.addEventListener('pointerup', onPointerUp);
+  window.addEventListener('pointercancel', onPointerUp);
+  activeDragCleanupRef.current = onPointerUp;
+}
+
+/**
  * Custom scrollbar overlays that show viewport position within the MSA alignment
  * and allow clicking/dragging to control the DeckGL view state.
  */
@@ -112,41 +165,17 @@ export function MSAScrollbars({ layoutMetrics = null }) {
   // Handle horizontal thumb drag
   const handleHThumbDrag = useCallback(
     (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDraggingH(true);
-
-      const track = hTrackRef.current;
-      if (!track) return;
-
-      e.currentTarget?.setPointerCapture?.(e.pointerId);
-
-      const onPointerMove = (moveEvent) => {
-        const rect = track.getBoundingClientRect();
-        const targetCol = getTrackClickTarget({
-          pointerClientPosition: moveEvent.clientX,
-          trackStart: rect.left,
-          trackSize: rect.width,
-          itemCount: cols,
-        });
-        centerViewportOn({ column: targetCol });
-      };
-
-      const onPointerUp = () => {
-        setIsDraggingH(false);
-        window.removeEventListener('pointermove', onPointerMove);
-        window.removeEventListener('pointerup', onPointerUp);
-        window.removeEventListener('pointercancel', onPointerUp);
-        if (activeDragCleanupRef.current === onPointerUp) {
-          activeDragCleanupRef.current = null;
-        }
-      };
-
-      activeDragCleanupRef.current?.();
-      window.addEventListener('pointermove', onPointerMove);
-      window.addEventListener('pointerup', onPointerUp);
-      window.addEventListener('pointercancel', onPointerUp);
-      activeDragCleanupRef.current = onPointerUp;
+      startThumbDrag({
+        event: e,
+        trackRef: hTrackRef,
+        itemCount: cols,
+        setDragging: setIsDraggingH,
+        activeDragCleanupRef,
+        getClientPosition: (moveEvent) => moveEvent.clientX,
+        getTrackBounds: (rect) => ({ trackStart: rect.left, trackSize: rect.width }),
+        centerViewportOn,
+        axisKey: 'column',
+      });
     },
     [centerViewportOn, cols]
   );
@@ -154,41 +183,17 @@ export function MSAScrollbars({ layoutMetrics = null }) {
   // Handle vertical thumb drag
   const handleVThumbDrag = useCallback(
     (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDraggingV(true);
-
-      const track = vTrackRef.current;
-      if (!track) return;
-
-      e.currentTarget?.setPointerCapture?.(e.pointerId);
-
-      const onPointerMove = (moveEvent) => {
-        const rect = track.getBoundingClientRect();
-        const targetRow = getTrackClickTarget({
-          pointerClientPosition: moveEvent.clientY,
-          trackStart: rect.top,
-          trackSize: rect.height,
-          itemCount: rows,
-        });
-        centerViewportOn({ row: targetRow });
-      };
-
-      const onPointerUp = () => {
-        setIsDraggingV(false);
-        window.removeEventListener('pointermove', onPointerMove);
-        window.removeEventListener('pointerup', onPointerUp);
-        window.removeEventListener('pointercancel', onPointerUp);
-        if (activeDragCleanupRef.current === onPointerUp) {
-          activeDragCleanupRef.current = null;
-        }
-      };
-
-      activeDragCleanupRef.current?.();
-      window.addEventListener('pointermove', onPointerMove);
-      window.addEventListener('pointerup', onPointerUp);
-      window.addEventListener('pointercancel', onPointerUp);
-      activeDragCleanupRef.current = onPointerUp;
+      startThumbDrag({
+        event: e,
+        trackRef: vTrackRef,
+        itemCount: rows,
+        setDragging: setIsDraggingV,
+        activeDragCleanupRef,
+        getClientPosition: (moveEvent) => moveEvent.clientY,
+        getTrackBounds: (rect) => ({ trackStart: rect.top, trackSize: rect.height }),
+        centerViewportOn,
+        axisKey: 'row',
+      });
     },
     [centerViewportOn, rows]
   );

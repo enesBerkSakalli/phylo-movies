@@ -103,12 +103,6 @@ export function validateRangeTuple(value: unknown, fieldName: string): [number, 
   return [start, end];
 }
 
-export function validateNullableNumber(value: unknown, fieldName: string): number | null {
-  if (value === null) return null;
-  assertFiniteNumber(value, fieldName);
-  return value;
-}
-
 export function validateNullableInteger(value: unknown, fieldName: string): number | null {
   if (value === null) return null;
   return validateInteger(value, fieldName);

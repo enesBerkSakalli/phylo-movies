@@ -167,8 +167,6 @@ export function ToolsSidebar({
   );
 }
 
-export default ToolsSidebar;
-
 function DatasetProvenanceItem({ fileName, provenance }) {
   const settings = Array.isArray(provenance?.settings) ? provenance.settings : [];
   const hydrationStats = useAppStore(selectTreeHydrationStats);

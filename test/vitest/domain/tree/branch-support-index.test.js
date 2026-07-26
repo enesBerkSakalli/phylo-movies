@@ -5,7 +5,6 @@ import {
   canonicalSupportSplitKey,
   classifyMovementBranchValues,
   formatBranchAnnotationLabel,
-  formatSupportValue,
   getAvailableBranchAnnotationOptions,
 } from '../../../../src/domain/tree/branchSupportIndex.js';
 
@@ -221,9 +220,7 @@ describe('branch annotation indexing', () => {
     ).toThrow(/requires hydrated interpolated_trees\[2\]/);
   });
 
-  it('formats support and classifies source and destination branch values', () => {
-    expect(formatSupportValue({ primary: 88.345 })).toBe('88.3');
-    expect(formatSupportValue(null)).toBe('-');
+  it('classifies source and destination branch values', () => {
     expect(classifyMovementBranchValues({ value: 91 }, { value: 88 }, 70)).toBe('both_high_value');
     expect(classifyMovementBranchValues({ value: 91 }, { value: 88 }, 90)).toBe('mixed_value');
     expect(classifyMovementBranchValues({ value: 91 }, { value: 35 }, 70)).toBe('mixed_value');

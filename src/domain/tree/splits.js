@@ -225,18 +225,6 @@ export function parseSubtreeHighlightEntry(entry) {
   return subtrees;
 }
 
-export function collectUniqueEdges(tracking, start, end, excludeKey) {
-  const map = new Map();
-  for (let i = start; i < end; i++) {
-    const edge = tracking[i];
-    if (Array.isArray(edge) && edge.length > 0) {
-      const key = toSubtreeKey(edge);
-      if (key !== excludeKey && !map.has(key)) map.set(key, edge);
-    }
-  }
-  return Array.from(map.values());
-}
-
 export function collectUniqueSubtrees(tracking, start, end, excludeKeys = new Set()) {
   const map = new Map();
 

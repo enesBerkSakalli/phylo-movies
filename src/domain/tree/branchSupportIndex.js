@@ -375,11 +375,6 @@ export function buildBranchSupportIndex({ interpolatedTrees, frames } = {}) {
   };
 }
 
-export function formatSupportValue(support) {
-  const value = Number(support?.primary);
-  return Number.isFinite(value) ? value.toFixed(1) : '-';
-}
-
 export function classifyMovementBranchValues(
   sourceBranchValue,
   destinationBranchValue,

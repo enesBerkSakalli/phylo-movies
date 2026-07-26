@@ -164,5 +164,3 @@ function TaxaColoringTabPanel({ value, children }) {
     </TabsContent>
   );
 }
-
-export default TaxaColoringWindow;

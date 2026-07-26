@@ -277,5 +277,3 @@ function MenuItem({ icon: Icon, label, onClick, disabled = false }) {
     </Button>
   );
 }
-
-export default NodeContextMenu;

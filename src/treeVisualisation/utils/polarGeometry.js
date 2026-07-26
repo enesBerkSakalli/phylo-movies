@@ -175,26 +175,6 @@ export function lastPathPoint(path) {
   return null;
 }
 
-export function replaceLastPathPoint(path, point) {
-  if (!path) return path;
-
-  if (ArrayBuffer.isView(path) && path.length >= 3) {
-    const copy = new path.constructor(path);
-    copy[copy.length - 3] = point[0];
-    copy[copy.length - 2] = point[1];
-    copy[copy.length - 1] = point[2] ?? 0;
-    return copy;
-  }
-
-  if (Array.isArray(path) && path.length > 0) {
-    const copy = path.map((item) => (Array.isArray(item) ? [...item] : item));
-    copy[copy.length - 1] = point;
-    return copy;
-  }
-
-  return path;
-}
-
 function hasCartesianProjectionMode(element) {
   return CARTESIAN_PROJECTION_MODES.has(element?.projectionMode);
 }

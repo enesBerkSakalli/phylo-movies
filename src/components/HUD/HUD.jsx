@@ -85,5 +85,3 @@ export function HUD() {
     </Draggable>
   );
 }
-
-export default HUD;

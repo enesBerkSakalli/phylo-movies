@@ -30,5 +30,3 @@ export function TourLauncher() {
     </AppTooltip>
   );
 }
-
-export default TourLauncher;

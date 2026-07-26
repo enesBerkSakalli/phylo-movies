@@ -264,5 +264,3 @@ function ApplicationPreviewHero() {
     </section>
   );
 }
-
-export default WorkspaceInitializationPage;
