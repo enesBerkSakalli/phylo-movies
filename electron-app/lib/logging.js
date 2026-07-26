@@ -21,7 +21,7 @@ let launchLogPath = null;
 function earlyLog(message) {
   try {
     fs.appendFileSync(earlyLogPath, `[${new Date().toISOString()}] ${message}\n`);
-  } catch (err) {
+  } catch (_err) {
     // Avoid crashing if logging fails
   }
 }
@@ -34,7 +34,7 @@ function logToFile(message) {
       launchLogPath = path.join(userDataDir, 'launch.log');
     }
     fs.appendFileSync(launchLogPath, `[${new Date().toISOString()}] ${message}\n`);
-  } catch (err) {
+  } catch (_err) {
     // Avoid crashing if logging fails
   }
 }

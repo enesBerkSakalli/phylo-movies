@@ -16,7 +16,7 @@ function setupIpcHandlers() {
 
   // Loading UI handlers - Consolidated to only handle native taskbar progress
   // while the frontend React components handle the visual overlay
-  ipcMain.on('loading-show', (event, message) => {
+  ipcMain.on('loading-show', (_event, _message) => {
     const mainWindow = getMainWindow();
     if (mainWindow) {
       mainWindow.setProgressBar(0.01); // Show indeterminate/start in dock
@@ -30,7 +30,7 @@ function setupIpcHandlers() {
     }
   });
 
-  ipcMain.on('loading-progress', (event, { progress, message }) => {
+  ipcMain.on('loading-progress', (event, { progress, message: _message }) => {
     const mainWindow = getMainWindow();
     if (mainWindow && progress >= 0) {
       mainWindow.setProgressBar(progress / 100); // Dock progress (0-1)

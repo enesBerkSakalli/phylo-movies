@@ -153,7 +153,7 @@ async function startBackend() {
     try {
       console.log(`[Backend] ${data.toString().trim()}`);
       logToFile(`[Backend] ${data.toString().trim()}`);
-    } catch (e) {
+    } catch (_e) {
       // Ignore logging errors
     }
   });
@@ -164,7 +164,7 @@ async function startBackend() {
       stderrBuffer += output + '\n';
       console.error(`[Backend Error] ${output}`);
       logToFile(`[Backend Error] ${output}`);
-    } catch (e) {
+    } catch (_e) {
       // Ignore logging errors
     }
   });
