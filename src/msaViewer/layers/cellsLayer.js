@@ -143,12 +143,12 @@ function isComparableResidue(residue) {
   return Boolean(residue && residue !== '-' && residue !== ' ');
 }
 
-export function getTaxaCellColor(seqId, rowColorMap = {}) {
+function getTaxaCellColor(seqId, rowColorMap = {}) {
   const rowColor = rowColorMap[seqId];
   return rowColor ? [...colorToRgb(rowColor), 255] : [255, 255, 255, 255];
 }
 
-export function applyRegionTint(baseColor, col, currentRegion, previousRegion) {
+function applyRegionTint(baseColor, col, currentRegion, previousRegion) {
   const inCurrentRegion =
     currentRegion && col >= currentRegion.startCol - 1 && col <= currentRegion.endCol - 1;
 

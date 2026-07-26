@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const LAZY_ROUTE_RELOAD_KEY = 'phylo-movies:lazy-route-reload';
+const LAZY_ROUTE_RELOAD_KEY = 'phylo-movies:lazy-route-reload';
 
 const DYNAMIC_IMPORT_FAILURE_PATTERNS = [
   /Failed to fetch dynamically imported module/i,

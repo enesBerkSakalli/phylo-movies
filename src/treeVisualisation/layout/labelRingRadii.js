@@ -25,7 +25,7 @@ function normalizeAngleSpan(angleSpanRadians) {
   return Math.max(MIN_ANGLE_SPAN_RADIANS, Math.min(TAU, span));
 }
 
-export function estimateLabelSize(fontSize, labelCount) {
+function estimateLabelSize(fontSize, labelCount) {
   const numericFontSize = typeof fontSize === 'string' ? parseFloat(fontSize) : Number(fontSize);
   const baseSize = numericFontSize * LABEL_FONT_SIZE_UNIT || DEFAULT_LABEL_SIZE;
   return baseSize * calculateTaxaVisualScale(labelCount);

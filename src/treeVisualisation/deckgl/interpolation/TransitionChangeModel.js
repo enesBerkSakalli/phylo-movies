@@ -96,13 +96,13 @@ export function summarizeTransitionLifecycles(transitionChangeModel) {
   };
 }
 
-export function phase(timeFactor, start, end) {
+function phase(timeFactor, start, end) {
   const t = clamp01(timeFactor);
   if (end <= start) return t >= end ? 1 : 0;
   return clamp01((t - start) / (end - start));
 }
 
-export function getVisibleBranchLength(link) {
+function getVisibleBranchLength(link) {
   if (!link) return 0;
   const radialLength = Number(link.radialLength);
   if (Number.isFinite(radialLength)) return Math.max(0, radialLength);
@@ -160,7 +160,7 @@ function classifyLinkLifecycle(fromLink, toLink, fromLength, toLength, zeroEpsil
   return LINK_LIFECYCLES.UNCHANGED;
 }
 
-export function getLinkInterpolationKey(linkOrKey) {
+function getLinkInterpolationKey(linkOrKey) {
   if (typeof linkOrKey === 'string') return linkOrKey;
   return linkOrKey?.splitKey || getSplitKey(linkOrKey) || linkOrKey?.id || null;
 }

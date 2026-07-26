@@ -11,7 +11,7 @@ export const HOVER_HIGHLIGHT_COLOR = [0, 200, 220, 150];
 
 // Minimum node radius for internal nodes
 export const MIN_NODE_RADIUS = 3;
-export const NODE_RADIUS_MIN_PIXELS = 0.5;
+const NODE_RADIUS_MIN_PIXELS = 0.5;
 
 // Node border (stroke) widths
 export const INNER_NODE_STROKE_WIDTH = 0.2;

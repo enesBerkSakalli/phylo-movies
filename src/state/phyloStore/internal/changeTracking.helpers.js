@@ -97,7 +97,7 @@ export function resolveSubtreeHighlights(state, indexOverride = null) {
   return getAffectedSubtreesForPivotEdge(state, index);
 }
 
-export function getSubtreeAtIndex(state, index) {
+function getSubtreeAtIndex(state, index) {
   const subtree = state.subtreeHighlightTracking[index];
   return Array.isArray(subtree) ? subtree : [];
 }

@@ -11,7 +11,7 @@ import { colorToRgb, rgba } from '../../services/ui/colorUtils.js';
  * @param {number} a - Alpha component (0-255), defaults to 255
  * @returns {number[]} RGBA color array for deck.gl
  */
-export function gray(v, a = 255) {
+function gray(v, a = 255) {
   return [v, v, v, a];
 }
 

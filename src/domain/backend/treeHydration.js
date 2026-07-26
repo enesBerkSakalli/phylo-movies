@@ -24,7 +24,7 @@ export function hydrateMovieTreeAtIndex(movieData, treeIndex) {
   );
 }
 
-export function hydrateTreePayloadNode(
+function hydrateTreePayloadNode(
   value,
   annotationDefinitions = [],
   treeDictionaries = {

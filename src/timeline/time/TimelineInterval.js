@@ -1,4 +1,4 @@
-export const TIMELINE_INTERVAL_TYPE = {
+const TIMELINE_INTERVAL_TYPE = {
   MOTION: 'motion',
   HOLD: 'hold',
 };

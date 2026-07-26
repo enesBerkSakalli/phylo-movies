@@ -29,7 +29,7 @@ export function sortH3Children(children) {
   return [...children].sort(compareH3StableOrder);
 }
 
-export function compareH3StableOrder(a, b) {
+function compareH3StableOrder(a, b) {
   const keyDelta = String(a.h3StableSortKey || '').localeCompare(String(b.h3StableSortKey || ''));
   if (keyDelta !== 0) return keyDelta;
   return (a.h3SiblingIndex || 0) - (b.h3SiblingIndex || 0);

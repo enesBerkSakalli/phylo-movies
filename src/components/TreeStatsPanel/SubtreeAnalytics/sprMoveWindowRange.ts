@@ -26,7 +26,7 @@ interface ResolvedMsaWindow {
 const isPositiveFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value > 0;
 
-export const hasSprMoveWindowAxis = (options: SprMoveWindowRangeOptions = {}): boolean =>
+const hasSprMoveWindowAxis = (options: SprMoveWindowRangeOptions = {}): boolean =>
   Boolean(options.hasMsa) &&
   isPositiveFiniteNumber(options.msaStepSize) &&
   isPositiveFiniteNumber(options.msaWindowSize) &&

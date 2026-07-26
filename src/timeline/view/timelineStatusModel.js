@@ -39,7 +39,7 @@ export function buildTimelineStatusSnapshot({
   };
 }
 
-export function buildInterpolationText(
+function buildInterpolationText(
   sequenceIndex,
   totalSequenceLength,
   inputTreeIndices,
@@ -114,7 +114,7 @@ function buildReadablePosition(
   };
 }
 
-export function buildSegmentText(timelineCursor) {
+function buildSegmentText(timelineCursor) {
   if (timelineCursor?.isObservedInput) return 'Input tree';
   if (
     Number.isInteger(timelineCursor?.sourceInputTreeIndex) &&
@@ -125,7 +125,7 @@ export function buildSegmentText(timelineCursor) {
   return 'Generated frame';
 }
 
-export function buildSegmentTooltipText(segmentText) {
+function buildSegmentTooltipText(segmentText) {
   if (segmentText === 'Input tree') {
     return 'An observed tree from one alignment window or uploaded tree set.';
   }

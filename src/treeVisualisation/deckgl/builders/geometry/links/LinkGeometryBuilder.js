@@ -6,7 +6,7 @@ import { calculateBranchCoordinates } from '../../../../layout/RadialTreeGeometr
 import { twoPointFloat32Path } from '../../../utils/pathFormat.js';
 
 /** Default number of segments for arc generation */
-export const ARC_SEGMENT_COUNT = 15;
+const ARC_SEGMENT_COUNT = 15;
 export const LINK_GEOMETRY_MODES = Object.freeze({
   RADIAL_ELBOW: 'radial-elbow',
   STRAIGHT: 'straight',

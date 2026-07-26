@@ -135,7 +135,7 @@ function getMainTreeBounds(controller) {
  * @param {number} yOffset - Y offset for clipboard position
  * @returns {TextLayer|null} Label layer or null
  */
-export function createClipboardLabelLayer(
+function createClipboardLabelLayer(
   treeIndex,
   bounds,
   inputFrameIndices = [],

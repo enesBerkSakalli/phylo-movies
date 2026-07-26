@@ -1,4 +1,4 @@
-export const DISTANCE_CHART_METRICS = {
+const DISTANCE_CHART_METRICS = {
   rfd: {
     label: 'Normalized RF',
     description:
@@ -26,7 +26,7 @@ export const DISTANCE_CHART_METRIC_OPTIONS = ['rfd', 'w-rfd', 'scale'].map((valu
 export const getDistanceChartMetric = (value) =>
   DISTANCE_CHART_METRICS[value] || DISTANCE_CHART_METRICS.rfd;
 
-export const isDistanceChartPairMetric = (value) => value === 'rfd' || value === 'w-rfd';
+const isDistanceChartPairMetric = (value) => value === 'rfd' || value === 'w-rfd';
 
 export const getDistanceChartSectionLabel = (value, hasMsa) => {
   if (!hasMsa) return 'Input-tree metrics';
@@ -60,7 +60,7 @@ export const formatDistancePointLabel = (sourceInputTreeIndex, targetInputTreeIn
 
 export const formatScalePointLabel = (inputTreeOrdinal) => `Input tree ${inputTreeOrdinal}`;
 
-export const formatMsaWindowRangeLabel = (window) =>
+const formatMsaWindowRangeLabel = (window) =>
   window ? `${window.startPosition}-${window.endPosition}` : null;
 
 export const formatGenomeDistancePointLabel = ({

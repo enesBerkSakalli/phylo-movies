@@ -77,7 +77,7 @@ function validateFiniteNumber(value: unknown, fieldName: string): number {
   return value;
 }
 
-export function validateSprPathSegment(value: unknown, fieldName: string): SprPathSegment {
+function validateSprPathSegment(value: unknown, fieldName: string): SprPathSegment {
   const segment = requiredRecord(value, fieldName);
   assertExactRecordKeys(segment, fieldName, ['split', 'branch_length']);
   return {

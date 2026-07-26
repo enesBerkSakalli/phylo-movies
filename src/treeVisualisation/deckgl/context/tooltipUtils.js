@@ -41,7 +41,7 @@ export function createTaxonTooltip(info, taxaGrouping) {
   };
 }
 
-export function escapeTooltipHtml(value) {
+function escapeTooltipHtml(value) {
   return String(value).replace(/[&<>"']/g, (char) => HTML_ESCAPE_MAP[char]);
 }
 

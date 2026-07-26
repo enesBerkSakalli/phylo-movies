@@ -11,7 +11,7 @@ import {
   isSubsetOfAny,
 } from '../../../domain/tree/splits.js';
 
-export { splitsEqual, toSplitSet };
+export { toSplitSet };
 
 /**
  * Check if branch matches current pivot edge
@@ -31,7 +31,7 @@ export function isLinkPivotEdge(linkData, pivotEdge) {
  * @param {Set<number>} pivotEdge - Pivot edge Set
  * @returns {boolean} True if node is the pivot edge
  */
-export function isNodePivotEdge(nodeData, pivotEdge) {
+function isNodePivotEdge(nodeData, pivotEdge) {
   const splits = getSplitIndices(nodeData);
   if (!pivotEdge || !splits) return false;
   return splitsEqual(splits, pivotEdge);

@@ -158,12 +158,3 @@ export function LayoutTransformSection() {
     </Collapsible>
   );
 }
-
-export function VisualStyle() {
-  return (
-    <>
-      <GeometryDimensionsSection />
-      <LayoutTransformSection />
-    </>
-  );
-}

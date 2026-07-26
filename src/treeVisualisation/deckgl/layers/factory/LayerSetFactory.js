@@ -10,7 +10,7 @@ import { getNodesLayerProps } from './nodes/NodeLayers.js';
 import { withSideSuffix } from '../styles/labels/labelUtils.js';
 import { BRANCH_ANNOTATION_NONE } from '../../../../domain/tree/branchSupportIndex.js';
 
-export const DEFAULT_LAYER_SET_CONFIGS = {
+const DEFAULT_LAYER_SET_CONFIGS = {
   ...LAYER_CONFIGS,
   labelDots: LABEL_DOTS_CONFIG,
 };

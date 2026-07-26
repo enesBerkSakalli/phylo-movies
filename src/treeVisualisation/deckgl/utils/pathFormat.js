@@ -28,7 +28,7 @@ export function safeDeckPath(path) {
   return isFiniteDeckPath(path) ? path : emptyPath();
 }
 
-export function isFiniteDeckPath(path) {
+function isFiniteDeckPath(path) {
   if (!path) return false;
 
   if (isTypedArray(path)) {

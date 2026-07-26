@@ -18,7 +18,7 @@ export function applyDenseInternalNodeOpacity(opacity, node, cached, highlight) 
   return applyDenseBaseOpacity(opacity, cached, highlight);
 }
 
-export function isDenseBaseInternalNode(node, cached, highlight) {
+function isDenseBaseInternalNode(node, cached, highlight) {
   if (node?.isLeaf !== false) return false;
   if (highlight?.role !== TREE_HIGHLIGHT_ROLE.BASE) return false;
 

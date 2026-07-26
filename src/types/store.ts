@@ -11,7 +11,6 @@ import type {
 export type NavigationDirection = 'forward' | 'backward' | 'jump';
 export type CameraMode = 'orthographic' | 'orbit';
 export type AnimationStage = 'COLLAPSE' | 'EXPAND' | 'REORDER' | null;
-export type LinkGeometryMode = 'radial-elbow' | 'straight';
 export type LayoutProjectionMode = 'radial' | 'hyperbolic' | 'walrus-3d';
 export type TimelineOccurrenceSelector =
   | 'first'

@@ -42,7 +42,7 @@ function computeH3CoordinatesSubtree(parent, parentTransform) {
   }
 }
 
-export function buildH3CanonicalOrientation(a, b) {
+function buildH3CanonicalOrientation(a, b) {
   const pa = [...a];
   const pb = [...b];
   const pivot = findH3PivotPoint(pa, pb);

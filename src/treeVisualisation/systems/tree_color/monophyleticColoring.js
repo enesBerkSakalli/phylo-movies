@@ -50,7 +50,7 @@ function ensureColorCache(colorData) {
  * @param {Object} node - Normalized tree render node
  * @returns {Array<string>} Array of leaf names
  */
-export function getSubtreeLeaves(node, colorData = null) {
+function getSubtreeLeaves(node, colorData = null) {
   if (!node) return [];
 
   if (Array.isArray(node.leafNames)) {
@@ -128,7 +128,7 @@ function getEffectiveTaxonColor(taxonName, colorData) {
  * @param {Object} node - Tree node to check
  * @returns {{ isMonophyletic: boolean, color: string|null }} Result with color if monophyletic
  */
-export function checkMonophyletic(node, colorData = null) {
+function checkMonophyletic(node, colorData = null) {
   const subtreeLeaves = getSubtreeLeaves(node, colorData);
 
   if (subtreeLeaves.length === 0) {

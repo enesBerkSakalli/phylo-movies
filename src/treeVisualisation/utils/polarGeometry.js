@@ -58,7 +58,7 @@ export function usesCartesianPositionInterpolation(fromElement, toElement) {
   );
 }
 
-export function interpolateCartesianPosition(fromElement, toElement, t) {
+function interpolateCartesianPosition(fromElement, toElement, t) {
   const fromPosition = readElementPosition(fromElement);
   const toPosition = readElementPosition(toElement);
   if (!fromPosition && !toPosition) return null;

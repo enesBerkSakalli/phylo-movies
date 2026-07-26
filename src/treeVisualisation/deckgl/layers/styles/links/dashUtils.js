@@ -33,7 +33,7 @@ function calculatePathLength(path) {
   return length;
 }
 
-export function calculateFlightDashArray(path) {
+function calculateFlightDashArray(path) {
   const pathLength = calculatePathLength(path);
 
   // Flight pattern: small dots with wide gaps

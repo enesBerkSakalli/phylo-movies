@@ -8,7 +8,7 @@ const formatIndices = (indices?: number[] | null): string => {
   return [sorted.join(','), sorted.join(' ')].join(' ');
 };
 
-export const normalizeSprMoveSearchValue = (value: string): string =>
+const normalizeSprMoveSearchValue = (value: string): string =>
   value
     .toLowerCase()
     .normalize('NFKD')

@@ -73,7 +73,7 @@ export function getFramePerfSnapshot() {
   return snapshot;
 }
 
-export function installFramePerfGlobal() {
+function installFramePerfGlobal() {
   if (typeof globalThis === 'undefined') return;
   globalThis.__PHYLO_FRAME_PERF__ = {
     getSnapshot: getFramePerfSnapshot,
