@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { subscribeWithSelector } from 'zustand/middleware';
 import { createTreeDatasetSlice } from './slices/dataset/treeDataset.slice.js';
 import { createDatasetLifecycleSlice } from './slices/dataset/datasetLifecycle.slice.js';
 import { createPlaybackSlice } from '../../core/slices/playbackSlice.js';
@@ -27,27 +28,29 @@ export * from './selectors/treeSelectors.js';
 /**
  * @type {import('zustand').UseBoundStore<import('zustand').StoreApi<AppStoreState>>}
  */
-export const useAppStore = create((set, get, store) => ({
-  ...createTreeDatasetSlice(set, get),
-  ...createDatasetLifecycleSlice(set, get, store),
-  ...createPlaybackSlice(set, get),
-  ...createTreeControllerRuntimeSlice(set, get),
-  ...createTimelineRuntimeSlice(set, get),
-  ...createTimelineSlice(set, get),
-  ...createTreeAppearanceSlice(set, get),
-  ...createTreeLayoutSlice(set, get),
-  ...createTreeViewportSlice(set, get),
-  ...createTaxonomyColoringPanelSlice(set, get),
-  ...createTaxonomyColoringSlice(set, get),
-  ...createTreeHighlightOpacitySlice(set, get),
-  ...createMsaViewerSlice(set, get),
-  ...createComparisonViewSlice(set, get),
-  ...createSubtreeSelectionSlice(set, get),
-  ...createTreeHighlightStateSlice(set, get),
-  ...createTreeRuntimeSyncSlice(set, get),
-  ...createClipboardSlice(set, get),
-  ...createContextMenuSlice(set, get),
-}));
+export const useAppStore = create(
+  subscribeWithSelector((set, get, store) => ({
+    ...createTreeDatasetSlice(set, get),
+    ...createDatasetLifecycleSlice(set, get, store),
+    ...createPlaybackSlice(set, get),
+    ...createTreeControllerRuntimeSlice(set, get),
+    ...createTimelineRuntimeSlice(set, get),
+    ...createTimelineSlice(set, get),
+    ...createTreeAppearanceSlice(set, get),
+    ...createTreeLayoutSlice(set, get),
+    ...createTreeViewportSlice(set, get),
+    ...createTaxonomyColoringPanelSlice(set, get),
+    ...createTaxonomyColoringSlice(set, get),
+    ...createTreeHighlightOpacitySlice(set, get),
+    ...createMsaViewerSlice(set, get),
+    ...createComparisonViewSlice(set, get),
+    ...createSubtreeSelectionSlice(set, get),
+    ...createTreeHighlightStateSlice(set, get),
+    ...createTreeRuntimeSyncSlice(set, get),
+    ...createClipboardSlice(set, get),
+    ...createContextMenuSlice(set, get),
+  }))
+);
 
 // Set up ColorManager subscription after store creation
 useAppStore.subscribe((state, prevState) => {

@@ -1,3 +1,4 @@
+import { shallow } from 'zustand/shallow';
 import { DeckGLTreeLayerDataFactory } from './deckgl/DeckGLTreeLayerDataFactory.js';
 import { DeckGLContext } from './deckgl/context/DeckGLContext.js';
 import { LayerManager } from './deckgl/layers/LayerManager.js';
@@ -8,7 +9,10 @@ import { AnimationRunner } from './systems/AnimationRunner.js';
 import { InterpolationRenderer } from './systems/InterpolationRenderer.js';
 import { createPlaybackProgressSynchronizer } from './systems/PlaybackProgressSynchronizer.js';
 import { StaticRenderer } from './systems/StaticRenderer.js';
-import { createLayerRenderContext } from './systems/LayerRenderContext.js';
+import {
+  createLayerRenderContext,
+  selectRenderRelevantFields,
+} from './systems/LayerRenderContext.js';
 import { resetTaxonColorCache } from './systems/tree_color/monophyleticColoring.js';
 import { TreeLayoutController } from './TreeLayoutController.js';
 import { selectActiveTreeList, useAppStore } from '../state/phyloStore/store.js';
@@ -42,12 +46,26 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     this.dataConverter = new DeckGLTreeLayerDataFactory();
     this.layerManager = new LayerManager();
     this.layerManager.layerStyles.handleRenderContextChange(this._createLayerRenderContext());
-    this._layerStylesUnsubscribe = useAppStore.subscribe((state, previousState) => {
-      this.layerManager?.layerStyles?.handleRenderContextChange(
-        createLayerRenderContext(state),
-        createLayerRenderContext(previousState)
-      );
-    });
+    // Building the full render context is a spread of the entire store, so gate
+    // it behind a cheap check of just the fields that can actually affect
+    // rendering — otherwise unrelated state changes (timeline scrubbing, hover,
+    // any other UI state) would each pay for two full-store spreads for nothing.
+    // subscribeWithSelector's listener only receives the narrow selected values,
+    // not the previous full state, so track the last raw state ourselves.
+    this._lastRenderRelevantState = useAppStore.getState();
+    this._layerStylesUnsubscribe = useAppStore.subscribe(
+      selectRenderRelevantFields,
+      () => {
+        const state = useAppStore.getState();
+        const previousState = this._lastRenderRelevantState;
+        this._lastRenderRelevantState = state;
+        this.layerManager?.layerStyles?.handleRenderContextChange(
+          createLayerRenderContext(state),
+          createLayerRenderContext(previousState)
+        );
+      },
+      { equalityFn: shallow }
+    );
     this.treeInterpolator = new TreeInterpolator();
     this.interpolationCache = new InterpolationCache({
       calculateLayout: this.calculateLayout.bind(this),
@@ -84,6 +102,19 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
         });
         this._layoutPrefetchTokens.delete(treeIndex);
       }
+    };
+
+    // A worker-level failure (e.g. the module failing to load) fires here
+    // instead of the in-band SUCCESS/FAILURE message above, so it needs its
+    // own handler or it fails silently. Any in-flight prefetch requests will
+    // never get a response, so drop them and fall back to on-demand rendering.
+    this.layoutWorker.onerror = (event) => {
+      console.error('[LayoutWorker] Worker error; animation will render on demand.', {
+        message: event?.message,
+        filename: event?.filename,
+        lineno: event?.lineno,
+      });
+      this._layoutPrefetchTokens.clear();
     };
     // -----------------------------
 
@@ -223,19 +254,13 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     }
     if (this._pendingRenderRAF !== null) return;
 
-    const pendingToken = {};
-    let frameId;
-    this._pendingRenderRAF = pendingToken;
-
-    frameId = scheduleNextFrame(() => {
+    // scheduleNextFrame (requestAnimationFrame/setTimeout) always calls back
+    // asynchronously, so this assignment can never race with the callback.
+    this._pendingRenderRAF = scheduleNextFrame(() => {
       this._pendingRenderRAF = null;
       if (this._destroyed) return;
       this._flushScheduledRender();
     });
-
-    if (this._pendingRenderRAF === pendingToken) {
-      this._pendingRenderRAF = frameId;
-    }
   }
 
   _flushScheduledRender() {
@@ -433,6 +458,7 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     this.deckContext = null;
     this._layerStylesUnsubscribe?.();
     this._layerStylesUnsubscribe = null;
+    this._lastRenderRelevantState = null;
     this.layerManager?.destroy();
     this.layerManager = null;
     this.comparisonRenderer = null;
