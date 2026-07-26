@@ -145,7 +145,6 @@ export default defineConfig(async (): Promise<UserConfig> => {
       proxy: {
         '/treedata': 'http://127.0.0.1:5002',
         '/stream': 'http://127.0.0.1:5002',
-        '^/msa(?:/|$)': 'http://127.0.0.1:5002',
         '/health': 'http://127.0.0.1:5002',
         '/about': 'http://127.0.0.1:5002',
       },
