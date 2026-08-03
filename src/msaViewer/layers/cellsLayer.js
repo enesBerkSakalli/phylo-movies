@@ -6,6 +6,7 @@
 import { ColumnLayer } from '@deck.gl/layers';
 import { getColorScheme } from '../utils/colorUtils.js';
 import { colorToRgb } from '../../services/ui/colorUtils.js';
+import { clamp01 } from '../../domain/math/mathUtils.js';
 
 export function getCellSampling(visibleRange, maxCells, { preserveRows = false } = {}) {
   const { r0, r1, c0, c1 } = visibleRange;
@@ -207,7 +208,7 @@ export function getCellBackgroundColor(
 }
 
 function identityColor(matchFraction) {
-  const ratio = Math.max(0, Math.min(1, matchFraction));
+  const ratio = clamp01(matchFraction);
   return [
     Math.round(255 * (1 - ratio)),
     Math.round(255 * (1 - ratio)),

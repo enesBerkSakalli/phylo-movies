@@ -81,7 +81,6 @@ export function getLinkOutlinesLayerProps(links, state, layerStyles) {
         metricScale,
       ],
       getDashArray: [colorVersion, pivotEdgeDashingEnabled, upcomingChangesEnabled],
-      getPath: [links],
     },
   };
 }
@@ -140,7 +139,6 @@ export function getLinksLayerProps(links, state, layerStyles) {
         taxaCount,
       ],
       getDashArray: [colorVersion, pivotEdgeDashingEnabled, upcomingChangesEnabled],
-      getPath: [links],
     },
   };
 }

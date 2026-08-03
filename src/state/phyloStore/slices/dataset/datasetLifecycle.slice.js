@@ -91,16 +91,17 @@ export const createDatasetLifecycleSlice = (set, get, store) => ({
   },
 });
 
+/**
+ * Sparse cache sized to the full tree list, with only the first tree hydrated up front.
+ * The rest are hydrated on demand.
+ */
 function createHydratedTreeCache(movieData) {
   const treePayloadList = movieData.interpolated_trees;
   const treeList = new Array(treePayloadList.length);
-  const indicesToHydrate = new Set([0]);
 
-  indicesToHydrate.forEach((treeIndex) => {
-    if (treeIndex >= 0 && treeIndex < treePayloadList.length) {
-      treeList[treeIndex] = hydrateMovieTreeAtIndex(movieData, treeIndex);
-    }
-  });
+  if (treePayloadList.length > 0) {
+    treeList[0] = hydrateMovieTreeAtIndex(movieData, 0);
+  }
 
   return treeList;
 }

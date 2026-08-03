@@ -1,3 +1,4 @@
+import { clamp01 } from '../../../../domain/math/mathUtils.js';
 export const createTreeHighlightOpacitySlice = (set) => ({
   // ==========================================================================
   // STATE
@@ -8,7 +9,7 @@ export const createTreeHighlightOpacitySlice = (set) => ({
   // ACTIONS
   // ==========================================================================
   setSubtreeHighlightOpacity: (opacity) => {
-    const value = Math.max(0, Math.min(1, Number(opacity)));
+    const value = clamp01(Number(opacity));
     set({ subtreeHighlightOpacity: value });
   },
 });

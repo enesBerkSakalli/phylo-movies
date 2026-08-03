@@ -2,7 +2,7 @@
  * PolarPathInterpolator - Interpolates paths using polar coordinates
  * Used for animating tree branches and extensions in radial layouts
  */
-import { crossesAngle, longArcDelta } from '../../../../domain/math/mathUtils.js';
+import { clamp01, crossesAngle, longArcDelta } from '../../../../domain/math/mathUtils.js';
 import {
   LINK_GEOMETRY_MODES,
   normalizeLinkGeometryMode,
@@ -89,7 +89,7 @@ export class PolarPathInterpolator {
       throw new Error(`Missing polarData for link interpolation: ${toLink?.id ?? fromLink?.id}`);
     }
 
-    const t = Math.max(0, Math.min(1, timeFactor));
+    const t = clamp01(timeFactor);
     const velocityEntry = options?.velocityEntry ?? null;
     const angularT = velocityEntry?.angularT ?? t;
 

@@ -1,4 +1,5 @@
 import { getSplitKey } from '../../../domain/tree/splits.js';
+import { clamp01 } from '../../../domain/math/mathUtils.js';
 
 export const LINK_LIFECYCLES = Object.freeze({
   UNCHANGED: 'unchanged',
@@ -163,8 +164,4 @@ function classifyLinkLifecycle(fromLink, toLink, fromLength, toLength, zeroEpsil
 function getLinkInterpolationKey(linkOrKey) {
   if (typeof linkOrKey === 'string') return linkOrKey;
   return linkOrKey?.splitKey || getSplitKey(linkOrKey) || linkOrKey?.id || null;
-}
-
-function clamp01(value) {
-  return Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0));
 }

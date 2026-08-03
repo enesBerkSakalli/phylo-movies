@@ -11,13 +11,11 @@ import {
   getGlobalAngularMaxAngle,
 } from './VelocityNormalizer.js';
 import { ANIMATION_STAGES } from './stages/animationStageDetector.js';
-import {
-  LINK_LIFECYCLES,
-  createLinkInterpolationMap,
-} from './TransitionChangeModel.js';
+import { LINK_LIFECYCLES, createLinkInterpolationMap } from './TransitionChangeModel.js';
 import { measureFrameStep } from '../../performance/frameInstrumentation.js';
 import { Z_NODE } from '../constants/zOffsets.js';
 import { pointsMatch } from './pointUtils.js';
+import { clamp01 } from '../../../domain/math/mathUtils.js';
 
 /**
  * TreeInterpolator - Orchestrates tree data interpolation
@@ -69,7 +67,7 @@ export class TreeInterpolator {
   _interpolateTreeData(dataFrom, dataTo, timeFactor, options = {}) {
     const interpolationOptions = normalizeInterpolationOptions(options);
     // Ensure timeFactor is clamped
-    const t = Math.max(0, Math.min(1, timeFactor));
+    const t = clamp01(timeFactor);
     const structuralOpacity = structuralOpacityOptions(interpolationOptions);
 
     // Cached layout data is reused across animation frames; its id maps can be reused too.

@@ -6,6 +6,7 @@ import {
 } from '../../utils/polarGeometry.js';
 import { twoPointFloat32Path } from '../utils/pathFormat.js';
 import { pointsMatch } from './pointUtils.js';
+import { clamp01 } from '../../../domain/math/mathUtils.js';
 
 const ZERO_LENGTH_EPSILON = 1e-6;
 
@@ -50,7 +51,7 @@ export class PolarLinkInterpolator {
       const change = model.getLinkChange(link) || model.getLinkChange(matchKey);
       const lifecycle = change?.lifecycle || fallbackLifecycle;
       const clock = getLifecycleClock(lifecycle, clocks, timeFactor);
-      const lengthScale = getLifecycleLengthScale(lifecycle, clock, timeFactor);
+      const lengthScale = getLifecycleLengthScale(lifecycle, timeFactor);
       const entry = {
         matchKey,
         fromLink,
@@ -192,7 +193,7 @@ export class PolarLinkInterpolator {
     const targetReferenceRadius = Math.hypot(targetReferencePosition[0], targetReferencePosition[1]);
     const targetAngle = Math.atan2(targetFramePosition[1], targetFramePosition[0]);
     const branchLength = Math.max(0, targetReferenceRadius - sourceRadius);
-    const scaledBranchLength = branchLength * clampTime(lengthScale);
+    const scaledBranchLength = branchLength * clamp01(lengthScale);
     const targetPosition =
       scaledBranchLength <= ZERO_LENGTH_EPSILON
         ? sourcePosition
@@ -298,6 +299,12 @@ export class PolarLinkInterpolator {
             pathPoolKey: link?.id != null ? `link:${link.id}` : null,
           });
 
+    // Pooled datums outlive a transition, so clear the lifecycle-only fields before merging:
+    // Object.assign never removes keys the new source omits, which would otherwise leave a link
+    // stuck at the opacity/flags it carried while entering or exiting.
+    result.opacity = undefined;
+    result.isEntering = false;
+    result.isExiting = false;
     Object.assign(result, link, {
       path,
       sourcePosition,
@@ -371,14 +378,17 @@ function getLifecycleClock(lifecycle, clocks, fallback) {
   }
 }
 
-function getLifecycleLengthScale(lifecycle, clock, frameTimeFactor) {
+/**
+ * Length scaling runs on the raw frame clock, not the staged lifecycle clocks: the staged clocks
+ * hold a branch at full length for part of the frame and snap it, which read as a flicker. The
+ * staged clock still drives `transitionPhase`.
+ */
+function getLifecycleLengthScale(lifecycle, frameTimeFactor) {
   switch (lifecycle) {
     case LINK_LIFECYCLES.ENTERING:
-      return frameTimeFactor;
     case LINK_LIFECYCLES.REVIVING:
       return frameTimeFactor;
     case LINK_LIFECYCLES.EXITING:
-      return 1 - frameTimeFactor;
     case LINK_LIFECYCLES.ZEROING:
       return 1 - frameTimeFactor;
     default:
@@ -468,7 +478,7 @@ function scaleAlongCartesianEndpoint(sourcePosition, targetFramePosition, target
   ];
   const referenceLength = Math.hypot(referenceDelta[0], referenceDelta[1], referenceDelta[2]);
   const frameLength = Math.hypot(frameDelta[0], frameDelta[1], frameDelta[2]);
-  const scale = clampTime(t);
+  const scale = clamp01(t);
   if (referenceLength <= ZERO_LENGTH_EPSILON || frameLength <= ZERO_LENGTH_EPSILON || scale <= 0) {
     return source;
   }
@@ -499,14 +509,10 @@ function baseOpacity(link) {
 
 function enteringStructuralOpacity(element, options) {
   if (!options?.hasExplicitEnterTimeFactor) return baseOpacity(element);
-  return baseOpacity(element) * clampTime(options.enterTimeFactor);
+  return baseOpacity(element) * clamp01(options.enterTimeFactor);
 }
 
 function exitingStructuralOpacity(element, options) {
   if (!options?.hasExplicitExitTimeFactor) return baseOpacity(element);
-  return baseOpacity(element) * (1 - clampTime(options.exitTimeFactor));
-}
-
-function clampTime(timeFactor) {
-  return Math.max(0, Math.min(1, Number.isFinite(timeFactor) ? timeFactor : 0));
+  return baseOpacity(element) * (1 - clamp01(options.exitTimeFactor));
 }

@@ -3,11 +3,7 @@ import {
   resolveCursorTreeIndex,
   resolveHighlightTreeIndex,
 } from '../../domain/indexing/treeIndexSemantics.js';
-
-const clamp01 = (value) => {
-  if (!Number.isFinite(value)) return 0;
-  return Math.max(0, Math.min(1, value));
-};
+import { clamp01 } from '../../domain/math/mathUtils.js';
 
 const normalizeOptionalProgress = (value) => (Number.isFinite(value) ? clamp01(value) : null);
 

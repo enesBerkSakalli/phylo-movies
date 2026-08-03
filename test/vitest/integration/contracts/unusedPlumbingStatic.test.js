@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 
@@ -142,33 +143,24 @@ describe('unused plumbing cleanup', () => {
   });
 
   it('does not keep generated BranchArchitect artifacts in the app workspace', () => {
+    // Checked against the submodule's tracked files rather than the filesystem: .venv-build and
+    // friends are gitignored precisely because they appear during a local build, so asserting
+    // they are absent fails on any machine that has run one. What must not happen is committing
+    // them.
     const generatedPaths = [
-      join(repoRoot, 'engine', 'BranchArchitect', '.venv-build'),
-      join(repoRoot, 'engine', 'BranchArchitect', 'webapp', '.venv'),
-      join(repoRoot, 'engine', 'BranchArchitect', 'test', 'output'),
-      join(
-        repoRoot,
-        'engine',
-        'BranchArchitect',
-        'brancharchitect',
-        'static',
-        'css',
-        'matrix_enhanced.css'
-      ),
-      join(
-        repoRoot,
-        'engine',
-        'BranchArchitect',
-        'brancharchitect',
-        'static',
-        'js',
-        'matrix-utils.js'
-      ),
+      '.venv-build',
+      'webapp/.venv',
+      'test/output',
+      'brancharchitect/static/css/matrix_enhanced.css',
+      'brancharchitect/static/js/matrix-utils.js',
     ];
 
-    for (const generatedPath of generatedPaths) {
-      expect(existsSync(generatedPath), relative(repoRoot, generatedPath)).toBe(false);
-    }
+    const tracked = execFileSync(
+      'git',
+      ['-C', join(repoRoot, 'engine', 'BranchArchitect'), 'ls-files', '--', ...generatedPaths],
+      { encoding: 'utf8' }
+    ).trim();
+    expect(tracked, 'tracked BranchArchitect artifacts').toBe('');
 
     const gitignore = readFileSync(join(repoRoot, '.gitignore'), 'utf8');
     expect(gitignore).toContain('engine/BranchArchitect/.venv-build/');

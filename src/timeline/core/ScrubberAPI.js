@@ -1,4 +1,5 @@
 import { selectInputFrameIndices } from '../../state/phyloStore/selectors/treeSelectors.js';
+import { clamp01 } from '../../domain/math/mathUtils.js';
 
 // ============================================================================
 // SCRUBBER API
@@ -145,5 +146,5 @@ export class ScrubberAPI {
 
 function clampProgress(value) {
   if (!Number.isFinite(value)) return 0;
-  return Math.max(0, Math.min(1, value));
+  return clamp01(value);
 }

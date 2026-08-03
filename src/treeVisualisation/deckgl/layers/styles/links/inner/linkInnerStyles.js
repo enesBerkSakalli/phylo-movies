@@ -34,7 +34,7 @@ export function getLinkColor(link, cached, helpers) {
 
   // Check if this is a completed change edge (full opacity - clearly visible)
   if (upcomingChangesEnabled && highlight.role === TREE_HIGHLIGHT_ROLE.COMPLETED_CHANGE) {
-    let opacity = helpers.getBaseOpacity(link.opacity);
+    const opacity = helpers.getBaseOpacity(link.opacity);
     // Full opacity for completed - make it clearly visible
     _linkColorOut[0] = historyColor[0];
     _linkColorOut[1] = historyColor[1];

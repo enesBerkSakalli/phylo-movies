@@ -25,6 +25,18 @@ export function shortestAngle(a, b) {
 export const clamp = (value, min = 0, max = 1) => Math.max(min, Math.min(max, value));
 
 /**
+ * Clamps a value to the unit interval, coercing non-finite input to 0.
+ *
+ * The finite guard is what distinguishes this from clamp(): opacities, time factors and
+ * progress ratios all funnel through here, and a NaN reaching a shader or an easing curve
+ * is far harder to trace than a 0.
+ *
+ * @param {number} value - The value to clamp
+ * @returns {number} Value in [0, 1], or 0 if not finite
+ */
+export const clamp01 = (value) => (Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0);
+
+/**
  * Calculates interpolation indices for tree transitions
 /**
  * Cubic ease-in-out interpolation for biological transitions

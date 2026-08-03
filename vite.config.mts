@@ -112,6 +112,9 @@ export default defineConfig(async (): Promise<UserConfig> => {
     ],
     define: {
       'import.meta.env.VITE_APP_VERSION': JSON.stringify(packageJson.version),
+      // react-draggable 4.7.0 reads process.env.DRAGGABLE_DEBUG from its log() helper on every
+      // DraggableCore render, which throws "process is not defined" in the browser.
+      'process.env.DRAGGABLE_DEBUG': 'false',
     },
     envPrefix: ['VITE_'],
     resolve: {
@@ -155,6 +158,13 @@ export default defineConfig(async (): Promise<UserConfig> => {
     },
     optimizeDeps: {
       include: ['d3-hierarchy', 'd3-scale-chromatic'],
+      // Vite only forwards process.env.NODE_ENV to the pre-bundler, so the define above has to be
+      // repeated here to reach react-draggable's optimized chunk.
+      esbuildOptions: {
+        define: {
+          'process.env.DRAGGABLE_DEBUG': 'false',
+        },
+      },
     },
     build: {
       modulePreload: false,

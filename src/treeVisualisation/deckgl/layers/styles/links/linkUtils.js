@@ -1,4 +1,5 @@
 import { colorToRgb } from '../../../../../services/ui/colorUtils.js';
+import { SYSTEM_TREE_COLORS } from '../../../../../constants/TreeColors.js';
 import { resolveSubtreeHighlightRgb } from '../../../colors/highlightColorResolver.js';
 
 export const EXPANDING_LIFECYCLE_COLOR = [34, 197, 94];
@@ -28,7 +29,7 @@ export const hasLifecycleHighlightedLinks = (links) =>
 
 export const getSubtreeHighlightRgb = (link, cm, mode = 'solid', subtreeHighlightColor) => {
   return resolveSubtreeHighlightRgb({
-    baseColor: cm.getBranchColor(link),
+    baseColor: cm?.getBranchColor(link),
     mode,
     subtreeHighlightColor,
   });
@@ -37,5 +38,6 @@ export const getSubtreeHighlightRgb = (link, cm, mode = 'solid', subtreeHighligh
 export const getInnerLinkColor = (link, cached) => {
   const { colorManager: cm } = cached;
   // TreeColorManager owns base taxa/monophyletic color plus pivot-edge precedence.
-  return colorToRgb(cm.getBranchColorForInnerLine(link));
+  // It is absent until the controller attaches one, so fall back like the width/outline accessors.
+  return colorToRgb(cm?.getBranchColorForInnerLine(link) ?? SYSTEM_TREE_COLORS.defaultColor);
 };

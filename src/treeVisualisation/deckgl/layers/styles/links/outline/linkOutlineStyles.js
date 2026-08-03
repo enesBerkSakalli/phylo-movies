@@ -9,6 +9,7 @@ import { getReadableMetricScale } from '../../readableMetricScale.js';
 
 // Reusable output buffers to avoid per-call array allocations
 const _outlineColorOut = [0, 0, 0, 0];
+// Shared "no outline" result - never written to, only returned
 const _transparentColor = [0, 0, 0, 0];
 const _outlineDashOut = [0, 0];
 const PIVOT_GLOW_MIN_OPACITY = 160;
@@ -31,10 +32,6 @@ export function getLinkOutlineColor(link, cached) {
   const baseOpacity = link.opacity !== undefined ? link.opacity : 1;
 
   if (!cm && highlight.role !== TREE_HIGHLIGHT_ROLE.LIFECYCLE) {
-    _transparentColor[0] = 0;
-    _transparentColor[1] = 0;
-    _transparentColor[2] = 0;
-    _transparentColor[3] = 0;
     return _transparentColor; // Transparent if no ColorManager
   }
 
@@ -79,10 +76,6 @@ export function getLinkOutlineColor(link, cached) {
 
   // Otherwise: no outline
   if (!hasOutline) {
-    _transparentColor[0] = 0;
-    _transparentColor[1] = 0;
-    _transparentColor[2] = 0;
-    _transparentColor[3] = 0;
     return _transparentColor;
   }
 

@@ -15,19 +15,36 @@ export class LinkDataBuilder {
    * @returns {Array} Array of link data objects
    */
   convertLinks(links, options = {}) {
-    return links.map((link) => this.createLinkData(link, options)).filter(Boolean);
+    // Runs per layout conversion, so skips are counted and reported once instead of
+    // one console line per bad link.
+    const skipped = [];
+    // Single pass: map().filter() would walk every link twice on a hot path.
+    const converted = [];
+    for (let index = 0; index < links.length; index += 1) {
+      const linkData = this.createLinkData(links[index], options, skipped);
+      if (linkData) converted.push(linkData);
+    }
+
+    if (skipped.length > 0) {
+      console.warn(
+        `[LinkDataBuilder] Skipped ${skipped.length}/${links.length} links:`,
+        summarizeSkipReasons(skipped),
+        '- first:',
+        skipped[0]
+      );
+    }
+
+    return converted;
   }
 
   /**
    * Create link data object from normalized layout link
+   * @param {Array} [skipped] - Optional collector for skip diagnostics
    * @returns {Object} Link data for Deck.gl
    */
-  createLinkData(link, options = {}) {
+  createLinkData(link, options = {}, skipped = null) {
     if (!hasFiniteCoordinates(link.source) || !hasFiniteCoordinates(link.target)) {
-      console.warn(
-        '[LinkDataBuilder] Skipping link with invalid layout coordinates:',
-        link.targetSplitIndices
-      );
+      skipped?.push({ reason: 'invalid-coordinates', ref: link.targetSplitIndices });
       return null;
     }
 
@@ -45,7 +62,7 @@ export class LinkDataBuilder {
     const targetId = link.targetId;
     const linkKey = sourceId && targetId ? `link-${sourceId}->${targetId}` : null;
     if (!linkKey || !splitKey || !sourceId || !targetId) {
-      console.warn('[LinkDataBuilder] Skipping link without normalized ids:', link.targetName);
+      skipped?.push({ reason: 'missing-normalized-ids', ref: link.targetName });
       return null;
     }
 
@@ -82,20 +99,8 @@ export class LinkDataBuilder {
    */
   _extractLinkCoordinates(link) {
     return {
-      source: {
-        x: link.source.x,
-        y: link.source.y,
-        z: link.source.z,
-        angle: link.source.angle,
-        radius: link.source.radius,
-      },
-      target: {
-        x: link.target.x,
-        y: link.target.y,
-        z: link.target.z,
-        angle: link.target.angle,
-        radius: link.target.radius,
-      },
+      source: endpointCoordinates(link.source),
+      target: endpointCoordinates(link.target),
     };
   }
 
@@ -127,9 +132,35 @@ export class LinkDataBuilder {
 function hasFiniteCoordinates(node) {
   if (!node) return false;
 
+  const { x, y } = endpointCoordinates(node);
+  return Number.isFinite(x) && Number.isFinite(y);
+}
+
+/**
+ * Resolve the coordinates the geometry builder consumes. A layout node may carry either loose
+ * x/y/z or a packed `position` array, so both the validation above and the path builder read
+ * through here — otherwise a node validated via `position` reaches geometry as undefined x/y.
+ */
+function endpointCoordinates(node) {
+  const position = readPosition(node);
+  return {
+    x: Number.isFinite(node.x) ? node.x : position?.[0],
+    y: Number.isFinite(node.y) ? node.y : position?.[1],
+    z: Number.isFinite(node.z) ? node.z : position?.[2],
+    angle: node.angle,
+    radius: node.radius,
+  };
+}
+
+function readPosition(node) {
   const position = node.position;
-  if (Array.isArray(position) || ArrayBuffer.isView(position)) {
-    return Number.isFinite(position[0]) && Number.isFinite(position[1]);
+  return Array.isArray(position) || ArrayBuffer.isView(position) ? position : null;
+}
+
+function summarizeSkipReasons(skipped) {
+  const counts = {};
+  for (const entry of skipped) {
+    counts[entry.reason] = (counts[entry.reason] ?? 0) + 1;
   }
-  return Number.isFinite(node.x) && Number.isFinite(node.y);
+  return counts;
 }

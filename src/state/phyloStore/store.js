@@ -52,12 +52,16 @@ export const useAppStore = create(
   }))
 );
 
-// Set up ColorManager subscription after store creation
-useAppStore.subscribe((state, prevState) => {
-  if (state.frameIndex !== prevState.frameIndex) {
+// Set up ColorManager subscription after store creation.
+// Scoped to frameIndex via subscribeWithSelector - a bare subscribe() would run this on every
+// state change (every slider drag, color tweak and pulse tick) just to compare one field.
+useAppStore.subscribe(
+  (state) => state.frameIndex,
+  () => {
+    const state = useAppStore.getState();
     if (state.movieTimelineManager?.scrubController?.isScrubbing) {
       return;
     }
     state.updateColorManagerForCurrentIndex();
   }
-});
+);

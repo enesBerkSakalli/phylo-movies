@@ -1,6 +1,5 @@
 import { calculateWindow } from '../../domain/msa/msaWindowCalculator.js';
-
-const clamp01 = (value) => Math.max(0, Math.min(1, value || 0));
+import { clamp01 } from '../../domain/math/mathUtils.js';
 
 export function buildTimelineStatusSnapshot({
   frameIndex,

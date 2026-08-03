@@ -1,4 +1,5 @@
 import { SYSTEM_TREE_COLORS } from '../../../../constants/TreeColors.js';
+import { clamp01 } from '../../../../domain/math/mathUtils.js';
 import {
   clearEdgePreviews,
   renderTreeController,
@@ -37,7 +38,7 @@ export const createTreeHighlightStateSlice = (set, get) => ({
 
   setDimmingOpacity: (opacity) =>
     set((s) => ({
-      dimmingOpacity: Math.max(0, Math.min(1, opacity)),
+      dimmingOpacity: clamp01(opacity),
       colorVersion: s.colorVersion + 1,
     })),
 
@@ -50,7 +51,7 @@ export const createTreeHighlightStateSlice = (set, get) => ({
 
   setSubtreeDimmingOpacity: (opacity) =>
     set((s) => ({
-      subtreeDimmingOpacity: Math.max(0, Math.min(1, opacity)),
+      subtreeDimmingOpacity: clamp01(opacity),
       colorVersion: s.colorVersion + 1,
     })),
 

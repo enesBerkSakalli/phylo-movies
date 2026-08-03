@@ -2,6 +2,7 @@ import { TimelineDataProcessor } from './TimelineDataProcessor.js';
 import { buildTimelineFrameViews } from './TimelineFrameView.js';
 import { buildTimelineOccurrences } from './TimelineOccurrences.js';
 import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
+import { clamp01 } from '../../domain/math/mathUtils.js';
 
 const EMPTY_OCCURRENCES = Object.freeze([]);
 
@@ -291,11 +292,6 @@ function findInputTreeHold(occurrences) {
   return occurrences.find(
     (occurrence) => occurrence.role === 'hold' && occurrence.holdKind === 'input_tree'
   );
-}
-
-function clamp01(value) {
-  if (!Number.isFinite(value)) return 0;
-  return Math.max(0, Math.min(1, value));
 }
 
 function clampTime(value, totalDuration) {

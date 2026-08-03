@@ -1,4 +1,4 @@
-import { clamp } from '../../../../domain/math/mathUtils.js';
+import { clamp, clamp01 } from '../../../../domain/math/mathUtils.js';
 import { renderTreeController } from '../../internal/changeTracking.helpers.js';
 
 export const createComparisonViewSlice = (set, get) => ({
@@ -47,7 +47,7 @@ export const createComparisonViewSlice = (set, get) => ({
   setConnectorStrokeWidth: (width) => set({ connectorStrokeWidth: Number(width) }),
 
   setLinkConnectionOpacity: (opacity) => {
-    const value = Math.max(0, Math.min(1, Number(opacity)));
+    const value = clamp01(Number(opacity));
     set((state) => ({ linkConnectionOpacity: value, colorVersion: state.colorVersion + 1 }));
     renderTreeController(get());
   },

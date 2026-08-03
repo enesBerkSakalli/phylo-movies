@@ -1,3 +1,4 @@
+import { clamp01 } from '../../domain/math/mathUtils.js';
 const HIGHLIGHT_TARGET_EPSILON = 1e-6;
 
 export function resolveCursorTreeIndex(fromIndex, toIndex, timeFactor) {
@@ -51,7 +52,7 @@ function resolveMidpointTreeIndex(fromIndex, toIndex, timeFactor) {
 function normalizeTransitionIndexInputs(fromIndex, toIndex, timeFactor) {
   const from = Number.isInteger(fromIndex) ? fromIndex : 0;
   const to = Number.isInteger(toIndex) ? toIndex : from;
-  const t = Number.isFinite(timeFactor) ? Math.max(0, Math.min(1, timeFactor)) : 0;
+  const t = clamp01(timeFactor);
 
   return { from, to, t };
 }

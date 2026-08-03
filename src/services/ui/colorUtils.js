@@ -257,10 +257,9 @@ export function rgbToHex(rgb) {
   const toHex = (c) => {
     // Handle NaN, undefined, and clamp to 0-255 range
     const safeValue = Number.isFinite(c) ? Math.max(0, Math.min(255, Math.round(c))) : 0;
-    const hex = safeValue.toString(16);
-    return hex.length === 1 ? '0' + hex : hex;
+    return safeValue.toString(16).padStart(2, '0');
   };
-  return '#' + toHex(rgb[0]) + toHex(rgb[1]) + toHex(rgb[2]);
+  return `#${toHex(rgb[0])}${toHex(rgb[1])}${toHex(rgb[2])}`;
 }
 
 /**

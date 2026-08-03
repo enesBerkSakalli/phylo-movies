@@ -72,15 +72,17 @@ export class LinkGeometryBuilder {
   _createDirectPath(linkData) {
     const source = linkData?.source || {};
     const target = linkData?.target || {};
+    // No zero fallback on x/y: an unresolvable endpoint must yield a non-finite coordinate so
+    // twoPointFloat32Path drops the path, matching the elbow mode instead of drawing to (0, 0).
     return twoPointFloat32Path(
       [
-        finiteCoordinate(source.x, source.radius * Math.cos(source.angle)),
-        finiteCoordinate(source.y, source.radius * Math.sin(source.angle)),
+        planarCoordinate(source.x, source.radius * Math.cos(source.angle)),
+        planarCoordinate(source.y, source.radius * Math.sin(source.angle)),
         finiteCoordinate(source.z, 0),
       ],
       [
-        finiteCoordinate(target.x, target.radius * Math.cos(target.angle)),
-        finiteCoordinate(target.y, target.radius * Math.sin(target.angle)),
+        planarCoordinate(target.x, target.radius * Math.cos(target.angle)),
+        planarCoordinate(target.y, target.radius * Math.sin(target.angle)),
         finiteCoordinate(target.z, 0),
       ]
     );
@@ -127,6 +129,10 @@ export class LinkGeometryBuilder {
 
 function finiteCoordinate(value, fallback = 0) {
   return Number.isFinite(value) ? value : Number.isFinite(fallback) ? fallback : 0;
+}
+
+function planarCoordinate(value, polarFallback) {
+  return Number.isFinite(value) ? value : polarFallback;
 }
 
 function hasFinitePolarEndpoint(endpoint) {

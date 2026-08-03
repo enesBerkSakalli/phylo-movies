@@ -1,4 +1,5 @@
 import { TimelineInterval } from '../time/TimelineInterval.js';
+import { clamp01 } from '../../domain/math/mathUtils.js';
 
 export function buildTimelineOccurrences({ segments, timelineData, frameViews }) {
   const occurrences = [];
@@ -102,5 +103,5 @@ function addOccurrence({
 
 function progressForTime(movieTimeMs, totalDuration) {
   if (!Number.isFinite(totalDuration) || totalDuration <= 0) return 0;
-  return Math.max(0, Math.min(1, movieTimeMs / totalDuration));
+  return clamp01(movieTimeMs / totalDuration);
 }

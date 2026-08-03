@@ -1,3 +1,4 @@
+import { clamp01 } from '../../../domain/math/mathUtils.js';
 /**
  * ElementMatcher - Handles element matching and lifecycle during interpolation
  * Manages entering, updating, and exiting elements
@@ -103,6 +104,6 @@ export class ElementMatcher {
   }
 
   _clampTime(timeFactor) {
-    return Math.max(0, Math.min(1, Number.isFinite(timeFactor) ? timeFactor : 0));
+    return clamp01(timeFactor);
   }
 }

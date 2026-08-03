@@ -234,7 +234,7 @@ function ApplicationPreviewHero() {
           alt=""
           width="960"
           height="553"
-          fetchpriority="high"
+          fetchPriority="high"
           decoding="async"
           className="absolute inset-0 h-full w-full object-cover object-center opacity-70"
         />

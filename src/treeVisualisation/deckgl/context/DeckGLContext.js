@@ -112,6 +112,12 @@ export class DeckGLContext {
       },
     });
 
+    // Expose the instance on the existing frame-perf debug channel so deck.gl's own
+    // cpuTime/gpuTime split is readable while profiling. Diagnostic only.
+    if (globalThis.__PHYLO_FRAME_PERF__) {
+      globalThis.__PHYLO_FRAME_PERF__.getDeck = () => this.deck;
+    }
+
     // Ensure deck starts with correct dimensions and stays in sync with container resizing
     this._updateDeckSize(true);
     this._setupResizeObserver();

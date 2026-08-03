@@ -183,19 +183,6 @@ export async function processMovieData(formData, onProgress, options = {}) {
       }
     });
 
-    eventSource.addEventListener('log', (event) => {
-      refreshIdleTimeout();
-      try {
-        const log = JSON.parse(event.data);
-        const level = String(log.level || '').toLowerCase();
-        if (level === 'warning' || level === 'warn') {
-          console.warn(`[Backend] ${log.message}`);
-        } else if (level === 'error') {
-          console.error(`[Backend] ${log.message}`);
-        }
-      } catch {}
-    });
-
     eventSource.addEventListener('metadata', (event) => {
       refreshIdleTimeout();
       try {

@@ -10,8 +10,6 @@ import {
   toSubtreeSets,
 } from '../../internal/changeTracking.helpers.js';
 
-let pulseController = null;
-
 function getEdgeCount(edge) {
   if (edge instanceof Set) return edge.size;
   if (Array.isArray(edge)) return edge.length;
@@ -37,6 +35,9 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
   colorVersion: 0,
   currentAnimationStage: null, // 'COLLAPSE' | 'EXPAND' | 'REORDER' | null
   changePulsePhase: 0,
+  // Held in the store rather than a module singleton so it can't outlive the store instance that
+  // created it - a module-level controller keeps writing through the first store's set().
+  pulseController: null,
 
   // ==========================================================================
   // ACTIONS
@@ -58,28 +59,35 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
 
     set({
       colorManager,
-      pivotEdgeColor: get().pivotEdgeColor,
-      subtreeHighlightColor: get().subtreeHighlightColor,
       subtreeHighlightScope: 'current',
       taxaGrouping: null,
     });
 
+    // Deferred so the timeline manager built in the same initialize() tick is queryable.
+    // No cancellation handle is needed: if the dataset resets first, colorManager is null and
+    // both updates below no-op.
     setTimeout(() => {
-      const {
-        getSubtreeHighlightData,
-        updateColorManagerHighlightedSubtrees,
-        updateColorManagerPivotEdge,
-        getCurrentPivotEdge,
-      } = get();
+      const { colorManager: cm, getSubtreeHighlightData, getCurrentPivotEdge } = get();
+      if (!cm) return;
 
-      updateColorManagerHighlightedSubtrees(getSubtreeHighlightData());
-      updateColorManagerPivotEdge(getCurrentPivotEdge());
+      const pivotEdge = getCurrentPivotEdge();
+      const normalized = Array.isArray(pivotEdge) || pivotEdge instanceof Set ? pivotEdge : [];
+
+      // One colorVersion bump for both updates - the two public actions would bump twice and
+      // cost an extra render pass on every dataset load.
+      cm.updateHighlightedSubtrees?.(toSubtreeSets(getSubtreeHighlightData()));
+      cm.updatePivotEdge?.(normalized);
+      set((s) => ({ colorVersion: s.colorVersion + 1 }));
+      syncPivotPulseAnimation(get, getEdgeCount(normalized) > 0);
     }, 0);
   },
 
   resetColors: () => {
+    get().pulseController?.stop();
+
     set({
       colorManager: null,
+      pulseController: null,
       colorVersion: 0,
       taxaColorVersion: 0,
       taxaGrouping: null,
@@ -167,9 +175,6 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
 
     if (colorManager) {
       set((s) => ({ colorVersion: s.colorVersion + 1 }));
-    }
-
-    if (colorManager) {
       syncPivotPulseAnimation(get, getEdgeCount(normalizedPivotEdge) > 0);
     }
 
@@ -186,14 +191,15 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
   },
 
   startPulseAnimation: () => {
-    const { changePulseEnabled, colorManager } = get();
+    const { changePulseEnabled, colorManager, pulseController } = get();
     if (!changePulseEnabled) return;
 
     const hasPivotEdge = colorManager?.hasPivotEdges?.() === true;
     if (!hasPivotEdge || pulseController?.isRunning) return;
 
-    if (!pulseController) {
-      pulseController = new PulseAnimationController({
+    let controller = pulseController;
+    if (!controller) {
+      controller = new PulseAnimationController({
         onPhaseUpdate: (phase) => set({ changePulsePhase: phase }),
         shouldContinue: () => {
           const s = get();
@@ -201,9 +207,10 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
           return s.changePulseEnabled && cm?.hasPivotEdges?.() === true;
         },
       });
+      set({ pulseController: controller });
     }
-    pulseController.start();
+    controller.start();
   },
 
-  stopPulseAnimation: () => pulseController?.stop(),
+  stopPulseAnimation: () => get().pulseController?.stop(),
 });
