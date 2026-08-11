@@ -109,7 +109,7 @@ export function FocusAndChangeEffects() {
   );
 }
 
-export function GroupConnectorsSection({
+function GroupConnectorsSection({
   linkConnectionOpacity,
   connectorStrokeWidth,
   onLinkOpacityChange,

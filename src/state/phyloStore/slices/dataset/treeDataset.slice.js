@@ -2,7 +2,7 @@ import { selectTreeContext } from '../../selectors/treeSelectors.js';
 import { hydrateMovieTreeAtIndex } from '../../../../domain/backend/treeHydration.js';
 import { selectInputFrameIndicesFromRows } from '../../../../timeline/data/timelineFrameIndex.js';
 
-export const EMPTY_PAIR_METRICS = Object.freeze({
+const EMPTY_PAIR_METRICS = Object.freeze({
   rows: Object.freeze([]),
   semantics: Object.freeze({}),
 });

@@ -22,20 +22,10 @@ import {
 import { hydrateMovieTreeAtIndex as hydrateMovieTreePayloadAtIndex } from './treeHydration.js';
 
 export type {
-  DatasetProvenance,
-  MsaData,
-  PairMetricRow,
-  PairMetrics,
-  PairSolution,
   PhyloMovieData,
-  SplitChangeTemporalEvent,
-  SprMoveTemporalEvent,
-  SprPathSegment,
-  SubtreeHighlightTracking,
   TemporalEvent,
   TimelineFrame,
   TimelinePair,
-  TreeNode,
 } from './phyloMovieTypes';
 
 type ValidationOptions = {
