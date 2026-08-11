@@ -25,6 +25,7 @@ import {
   getExtensionWidth as resolveExtensionWidth,
 } from './styles/extensionStyles.js';
 import { getReadableMetricScale } from './styles/readableMetricScale.js';
+import { getRenderContextChangeCategory } from '../../RenderContextFields.js';
 
 /**
  * LayerStyles - Centralized style management for Deck.gl layers
@@ -133,57 +134,15 @@ export class LayerStyles {
       return;
     }
 
-    let layoutChanged = false;
-    let layerDataChanged = false;
-    let paintChanged = false;
-    const labelOffsets = state.styleConfig?.labelOffsets || {};
-    const prevLabelOffsets = prevState.styleConfig?.labelOffsets || {};
-
-    if (
-      labelOffsets.DEFAULT !== prevLabelOffsets.DEFAULT ||
-      labelOffsets.EXTENSION !== prevLabelOffsets.EXTENSION
-    ) {
-      layoutChanged = true;
-    }
-
-    if (
-      state.strokeWidth !== prevState.strokeWidth ||
-      state.fontSize !== prevState.fontSize ||
-      state.nodeSize !== prevState.nodeSize ||
-      state.branchAnnotationLabelKey !== prevState.branchAnnotationLabelKey ||
-      state.taxaCount !== prevState.taxaCount
-    ) {
-      layerDataChanged = true;
-    }
-
-    if (
-      state.dimmingEnabled !== prevState.dimmingEnabled ||
-      state.dimmingOpacity !== prevState.dimmingOpacity ||
-      state.subtreeDimmingEnabled !== prevState.subtreeDimmingEnabled ||
-      state.subtreeDimmingOpacity !== prevState.subtreeDimmingOpacity ||
-      state.subtreeHighlightsEnabled !== prevState.subtreeHighlightsEnabled ||
-      state.subtreeHighlightOpacity !== prevState.subtreeHighlightOpacity ||
-      state.pivotEdgeDashingEnabled !== prevState.pivotEdgeDashingEnabled ||
-      state.upcomingChangesEnabled !== prevState.upcomingChangesEnabled ||
-      state.highlightColorMode !== prevState.highlightColorMode ||
-      state.subtreeHighlightColor !== prevState.subtreeHighlightColor ||
-      state.linkConnectionOpacity !== prevState.linkConnectionOpacity ||
-      state.changePulseEnabled !== prevState.changePulseEnabled ||
-      state.changePulsePhase !== prevState.changePulsePhase ||
-      state.colorVersion !== prevState.colorVersion ||
-      state.taxaColorVersion !== prevState.taxaColorVersion
-    ) {
-      paintChanged = true;
-    }
-
-    if (layoutChanged || layerDataChanged || paintChanged) {
+    const changeCategory = getRenderContextChangeCategory(state, prevState);
+    if (changeCategory) {
       this._renderCache = null;
     }
-    if (layoutChanged && this.onLayoutChange) {
+    if (changeCategory === 'layout' && this.onLayoutChange) {
       this.onLayoutChange();
-    } else if (layerDataChanged && this.onLayerDataChange) {
+    } else if (changeCategory === 'layerData' && this.onLayerDataChange) {
       this.onLayerDataChange();
-    } else if (paintChanged && this.onPaintChange) {
+    } else if (changeCategory === 'paint' && this.onPaintChange) {
       this.onPaintChange();
     }
   }
