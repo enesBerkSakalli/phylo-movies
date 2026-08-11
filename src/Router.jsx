@@ -3,7 +3,6 @@ import { BrowserRouter, HashRouter, Routes, Route, Navigate, useLocation } from 
 import { WorkspaceInitializationPage } from './pages/WorkspaceInitialization/WorkspaceInitializationPage.jsx';
 import { ErrorBoundary } from './ErrorBoundary.jsx';
 import { isElectron } from './services/data/apiConfig.js';
-import { initWebAnalytics, trackWebAnalyticsPageView } from './services/analytics/webAnalytics.js';
 import { lazyRoute } from './lib/lazyRouteRecovery.js';
 
 const VisualizationApp = lazyRoute(() => import('./App.jsx'));
@@ -25,6 +24,19 @@ const RouterComponent = isElectron() ? HashRouter : BrowserRouter;
 const basename = isElectron() ? undefined : import.meta.env.BASE_URL?.replace(/\/$/, '') || '';
 const isDocsOnlyMode = import.meta.env.VITE_DOCS_ONLY === 'true';
 const isDemoOnlyMode = import.meta.env.VITE_DEMO_ONLY === 'true';
+
+// Analytics belongs to the public surfaces only: the usage webpage and the
+// GitHub Pages landing page. The application routes - /visualization, /demo,
+// the workspace landing in full-app mode, and every route under Electron -
+// never load the module, so nothing is fetched there at all.
+const ANALYTICS_WEBPAGE_PATHS = new Set(['/usage']);
+
+function isAnalyticsSurface(pathname) {
+  if (isElectron()) return false;
+  if (ANALYTICS_WEBPAGE_PATHS.has(pathname)) return true;
+  return isDocsOnlyMode && pathname === '/';
+}
+
 const landingElement = isDemoOnlyMode ? (
   <WorkspaceInitializationPage demoOnly />
 ) : isDocsOnlyMode ? (
@@ -64,8 +76,18 @@ function AnalyticsRouteTracker() {
   const location = useLocation();
 
   useEffect(() => {
-    initWebAnalytics();
-    trackWebAnalyticsPageView();
+    if (!isAnalyticsSurface(location.pathname)) return undefined;
+
+    let cancelled = false;
+    import('./services/analytics/webAnalytics.js').then((analytics) => {
+      if (cancelled) return;
+      analytics.initWebAnalytics();
+      analytics.trackWebAnalyticsPageView();
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [location.hash, location.pathname, location.search]);
 
   return null;
