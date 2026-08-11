@@ -17,7 +17,6 @@ import {
   useAppStore,
 } from '../../state/phyloStore/store.js';
 import { TaxaColoringWindow } from './TaxaColoringWindow.jsx';
-import { SYSTEM_TREE_COLORS } from '../../constants/TreeColors.js';
 import {
   fitFloatingWindowRect,
   getBrowserViewportSize,
@@ -92,8 +91,16 @@ export function TaxaColoringRndWindow({ isActive = false, onFocus } = {}) {
     const map = {};
     const currentTaxaMap = taxaGrouping?.taxaColorMap || {};
 
+    // Carry over explicit assignments only. Seeding every taxon with
+    // SYSTEM_TREE_COLORS.defaultColor made the map dense, and since the window
+    // applies its result on mount, that black reached the store for taxa the
+    // user never colored: MSA row labels then took their "has a color" branch
+    // and rendered white-on-black, and monophyletic detection saw every
+    // uncolored subtree as sharing one color. Consumers already fall back to
+    // the system default when an entry is absent.
     taxaNames.forEach((taxon) => {
-      map[taxon] = currentTaxaMap[taxon] || SYSTEM_TREE_COLORS.defaultColor;
+      const assigned = currentTaxaMap[taxon];
+      if (assigned) map[taxon] = assigned;
     });
     return map;
   }, [taxaNames, taxaGrouping]);

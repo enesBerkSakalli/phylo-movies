@@ -4,7 +4,6 @@ import { generateGroups } from '../../../treeColoring/utils/GroupingUtils.js';
 import { syncGroupColors } from '../utils/colorManagement.js';
 import { useCSVState } from './useCSVState.js';
 import { toHexMap } from '../../../services/ui/colorUtils.js';
-import { SYSTEM_TREE_COLORS } from '../../../constants/TreeColors.js';
 
 const GROUP_NAME_COLLATOR = new Intl.Collator(undefined, {
   numeric: true,
@@ -232,16 +231,18 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
 
   const resetToDefault = useCallback(
     function resetToDefault() {
-      // Clear everything across all modes - reset to standard system default
-      const defaultColor = SYSTEM_TREE_COLORS.defaultColor;
+      // Clear everything across all modes. Drop the entries rather than writing
+      // SYSTEM_TREE_COLORS.defaultColor into them: an absent entry is what the
+      // consumers treat as "use the system default", while an explicit black is
+      // indistinguishable from a color the user chose.
       taxaNames.forEach((name) => {
-        mgr.taxaColorMap[name] = defaultColor;
+        delete mgr.taxaColorMap[name];
       });
       groups.forEach((g) => {
-        mgr.groupColorMap[g.name] = defaultColor;
+        delete mgr.groupColorMap[g.name];
       });
       csvGroups.forEach((g) => {
-        mgr.groupColorMap[g.name] = defaultColor;
+        delete mgr.groupColorMap[g.name];
       });
 
       forceUpdate();
