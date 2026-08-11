@@ -368,6 +368,42 @@ describe('validatePhyloMovieData', () => {
     });
   });
 
+  it('hydrates one annotation key carrying two value types from separate definitions', () => {
+    const stringTree = { ...tree, annotation_values: [[0, 'EU']], children: tree.children };
+    const numberTree = { ...tree, annotation_values: [[1, 42]], children: tree.children };
+
+    const result = validatePhyloMovieData(
+      makePayload({
+        annotation_definitions: [
+          {
+            key: 'metadata.region',
+            path: ['metadata', 'region'],
+            label: 'region',
+            value_type: 'string',
+            role: 'metadata',
+          },
+          {
+            key: 'metadata.region',
+            path: ['metadata', 'region'],
+            label: 'region',
+            value_type: 'integer',
+            role: 'metadata',
+          },
+        ],
+        interpolated_trees: [stringTree, numberTree, stringTree],
+      })
+    );
+
+    expect(result.interpolated_trees[0].annotations?.fields['metadata.region']).toMatchObject({
+      value: 'EU',
+      value_type: 'string',
+    });
+    expect(result.interpolated_trees[1].annotations?.fields['metadata.region']).toMatchObject({
+      value: 42,
+      value_type: 'integer',
+    });
+  });
+
   it('hydrates compact tree names and splits from top-level dictionaries', () => {
     const compactTree = {
       name_ref: 0,

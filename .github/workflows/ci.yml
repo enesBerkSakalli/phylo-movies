@@ -2,9 +2,9 @@ name: CI - Test & Build
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
-    branches: [main]
+    branches: [main, dev]
 
 # Cancel in-progress runs for the same branch
 concurrency:
