@@ -178,23 +178,29 @@ function selectMaximinPalette(candidates, count) {
   const remaining = new Set(candidates.map((_, index) => index));
   remaining.delete(seedIndex);
 
+  // The distance to the background never changes, so evaluate it once per
+  // candidate rather than once per candidate per round.
+  const backgroundDistances = candidates.map((candidate) => candidate.color.deltaE(WHITE, '2000'));
+
+  // Running distance from each candidate to its nearest chosen color. Seeded
+  // against the first pick, then narrowed by only the newest pick each round.
+  // Rescanning every chosen color per candidate per round instead made this
+  // O(count x candidates x chosen) CIEDE2000 evaluations - about 10M for a
+  // 250-color request, which is where a large tree spent most of its freeze.
+  // The picks are unchanged: this tracks the same running minimum.
+  const minPeerDistances = candidates.map((candidate) =>
+    candidate.color.deltaE(candidates[seedIndex].color, '2000')
+  );
+
   while (chosen.length < count && remaining.size > 0) {
     let bestIndex = null;
     let bestScore = -Infinity;
 
     for (const candidateIndex of remaining) {
-      const candidate = candidates[candidateIndex].color;
-      let minPeerDistance = Infinity;
-
-      for (const chosenIndex of chosen) {
-        const distance = candidate.deltaE(candidates[chosenIndex].color, '2000');
-        if (distance < minPeerDistance) {
-          minPeerDistance = distance;
-        }
-      }
-
-      const backgroundDistance = candidate.deltaE(WHITE, '2000');
-      const score = Math.min(minPeerDistance, backgroundDistance * 0.65);
+      const score = Math.min(
+        minPeerDistances[candidateIndex],
+        backgroundDistances[candidateIndex] * 0.65
+      );
 
       if (score > bestScore) {
         bestScore = score;
@@ -205,6 +211,14 @@ function selectMaximinPalette(candidates, count) {
     if (bestIndex == null) break;
     chosen.push(bestIndex);
     remaining.delete(bestIndex);
+
+    const pickedColor = candidates[bestIndex].color;
+    for (const candidateIndex of remaining) {
+      const distance = candidates[candidateIndex].color.deltaE(pickedColor, '2000');
+      if (distance < minPeerDistances[candidateIndex]) {
+        minPeerDistances[candidateIndex] = distance;
+      }
+    }
   }
 
   return chosen.map((index) => candidates[index].hex);

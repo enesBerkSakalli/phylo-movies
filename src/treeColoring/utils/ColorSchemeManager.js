@@ -95,21 +95,29 @@ export class ColorSchemeManager {
       })
       .map((rgb) => ({ rgb, color: this._rgbArrayToColor(rgb) }));
 
+    // Farthest-point selection. Each candidate carries its distance to the
+    // nearest already-selected color; seed that once here, then fold in only
+    // the newly picked color after each round. Rescanning every selected color
+    // per candidate per round instead made this
+    // O(rounds x candidates x selected) CIEDE2000 evaluations - about 1.3M for
+    // 125 taxa and 25M for 334, which blocked the click handler for seconds to
+    // minutes. The picks are unchanged: this tracks the same running minimum.
+    for (const candidate of candidates) {
+      let minDistance = Infinity;
+      for (const selectedColor of selectedColors) {
+        const distance = candidate.color.deltaE(selectedColor, '2000');
+        if (distance < minDistance) minDistance = distance;
+      }
+      candidate.minDistance = minDistance;
+    }
+
     while (extended.length < targetCount && candidates.length > 0) {
       let bestIndex = 0;
       let bestDistance = -Infinity;
 
       for (let i = 0; i < candidates.length; i++) {
-        const candidateColor = candidates[i].color;
-        let minDistance = Infinity;
-
-        for (const selectedColor of selectedColors) {
-          const distance = candidateColor.deltaE(selectedColor, '2000');
-          if (distance < minDistance) minDistance = distance;
-        }
-
-        if (minDistance > bestDistance) {
-          bestDistance = minDistance;
+        if (candidates[i].minDistance > bestDistance) {
+          bestDistance = candidates[i].minDistance;
           bestIndex = i;
         }
       }
@@ -117,6 +125,11 @@ export class ColorSchemeManager {
       const [nextColor] = candidates.splice(bestIndex, 1);
       extended.push(nextColor.rgb);
       selectedColors.push(nextColor.color);
+
+      for (const candidate of candidates) {
+        const distance = candidate.color.deltaE(nextColor.color, '2000');
+        if (distance < candidate.minDistance) candidate.minDistance = distance;
+      }
     }
 
     return extended;
