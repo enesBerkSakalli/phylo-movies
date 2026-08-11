@@ -91,7 +91,10 @@ export class DeckGLContext {
       views: [this.views[this.cameraMode]],
       viewState: initialViewState,
       _backgroundColor: [255, 255, 255, 255],
-      useDevicePixels: 1,
+      // true lets luma.gl size the drawing buffer from devicePixelWidth/Height.
+      // A numeric 1 takes the explicit-ratio branch instead, which sizes the
+      // buffer to the CSS box and renders at 1/dpr of native on HiDPI screens.
+      useDevicePixels: true,
       glOptions: {
         antialias: true,
         preserveDrawingBuffer: false,
@@ -541,7 +544,10 @@ export class DeckGLContext {
       });
       this._resizeObserver.observe(this.container);
     } catch (err) {
-      console.warn('[DeckGLContext] ResizeObserver setup failed; canvas size may not auto-update.', err);
+      console.warn(
+        '[DeckGLContext] ResizeObserver setup failed; canvas size may not auto-update.',
+        err
+      );
     }
   }
 

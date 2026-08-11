@@ -127,13 +127,16 @@ describe('DeckGLContext view state handling', () => {
     expect(deckProps.views[0].props.controller).toEqual(context.getControllerConfig());
   });
 
-  it('uses a CSS-pixel drawing buffer without preserving rendered frames', () => {
+  it('draws at the device pixel ratio without preserving rendered frames', () => {
     const context = new DeckGLContext(document.createElement('div'));
 
     context.initialize();
 
     const deckProps = Deck.mock.calls.at(-1)[0];
-    expect(deckProps.useDevicePixels).toBe(1);
+    // Must stay boolean true, not 1: luma.gl treats a numeric useDevicePixels
+    // as an explicit ratio, so 1 sizes the buffer to the CSS box and renders
+    // at 1/dpr of native on HiDPI screens.
+    expect(deckProps.useDevicePixels).toBe(true);
     expect(deckProps.glOptions.preserveDrawingBuffer).toBe(false);
   });
 

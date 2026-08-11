@@ -350,7 +350,8 @@ export class MSADeckGLViewer {
       canvas,
       width: '100%',
       height: '100%',
-      useDevicePixels: 1,
+      // See DeckGLContext: numeric 1 renders at 1/dpr of native on HiDPI.
+      useDevicePixels: true,
       glOptions: {
         antialias: true,
       },
