@@ -90,5 +90,4 @@ describe('unused plumbing cleanup', () => {
     );
     expect(branchArchitectGitignore).toContain('/test/output/');
   });
-
 });

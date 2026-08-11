@@ -10,7 +10,9 @@
         "src/pages/Splash/splash-entry.jsx",
         "scripts/**/*.{js,mjs}",
         "test/mocha/default/*.test.js",
-        "test/mocha/supplemental/*.test.js"
+        "test/mocha/supplemental/*.test.js",
+        "test/vitest/domain/**/*.test.{js,ts}",
+        "test/vitest/integration/**/*.test.{js,ts}"
       ],
       "project": ["src/**/*.{js,jsx,ts,tsx}", "scripts/**/*.{js,mjs}"]
     },
