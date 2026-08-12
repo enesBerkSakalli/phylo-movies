@@ -10,7 +10,6 @@ import {
   useAppStore,
 } from '../../state/phyloStore/store.js';
 import { calculateConsensus, processMsaSequences } from '../../msaViewer/utils/dataUtils.js';
-import { SYSTEM_TREE_COLORS } from '../../constants/TreeColors';
 import { getTaxonColor } from '../../treeColoring/utils/GroupingUtils';
 import { MSAContext, MSAViewportContext, MSAViewportDispatchContext } from './MSAContextValue.js';
 
@@ -98,18 +97,10 @@ export function MSAProvider({ children }) {
     void taxaColorVersion;
     if (!processedData?.sequences) return {};
     const map = {};
-    const systemKeys = ['subtreeHighlightColor', 'pivotEdgeColor', 'strokeColor', 'defaultColor'];
 
     processedData.sequences.forEach((seq) => {
       const id = seq.id;
-      let color = getTaxonColor(id, taxaGrouping, null);
-
-      if (!color) {
-        if (!systemKeys.includes(id) && SYSTEM_TREE_COLORS[id]) {
-          color = SYSTEM_TREE_COLORS[id];
-        }
-      }
-
+      const color = getTaxonColor(id, taxaGrouping, null);
       if (color) map[id] = color;
     });
     return map;

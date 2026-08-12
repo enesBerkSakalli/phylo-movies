@@ -30,8 +30,7 @@ const MSA_WINDOW_BOUNDS = {
   margin: 16,
 };
 
-function fitMsaWindowRect(rect) {
-  const viewport = getBrowserViewportSize();
+function fitMsaWindowRect(rect, viewport) {
   return fitFloatingWindowRect(rect, {
     ...MSA_WINDOW_BOUNDS,
     viewportWidth: viewport.width,
@@ -68,7 +67,7 @@ function MSAWindowContent() {
             </div>
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="msa-rnd-header-actions flex shrink-0 items-center gap-1">
           <Button
             variant="ghost"
             size="icon-xs"
@@ -91,12 +90,28 @@ function MSAWindowContent() {
 function MsaRndWindowSurface({ isActive = false, onFocus } = {}) {
   const msaWindow = useAppStore(selectMsaWindow);
   const setMsaWindow = useAppStore(selectSetMsaWindow);
-  const fittedWindow = fitMsaWindowRect(msaWindow);
+  // Single viewport source: the render path and every handler fit against this
+  // state, so nothing reads window.innerWidth during the render phase.
+  const [viewport, setViewport] = React.useState(getBrowserViewportSize);
+  const fittedWindow = React.useMemo(
+    () => fitMsaWindowRect(msaWindow, viewport),
+    [msaWindow, viewport]
+  );
 
   React.useEffect(() => {
     const fitWindow = () => {
+      const nextViewport = getBrowserViewportSize();
+      // getBrowserViewportSize() returns a fresh object every call, so keep the
+      // previous one when the dimensions match; otherwise every resize event
+      // would re-render the unmemoized MSAViewer subtree for nothing.
+      setViewport((previous) =>
+        previous.width === nextViewport.width && previous.height === nextViewport.height
+          ? previous
+          : nextViewport
+      );
+
       const currentRect = useAppStore.getState().msaWindow;
-      const nextRect = fitMsaWindowRect(currentRect);
+      const nextRect = fitMsaWindowRect(currentRect, nextViewport);
       if (hasFloatingWindowRectChanged(currentRect, nextRect)) {
         setMsaWindow(toFloatingWindowRect(nextRect));
       }
@@ -125,19 +140,20 @@ function MsaRndWindowSurface({ isActive = false, onFocus } = {}) {
       minHeight={fittedWindow.minHeight}
       bounds="window"
       dragHandleClassName="msa-rnd-header"
-      cancel=".msa-rnd-body"
+      cancel=".msa-rnd-body, .msa-rnd-header-actions"
       onMouseDown={onFocus}
       onDragStop={(_e, d) => {
-        const nextRect = fitMsaWindowRect({ ...fittedWindow, x: d.x, y: d.y });
+        const nextRect = fitMsaWindowRect(
+          { width: fittedWindow.width, height: fittedWindow.height, x: d.x, y: d.y },
+          viewport
+        );
         setMsaWindow(toFloatingWindowRect(nextRect));
       }}
       onResizeStop={(_e, _dir, ref, _delta, pos) => {
-        const nextRect = fitMsaWindowRect({
-          width: parseInt(ref.style.width, 10),
-          height: parseInt(ref.style.height, 10),
-          x: pos.x,
-          y: pos.y,
-        });
+        const nextRect = fitMsaWindowRect(
+          { width: ref.offsetWidth, height: ref.offsetHeight, x: pos.x, y: pos.y },
+          viewport
+        );
         setMsaWindow(toFloatingWindowRect(nextRect));
       }}
       role="region"
