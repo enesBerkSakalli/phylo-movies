@@ -42,9 +42,6 @@ export class ColorSchemeManager {
     // scheme as the seed and add distinct generated colors. Replacing the whole palette
     // made different 10-color schemes collapse to the same generated result.
     if (numTargets > rgbScheme.length) {
-      console.log(
-        `[ColorSchemeManager] Palette "${schemeName}" has ${rgbScheme.length} colors but need ${numTargets}. Extending palette.`
-      );
       rgbScheme = this._extendRgbScheme(rgbScheme, numTargets);
     }
 
@@ -61,9 +58,6 @@ export class ColorSchemeManager {
     // If scheme still has fewer colors than targets after ordering (due to duplicates),
     // supplement with dynamically generated colors to ensure every target gets a unique color
     if (scheme.length < numTargets) {
-      console.log(
-        `[ColorSchemeManager] Ordered scheme has ${scheme.length} colors but need ${numTargets}. Supplementing.`
-      );
       scheme = this._extendRgbScheme(scheme, numTargets);
     }
 
@@ -178,13 +172,13 @@ export class ColorSchemeManager {
     const minLc = 45;
 
     for (let i = 0; i < n; i++) {
-      let color = colorObjs[i];
+      const color = colorObjs[i];
       const contrast = Math.abs(white.contrast(color, 'APCA'));
 
       if (contrast < minLc) {
         // Fix it by darkening
         // Convert to Oklch for perceptual darkening
-        let fixed = color.to('oklch');
+        const fixed = color.to('oklch');
         let safety = 0;
         // Loop until it passes or safety break
         while (Math.abs(white.contrast(fixed, 'APCA')) < minLc && safety < 50) {
@@ -296,7 +290,7 @@ export class ColorSchemeManager {
     while (attempts < 10) {
       const h = Math.random() * 360;
       const c = 0.15 + Math.random() * 0.2; // 0.15 - 0.35 (More vibrant colors)
-      let l = 0.35 + Math.random() * 0.3; // 0.35 - 0.65 (Wider lightness range)
+      const l = 0.35 + Math.random() * 0.3; // 0.35 - 0.65 (Wider lightness range)
 
       color = new Color('oklch', [l, c, h]);
       const contrast = Math.abs(white.contrast(color, 'APCA'));

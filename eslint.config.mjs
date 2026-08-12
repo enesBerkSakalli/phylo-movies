@@ -11,7 +11,8 @@ export default tseslint.config(
       'node_modules/**',
       'coverage/**',
       'engine/**',
-      'electron-app/**',
+      'electron-app/node_modules/**',
+      'electron-app/frontend-dist/**',
       'logs/**',
     ],
   },
@@ -67,6 +68,13 @@ export default tseslint.config(
           ],
         },
       ],
+      // Correctness rules the codebase already satisfies. Kept at error so the
+      // clean state is enforced rather than merely observed.
+      eqeqeq: ['error', 'always', { null: 'ignore' }],
+      'no-var': 'error',
+      'no-debugger': 'error',
+      'no-alert': 'error',
+      'prefer-const': 'error',
       'no-prototype-builtins': 'warn',
       'no-unused-expressions': 'warn',
       'no-useless-assignment': 'warn',
@@ -85,6 +93,16 @@ export default tseslint.config(
     },
   },
   {
+    // Application source only. scripts/ are CLI entry points whose output is
+    // console, and test/ callbacks are conventionally written as `function`.
+    files: ['src/**/*.{js,jsx,ts,tsx}'],
+    rules: {
+      'no-console': ['error', { allow: ['warn', 'error'] }],
+      'object-shorthand': 'error',
+      'prefer-arrow-callback': 'error',
+    },
+  },
+  {
     files: ['src/**/*.{jsx,tsx}'],
     plugins: {
       'react-hooks': reactHooks,
@@ -100,6 +118,29 @@ export default tseslint.config(
     files: ['src/components/ui/**/*.{jsx,tsx}'],
     rules: {
       'react-refresh/only-export-components': 'off',
+    },
+  },
+  {
+    // Electron main/preload run in Node and are written as CommonJS, so they need
+    // the same require() and underscore-prefix exemptions the rest of the repo has.
+    files: ['electron-app/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'commonjs',
+      globals: { ...globals.node },
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          argsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+          ignoreRestSiblings: true,
+          varsIgnorePattern: '^_',
+        },
+      ],
     },
   },
   {
