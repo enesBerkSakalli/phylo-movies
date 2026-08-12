@@ -135,7 +135,6 @@ export class AnimationRunner {
       if (shouldStop) {
         this.stopAnimation(); // Dispatch 'playing: false' to store
         this.stop(); // Stop local loop
-        return;
       }
     } catch (err) {
       if (runToken !== this._runToken) return;

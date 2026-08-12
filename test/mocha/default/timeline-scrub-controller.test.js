@@ -27,7 +27,9 @@ function createController({ scrubberAPI, renderer = null, store = null } = {}) {
 }
 
 function flushMicrotasks() {
-  return new Promise((resolve) => setTimeout(resolve, 0));
+  return new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
 }
 
 describe('TimelineScrubController', () => {

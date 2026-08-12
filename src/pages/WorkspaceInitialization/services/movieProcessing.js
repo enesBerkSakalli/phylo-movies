@@ -300,7 +300,6 @@ export async function processMovieData(formData, onProgress, options = {}) {
           interpolated_trees: streamedTrees,
         };
         resolveOnce(result);
-        return;
       } catch (err) {
         console.error('[SSE] Failed to parse complete event:', {
           error: err,

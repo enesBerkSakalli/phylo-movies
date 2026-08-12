@@ -98,7 +98,9 @@ function createTimelineManager(movieData) {
 }
 
 function flushMicrotasks() {
-  return new Promise((resolve) => setTimeout(resolve, 0));
+  return new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
 }
 
 describe('ScrubberAPI', () => {

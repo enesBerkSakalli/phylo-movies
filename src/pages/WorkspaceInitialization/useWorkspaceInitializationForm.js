@@ -499,7 +499,9 @@ async function finalizeAndNavigate(
   if (!isCurrentOperation(operationRef, operation)) return;
 
   // Brief delay to show completion sentiment
-  await new Promise((resolve) => setTimeout(resolve, 300));
+  await new Promise((resolve) => {
+    setTimeout(resolve, 300);
+  });
   if (!isCurrentOperation(operationRef, operation)) return;
 
   navigate('/visualization');

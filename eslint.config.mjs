@@ -75,6 +75,22 @@ export default tseslint.config(
       'no-debugger': 'error',
       'no-alert': 'error',
       'prefer-const': 'error',
+      // Defect detectors, all at zero findings when introduced: each one flags a
+      // construct that is almost always a mistake rather than a style choice.
+      'no-constant-binary-expression': 'error',
+      'no-self-compare': 'error',
+      'no-unmodified-loop-condition': 'error',
+      'array-callback-return': 'error',
+      'no-promise-executor-return': 'error',
+      'guard-for-in': 'error',
+      'default-case-last': 'error',
+      radix: 'error',
+      // Small clarity rules, five findings between them at introduction.
+      'no-unneeded-ternary': 'error',
+      'prefer-object-spread': 'error',
+      'no-useless-concat': 'error',
+      'no-useless-rename': 'error',
+      'no-useless-return': 'error',
       'no-prototype-builtins': 'warn',
       'no-unused-expressions': 'warn',
       'no-useless-assignment': 'warn',
@@ -98,6 +114,8 @@ export default tseslint.config(
     files: ['src/**/*.{js,jsx,ts,tsx}'],
     rules: {
       'no-console': ['error', { allow: ['warn', 'error'] }],
+      // Tests assert on literal source text containing ${...}, so this is src-only.
+      'no-template-curly-in-string': 'error',
       'object-shorthand': 'error',
       'prefer-arrow-callback': 'error',
     },
