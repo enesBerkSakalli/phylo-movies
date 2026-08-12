@@ -201,9 +201,7 @@ export async function processMovieData(formData, onProgress, options = {}) {
         reportProgress(highWaterMark, 'Streaming trees...');
       } catch (err) {
         rejectOnce(
-          new Error(
-            `${STREAM_CONTRACT_PREFIX}: metadata event is not valid JSON (${err.message}).`
-          )
+          new Error(`${STREAM_CONTRACT_PREFIX}: metadata event is not valid JSON (${err.message}).`)
         );
       }
     });
@@ -219,9 +217,7 @@ export async function processMovieData(formData, onProgress, options = {}) {
         }
         const chunk = JSON.parse(event.data);
         if (!Array.isArray(chunk.trees)) {
-          rejectOnce(
-            new Error(`${STREAM_CONTRACT_PREFIX}: tree chunk is missing a trees array.`)
-          );
+          rejectOnce(new Error(`${STREAM_CONTRACT_PREFIX}: tree chunk is missing a trees array.`));
           return;
         }
         const startIndex = chunk.start_index;
@@ -287,9 +283,7 @@ export async function processMovieData(formData, onProgress, options = {}) {
         }
 
         if (!streamMetadata) {
-          rejectOnce(
-            new Error(`${STREAM_CONTRACT_PREFIX}: completion arrived before metadata.`)
-          );
+          rejectOnce(new Error(`${STREAM_CONTRACT_PREFIX}: completion arrived before metadata.`));
           return;
         }
         if (expectedTreeTotal !== null && expectedTreeTotal !== streamedTrees.length) {

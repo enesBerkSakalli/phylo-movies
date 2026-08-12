@@ -54,7 +54,7 @@ export class CanvasRecorder {
       'video/webm',
     ];
 
-    let options = { videoBitsPerSecond: this.videoBitsPerSecond };
+    const options = { videoBitsPerSecond: this.videoBitsPerSecond };
     let selectedType = null;
 
     // 1. Try user-provided mimeType first if valid

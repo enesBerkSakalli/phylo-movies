@@ -77,9 +77,7 @@ function printRows(label, rows) {
     );
   }
 
-  console.log(
-    `TOTAL\t${formatKilobytes(totalBytes)}\t${formatKilobytes(totalGzipBytes)} gzip`
-  );
+  console.log(`TOTAL\t${formatKilobytes(totalBytes)}\t${formatKilobytes(totalGzipBytes)} gzip`);
 }
 
 const mainChunk = findMainChunk();

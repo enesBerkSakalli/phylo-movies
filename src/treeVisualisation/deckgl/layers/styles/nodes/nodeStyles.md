@@ -49,14 +49,15 @@ _Re-exported from `nodeRadiusStyles.js`_
 Resolves node radius with size multipliers for different states.
 
 **Size Multipliers:**
-| State | Multiplier |
-| ---------------- | ---------- |
-| Entering/Exiting | 0.7× |
-| Completed Change | 1.5× |
-| Active Edge | 1.5× |
-| Subtree Highlight | 1.6x |
-| History Subtree | 1.15× |
-| Default | 1.0× |
+
+| State             | Multiplier |
+| ----------------- | ---------- |
+| Entering/Exiting  | 0.7×       |
+| Completed Change  | 1.5×       |
+| Active Edge       | 1.5×       |
+| Subtree Highlight | 1.6x       |
+| History Subtree   | 1.15×      |
+| Default           | 1.0×       |
 
 ---
 

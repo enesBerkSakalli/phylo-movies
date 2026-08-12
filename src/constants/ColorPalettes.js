@@ -59,7 +59,7 @@ function colorToHex(color) {
 }
 
 function toAccessibleSrgbColor(color) {
-  let fixed = color.to('oklch');
+  const fixed = color.to('oklch');
   let safety = 0;
 
   while (

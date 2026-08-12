@@ -5,8 +5,8 @@
  * @return {Number}.
  */
 export function shortestAngle(a, b) {
-  let v1 = b - a;
-  let v2 = b - a - Math.sign(v1) * 2 * Math.PI;
+  const v1 = b - a;
+  const v2 = b - a - Math.sign(v1) * 2 * Math.PI;
 
   if (Math.abs(v1) < Math.abs(v2)) {
     return v1;

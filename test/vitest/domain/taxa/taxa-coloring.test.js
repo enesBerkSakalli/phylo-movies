@@ -130,7 +130,6 @@ describe('GroupingUtils', () => {
       expect(result).toHaveLength(0);
     });
   });
-
 });
 
 describe('Group State Persistence', () => {

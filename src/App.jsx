@@ -27,7 +27,8 @@ import { phyloData } from './services/data/dataService.js';
 import { useTreeController } from './hooks/useTreeController.js';
 
 const MsaRndWindow = React.lazy(() => import('./components/msa/MsaRndWindow.jsx'));
-const loadTaxaColoringRndWindow = () => import('./components/taxa-coloring/TaxaColoringRndWindow.jsx');
+const loadTaxaColoringRndWindow = () =>
+  import('./components/taxa-coloring/TaxaColoringRndWindow.jsx');
 const TaxaColoringRndWindow = React.lazy(loadTaxaColoringRndWindow);
 
 export function App() {

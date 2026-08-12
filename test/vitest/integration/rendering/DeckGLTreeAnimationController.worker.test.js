@@ -32,7 +32,8 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     });
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
 
-    const module = await import('../../../../src/treeVisualisation/DeckGLTreeAnimationController.js');
+    const module =
+      await import('../../../../src/treeVisualisation/DeckGLTreeAnimationController.js');
     ControllerClass = module.DeckGLTreeAnimationController;
 
     useAppStore.setState({

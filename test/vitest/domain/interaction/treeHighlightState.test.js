@@ -173,8 +173,8 @@ describe('tree highlight state', () => {
     const nextContext = {
       branchAnnotationLabelKey:
         previousContext.branchAnnotationLabelKey === 'support.bootstrap.value'
-        ? 'support.ufboot.value'
-        : 'support.bootstrap.value',
+          ? 'support.ufboot.value'
+          : 'support.bootstrap.value',
       taxaCount: 0,
     };
     const layerStyles = new LayerStyles();

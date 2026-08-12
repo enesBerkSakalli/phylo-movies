@@ -65,17 +65,17 @@ export class LabelDataBuilder {
 
     return {
       id: labelKey,
-      position: position,
+      position,
       text: leaf.name,
       name: leaf.name,
       isLeaf: true,
       split_indices: splitIndices,
       splitKey,
       angle: angleRad,
-      distance: distance,
+      distance,
       polarPosition: labelRadius,
-      textAnchor: textAnchor,
-      rotation: rotation, // in RADIANS
+      textAnchor,
+      rotation, // in RADIANS
     };
   }
 

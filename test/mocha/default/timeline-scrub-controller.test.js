@@ -1,6 +1,8 @@
 const { expect } = require('chai');
 
-const { TimelineScrubController } = require('../../../src/timeline/core/TimelineScrubController.js');
+const {
+  TimelineScrubController,
+} = require('../../../src/timeline/core/TimelineScrubController.js');
 
 function createController({ scrubberAPI, renderer = null, store = null } = {}) {
   const state = {

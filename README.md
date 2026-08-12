@@ -38,11 +38,11 @@ For revision review, use the current `main` branch unless the submission system 
 
 ## Choose the Right Entry Point
 
-| Entry point       | Use it for                                                                                      | Backend-dependent actions                                                                                                      |
-| ----------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| GitHub Pages site | Reading documentation, downloading releases/data, and opening generated demo movies at `/demo`. | New uploads, local example processing, interpolation, and MSA workflows do not run on the static site.                         |
-| Source checkout   | Recommended macOS/reviewer path for full local processing from the browser.                     | Run `./start.sh`, keep the terminal open, and use the printed `http://127.0.0.1:5173/` URL.                                    |
-| Docker            | Recommended full-stack path without manually setting up the backend.                            | Run `docker compose up --build` and open `http://localhost:8080/`.                                                             |
+| Entry point       | Use it for                                                                                      | Backend-dependent actions                                                                                                                                                  |
+| ----------------- | ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub Pages site | Reading documentation, downloading releases/data, and opening generated demo movies at `/demo`. | New uploads, local example processing, interpolation, and MSA workflows do not run on the static site.                                                                     |
+| Source checkout   | Recommended macOS/reviewer path for full local processing from the browser.                     | Run `./start.sh`, keep the terminal open, and use the printed `http://127.0.0.1:5173/` URL.                                                                                |
+| Docker            | Recommended full-stack path without manually setting up the backend.                            | Run `docker compose up --build` and open `http://localhost:8080/`.                                                                                                         |
 | Desktop release   | Optional packaged convenience build.                                                            | macOS artifacts are unsigned convenience builds; use source or Docker for review, or see [Troubleshooting](docs/troubleshooting.md#symptom-macos-says-the-app-is-damaged). |
 
 ## Quick Start

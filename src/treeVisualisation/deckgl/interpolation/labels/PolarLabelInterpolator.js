@@ -42,9 +42,10 @@ export class PolarLabelInterpolator {
     const angularT = velocityEntry?.angularT ?? t;
     const interpolatedPosition = this._interpolatePosition(fromLabel, toLabel, t, velocityEntry);
     const motionOpacity = 1;
-    const angle = hasRadiusOverride && !usesCartesianPosition
-      ? angleFromPosition(interpolatedPosition, toLabel.angle)
-      : toLabel.angle;
+    const angle =
+      hasRadiusOverride && !usesCartesianPosition
+        ? angleFromPosition(interpolatedPosition, toLabel.angle)
+        : toLabel.angle;
     const z =
       Array.isArray(interpolatedPosition) && Number.isFinite(interpolatedPosition[2])
         ? interpolatedPosition[2]
@@ -53,9 +54,10 @@ export class PolarLabelInterpolator {
 
     return {
       ...toLabel,
-      position: hasRadiusOverride && !usesCartesianPosition
-        ? positionFromPolar(radiusOverride, angle, z)
-        : interpolatedPosition,
+      position:
+        hasRadiusOverride && !usesCartesianPosition
+          ? positionFromPolar(radiusOverride, angle, z)
+          : interpolatedPosition,
       motionOpacity,
       ...(hasRadiusOverride && !usesCartesianPosition
         ? {

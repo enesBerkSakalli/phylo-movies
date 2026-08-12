@@ -52,7 +52,7 @@ export class NodeDataBuilder {
       parentId: node.parentId,
       position,
       renderPosition: [position[0], position[1], position[2] + Z_NODE],
-      dotSize: dotSize,
+      dotSize,
       isLeaf,
       isInternal: !isLeaf,
       name: node.name,

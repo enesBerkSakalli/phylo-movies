@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import { auditPublicationData, TAXA_SCALE_TIERS } from '../../../../scripts/check-publication-data.mjs';
+import {
+  auditPublicationData,
+  TAXA_SCALE_TIERS,
+} from '../../../../scripts/check-publication-data.mjs';
 
 describe('publication data hygiene', () => {
   it('verifies retained publication files against manifests and content counts', () => {

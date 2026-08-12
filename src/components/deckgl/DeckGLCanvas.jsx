@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { selectTreeController, useAppStore } from '../../state/phyloStore/store.js';
 
-const DeckGLCanvas = React.memo(function DeckGLCanvas() {
+const DeckGLCanvas = React.memo(() => {
   const animationController = useAppStore(selectTreeController);
   const containerRef = useRef(null);
 

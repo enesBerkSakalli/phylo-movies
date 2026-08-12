@@ -229,26 +229,23 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
     forceUpdate();
   }, [mgr, resetCSV, forceUpdate]);
 
-  const resetToDefault = useCallback(
-    function resetToDefault() {
-      // Clear everything across all modes. Drop the entries rather than writing
-      // SYSTEM_TREE_COLORS.defaultColor into them: an absent entry is what the
-      // consumers treat as "use the system default", while an explicit black is
-      // indistinguishable from a color the user chose.
-      taxaNames.forEach((name) => {
-        delete mgr.taxaColorMap[name];
-      });
-      groups.forEach((g) => {
-        delete mgr.groupColorMap[g.name];
-      });
-      csvGroups.forEach((g) => {
-        delete mgr.groupColorMap[g.name];
-      });
+  const resetToDefault = useCallback(() => {
+    // Clear everything across all modes. Drop the entries rather than writing
+    // SYSTEM_TREE_COLORS.defaultColor into them: an absent entry is what the
+    // consumers treat as "use the system default", while an explicit black is
+    // indistinguishable from a color the user chose.
+    taxaNames.forEach((name) => {
+      delete mgr.taxaColorMap[name];
+    });
+    groups.forEach((g) => {
+      delete mgr.groupColorMap[g.name];
+    });
+    csvGroups.forEach((g) => {
+      delete mgr.groupColorMap[g.name];
+    });
 
-      forceUpdate();
-    },
-    [taxaNames, groups, csvGroups, mgr, forceUpdate]
-  );
+    forceUpdate();
+  }, [taxaNames, groups, csvGroups, mgr, forceUpdate]);
 
   const buildResult = useCallback(
     () => ({

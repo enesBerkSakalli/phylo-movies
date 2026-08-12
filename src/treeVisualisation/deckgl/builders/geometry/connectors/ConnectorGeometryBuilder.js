@@ -87,13 +87,13 @@ export function buildBundledBezierPath(
     }
 
     // Radial vector from source center to start point
-    let dx1 = p0[0] - sc[0];
-    let dy1 = p0[1] - sc[1];
+    const dx1 = p0[0] - sc[0];
+    const dy1 = p0[1] - sc[1];
     const len1 = Math.sqrt(dx1 * dx1 + dy1 * dy1) || 1;
 
     // Radial vector from target center to end point
-    let dx2 = p3[0] - tc[0];
-    let dy2 = p3[1] - tc[1];
+    const dx2 = p3[0] - tc[0];
+    const dy2 = p3[1] - tc[1];
     const len2 = Math.sqrt(dx2 * dx2 + dy2 * dy2) || 1;
 
     // Control point distance (handle length) - proportional to distance

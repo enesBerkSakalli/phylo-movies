@@ -22,12 +22,7 @@ import { STABLE_LABEL_BOUNDS_SIZE_PX } from '../layout/labelRingRadii.js';
  * @param {number} [rightRadius=0] - Right tree radius in world-space units
  * @returns {number} Right tree offset in world-space units
  */
-function calculateRightOffset(
-  canvasWidth,
-  rightTreeOffset,
-  leftRadius = 0,
-  rightRadius = 0
-) {
+function calculateRightOffset(canvasWidth, rightTreeOffset, leftRadius = 0, rightRadius = 0) {
   // Use tree radii if available; fall back to canvas-based estimate at zoom=0
   const effectiveLeftRadius = leftRadius > 0 ? leftRadius : canvasWidth / 4;
   const effectiveRightRadius = rightRadius > 0 ? rightRadius : canvasWidth / 4;

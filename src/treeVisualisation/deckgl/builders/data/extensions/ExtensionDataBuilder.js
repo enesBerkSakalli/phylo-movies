@@ -1,8 +1,5 @@
 import { getSplitKey } from '../../../../../domain/tree/splits.js';
-import {
-  normalizeDirection3,
-  normalizePosition3,
-} from '../../../../utils/polarGeometry.js';
+import { normalizeDirection3, normalizePosition3 } from '../../../../utils/polarGeometry.js';
 import { twoPointFloat32Path } from '../../../utils/pathFormat.js';
 import { LAYOUT_PROJECTION_MODES } from '../../../../layout/hyperbolicProjection/index.js';
 

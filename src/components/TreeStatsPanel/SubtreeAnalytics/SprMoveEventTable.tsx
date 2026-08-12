@@ -215,11 +215,7 @@ const resolveSelectedBranchValueLabel = (option?: BranchValueOption): string => 
 
 const resolveRowBranchValueLabel = (
   selectedLabel: string,
-  ...values: Array<
-    | SprMoveEventRow['sourceMovedSubtreeBranchValue']
-    | null
-    | undefined
-  >
+  ...values: Array<SprMoveEventRow['sourceMovedSubtreeBranchValue'] | null | undefined>
 ): string => values.find((value) => value?.label)?.label ?? selectedLabel;
 
 const formatBranchValueTitlePart = (
@@ -296,10 +292,7 @@ export const SprMoveEventTable = ({
   const [scrollMetrics, setScrollMetrics] = React.useState({ scrollTop: 0, viewportHeight: 0 });
   const selectedMovedSubtreeSignature = getSignature(selectedMovedSubtreeIndices);
   const selectedBranchValueLabel = resolveSelectedBranchValueLabel(selectedBranchValueOption);
-  const queryTerms = React.useMemo(
-    () => tokenizeSprMoveSearchQuery(globalFilter),
-    [globalFilter]
-  );
+  const queryTerms = React.useMemo(() => tokenizeSprMoveSearchQuery(globalFilter), [globalFilter]);
   const searchableEvents = React.useMemo(
     () =>
       events.map((event, eventOrdinal) => ({

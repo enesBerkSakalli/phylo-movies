@@ -123,10 +123,7 @@ export function NewProjectTab({ disabled: globalDisabled, reset }) {
               >
                 <React.Suspense
                   fallback={
-                    <div
-                      className="text-2xs text-muted-foreground/70"
-                      role="status"
-                    >
+                    <div className="text-2xs text-muted-foreground/70" role="status">
                       Loading tree inference settings…
                     </div>
                   }

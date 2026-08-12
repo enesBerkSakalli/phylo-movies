@@ -75,7 +75,10 @@ function MovieChartSectionComponent() {
         <div id="distance-chart-panel" className="mt-0.5 h-[50px] w-full min-w-0">
           <React.Suspense
             fallback={
-              <div className="flex h-full items-center text-xs text-muted-foreground/50" role="status">
+              <div
+                className="flex h-full items-center text-xs text-muted-foreground/50"
+                role="status"
+              >
                 Loading chart…
               </div>
             }

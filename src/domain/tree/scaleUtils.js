@@ -70,7 +70,7 @@ export default function calculateScales(treeList, inputFrameIndices) {
     throw new TypeError('calculateScales requires explicit inputFrameIndices');
   }
 
-  let scaleList = [];
+  const scaleList = [];
   for (let i = 0; i < inputFrameIndices.length; i++) {
     const idx = inputFrameIndices[i];
     const scale = _calculateScale(treeList[idx]);
@@ -86,7 +86,7 @@ function _calculateScale(node, isRoot = true) {
   const children = getScaleChildren(node);
   if (children.length > 0) {
     children.forEach((child) => {
-      let child_scale = _calculateScale(child, false);
+      const child_scale = _calculateScale(child, false);
 
       if (maxRadius < child_scale) {
         maxRadius = child_scale;

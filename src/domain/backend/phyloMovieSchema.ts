@@ -21,12 +21,7 @@ import {
 } from './treePayloadValidators';
 import { hydrateMovieTreeAtIndex as hydrateMovieTreePayloadAtIndex } from './treeHydration.js';
 
-export type {
-  PhyloMovieData,
-  TemporalEvent,
-  TimelineFrame,
-  TimelinePair,
-} from './phyloMovieTypes';
+export type { PhyloMovieData, TemporalEvent, TimelineFrame, TimelinePair } from './phyloMovieTypes';
 
 type ValidationOptions = {
   hydrateTrees?: boolean;
@@ -121,10 +116,7 @@ export function hydrateMovieTreeAtIndex(
   movieData: PhyloMovieData | PhyloMovieTransportData,
   treeIndex: number
 ) {
-  return hydrateMovieTreePayloadAtIndex(
-    movieData,
-    treeIndex
-  );
+  return hydrateMovieTreePayloadAtIndex(movieData, treeIndex);
 }
 
 function optionalString(value: unknown, fieldName: string): string | undefined {

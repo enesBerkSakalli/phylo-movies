@@ -213,7 +213,9 @@ function stopBackend() {
       const killer = spawn('taskkill', ['/pid', pid.toString(), '/f', '/t']);
       killer.on('error', (err) => {
         console.error('Failed to run taskkill:', err);
-        logToFile(`taskkill spawn error for pid ${pid}: ${err && err.message ? err.message : String(err)}`);
+        logToFile(
+          `taskkill spawn error for pid ${pid}: ${err && err.message ? err.message : String(err)}`
+        );
       });
       killer.on('exit', (code) => {
         if (code !== 0) {

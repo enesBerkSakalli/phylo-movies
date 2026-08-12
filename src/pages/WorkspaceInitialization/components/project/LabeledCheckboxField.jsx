@@ -15,7 +15,14 @@ import { cn } from '../../../../lib/utils';
  * setting doesn't currently apply (as opposed to `disabled`, which only
  * locks interaction without implying the setting is inapplicable).
  */
-export function LabeledCheckboxField({ control, name, label, description, disabled, muted = false }) {
+export function LabeledCheckboxField({
+  control,
+  name,
+  label,
+  description,
+  disabled,
+  muted = false,
+}) {
   return (
     <FormField
       control={control}
@@ -26,7 +33,9 @@ export function LabeledCheckboxField({ control, name, label, description, disabl
             <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={disabled} />
           </FormControl>
           <div className="flex flex-col gap-1 leading-none">
-            <FormLabel className={cn('cursor-pointer text-sm font-normal', muted && 'text-muted-foreground')}>
+            <FormLabel
+              className={cn('cursor-pointer text-sm font-normal', muted && 'text-muted-foreground')}
+            >
               {label}
             </FormLabel>
             <FormDescription className="text-2xs leading-tight">{description}</FormDescription>

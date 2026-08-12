@@ -78,9 +78,7 @@ function assignStableH3ChildAngles(children, parentRadius, level, parent) {
   for (let index = 0; index < children.length; index += 1) {
     const fallbackCenter = cumulativeWeight + fallbackWeights[index] / 2;
     const stableCenter =
-      leafRanks && parentLeafCount > 0
-        ? getH3ChildLeafCenter(children[index], leafRanks)
-        : null;
+      leafRanks && parentLeafCount > 0 ? getH3ChildLeafCenter(children[index], leafRanks) : null;
     const normalizedCenter =
       stableCenter === null
         ? (fallbackCenter - firstFallbackCenter) / totalFallbackWeight

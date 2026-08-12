@@ -50,7 +50,16 @@ describe('scaleUtils', () => {
     });
 
     it('calculates scale directly from compact tuple tree payloads', () => {
-      const compactTree = [0, 0, 0, null, [[5, 1, 1, null, [[3, 2, 2, null, []]]], [2, 3, 3, null, []]]];
+      const compactTree = [
+        0,
+        0,
+        0,
+        null,
+        [
+          [5, 1, 1, null, [[3, 2, 2, null, []]]],
+          [2, 3, 3, null, []],
+        ],
+      ];
 
       const result = calculateScales([compactTree], [0]);
 

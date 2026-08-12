@@ -63,7 +63,8 @@ describe('tree viewport behavior', () => {
     });
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
 
-    const module = await import('../../../../src/treeVisualisation/DeckGLTreeAnimationController.js');
+    const module =
+      await import('../../../../src/treeVisualisation/DeckGLTreeAnimationController.js');
     ControllerClass = module.DeckGLTreeAnimationController;
   });
 
@@ -87,10 +88,7 @@ describe('tree viewport behavior', () => {
   });
 
   it('loads the workspace tour only after the user targets its launcher', () => {
-    const source = readFileSync(
-      join(process.cwd(), 'src/features/tours/TourLauncher.jsx'),
-      'utf8'
-    );
+    const source = readFileSync(join(process.cwd(), 'src/features/tours/TourLauncher.jsx'), 'utf8');
 
     expect(source).not.toContain("from './workspaceTour.js'");
     expect(source).toContain("const loadWorkspaceTour = () => import('./workspaceTour.js')");

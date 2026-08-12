@@ -294,9 +294,9 @@ describe('hyperbolic radial projection', () => {
       Math.max(smallerStableFirstClade.h3SubtreeRadius, largerStableSecondClade.h3SubtreeRadius);
 
     expect(relativeRadiusDelta).toBeLessThan(0.1);
-    expect(angularDistance(smallerStableFirstClade.h3Theta, largerStableSecondClade.h3Theta)).toBeCloseTo(
-      Math.PI
-    );
+    expect(
+      angularDistance(smallerStableFirstClade.h3Theta, largerStableSecondClade.h3Theta)
+    ).toBeCloseTo(Math.PI);
   });
 
   it('keeps an unchanged clade azimuth stable when a sibling clade splits', () => {

@@ -179,7 +179,9 @@ export class PolarLinkInterpolator {
       this._lifecycleTargetReferencePosition(fromLink, toLink, options.lifecycle, options) ||
       targetFramePosition;
 
-    if (usesCartesianEndpointScaling(sourcePosition, targetFramePosition, targetReferencePosition)) {
+    if (
+      usesCartesianEndpointScaling(sourcePosition, targetFramePosition, targetReferencePosition)
+    ) {
       const targetPosition = scaleAlongCartesianEndpoint(
         sourcePosition,
         targetFramePosition,
@@ -190,7 +192,10 @@ export class PolarLinkInterpolator {
     }
 
     const sourceRadius = Math.hypot(sourcePosition[0], sourcePosition[1]);
-    const targetReferenceRadius = Math.hypot(targetReferencePosition[0], targetReferencePosition[1]);
+    const targetReferenceRadius = Math.hypot(
+      targetReferencePosition[0],
+      targetReferencePosition[1]
+    );
     const targetAngle = Math.atan2(targetFramePosition[1], targetFramePosition[0]);
     const branchLength = Math.max(0, targetReferenceRadius - sourceRadius);
     const scaledBranchLength = branchLength * clamp01(lengthScale);
@@ -462,7 +467,12 @@ function usesCartesianEndpointScaling(...positions) {
   return positions.some((position) => Math.abs(Number(position?.[2]) || 0) > ZERO_LENGTH_EPSILON);
 }
 
-function scaleAlongCartesianEndpoint(sourcePosition, targetFramePosition, targetReferencePosition, t) {
+function scaleAlongCartesianEndpoint(
+  sourcePosition,
+  targetFramePosition,
+  targetReferencePosition,
+  t
+) {
   const source = normalizePosition3(sourcePosition) || [0, 0, 0];
   const targetFrame = normalizePosition3(targetFramePosition) || [0, 0, 0];
   const targetReference = normalizePosition3(targetReferencePosition) || [0, 0, 0];

@@ -36,7 +36,7 @@ function buildRejectionMessage(rejection: FileRejection | undefined, maxSize: nu
 }
 
 export const FileUploadZone = React.forwardRef<HTMLDivElement, FileUploadZoneProps>(
-  function FileUploadZone(
+  (
     {
       onFileSelect,
       accept,
@@ -50,7 +50,7 @@ export const FileUploadZone = React.forwardRef<HTMLDivElement, FileUploadZonePro
       ...divProps
     },
     ref
-  ) {
+  ) => {
     const generatedId = React.useId();
     const inputId = id || `file-upload-${generatedId}`;
     const descriptionId = `${inputId}-description`;

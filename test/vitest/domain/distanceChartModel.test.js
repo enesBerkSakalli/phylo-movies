@@ -100,10 +100,7 @@ describe('distanceChartModel', () => {
   it('labels distance points from normalized pair metrics and pair rows', () => {
     const { points, yMax } = buildSeriesPoints('rfd', pairMetrics, [], pairs);
 
-    expect(points.map((point) => point.contextLabel)).toEqual([
-      'Tree 8 -> 9',
-      'Tree 9 -> 10',
-    ]);
+    expect(points.map((point) => point.contextLabel)).toEqual(['Tree 8 -> 9', 'Tree 9 -> 10']);
     expect(yMax).toBe(1);
     expect(points[0]).toMatchObject({
       pairId: 'pair-a',

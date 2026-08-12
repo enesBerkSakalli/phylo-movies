@@ -76,8 +76,8 @@ export function calculateWindow(
   const midPosition = Math.max(startPosition, Math.min(endPosition, rawMidPosition));
 
   return {
-    startPosition: startPosition, // 1-based inclusive
-    midPosition: midPosition, // 1-based (center position, clamped to window)
-    endPosition: endPosition, // 1-based inclusive
+    startPosition, // 1-based inclusive
+    midPosition, // 1-based (center position, clamped to window)
+    endPosition, // 1-based inclusive
   };
 }

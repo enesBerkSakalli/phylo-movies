@@ -73,17 +73,17 @@ The tree canvas can also be magnified with the top-right zoom controls, mouse wh
 
 ## Taxa and Highlights
 
-| Control                  | Meaning                                                             |
-| ------------------------ | ------------------------------------------------------------------- |
-| **Edit Taxa Colors**     | Opens the Taxa Coloring floating window.                            |
+| Control                        | Meaning                                                             |
+| ------------------------------ | ------------------------------------------------------------------- |
+| **Edit Taxa Colors**           | Opens the Taxa Coloring floating window.                            |
 | **Monophyletic Branch Colors** | Applies group/taxa color assignments to monophyletic branch groups. |
-| **Change Edges**         | Shows changed/pivot edges and lets you choose their color.          |
-| **Subtree Highlighting** | Highlights moved or manually selected subtrees.                     |
-| **Highlight Opacity**    | Controls subtree highlight opacity.                                 |
-| **Highlight Scope**      | Chooses all affected edges or only the current subtree.             |
-| **Highlight Style**      | Uses a solid color, taxa colors, or high contrast.                  |
-| **Focus**                | Zooms to the manually highlighted subtree.                          |
-| **Clear**                | Removes manually marked subtree highlights.                         |
+| **Change Edges**               | Shows changed/pivot edges and lets you choose their color.          |
+| **Subtree Highlighting**       | Highlights moved or manually selected subtrees.                     |
+| **Highlight Opacity**          | Controls subtree highlight opacity.                                 |
+| **Highlight Scope**            | Chooses all affected edges or only the current subtree.             |
+| **Highlight Style**            | Uses a solid color, taxa colors, or high contrast.                  |
+| **Focus**                      | Zooms to the manually highlighted subtree.                          |
+| **Clear**                      | Removes manually marked subtree highlights.                         |
 
 ## View Mode
 

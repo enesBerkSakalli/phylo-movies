@@ -8,19 +8,19 @@ Canvas export controls are in the top-right workspace toolbar.
 
 ## Viewport Controls
 
-| Control | Meaning |
-| --- | --- |
+| Control                     | Meaning                                    |
+| --------------------------- | ------------------------------------------ |
 | **Fit all visible content** | Fits the active tree view into the canvas. |
-| **Zoom out tree** | Decreases tree zoom. |
-| **Reset tree view** | Restores the default tree view. |
-| **Zoom in tree** | Increases tree zoom. |
+| **Zoom out tree**           | Decreases tree zoom.                       |
+| **Reset tree view**         | Restores the default tree view.            |
+| **Zoom in tree**            | Increases tree zoom.                       |
 
 These controls change only the viewport. They do not change the dataset, tree topology, or inference output.
 
 ## PNG Export
 
-| Control | Meaning |
-| --- | --- |
+| Control      | Meaning                                                |
+| ------------ | ------------------------------------------------------ |
 | **Save PNG** | Saves the current rendered tree canvas as a PNG image. |
 
 PNG export captures the current canvas state, including layout, styling, labels, highlights, and comparison view if visible. It does not export the full manual, timeline, sidebar, or floating windows.
@@ -29,10 +29,10 @@ If PNG export fails, check that the tree has finished rendering and that the can
 
 ## WebM Recording
 
-| Control | Meaning |
-| --- | --- |
+| Control             | Meaning                                                        |
+| ------------------- | -------------------------------------------------------------- |
 | **Start recording** | Starts browser recording capture for the visualization canvas. |
-| **Stop recording** | Finishes recording and saves the WebM file. |
+| **Stop recording**  | Finishes recording and saves the WebM file.                    |
 
 Recording is useful for playback demonstrations and supplemental visual material. The browser may require recording permission, and recording can fail if the canvas is unavailable or the browser interrupts recording.
 

@@ -64,11 +64,7 @@ const renderFieldCases = [
 ];
 
 const renderCategoryCases = [
-  [
-    'layout',
-    'onLayoutChange',
-    (context) => (context.styleConfig.labelOffsets.DEFAULT = 3),
-  ],
+  ['layout', 'onLayoutChange', (context) => (context.styleConfig.labelOffsets.DEFAULT = 3)],
   ['layer data', 'onLayerDataChange', (context) => (context.strokeWidth = 3)],
   ['paint', 'onPaintChange', (context) => (context.dimmingEnabled = false)],
 ];
