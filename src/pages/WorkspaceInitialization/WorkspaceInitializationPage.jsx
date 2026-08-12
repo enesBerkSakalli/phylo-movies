@@ -43,7 +43,19 @@ function getEngineStatus(state) {
 
 export function WorkspaceInitializationPage({ demoOnly = false }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [showBackendAlert, setShowBackendAlert] = React.useState(false);
+  // The backend alert appears only after a 750ms delay, and only while the
+  // backend is genuinely being waited on. showBackendAlert is derived from that
+  // eligibility and a delay flag; the eligibility toggle resets the flag during
+  // render (store-previous-value) so no synchronous setState runs in the effect.
+  const backendAlertEligible = !demoOnly && backendStatus.state !== 'ready';
+  const [backendAlertDelayElapsed, setBackendAlertDelayElapsed] = React.useState(false);
+  const [prevBackendAlertEligible, setPrevBackendAlertEligible] =
+    React.useState(backendAlertEligible);
+  if (backendAlertEligible !== prevBackendAlertEligible) {
+    setPrevBackendAlertEligible(backendAlertEligible);
+    setBackendAlertDelayElapsed(false);
+  }
+  const showBackendAlert = backendAlertEligible && backendAlertDelayElapsed;
   const activeTab = demoOnly || searchParams.get('tab') === 'example' ? 'example' : 'upload';
   const {
     form,
@@ -69,14 +81,10 @@ export function WorkspaceInitializationPage({ demoOnly = false }) {
   const exampleDatasets = demoOnly ? DEMO_EXAMPLE_DATASETS : undefined;
 
   React.useEffect(() => {
-    if (demoOnly || backendStatus.state === 'ready') {
-      setShowBackendAlert(false);
-      return undefined;
-    }
-
-    const timeoutId = window.setTimeout(() => setShowBackendAlert(true), 750);
+    if (!backendAlertEligible) return undefined;
+    const timeoutId = window.setTimeout(() => setBackendAlertDelayElapsed(true), 750);
     return () => window.clearTimeout(timeoutId);
-  }, [backendStatus.state, demoOnly]);
+  }, [backendAlertEligible]);
 
   function handleTabChange(value) {
     const nextSearchParams = new URLSearchParams(searchParams);

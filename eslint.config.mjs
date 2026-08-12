@@ -121,21 +121,38 @@ export default tseslint.config(
     },
   },
   {
-    files: ['src/**/*.{jsx,tsx}'],
-    plugins: {
-      'react-hooks': reactHooks,
-      'react-refresh': reactRefresh,
-    },
+    // react-hooks rules also cover custom hooks written in .js, not only the
+    // component files. The compiler-powered rules catch cascading renders and
+    // ref reads/writes during render that AST-only linting misses.
+    files: ['src/**/*.{js,jsx,ts,tsx}'],
+    plugins: { 'react-hooks': reactHooks },
     rules: {
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/refs': 'warn',
+      'react-hooks/purity': 'warn',
+      'react-hooks/no-deriving-state-in-effects': 'warn',
+    },
+  },
+  {
+    // react-refresh only concerns component module exports, so it stays on the
+    // component files.
+    files: ['src/**/*.{jsx,tsx}'],
+    plugins: { 'react-refresh': reactRefresh },
+    rules: {
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
   },
   {
-    files: ['src/components/ui/**/*.{jsx,tsx}'],
+    // Generated shadcn files: copied in verbatim and maintained upstream, so the
+    // rules that fight their generated style are turned off here rather than
+    // edited into local drift.
+    files: ['src/components/ui/**/*.{jsx,tsx}', 'src/hooks/use-mobile.ts'],
     rules: {
       'react-refresh/only-export-components': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/purity': 'off',
     },
   },
   {

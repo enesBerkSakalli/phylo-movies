@@ -35,7 +35,6 @@ export function TaxaColoringWindow({
     csvValidation,
     csvError,
     colorManager,
-    colorVersion,
     applyScheme,
     onFile,
     onMetadataSource,
@@ -109,7 +108,6 @@ export function TaxaColoringWindow({
         <TaxaTabContent
           taxaNames={taxaNames}
           colorManager={colorManager}
-          colorVersion={colorVersion}
           applyScheme={applyScheme}
           handleColorChange={handleColorChange}
         />
@@ -125,7 +123,6 @@ export function TaxaColoringWindow({
           groupingResult={groupingResult}
           groups={groups}
           colorManager={colorManager}
-          colorVersion={colorVersion}
           applyScheme={applyScheme}
           handleColorChange={handleColorChange}
           onStrategyChange={handleStrategyChange}
@@ -141,7 +138,6 @@ export function TaxaColoringWindow({
           csvError={csvError}
           csvGroups={csvGroups}
           colorManager={colorManager}
-          colorVersion={colorVersion}
           onFile={onFile}
           metadataSources={metadataSources}
           onMetadataSource={onMetadataSource}

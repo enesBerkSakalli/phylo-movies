@@ -32,8 +32,21 @@ export function RecentRunsPanel() {
   }, []);
 
   React.useEffect(() => {
-    refreshRuns();
-  }, [refreshRuns]);
+    // Fetch on mount inside a guarded async closure so the setState happens after
+    // the await rather than synchronously in the effect body.
+    let active = true;
+    (async () => {
+      try {
+        const initialRuns = await phyloData.listRuns();
+        if (active) setRuns(initialRuns);
+      } catch (err) {
+        if (active) setError(err?.message || 'Saved runs could not be loaded.');
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   async function handleOpen(runId) {
     setError(null);

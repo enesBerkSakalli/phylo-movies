@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ColorSchemeManager } from '../../../treeColoring/utils/ColorSchemeManager.js';
 import { generateGroups } from '../../../treeColoring/utils/GroupingUtils.js';
 import { syncGroupColors } from '../utils/colorManagement.js';
@@ -18,41 +18,27 @@ function orderedColorTargets(items, isGrouped) {
   return isGrouped ? [...items].sort(compareGroupedTargets) : items;
 }
 
+function toPlainMap(maybeMap) {
+  if (maybeMap instanceof Map) return Object.fromEntries(maybeMap);
+  return maybeMap && typeof maybeMap === 'object' ? maybeMap : null;
+}
+
 export function useTaxaColoringState(taxaNames, originalColorMap, initialStateParam = {}) {
   const initialState = initialStateParam || {};
 
-  // Initialize ColorSchemeManager with saved colors if available
-  const colorManagerRef = useRef(null);
-  if (colorManagerRef.current === null) {
-    const mgr = new ColorSchemeManager(originalColorMap);
+  // The taxa and group color maps are the single source of truth and live in
+  // React state, updated immutably. ColorSchemeManager is used only as a
+  // stateless computation engine (palette generation and ordering) when a
+  // scheme is applied, not as a mutable store, so there is no version counter
+  // to force re-renders.
+  const [normalizedOriginal] = useState(
+    () => new ColorSchemeManager(originalColorMap).taxaColorMap
+  );
 
-    // Restore taxa colors from saved state immediately during initialization
-    if (initialState.taxaColorMap) {
-      const taxaMap =
-        initialState.taxaColorMap instanceof Map
-          ? Object.fromEntries(initialState.taxaColorMap)
-          : initialState.taxaColorMap;
-      Object.entries(taxaMap).forEach(([name, color]) => {
-        mgr.taxaColorMap[name] = color;
-      });
-    }
-
-    // Restore group colors from saved state immediately during initialization
-    if (initialState.groupColorMap) {
-      const groupMap =
-        initialState.groupColorMap instanceof Map
-          ? Object.fromEntries(initialState.groupColorMap)
-          : initialState.groupColorMap;
-      Object.entries(groupMap).forEach(([name, color]) => {
-        mgr.groupColorMap[name] = color;
-      });
-    }
-
-    colorManagerRef.current = mgr;
-  }
-
-  const [version, setVersion] = useState(0);
-  const forceUpdate = useCallback(() => setVersion((v) => v + 1), []);
+  const [taxaColorMap, setTaxaColorMap] = useState(() => {
+    const savedTaxa = toPlainMap(initialState.taxaColorMap);
+    return savedTaxa ? { ...normalizedOriginal, ...savedTaxa } : { ...normalizedOriginal };
+  });
 
   const [mode, setMode] = useState(initialState.mode || 'taxa');
   const [selectedStrategy, setSelectedStrategy] = useState(initialState.strategyType || 'prefix');
@@ -62,8 +48,34 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
   const [segmentIndex, setSegmentIndex] = useState(initialState.segmentIndex ?? 0);
   const [useRegex, setUseRegex] = useState(initialState.useRegex ?? false);
   const [regexPattern, setRegexPattern] = useState(initialState.regexPattern || '');
-  const [groups, setGroups] = useState([]);
-  const [groupingResult, setGroupingResult] = useState(null);
+
+  // Reopening in groups mode regenerates the saved grouping once during
+  // initialization and seeds the group state from it, rather than running a
+  // mount effect that then forces a second render (advanced-init-once).
+  const [initialGrouping] = useState(() => {
+    if (initialState.mode !== 'groups' || taxaNames.length === 0) return null;
+    const res = generateGroups(
+      taxaNames,
+      Array.isArray(initialState.separators) && initialState.separators.length > 0
+        ? initialState.separators
+        : null,
+      initialState.strategyType || 'prefix',
+      {
+        segmentIndex: initialState.segmentIndex || 0,
+        useRegex: initialState.useRegex || false,
+        regexPattern: initialState.regexPattern || '',
+      }
+    );
+    return res ?? null;
+  });
+
+  const [groupColorMap, setGroupColorMap] = useState(() => {
+    const savedGroups = toPlainMap(initialState.groupColorMap);
+    const base = savedGroups ? { ...savedGroups } : {};
+    return initialGrouping?.groups ? syncGroupColors(base, initialGrouping.groups) : base;
+  });
+  const [groups, setGroups] = useState(initialGrouping?.groups ?? []);
+  const [groupingResult, setGroupingResult] = useState(initialGrouping ?? null);
 
   const {
     csvData,
@@ -79,47 +91,18 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
     resetCSV,
   } = useCSVState(taxaNames, initialState);
 
-  const mgr = colorManagerRef.current;
-
-  // Initialize groups if reopening in groups mode with saved configuration
-  // Color maps are already restored during ColorSchemeManager initialization
-  useEffect(() => {
-    // If we're reopening in groups mode with saved configuration, regenerate groups
-    if (initialState.mode === 'groups' && taxaNames.length > 0) {
-      const savedSeparators = initialState.separators;
-      const options = {
-        segmentIndex: initialState.segmentIndex || 0,
-        useRegex: initialState.useRegex || false,
-        regexPattern: initialState.regexPattern || '',
-      };
-
-      const res = generateGroups(
-        taxaNames,
-        savedSeparators && savedSeparators.length > 0 ? savedSeparators : null,
-        initialState.strategyType || 'prefix',
-        options
-      );
-
-      if (res?.groups) {
-        setGroups(res.groups);
-        setGroupingResult(res);
-        // Sync colors: restore saved colors or generate new ones
-        syncGroupColors(mgr, res.groups);
-      }
-    }
-
-    forceUpdate();
-  }, []); // Run once on mount
-
-  // Sync CSV group colors only while CSV assignments are active. Pattern and CSV
-  // modes share the group color map, so hidden CSV state must not overwrite the
-  // active pattern assignment.
-  useEffect(() => {
+  // Give CSV groups their default colors while CSV assignments are active.
+  // Pattern and CSV modes share the group color map, so this runs only in CSV
+  // mode. Adjusted during render via the store-previous-value pattern rather
+  // than a setState-in-effect (rerender-derived-state-no-effect).
+  const csvSyncSignal = mode === 'csv' ? csvGroups : null;
+  const [prevCsvSyncSignal, setPrevCsvSyncSignal] = useState(csvSyncSignal);
+  if (csvSyncSignal !== prevCsvSyncSignal) {
+    setPrevCsvSyncSignal(csvSyncSignal);
     if (mode === 'csv' && csvGroups.length > 0) {
-      syncGroupColors(mgr, csvGroups);
-      forceUpdate();
+      setGroupColorMap((prev) => syncGroupColors(prev, csvGroups));
     }
-  }, [mode, csvGroups, mgr, forceUpdate]);
+  }
 
   const applyScheme = useCallback(
     (id, targetMode) => {
@@ -129,10 +112,17 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
         csv: { items: csvGroups, isGrouped: true },
       };
       const { items, isGrouped } = itemsMap[targetMode];
-      mgr.applyColorScheme(id, orderedColorTargets(items, isGrouped), isGrouped);
-      forceUpdate();
+      // Compute the assignments with a throwaway manager, then fold them into the
+      // color-map state immutably.
+      const scratch = new ColorSchemeManager();
+      scratch.applyColorScheme(id, orderedColorTargets(items, isGrouped), isGrouped);
+      if (isGrouped) {
+        setGroupColorMap((prev) => ({ ...prev, ...scratch.groupColorMap }));
+      } else {
+        setTaxaColorMap((prev) => ({ ...prev, ...scratch.taxaColorMap }));
+      }
     },
-    [taxaNames, groups, csvGroups, mgr, forceUpdate]
+    [taxaNames, groups, csvGroups]
   );
 
   const updateGroups = useCallback(() => {
@@ -157,12 +147,11 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
       if (res.analyzed && res.separators && res.separators.length > 0) {
         setSeparators(res.separators);
       }
-      syncGroupColors(mgr, res.groups);
-      forceUpdate();
+      setGroupColorMap((prev) => syncGroupColors(prev, res.groups));
     } else {
       setGroups([]);
     }
-  }, [taxaNames, selectedStrategy, separators, segmentIndex, useRegex, regexPattern, mgr]);
+  }, [taxaNames, selectedStrategy, separators, segmentIndex, useRegex, regexPattern]);
 
   // Track previous grouping config to avoid unnecessary updateGroups calls
   const prevGroupingConfigRef = useRef(null);
@@ -216,7 +205,8 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
   }, []);
 
   const resetAll = useCallback(() => {
-    mgr.reset();
+    setTaxaColorMap({ ...normalizedOriginal });
+    setGroupColorMap({});
     setMode('taxa');
     setSelectedStrategy('prefix');
     setSeparators([]);
@@ -226,32 +216,31 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
     setGroups([]);
     setGroupingResult(null);
     resetCSV();
-    forceUpdate();
-  }, [mgr, resetCSV, forceUpdate]);
+  }, [normalizedOriginal, resetCSV]);
 
   const resetToDefault = useCallback(() => {
     // Clear everything across all modes. Drop the entries rather than writing
     // SYSTEM_TREE_COLORS.defaultColor into them: an absent entry is what the
     // consumers treat as "use the system default", while an explicit black is
     // indistinguishable from a color the user chose.
-    taxaNames.forEach((name) => {
-      delete mgr.taxaColorMap[name];
+    setTaxaColorMap((prev) => {
+      const next = { ...prev };
+      taxaNames.forEach((name) => delete next[name]);
+      return next;
     });
-    groups.forEach((g) => {
-      delete mgr.groupColorMap[g.name];
+    setGroupColorMap((prev) => {
+      const next = { ...prev };
+      groups.forEach((g) => delete next[g.name]);
+      csvGroups.forEach((g) => delete next[g.name]);
+      return next;
     });
-    csvGroups.forEach((g) => {
-      delete mgr.groupColorMap[g.name];
-    });
-
-    forceUpdate();
-  }, [taxaNames, groups, csvGroups, mgr, forceUpdate]);
+  }, [taxaNames, groups, csvGroups]);
 
   const buildResult = useCallback(
     () => ({
       mode,
-      taxaColorMap: toHexMap(mgr.taxaColorMap),
-      groupColorMap: toHexMap(mgr.groupColorMap),
+      taxaColorMap: toHexMap(taxaColorMap),
+      groupColorMap: toHexMap(groupColorMap),
       separators: Array.isArray(separators) && separators.length > 0 ? separators : null,
       strategyType: selectedStrategy,
       segmentIndex,
@@ -266,7 +255,8 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
     }),
     [
       mode,
-      mgr,
+      taxaColorMap,
+      groupColorMap,
       separators,
       selectedStrategy,
       segmentIndex,
@@ -278,17 +268,22 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
       csvColumn,
       csvData,
       csvFileName,
-      version,
     ]
   );
 
-  const handleColorChange = useCallback(
-    (name, color, isGroup = false) => {
-      const colorMap = isGroup ? mgr.groupColorMap : mgr.taxaColorMap;
-      colorMap[name] = color;
-      forceUpdate();
-    },
-    [mgr, forceUpdate]
+  const handleColorChange = useCallback((name, color, isGroup = false) => {
+    if (isGroup) {
+      setGroupColorMap((prev) => ({ ...prev, [name]: color }));
+    } else {
+      setTaxaColorMap((prev) => ({ ...prev, [name]: color }));
+    }
+  }, []);
+
+  // Snapshot exposed to the swatch grid. Its identity changes with the color
+  // maps, so consumers re-render on color changes without a version counter.
+  const colorManager = useMemo(
+    () => ({ taxaColorMap, groupColorMap }),
+    [taxaColorMap, groupColorMap]
   );
 
   return {
@@ -308,8 +303,7 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
     csvColumn,
     csvValidation,
     csvError,
-    colorManager: mgr,
-    colorVersion: version, // Expose version to force re-renders in child components
+    colorManager,
     applyScheme,
     onFile,
     onMetadataSource,

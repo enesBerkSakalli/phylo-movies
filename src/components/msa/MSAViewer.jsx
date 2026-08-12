@@ -136,7 +136,6 @@ export function MSAViewer() {
       pendingRangeRef.current = null;
       publishedRangeRef.current = null;
       setVisibleRangeRef.current(null);
-      setLayoutMetrics(null);
     }
   }, [colorScheme, msaPreviousRegion, msaRegion, processedData, rowColorMap, showLetters]);
 
@@ -150,7 +149,7 @@ export function MSAViewer() {
   return (
     <div className="msa-rnd-body relative flex-1 min-h-0 bg-background" ref={containerRef}>
       <MSAStatusOverlay />
-      <MSAScrollbars layoutMetrics={layoutMetrics} />
+      <MSAScrollbars layoutMetrics={processedData ? layoutMetrics : null} />
     </div>
   );
 }

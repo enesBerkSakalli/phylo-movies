@@ -3,13 +3,7 @@ import { ColorSchemeSelector } from '../shared/ColorSchemeSelector.jsx';
 import { EmptyStateAlert } from '../shared/EmptyStateAlert.jsx';
 import { ColorInputGrid } from '../shared/ColorInputGrid.jsx';
 
-export function TaxaTabContent({
-  taxaNames,
-  colorManager,
-  colorVersion,
-  applyScheme,
-  handleColorChange,
-}) {
+export function TaxaTabContent({ taxaNames, colorManager, applyScheme, handleColorChange }) {
   return (
     <div className="flex flex-col gap-4">
       <ColorSchemeSelector
@@ -27,7 +21,6 @@ export function TaxaTabContent({
             <p className="text-2xs text-muted-foreground">Individual color assignments.</p>
           </div>
           <ColorInputGrid
-            key={colorVersion}
             items={taxaNames}
             isGroup={false}
             colorManager={colorManager}

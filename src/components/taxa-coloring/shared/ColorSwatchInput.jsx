@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useId } from 'react';
+import React, { useMemo, useState, useId } from 'react';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover';
@@ -13,11 +13,22 @@ export function ColorSwatchInput({ label, color, onChange }) {
   const displayColor = HEX_COLOR_PATTERN.test(color || '') ? color : '#000000';
   const [customColor, setCustomColor] = useState(displayColor);
 
-  useEffect(() => {
+  // Reset the editable value to the committed color when the popover opens
+  // (rerender-move-effect-to-event) instead of syncing from an effect.
+  const openPopover = () => {
+    setCustomColor(displayColor);
+    setOpen(true);
+  };
+
+  // If the committed color changes while the popover is open, keep the editable
+  // value in step, adjusted during render via the store-previous-value pattern.
+  const [syncedDisplayColor, setSyncedDisplayColor] = useState(displayColor);
+  if (displayColor !== syncedDisplayColor) {
+    setSyncedDisplayColor(displayColor);
     if (open) {
       setCustomColor(displayColor);
     }
-  }, [open, displayColor]);
+  }
 
   // Quick colors: first 4 palettes, first 5 colors each
   const quickColors = useMemo(() => {
@@ -44,7 +55,7 @@ export function ColorSwatchInput({ label, color, onChange }) {
   return (
     <div className="flex flex-col gap-1 p-2 rounded-md border border-transparent hover:border-border/20 hover:bg-accent/5 transition-all group/swatch">
       <div className="flex items-center gap-2">
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover open={open} onOpenChange={(next) => (next ? openPopover() : setOpen(false))}>
           <PopoverTrigger asChild>
             <Button
               id={controlId}

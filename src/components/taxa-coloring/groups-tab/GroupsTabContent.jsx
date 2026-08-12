@@ -13,7 +13,6 @@ export function GroupsTabContent({
   groupingResult,
   groups,
   colorManager,
-  colorVersion,
   applyScheme,
   handleColorChange,
   onStrategyChange,
@@ -44,7 +43,6 @@ export function GroupsTabContent({
             <p className="text-2xs text-muted-foreground">Colors assigned to detected subtrees.</p>
           </div>
           <ColorInputGrid
-            key={colorVersion}
             items={groups}
             isGroup={true}
             colorManager={colorManager}

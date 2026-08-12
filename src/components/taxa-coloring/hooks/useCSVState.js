@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState } from 'react';
 import { parseGroupCSV } from '../../../treeColoring/utils/CSVParser.js';
 import { chooseInitialCSVColumn, loadCSVColumn } from '../utils/csvHelpers.js';
 
@@ -17,15 +17,15 @@ export function useCSVState(taxaNames, initialState = {}) {
     return null;
   });
   const [csvColumn, setCsvColumn] = useState(safeState.csvColumn || null);
-  const [csvValidation, setCsvValidation] = useState(null);
-  const [csvError, setCsvError] = useState(null);
-
-  useEffect(() => {
+  const [csvValidation, setCsvValidation] = useState(() => {
+    // Restore validation once from saved state, computed during initialization
+    // rather than in a mount effect (rerender-lazy-state-init).
     if (safeState.csvData && safeState.csvColumn && taxaNames.length > 0) {
-      const { validation } = loadCSVColumn(safeState.csvData, safeState.csvColumn, taxaNames);
-      setCsvValidation(validation);
+      return loadCSVColumn(safeState.csvData, safeState.csvColumn, taxaNames).validation;
     }
-  }, []);
+    return null;
+  });
+  const [csvError, setCsvError] = useState(null);
 
   const loadTableText = useCallback(
     (text, fileName, preferredColumn = null) => {

@@ -73,10 +73,11 @@ export function useWorkspaceInitializationForm({ skipBackendCheck = false } = {}
   const { reset: resetForm } = form;
 
   useEffect(() => {
+    const operation = operationRef.current;
     return () => {
-      operationRef.current.mounted = false;
-      operationRef.current.id += 1;
-      operationRef.current.controller?.abort();
+      operation.mounted = false;
+      operation.id += 1;
+      operation.controller?.abort();
       hideElectronLoading();
     };
   }, []);

@@ -13,7 +13,6 @@ export function CSVTabContent({
   csvError,
   csvGroups,
   colorManager,
-  colorVersion,
   onFile,
   metadataSources,
   onMetadataSource,
@@ -45,7 +44,6 @@ export function CSVTabContent({
             description="Apply palettes to CSV-defined groups."
           />
           <CSVGroupColors
-            key={colorVersion}
             csvGroups={csvGroups}
             colorManager={colorManager}
             onColorChange={handleColorChange}

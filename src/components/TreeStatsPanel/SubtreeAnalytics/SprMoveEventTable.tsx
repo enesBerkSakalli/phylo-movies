@@ -392,9 +392,16 @@ export const SprMoveEventTable = ({
     updateScrollMetrics();
   }, [filteredEventRows.length, updateScrollMetrics]);
 
-  React.useEffect(() => {
+  // Reset the editable input when the incoming threshold changes, using React's
+  // store-previous-value pattern instead of an effect so the value is corrected
+  // during render rather than in a second commit.
+  const [lastSyncedThreshold, setLastSyncedThreshold] = React.useState(
+    normalizedBranchValueThreshold
+  );
+  if (normalizedBranchValueThreshold !== lastSyncedThreshold) {
+    setLastSyncedThreshold(normalizedBranchValueThreshold);
     setBranchValueThresholdInput(formatBranchValueThreshold(normalizedBranchValueThreshold));
-  }, [normalizedBranchValueThreshold]);
+  }
 
   React.useEffect(() => {
     const element = scrollContainerRef.current;
