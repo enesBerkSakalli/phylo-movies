@@ -607,9 +607,9 @@ export class MSADeckGLViewer {
   // =======================================================================
 
   /**
-   * Build instanced cell layers for the MAIN view (culled)
-   * @param {number} cellSize - Size of each cell
-   * @returns {ColumnLayer[]} The cell layers
+   * Row/column bounds of the cells currently inside the main view.
+   * @returns {{ r0: number, r1: number, c0: number, c1: number }} Inclusive
+   *   first/last row and column indices, clamped to the alignment size.
    */
   getVisibleRange() {
     return getVisibleRange(
