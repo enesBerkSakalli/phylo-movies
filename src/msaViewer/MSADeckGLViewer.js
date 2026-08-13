@@ -3,6 +3,7 @@
  */
 
 import { Deck, OrthographicView, OrthographicController } from '@deck.gl/core';
+import { disconnectObserver, teardownDeckRenderer } from '../lib/deckTeardown.js';
 import { calculateConsensus } from './utils/dataUtils.js';
 import {
   buildCellData,
@@ -959,39 +960,22 @@ export class MSADeckGLViewer {
   destroy() {
     this._destroyed = true;
 
-    this._initialLayoutObserver?.disconnect();
-    this._initialLayoutObserver = null;
-
-    if (this.frame) {
-      cancelAnimationFrame(this.frame);
-      this.frame = null;
-    }
-
-    // Clean up resize observer
-    if (this.resizeObserver) {
-      this.resizeObserver.disconnect();
-      this.resizeObserver = null;
-    }
+    this._initialLayoutObserver = disconnectObserver(this._initialLayoutObserver);
 
     // Remove wheel handler
     if (this.container && this._handleWheel) {
       this.container.removeEventListener('wheel', this._handleWheel);
     }
 
-    if (this.state.deckgl) {
-      this.state.deckgl.finalize();
-      this.state.deckgl = null;
-    }
-
-    // Remove artifacts we added (leave React-managed children alone)
-    if (this.container) {
-      try {
-        if (this.canvas && this.canvas.parentNode === this.container) {
-          this.container.removeChild(this.canvas);
-        }
-      } catch (err) {
-        console.warn('[MSA Viewer] Cleanup error during removeChild:', err);
-      }
-    }
+    teardownDeckRenderer({
+      frameId: this.frame,
+      resizeObserver: this.resizeObserver,
+      deck: this.state.deckgl,
+      element: this.canvas,
+      label: '[MSA Viewer]',
+    });
+    this.frame = null;
+    this.resizeObserver = null;
+    this.state.deckgl = null;
   }
 }

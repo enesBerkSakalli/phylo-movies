@@ -3,6 +3,7 @@ if (typeof document !== 'undefined') {
   import('../../css/movie-timeline/container.css');
 }
 import { Deck, OrthographicView } from '@deck.gl/core';
+import { teardownDeckRenderer } from '../../lib/deckTeardown.js';
 import { TIMELINE_CONSTANTS, TIMELINE_THEME } from '../constants.js';
 import {
   createPathLayer,
@@ -894,23 +895,9 @@ export class DeckTimelineRenderer {
    * Cleans up all resources: deck.gl instance, DOM elements, event listeners, observers.
    */
   destroy() {
-    if (this._updateFrameId !== null) {
-      cancelAnimationFrame(this._updateFrameId);
-      this._updateFrameId = null;
-    }
-
     if (this._hoverTimeoutId !== null) {
       clearTimeout(this._hoverTimeoutId);
       this._hoverTimeoutId = null;
-    }
-
-    if (this.deck) {
-      this.deck.finalize();
-      this.deck = null;
-    }
-
-    if (this.canvas?.parentNode) {
-      this.canvas.parentNode.removeChild(this.canvas);
     }
 
     if (this._unbindMouseEvents) {
@@ -920,10 +907,16 @@ export class DeckTimelineRenderer {
 
     window.removeEventListener('resize', this._onResize);
 
-    if (this._resizeObserver) {
-      this._resizeObserver.disconnect();
-      this._resizeObserver = null;
-    }
+    teardownDeckRenderer({
+      frameId: this._updateFrameId,
+      resizeObserver: this._resizeObserver,
+      deck: this.deck,
+      element: this.canvas,
+      label: '[DeckTimelineRenderer]',
+    });
+    this._updateFrameId = null;
+    this._resizeObserver = null;
+    this.deck = null;
 
     this.container = null;
     this._lastHoverId = null;

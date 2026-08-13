@@ -1,4 +1,5 @@
 import { Deck } from '@deck.gl/core';
+import { teardownDeckRenderer } from '../../../lib/deckTeardown.js';
 import { easeInOutCubic } from '../../../domain/math/mathUtils.js';
 import { useAppStore } from '../../../state/phyloStore/store.js';
 import { measureFrameStep } from '../../performance/frameInstrumentation.js';
@@ -459,33 +460,16 @@ export class DeckGLContext {
   destroy() {
     this._isDestroyed = true;
 
-    if (this._viewStateFrameId !== null) {
-      if (typeof cancelAnimationFrame === 'function') {
-        cancelAnimationFrame(this._viewStateFrameId);
-      }
-      this._viewStateFrameId = null;
-    }
-
-    // Only finalize deck if we own it (not external/React-managed)
-    if (this.deck) {
-      this.deck.finalize();
-    }
+    teardownDeckRenderer({
+      frameId: this._viewStateFrameId,
+      resizeObserver: this._resizeObserver,
+      deck: this.deck,
+      element: this.canvas,
+      label: '[DeckGLContext]',
+    });
+    this._viewStateFrameId = null;
+    this._resizeObserver = null;
     this.deck = null;
-
-    if (this._resizeObserver) {
-      this._resizeObserver.disconnect();
-      this._resizeObserver = null;
-    }
-
-    // Safety check: verify parentNode exists and canvas is actually its child
-    try {
-      if (this.canvas && this.canvas.parentNode && this.canvas.parentNode.contains(this.canvas)) {
-        this.canvas.parentNode.removeChild(this.canvas);
-      }
-    } catch (e) {
-      console.warn('[DeckGLContext] Failed to remove deck.gl canvas during cleanup:', e);
-    }
-
     this.canvas = null;
     this._onWebGLInitialized = null;
     this._onError = null;
