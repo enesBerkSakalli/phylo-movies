@@ -9,6 +9,7 @@ export function applyDimmingWithCache(
   subtreeDimmingOpacity,
   _highlightedSubtreeData
 ) {
+  let result = opacity;
   const isSourceOrDest =
     isNode &&
     Boolean(
@@ -22,7 +23,7 @@ export function applyDimmingWithCache(
       : colorManager.isDownstreamOfAnyPivotEdge?.(entity);
 
     if (!isDownstream) {
-      opacity = Math.round(opacity * dimmingOpacity);
+      result = Math.round(result * dimmingOpacity);
     }
   }
 
@@ -34,9 +35,9 @@ export function applyDimmingWithCache(
       : colorManager.isLinkInHighlightedSubtreeFast(entity);
 
     if (!isInSubtree) {
-      opacity = Math.round(opacity * subtreeDimmingOpacity);
+      result = Math.round(result * subtreeDimmingOpacity);
     }
   }
 
-  return opacity;
+  return result;
 }

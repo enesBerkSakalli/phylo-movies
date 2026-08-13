@@ -91,6 +91,10 @@ export default tseslint.config(
       'no-useless-concat': 'error',
       'no-useless-rename': 'error',
       'no-useless-return': 'error',
+      // Structural rules, measured against src before enabling.
+      'symbol-description': 'error',
+      'no-unreachable-loop': 'error',
+      'grouped-accessor-pairs': 'error',
       'no-prototype-builtins': 'warn',
       'no-unused-expressions': 'warn',
       'no-useless-assignment': 'warn',
@@ -118,6 +122,11 @@ export default tseslint.config(
       'no-template-curly-in-string': 'error',
       'object-shorthand': 'error',
       'prefer-arrow-callback': 'error',
+      // Application-code structure. Scoped to src/ because test harnesses reuse a
+      // module-level binding inside hook callbacks by convention, which reads as a
+      // shadow, and CLI scripts intentionally reassign locals.
+      'no-shadow': 'error',
+      'no-param-reassign': 'error',
     },
   },
   {
@@ -153,6 +162,8 @@ export default tseslint.config(
       'react-refresh/only-export-components': 'off',
       'react-hooks/set-state-in-effect': 'off',
       'react-hooks/purity': 'off',
+      'no-shadow': 'off',
+      'no-param-reassign': 'off',
     },
   },
   {

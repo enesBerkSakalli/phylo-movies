@@ -40,23 +40,25 @@ export function calculateWindow(
     return { startPosition: 1, midPosition: 1, endPosition: Math.max(1, defaultEndPosition) };
   }
 
-  if (!msaStepSize || msaStepSize <= 0) {
+  let stepSize = msaStepSize;
+  if (!stepSize || stepSize <= 0) {
     console.warn('[calculateWindow] Invalid msaStepSize:', msaStepSize);
-    msaStepSize = 1; // Default to 1
+    stepSize = 1; // Default to 1
   }
 
-  if (!msaWindowSize || msaWindowSize <= 0) {
+  let windowSize = msaWindowSize;
+  if (!windowSize || windowSize <= 0) {
     console.warn('[calculateWindow] Invalid msaWindowSize:', msaWindowSize);
-    msaWindowSize = 100; // Default to 100
+    windowSize = 100; // Default to 100
   }
 
   // Match backend calculation (0-indexed)
   // Backend: center_pos = frame_index * step_size
-  const centerPos0 = currentInputFrameIndex * msaStepSize;
+  const centerPos0 = currentInputFrameIndex * stepSize;
 
   // Backend: left_half = int(window_size / 2), right_half = ceil(window_size / 2)
-  const leftHalf = Math.floor(msaWindowSize / 2);
-  const rightHalf = Math.ceil(msaWindowSize / 2);
+  const leftHalf = Math.floor(windowSize / 2);
+  const rightHalf = Math.ceil(windowSize / 2);
 
   // Backend: start_pos = max(0, center_pos - left_half)
   // Backend: end_pos = min(alignment_length, center_pos + right_half)

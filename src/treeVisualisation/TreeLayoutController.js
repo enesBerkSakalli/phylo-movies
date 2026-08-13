@@ -188,8 +188,9 @@ export class TreeLayoutController {
     const { layoutProjectionMode, hyperbolicProjectionStrength } = state;
     const treeList = selectActiveTreeList(state);
 
-    if (!treeData && Number.isInteger(treeIndex)) {
-      treeData = state.ensureTreeHydrated?.(treeIndex) ?? treeList?.[treeIndex] ?? null;
+    let resolvedTreeData = treeData;
+    if (!resolvedTreeData && Number.isInteger(treeIndex)) {
+      resolvedTreeData = state.ensureTreeHydrated?.(treeIndex) ?? treeList?.[treeIndex] ?? null;
     }
 
     // initializeUniformScaling is cache-guarded and also catches dataset reference changes.
@@ -198,7 +199,7 @@ export class TreeLayoutController {
     const layoutCacheKey = this._getLayoutResultCacheKey({
       state,
       treeList,
-      treeData,
+      treeData: resolvedTreeData,
       treeIndex,
     });
     if (layoutCacheKey) {
@@ -208,7 +209,7 @@ export class TreeLayoutController {
 
     const transformCacheKey = createTransformCacheKey({ state, treeList, branchTransformation });
     const transformedTreeData = this._getTransformedTreeData(
-      treeData,
+      resolvedTreeData,
       branchTransformation,
       treeIndex,
       transformCacheKey,

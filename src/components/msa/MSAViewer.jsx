@@ -74,16 +74,16 @@ export function MSAViewer() {
       centerViewportOn: (position) => viewer.centerViewportOn(position),
     });
 
-    viewer.onViewStateChange = ({ range, layoutMetrics }) => {
-      if (layoutMetrics) {
+    viewer.onViewStateChange = ({ range, layoutMetrics: metrics }) => {
+      if (metrics) {
         setLayoutMetrics((current) => {
           if (
-            current?.labelsWidth === layoutMetrics.labelsWidth &&
-            current?.axisHeight === layoutMetrics.axisHeight
+            current?.labelsWidth === metrics.labelsWidth &&
+            current?.axisHeight === metrics.axisHeight
           ) {
             return current;
           }
-          return layoutMetrics;
+          return metrics;
         });
       }
       if (range) {

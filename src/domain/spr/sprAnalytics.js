@@ -155,7 +155,7 @@ function buildSprMoveEventRowsFromContext(pairs, options, context) {
       const metric = getPairMetric(metricByPairId, pairId);
 
       return rawEvents
-        .map((event, eventIndex) => {
+        .map((event, moveIndex) => {
           const driverSplitIndices = normalizeSubtreeIndices(event.driver_subtree);
           const highlightGroup = normalizeHighlightGroup(event.highlight_group);
           const eventGroup =
@@ -249,7 +249,7 @@ function buildSprMoveEventRowsFromContext(pairs, options, context) {
               sourceInputTreeIndex,
               targetInputTreeIndex,
             }),
-            eventIndex,
+            eventIndex: moveIndex,
             signature,
             splitIndices,
             driverSplitIndices,

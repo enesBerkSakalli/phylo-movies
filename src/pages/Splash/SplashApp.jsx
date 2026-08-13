@@ -12,9 +12,9 @@ const SplashApp = () => {
   useEffect(() => {
     // Listen for status updates from main process
     if (window.splashAPI) {
-      window.splashAPI.onStatusUpdate((_event, { message, progress }) => {
+      window.splashAPI.onStatusUpdate((_event, { message, progress: progressValue }) => {
         setStatus(message);
-        if (progress !== undefined) setProgress(progress);
+        if (progressValue !== undefined) setProgress(progressValue);
       });
 
       window.splashAPI.onFadeOut(() => {
