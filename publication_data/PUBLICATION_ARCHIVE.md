@@ -82,7 +82,7 @@ than this archive. They are openable demo payloads, not the reproducibility
 source of truth. Their copy surface is controlled by:
 
 ```text
-scripts/copy-examples.sh
+scripts/copy-examples.mjs
 ```
 
 The publication data archive remains the authoritative source for source
