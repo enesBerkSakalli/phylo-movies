@@ -2,7 +2,7 @@
 
 [Back to README](../README.md)
 
-Built-in examples are declared in `src/pages/WorkspaceInitialization/exampleDatasets.js` and read from `publication_data/`. During development, Vite serves those files as `/examples/...`. During production builds, `scripts/copy-examples.sh` copies the example files into the build output.
+Built-in examples are declared in `src/pages/WorkspaceInitialization/exampleDatasets.js` and read from `publication_data/`. During development, Vite serves those files as `/examples/...`. During production builds, `scripts/copy-examples.mjs` (run by `npm run build`) copies the example files into the build output.
 
 ## Where Examples Work
 

@@ -130,16 +130,13 @@ export const phyloData = {
   },
 
   async set(data, options = {}) {
-    // readMoviePayload already validated what it returns, so re-running the
-    // contract over four million nodes here would be pure waste.
     // A binary-backed payload can never satisfy validatePhyloMovieData: it has
-    // no interpolated_trees and carries a treeSource the contract rejects. Since
-    // readMoviePayload is its only producer, and that already validated it,
-    // detect it here rather than making every caller pass the flag.
-    const validatedBackendData =
-      options.validated || isBinaryBackedPayload(data)
-        ? data
-        : validatePhyloMovieData(data, TRANSPORT_VALIDATION_OPTIONS);
+    // no interpolated_trees and carries a treeSource the contract rejects.
+    // readMoviePayload is its only producer and already validated it, so re-
+    // running the contract over millions of nodes here would be pure waste.
+    const validatedBackendData = isBinaryBackedPayload(data)
+      ? data
+      : validatePhyloMovieData(data, TRANSPORT_VALIDATION_OPTIONS);
 
     const run = await createRunRecord(validatedBackendData, options);
 

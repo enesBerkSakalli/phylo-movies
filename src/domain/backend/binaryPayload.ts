@@ -38,7 +38,7 @@ const MAGIC = 'PMB1';
 const HEADER_ALIGNMENT = 8;
 export const BINARY_PAYLOAD_FORMAT_VERSION = 3;
 
-export interface BinaryTreeBlock {
+interface BinaryTreeBlock {
   nodeCount: number;
   annotationCount: number;
   length: Float64Array;

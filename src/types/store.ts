@@ -141,7 +141,7 @@ export interface TaxaGrouping {
  * PMB1 container holds typed-array blocks, and consumers read through this
  * rather than indexing either.
  */
-export interface TreeSource {
+interface TreeSource {
   treeCount: number;
   hydrateAt: (index: number) => TreeNode;
   payloadAt: (index: number) => unknown;

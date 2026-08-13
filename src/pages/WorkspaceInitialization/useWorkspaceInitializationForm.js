@@ -345,7 +345,7 @@ export function useWorkspaceInitializationForm({ skipBackendCheck = false } = {}
 
       setOperationState({ percent: 75, message: 'Preparing visualization...' });
       payload.file_name = payload.file_name || example.fileName;
-      await phyloData.set(payload, { label: example.name, validated: true });
+      await phyloData.set(payload, { label: example.name });
       if (!isCurrentOperation(operationRef, operation)) return;
 
       navigate('/visualization');
