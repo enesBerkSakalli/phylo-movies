@@ -20,6 +20,7 @@ import {
   validateTreePayloadList,
 } from './treePayloadValidators';
 import { hydrateMovieTreeAtIndex as hydrateMovieTreePayloadAtIndex } from './treeHydration.js';
+import { flattenTreeAnnotationValues } from './annotationValueLayout';
 
 export type { PhyloMovieData, TemporalEvent, TimelineFrame, TimelinePair } from './phyloMovieTypes';
 
@@ -67,9 +68,14 @@ export function validatePhyloMovieData(
     splitDefinitions,
   };
   const hydrateTrees = options.hydrateTrees !== false;
+  // The transport payload is what stays resident for the whole session, so its
+  // annotation values are normalised to the flat layout here. validateTreeList
+  // builds fresh TreeNodes and discards the compact form, so it needs no pass.
   const interpolatedTrees = hydrateTrees
     ? validateTreeList(data.interpolated_trees, annotationDefinitions, treeDictionaries)
-    : validateTreePayloadList(data.interpolated_trees, annotationDefinitions, treeDictionaries);
+    : flattenTreeAnnotationValues(
+        validateTreePayloadList(data.interpolated_trees, annotationDefinitions, treeDictionaries)
+      );
   const treeCount = interpolatedTrees.length;
   const frames = validateFrames(data.frames, treeCount);
   const pairs = validatePairs(data.pairs, treeCount);

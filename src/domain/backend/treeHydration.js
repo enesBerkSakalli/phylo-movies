@@ -1,4 +1,5 @@
 import { toSubtreeKey } from '../tree/splits.js';
+import { forEachAnnotationPair } from './annotationValueLayout.ts';
 
 const splitKeyDefinitionsCache = new WeakMap();
 
@@ -111,7 +112,7 @@ function getSplitKeyDefinitions(splitDefinitions) {
 
 function hydrateAnnotationValues(annotationValues, annotationDefinitions) {
   const fields = {};
-  annotationValues.forEach(([definitionIndex, value]) => {
+  forEachAnnotationPair(annotationValues, (definitionIndex, value) => {
     const definition = annotationDefinitions[definitionIndex];
     const { key, ...schema } = definition;
     fields[key] = {

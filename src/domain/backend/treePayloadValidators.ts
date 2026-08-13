@@ -33,6 +33,7 @@ import {
   validatePairSolution,
   validateSprPath,
 } from './solutionValidators';
+import { isNestedAnnotationValues } from './annotationValueLayout';
 
 type AnnotationDefinition = Omit<AnnotationField, 'value'> & { key: string };
 type TreePayloadDictionaries = {
@@ -421,15 +422,9 @@ function validateCompactAnnotationValues(
 
   const rows = requiredArray(value, fieldName);
   const fields: Record<string, AnnotationField> = {};
-  rows.forEach((row, index) => {
-    const rowFieldName = `${fieldName}[${index}]`;
-    const tuple = requiredArray(row, rowFieldName);
-    if (tuple.length !== 2) {
-      throw new Error(
-        `Invalid phyloMovieData payload: ${rowFieldName} must be [definition, value]`
-      );
-    }
-    const definitionIndex = validateInteger(tuple[0], `${rowFieldName}[0]`);
+
+  const addPair = (rawDefinitionIndex: unknown, rawValue: unknown, rowFieldName: string): void => {
+    const definitionIndex = validateInteger(rawDefinitionIndex, `${rowFieldName}[0]`);
     if (definitionIndex < 0 || definitionIndex >= annotationDefinitions.length) {
       throw new Error(
         `Invalid phyloMovieData payload: ${rowFieldName}[0] must reference annotation_definitions`
@@ -443,7 +438,7 @@ function validateCompactAnnotationValues(
       );
     }
     const annotationValue = validateAnnotationValue(
-      tuple[1],
+      rawValue,
       definition.value_type,
       `${rowFieldName}[1]`
     );
@@ -452,7 +447,32 @@ function validateCompactAnnotationValues(
       ...schema,
       value: annotationValue,
     };
-  });
+  };
+
+  // Nested layout: one two-element array per field, as the backend emits it.
+  if (isNestedAnnotationValues(rows)) {
+    rows.forEach((row, index) => {
+      const rowFieldName = `${fieldName}[${index}]`;
+      const tuple = requiredArray(row, rowFieldName);
+      if (tuple.length !== 2) {
+        throw new Error(
+          `Invalid phyloMovieData payload: ${rowFieldName} must be [definition, value]`
+        );
+      }
+      addPair(tuple[0], tuple[1], rowFieldName);
+    });
+    return { fields };
+  }
+
+  // Flat layout: the same pairs inlined, which is what ingest normalises to.
+  if (rows.length % 2 !== 0) {
+    throw new Error(
+      `Invalid phyloMovieData payload: ${fieldName} must hold definition/value pairs`
+    );
+  }
+  for (let offset = 0; offset < rows.length; offset += 2) {
+    addPair(rows[offset], rows[offset + 1], `${fieldName}[${offset / 2}]`);
+  }
 
   return { fields };
 }
