@@ -44,11 +44,19 @@ export function disconnectObserver(observer) {
  * finalize() is sufficient here. If that changes, this is the one place to add
  * the extra teardown.
  *
- * @param {{finalize?: () => void}|null|undefined} deck
+ * An absent deck is normal - a renderer can be torn down before it ever
+ * initialized - so that case is silent. A deck without finalize throws, which
+ * is wanted: it means something other than a Deck was passed, and skipping
+ * teardown quietly would leak the real instance. Written as an explicit guard
+ * rather than deck?.finalize() only to say so; the two behave identically,
+ * because optional chaining short-circuits on a nullish receiver, not on a
+ * missing property.
+ *
+ * @param {{finalize: () => void}|null|undefined} deck
  * @returns {null}
  */
 export function finalizeDeck(deck) {
-  deck?.finalize();
+  if (deck) deck.finalize();
   return null;
 }
 

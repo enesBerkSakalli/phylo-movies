@@ -45,6 +45,14 @@ describe('deck teardown helpers', () => {
     expect(finalizeDeck(deck)).toBeNull();
     expect(deck.finalize).toHaveBeenCalledOnce();
     expect(() => finalizeDeck(null)).not.toThrow();
+    expect(() => finalizeDeck(undefined)).not.toThrow();
+  });
+
+  it('throws when given something that is not a Deck', () => {
+    // Documents the contract rather than guarding a regression: optional
+    // chaining would throw here too, since it short-circuits on a nullish
+    // receiver, not on a missing property.
+    expect(() => finalizeDeck({})).toThrow(TypeError);
   });
 
   it('removes an element it still owns', () => {

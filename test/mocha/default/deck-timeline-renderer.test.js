@@ -470,4 +470,31 @@ describe('DeckTimelineRenderer', () => {
     global.cancelAnimationFrame = originalCancelAnimationFrame;
     global.clearTimeout = originalClearTimeout;
   });
+
+  it('detaches input handling before finalizing deck on destroy', () => {
+    const { timelineData, segments } = makeTimelineFixture();
+    const container = makeContainer();
+    const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
+
+    // Finalizing while mouse handlers are still bound would let a late event
+    // reach a torn-down deck, so the order is a contract rather than incidental.
+    const order = [];
+    const originalUnbind = renderer._unbindMouseEvents;
+    renderer._unbindMouseEvents = () => {
+      order.push('unbind');
+      originalUnbind?.();
+    };
+    const originalRemoveEventListener = global.window.removeEventListener.bind(global.window);
+    global.window.removeEventListener = (event, handler, options) => {
+      if (event === 'resize') order.push('window-resize');
+      return originalRemoveEventListener(event, handler, options);
+    };
+    renderer.deck.finalize = () => order.push('finalize');
+
+    renderer.destroy();
+
+    global.window.removeEventListener = originalRemoveEventListener;
+
+    expect(order).to.deep.equal(['unbind', 'window-resize', 'finalize']);
+  });
 });
