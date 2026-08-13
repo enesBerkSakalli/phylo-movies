@@ -227,6 +227,10 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     // Skip layer rebuilds if animation is running (AnimationRunner handles its own renders).
     if (this.animationRunner.isRunning) return;
 
+    // A missing zoom would make every delta below NaN, which is never < the
+    // threshold, so the pan-only throttle would stop short-circuiting.
+    if (!Number.isFinite(zoom)) return;
+
     // Skip if zoom hasn't changed significantly (avoid pan-only redundant renders).
     const zoomDelta = this._lastZoom !== null ? Math.abs(zoom - this._lastZoom) : Infinity;
     if (zoomDelta < 0.01) return; // Threshold: ~1% zoom change
@@ -322,8 +326,9 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
 
     this._configureDeckContextCallbacks();
     this.resize(this.deckContext.getCanvasDimensions());
-    this._markReady();
 
+    // Readiness is resolved by the onWebGLInitialized callback wired in
+    // _configureDeckContextCallbacks, once the GL context actually reports ready.
     // Initial render
     this.renderAllElements();
   }
@@ -783,17 +788,11 @@ function isRenderCancelled(isCancelled) {
   return typeof isCancelled === 'function' && isCancelled();
 }
 
-function getNow() {
-  return typeof performance !== 'undefined' && typeof performance.now === 'function'
-    ? performance.now()
-    : Date.now();
-}
-
 function scheduleNextFrame(callback) {
   if (typeof requestAnimationFrame === 'function') {
     return requestAnimationFrame(callback);
   }
-  return setTimeout(() => callback(getNow()), 16);
+  return setTimeout(callback, 16);
 }
 
 function cancelScheduledFrame(frameId) {
