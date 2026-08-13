@@ -73,6 +73,8 @@
     "fixtures:generate:ci": "cd engine/BranchArchitect && poetry run python ../../scripts/generate-frontend-fixtures.py --write --reuse-inferred",
     "fixtures:check": "cd engine/BranchArchitect && poetry run python ../../scripts/generate-frontend-fixtures.py --check",
     "fixtures:list": "cd engine/BranchArchitect && poetry run python ../../scripts/generate-frontend-fixtures.py --list",
+    "fixtures:binary:generate": "cd engine/BranchArchitect && poetry run python ../../scripts/generate-binary-payload-fixture.py --write",
+    "fixtures:binary:check": "cd engine/BranchArchitect && poetry run python ../../scripts/generate-binary-payload-fixture.py --check",
     "publication:data:check": "node scripts/check-publication-data.mjs",
     "publication:bootstrap-tree-distance": "cd engine/BranchArchitect && poetry run python ../../scripts/generate-bootstrap-tree-distance-analysis.py",
     "publication:bootstrap-tree-distance:check": "cd engine/BranchArchitect && poetry run python ../../scripts/generate-bootstrap-tree-distance-analysis.py --check",

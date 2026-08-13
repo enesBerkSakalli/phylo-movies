@@ -122,3 +122,78 @@ function hydrateAnnotationValues(annotationValues, annotationDefinitions) {
   });
   return { fields };
 }
+
+/**
+ * Expand one tree of a PMB1 payload into the same node shape the JSON path
+ * produces. Reads the block's typed arrays rather than a nested node graph, so
+ * only the requested tree becomes objects; the rest of the payload stays an
+ * ArrayBuffer.
+ *
+ * Reference bounds are checked here rather than when the container is opened,
+ * which keeps the cost proportional to the one tree being read.
+ */
+export function hydrateBinaryTreeAtIndex(binaryPayload, movieData, treeIndex) {
+  const block = binaryPayload.readTreeBlock(treeIndex);
+  const annotationDefinitions = movieData.annotation_definitions ?? [];
+  const treeNameDefinitions = movieData.tree_name_definitions ?? [];
+  const splitDefinitions = movieData.split_definitions ?? [];
+  const splitKeyDefinitions = getSplitKeyDefinitions(splitDefinitions);
+  const valueDefinitions = binaryPayload.annotationValueDefinitions;
+
+  const nodes = new Array(block.nodeCount);
+
+  for (let index = 0; index < block.nodeCount; index += 1) {
+    const nameRef = block.nameRef[index];
+    const splitRef = block.splitRef[index];
+    if (nameRef >= treeNameDefinitions.length) {
+      throw new Error(
+        `Invalid phyloMovieData payload: interpolated_trees[${treeIndex}] name_ref must reference tree_name_definitions`
+      );
+    }
+    if (splitRef >= splitDefinitions.length) {
+      throw new Error(
+        `Invalid phyloMovieData payload: interpolated_trees[${treeIndex}] split_ref must reference split_definitions`
+      );
+    }
+
+    const start = block.annotationOffset[index];
+    const end = block.annotationOffset[index + 1];
+    let annotations;
+    if (end > start) {
+      const fields = {};
+      for (let offset = start; offset < end; offset += 1) {
+        const definition = annotationDefinitions[block.annotationDefinition[offset]];
+        if (!definition) {
+          throw new Error(
+            `Invalid phyloMovieData payload: interpolated_trees[${treeIndex}] annotation must reference annotation_definitions`
+          );
+        }
+        const { key, ...schema } = definition;
+        fields[key] = {
+          ...schema,
+          value: valueDefinitions[block.annotationValue[offset]],
+        };
+      }
+      annotations = { fields };
+    }
+
+    const splitKey = splitKeyDefinitions[splitRef] ?? null;
+    nodes[index] = {
+      name: treeNameDefinitions[nameRef],
+      length: block.length[index],
+      split_indices: splitDefinitions[splitRef],
+      ...(splitKey === null ? {} : { splitKey }),
+      ...(annotations === undefined ? {} : { annotations }),
+      children: [],
+    };
+  }
+
+  // Preorder guarantees a parent is built before any of its children, and the
+  // encoder emits children in source order, so appending reproduces it.
+  for (let index = 0; index < block.nodeCount; index += 1) {
+    const parentIndex = block.parent[index];
+    if (parentIndex >= 0) nodes[parentIndex].children.push(nodes[index]);
+  }
+
+  return block.nodeCount > 0 ? nodes[0] : null;
+}
