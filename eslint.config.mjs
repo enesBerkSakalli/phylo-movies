@@ -127,6 +127,25 @@ export default tseslint.config(
       // shadow, and CLI scripts intentionally reassign locals.
       'no-shadow': 'error',
       'no-param-reassign': 'error',
+      // Catches the destructured-const-before-declaration temporal dead zone that
+      // blanked the workspace landing page. functions/classes stay hoisted; only
+      // variable reads before their declaration are flagged. The typescript-eslint
+      // variant is disabled to avoid double-reporting on .ts/.tsx.
+      'no-use-before-define': ['error', { functions: false, classes: false, variables: true }],
+      '@typescript-eslint/no-use-before-define': 'off',
+    },
+  },
+  {
+    // These files define nested render components and a helper below their first
+    // use inside a later-running render function, which is runtime-safe. Reordering
+    // the large blocks earns no runtime benefit, so no-use-before-define is scoped
+    // off here rather than churned around.
+    files: [
+      'src/components/TreeStatsPanel/AnalyticsDashboard.tsx',
+      'src/components/TreeStatsPanel/TreeStatsPanel.tsx',
+    ],
+    rules: {
+      'no-use-before-define': 'off',
     },
   },
   {
@@ -164,6 +183,7 @@ export default tseslint.config(
       'react-hooks/purity': 'off',
       'no-shadow': 'off',
       'no-param-reassign': 'off',
+      'no-use-before-define': 'off',
     },
   },
   {

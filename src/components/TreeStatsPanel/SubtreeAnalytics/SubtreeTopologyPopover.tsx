@@ -37,6 +37,11 @@ const countLeaves = (node: SprMovedSubtreeTopologyNode): number => {
   return node.children.reduce((sum, child) => sum + countLeaves(child), 0);
 };
 
+const getMaxDepth = (node: SprMovedSubtreeTopologyNode, depth = 0): number => {
+  if (!node.children.length) return depth;
+  return Math.max(...node.children.map((child) => getMaxDepth(child, depth + 1)));
+};
+
 const layoutTopology = (root: SprMovedSubtreeTopologyNode): LayoutNode[] => {
   const leafCount = countLeaves(root);
   const maxDepth = getMaxDepth(root);
@@ -72,11 +77,6 @@ const layoutTopology = (root: SprMovedSubtreeTopologyNode): LayoutNode[] => {
 
   visit(root, 0, '0');
   return nodes;
-};
-
-const getMaxDepth = (node: SprMovedSubtreeTopologyNode, depth = 0): number => {
-  if (!node.children.length) return depth;
-  return Math.max(...node.children.map((child) => getMaxDepth(child, depth + 1)));
 };
 
 const findLayoutNode = (nodes: LayoutNode[], path: string): LayoutNode | undefined =>

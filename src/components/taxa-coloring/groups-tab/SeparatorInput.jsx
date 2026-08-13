@@ -7,16 +7,6 @@ import { X } from 'lucide-react';
 export function SeparatorInput({ separators = [], onChange, detectedSeparators = [] }) {
   const [inputValue, setInputValue] = useState('');
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' || e.key === ',' || e.key === ' ') {
-      e.preventDefault();
-      addSeparator();
-    } else if (e.key === 'Backspace' && inputValue === '' && separators.length > 0) {
-      // Remove last separator on backspace when input is empty
-      removeSeparator(separators.length - 1);
-    }
-  };
-
   const addSeparator = () => {
     const trimmed = inputValue.trim();
     if (trimmed && !separators.includes(trimmed)) {
@@ -27,6 +17,16 @@ export function SeparatorInput({ separators = [], onChange, detectedSeparators =
 
   const removeSeparator = (index) => {
     onChange(separators.filter((_, i) => i !== index));
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ',' || e.key === ' ') {
+      e.preventDefault();
+      addSeparator();
+    } else if (e.key === 'Backspace' && inputValue === '' && separators.length > 0) {
+      // Remove last separator on backspace when input is empty
+      removeSeparator(separators.length - 1);
+    }
   };
 
   const handleInputChange = (e) => {
