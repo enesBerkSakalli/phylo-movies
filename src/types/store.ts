@@ -135,10 +135,23 @@ export interface TaxaGrouping {
   csvFileName?: string | null;
 }
 
+/**
+ * Uniform read access to a movie's trees, whichever encoding carries them. See
+ * src/domain/backend/treeSource.js - the JSON payload holds a plain array, the
+ * PMB1 container holds typed-array blocks, and consumers read through this
+ * rather than indexing either.
+ */
+export interface TreeSource {
+  treeCount: number;
+  hydrateAt: (index: number) => TreeNode;
+  payloadAt: (index: number) => unknown;
+  isCompactAt: (index: number) => boolean;
+}
+
 export interface AppStoreState {
   // From treeDataset.slice
   treeList: Array<TreeNode | undefined>;
-  treePayloadList: Array<TreeNode | undefined>;
+  treeSource: TreeSource | null;
   timelineFrames: TimelineFrame[];
   leafNamesByIndex: string[];
   fileName: string | null;

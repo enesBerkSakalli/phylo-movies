@@ -1,14 +1,4 @@
-function isCompactTreePayload(tree) {
-  if (Array.isArray(tree)) return true;
-  if (!tree || typeof tree !== 'object') return false;
-  return (
-    Object.prototype.hasOwnProperty.call(tree, 'name_ref') ||
-    Object.prototype.hasOwnProperty.call(tree, 'split_ref') ||
-    Object.prototype.hasOwnProperty.call(tree, 'annotation_values')
-  );
-}
-
-let cachedTreePayloadList = null;
+let cachedTreeSource = null;
 let cachedTreeList = null;
 let cachedTreeHydrationVersion = null;
 let cachedStats = Object.freeze({
@@ -20,26 +10,27 @@ let cachedStats = Object.freeze({
 });
 
 export const selectTreeHydrationStats = (state) => {
-  const treePayloadList = state.treePayloadList;
+  const treeSource = state.treeSource;
   const treeList = state.treeList;
   const treeHydrationVersion = state.treeHydrationVersion ?? 0;
 
   if (
-    treePayloadList === cachedTreePayloadList &&
+    treeSource === cachedTreeSource &&
     treeList === cachedTreeList &&
     treeHydrationVersion === cachedTreeHydrationVersion
   ) {
     return cachedStats;
   }
 
-  const totalTrees = treePayloadList.length || treeList.length;
+  const sourceTreeCount = treeSource?.treeCount ?? 0;
+  const totalTrees = sourceTreeCount || treeList.length;
   const hydratedTrees = treeList.reduce((count, tree) => count + (tree ? 1 : 0), 0);
-  const compactPayloadTrees = treePayloadList.reduce(
-    (count, tree) => count + (isCompactTreePayload(tree) ? 1 : 0),
-    0
-  );
+  let compactPayloadTrees = 0;
+  for (let index = 0; index < sourceTreeCount; index += 1) {
+    if (treeSource.isCompactAt(index)) compactPayloadTrees += 1;
+  }
 
-  cachedTreePayloadList = treePayloadList;
+  cachedTreeSource = treeSource;
   cachedTreeList = treeList;
   cachedTreeHydrationVersion = treeHydrationVersion;
   cachedStats = {

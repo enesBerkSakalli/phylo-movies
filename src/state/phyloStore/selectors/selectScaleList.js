@@ -9,18 +9,27 @@ let cachedScaleList = [];
 /** @param {import('../../../types/store').AppStoreState} state */
 export const selectScaleList = (state) => {
   const treeList = selectActiveTreeList(state);
-  const treePayloadList = state.treePayloadList;
+  const treeSource = state.treeSource;
   const inputFrameIndices = selectInputFrameIndices(state);
-  const scaleTreeList =
-    Array.isArray(treePayloadList) && treePayloadList.length === treeList.length
-      ? treePayloadList
-      : treeList;
+  const useSource = treeSource != null && treeSource.treeCount === treeList.length;
+  const cacheKey = useSource ? treeSource : treeList;
 
-  if (scaleTreeList === cachedTreeList && inputFrameIndices === cachedInputFrameIndices) {
+  if (cacheKey === cachedTreeList && inputFrameIndices === cachedInputFrameIndices) {
     return cachedScaleList;
   }
 
-  cachedTreeList = scaleTreeList;
+  // Only the input frames are scaled, so read just those from the source rather
+  // than materialising every tree. calculateScales indexes by frame, and walks
+  // a compact tuple node or an expanded one equally well.
+  let scaleTreeList = treeList;
+  if (useSource) {
+    scaleTreeList = [];
+    for (const frameIndex of inputFrameIndices) {
+      scaleTreeList[frameIndex] = treeSource.payloadAt(frameIndex) ?? treeList[frameIndex];
+    }
+  }
+
+  cachedTreeList = cacheKey;
   cachedInputFrameIndices = inputFrameIndices;
   cachedScaleList = scaleTreeList.length ? calculateScales(scaleTreeList, inputFrameIndices) : [];
   return cachedScaleList;

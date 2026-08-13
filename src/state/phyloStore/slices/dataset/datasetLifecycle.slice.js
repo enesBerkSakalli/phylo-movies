@@ -1,5 +1,5 @@
 import { MovieTimelineManager } from '../../../../timeline/core/MovieTimelineManager.js';
-import { hydrateMovieTreeAtIndex } from '../../../../domain/backend/treeHydration.js';
+import { createTreeSource } from '../../../../domain/backend/treeSource.js';
 import { createTreeDatasetInitialState } from './treeDataset.slice.js';
 
 const LARGE_DATASET_LABEL_TAXA_THRESHOLD = 300;
@@ -36,14 +36,16 @@ export const createDatasetLifecycleSlice = (set, get, store) => ({
     resetInterpolationCaches();
 
     const {
-      interpolated_trees: interpolatedTrees,
       frames,
       pairs,
       temporal_events: temporalEvents,
       pair_metrics: pairMetrics,
       subtree_highlight_tracking: subtreeHighlightTracking,
     } = movieData;
-    const treeList = createHydratedTreeCache(movieData);
+    // A caller may hand in a source directly, which is how a PMB1 payload
+    // arrives; otherwise the trees are a plain array on movieData.
+    const treeSource = movieData.treeSource ?? createTreeSource(movieData);
+    const treeList = createHydratedTreeCache(treeSource);
     const leafNamesByIndex = deriveLeafNamesByIndex(treeList[0]);
 
     const { sequences: msaSequences, window_size: windowSize, step_size: stepSize } = movieData.msa;
@@ -69,8 +71,7 @@ export const createDatasetLifecycleSlice = (set, get, store) => ({
       movieTimelineManager,
       timelineCursor,
       treeList,
-      treePayloadList: interpolatedTrees,
-      treeHydrationSource: movieData,
+      treeSource,
       treeHydrationVersion: 0,
       timelineFrames: frames,
       leafNamesByIndex,
@@ -95,12 +96,11 @@ export const createDatasetLifecycleSlice = (set, get, store) => ({
  * Sparse cache sized to the full tree list, with only the first tree hydrated up front.
  * The rest are hydrated on demand.
  */
-function createHydratedTreeCache(movieData) {
-  const treePayloadList = movieData.interpolated_trees;
-  const treeList = new Array(treePayloadList.length);
+function createHydratedTreeCache(treeSource) {
+  const treeList = new Array(treeSource.treeCount);
 
-  if (treePayloadList.length > 0) {
-    treeList[0] = hydrateMovieTreeAtIndex(movieData, 0);
+  if (treeSource.treeCount > 0) {
+    treeList[0] = treeSource.hydrateAt(0);
   }
 
   return treeList;

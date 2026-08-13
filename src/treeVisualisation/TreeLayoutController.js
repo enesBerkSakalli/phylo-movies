@@ -142,7 +142,7 @@ export class TreeLayoutController {
 
     const transformedTreeList =
       branchTransformation === 'none'
-        ? getScaleSourceTreeList(state, treeList)
+        ? getScaleSourceTreeList(state, treeList, inputFrameIndices)
         : this._getOrCacheTransformedTrees(treeList, branchTransformation, state);
     const { maxGlobalScale, minWindowSize } = this._calculateTrajectoryScale(
       transformedTreeList,
@@ -402,9 +402,20 @@ function hasUniformScaleValue(value) {
   return value !== null && value !== undefined && Number.isFinite(Number(value));
 }
 
-function getScaleSourceTreeList(state, treeList) {
-  const treePayloadList = state?.treePayloadList;
-  return Array.isArray(treePayloadList) && treePayloadList.length === treeList.length
-    ? treePayloadList
-    : treeList;
+/**
+ * Scales are computed from the stored payload rather than the hydrated cache, so
+ * an unhydrated frame still contributes. Only the input frames are read, because
+ * calculateScales indexes by frame, and it walks a compact tuple node or an
+ * expanded one equally well.
+ */
+function getScaleSourceTreeList(state, treeList, inputFrameIndices) {
+  const treeSource = state?.treeSource;
+  if (!treeSource || treeSource.treeCount !== treeList.length) return treeList;
+  if (!Array.isArray(inputFrameIndices)) return treeList;
+
+  const scaleTreeList = [];
+  for (const frameIndex of inputFrameIndices) {
+    scaleTreeList[frameIndex] = treeSource.payloadAt(frameIndex) ?? treeList[frameIndex];
+  }
+  return scaleTreeList;
 }

@@ -1,5 +1,4 @@
 import { selectTreeContext } from '../../selectors/treeSelectors.js';
-import { hydrateMovieTreeAtIndex } from '../../../../domain/backend/treeHydration.js';
 import { selectInputFrameIndicesFromRows } from '../../../../timeline/data/timelineFrameIndex.js';
 
 const EMPTY_PAIR_METRICS = Object.freeze({
@@ -15,8 +14,7 @@ export function createTreeDatasetInitialState() {
   return {
     // STATE: Core Data
     treeList: [],
-    treePayloadList: [],
-    treeHydrationSource: null,
+    treeSource: null,
     treeHydrationVersion: 0,
     timelineFrames: [],
     leafNamesByIndex: [],
@@ -46,7 +44,7 @@ export const createTreeDatasetSlice = (set, get) => ({
 
     const state = get();
     const treeList = Array.isArray(state.treeList) ? state.treeList : [];
-    const treePayloadList = Array.isArray(state.treePayloadList) ? state.treePayloadList : [];
+    const treeSource = state.treeSource;
     let nextTreeList = null;
 
     const hydratedTrees = indices.map((index) => {
@@ -56,9 +54,9 @@ export const createTreeDatasetSlice = (set, get) => ({
       const activeTreeList = nextTreeList ?? treeList;
       const existingTree = activeTreeList[treeIndex];
       if (existingTree) return existingTree;
-      if (!state.treeHydrationSource || treeIndex >= treePayloadList.length) return null;
+      if (!treeSource || treeIndex >= treeSource.treeCount) return null;
 
-      const hydratedTree = hydrateMovieTreeAtIndex(state.treeHydrationSource, treeIndex);
+      const hydratedTree = treeSource.hydrateAt(treeIndex);
       if (!nextTreeList) {
         nextTreeList = treeList.slice();
       }
@@ -89,7 +87,7 @@ export const createTreeDatasetSlice = (set, get) => ({
     if (!Number.isInteger(windowRadius) || windowRadius < 0) return [];
 
     const state = get();
-    const totalTrees = state.treeList?.length ?? 0;
+    const totalTrees = state.treeSource?.treeCount ?? state.treeList?.length ?? 0;
     const indices = [];
     for (
       let index = Math.max(0, treeIndex - windowRadius);

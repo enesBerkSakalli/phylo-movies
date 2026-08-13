@@ -247,7 +247,10 @@ describe('phylo store dataset normalization', () => {
     useAppStore.getState().initialize(movieData);
 
     const state = useAppStore.getState();
-    expect(state.treePayloadList).toBe(movieData.interpolated_trees);
+    // The store reads trees through a source rather than holding the array, but
+    // it must still hand back the backend's own nodes rather than copies.
+    expect(state.treeSource.treeCount).toBe(movieData.interpolated_trees.length);
+    expect(state.treeSource.payloadAt(0)).toBe(movieData.interpolated_trees[0]);
     expect(state.treeList).toHaveLength(movieData.interpolated_trees.length);
     expect(state.treeList[0]).toEqual(hydratedCompactTree);
     expect(state.timelineFrames).toBe(movieData.frames);
@@ -305,7 +308,7 @@ describe('phylo store dataset normalization', () => {
     expect(state.treeList).toHaveLength(3);
     expect(state.treeList[0]).toEqual(hydratedCompactTree);
     expect(state.treeList[1]).toBeUndefined();
-    expect(state.treePayloadList[1]).toBe(compactTree);
+    expect(state.treeSource.payloadAt(1)).toBe(compactTree);
     expect(state.leafNamesByIndex).toEqual(['taxon-a', 'taxon-b']);
     expect(phyloStoreModule.selectTreeHydrationStats(state)).toMatchObject({
       totalTrees: 3,
