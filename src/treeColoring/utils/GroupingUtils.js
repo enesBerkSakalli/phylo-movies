@@ -133,12 +133,13 @@ export function detectBestSeparators(taxaNames) {
     const usage = (withSeparator.length / taxaNames.length) * 100;
 
     if (usage >= 10 && withSeparator.length >= 2) {
-      // Calculate score based on usage and group balance
+      // Calculate score based on usage and group balance. char is invariant across
+      // the reduce, so build its counting regex once instead of per name. The g flag
+      // carries lastIndex state, but String.match with a global regex ignores it.
+      const charRegex = new RegExp(escapeRegex(char), 'g');
       const avgOccurrences =
-        withSeparator.reduce(
-          (sum, name) => sum + (name.match(new RegExp(escapeRegex(char), 'g')) || []).length,
-          0
-        ) / withSeparator.length;
+        withSeparator.reduce((sum, name) => sum + (name.match(charRegex) || []).length, 0) /
+        withSeparator.length;
 
       const score = usage * (1 + avgOccurrences / 10);
       results.push({ separator: char, usage, avgOccurrences, score });
