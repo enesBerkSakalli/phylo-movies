@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Generate and check frontend JSON fixtures from BranchArchitect output."""
+"""Generate and check frontend fixtures from BranchArchitect output.
+
+Each fixture is written twice: the compact JSON payload the frontend loads
+today, and the same payload in the PMB1 binary container beside it. Both come
+from one build of the payload, so the two encodings cannot drift apart.
+"""
 
 from __future__ import annotations
 
@@ -35,6 +40,7 @@ from webapp.services.trees.frontend_builder import (  # noqa: E402
     build_movie_data_from_result,
     compact_tree_payload,
 )
+from webapp.services.trees.binary_payload import pack_movie_payload  # noqa: E402
 from webapp.services.msa import process_msa_data  # noqa: E402
 
 
@@ -233,7 +239,8 @@ def main() -> int:
         for fixture in selected:
             print(
                 f"{fixture.name}: {fixture.source.relative_to(ROOT)} -> "
-                f"{fixture.output.relative_to(ROOT)}"
+                f"{fixture.output.relative_to(ROOT)}, "
+                f"{_binary_output(fixture).relative_to(ROOT)}"
             )
         return 0
 
@@ -243,30 +250,47 @@ def main() -> int:
                 fixture, regenerate_inferred=not args.reuse_inferred
             )
             fixture.output.parent.mkdir(parents=True, exist_ok=True)
-            fixture.output.write_text(_render_fixture(fixture), encoding="utf-8")
+            json_text, binary_bytes = _render_fixture(fixture)
+            binary_output = _binary_output(fixture)
+            fixture.output.write_text(json_text, encoding="utf-8")
+            binary_output.write_bytes(binary_bytes)
             print(f"wrote {fixture.output.relative_to(ROOT)}")
+            print(f"wrote {binary_output.relative_to(ROOT)}")
         return 0
 
     stale = []
     for fixture in selected:
         _prepare_fixture_source(fixture, regenerate_inferred=False)
-        generated = _render_fixture(fixture)
+        generated, generated_binary = _render_fixture(fixture)
         current = fixture.output.read_text(encoding="utf-8")
+        binary_output = _binary_output(fixture)
+        current_binary = binary_output.read_bytes() if binary_output.exists() else None
+
+        # Track which encoding drifted, so the report names the file that is
+        # actually wrong rather than always blaming the JSON.
+        drifted = []
         if generated != current:
-            stale.append((fixture, current, generated))
+            drifted.append(fixture.output)
+        if generated_binary != current_binary:
+            drifted.append(binary_output)
+        if drifted:
+            stale.append((fixture, current, generated, drifted))
 
     if not stale:
         print(f"checked {len(selected)} generated frontend fixture(s)")
         return 0
 
-    for fixture, current, generated in stale:
-        print(
-            f"{fixture.output.relative_to(ROOT)} is stale for fixture "
-            f"{fixture.name!r}; run `npm run fixtures:generate -- "
-            f"--fixture {fixture.name}`.",
-            file=sys.stderr,
-        )
-        _print_small_diff(current, generated)
+    for fixture, current, generated, drifted in stale:
+        for drifted_path in drifted:
+            print(
+                f"{drifted_path.relative_to(ROOT)} is stale for fixture "
+                f"{fixture.name!r}; run `npm run fixtures:generate -- "
+                f"--fixture {fixture.name}`.",
+                file=sys.stderr,
+            )
+        # A byte diff of the container would be noise, so only the JSON is shown.
+        if fixture.output in drifted:
+            _print_small_diff(current, generated)
     return 1
 
 
@@ -277,10 +301,17 @@ def _select_fixtures(names: Iterable[str] | None) -> Iterable[FixtureSpec]:
     return tuple(fixture for fixture in FIXTURES if fixture.name in wanted)
 
 
-def _render_fixture(fixture: FixtureSpec) -> str:
+def _binary_output(fixture: FixtureSpec) -> Path:
+    """Companion PMB1 path for a fixture's JSON output."""
+    return fixture.output.with_suffix(".pmb")
+
+
+def _render_fixture(fixture: FixtureSpec) -> tuple[str, bytes]:
+    """Build the payload once and return both encodings of it."""
     payload = _build_payload(fixture)
     _assert_normalized_contract_fields(payload, fixture.name)
-    return json.dumps(payload, separators=(",", ":")) + "\n"
+    json_text = json.dumps(payload, separators=(",", ":")) + "\n"
+    return json_text, pack_movie_payload(payload)
 
 
 def _prepare_fixture_source(fixture: FixtureSpec, *, regenerate_inferred: bool) -> None:
@@ -530,7 +561,10 @@ def _build_dataset_provenance(fixture: FixtureSpec) -> dict | None:
             "settings": [
                 {"label": "Tree inference", "value": "IQ-TREE 3.1.1"},
                 {"label": "Search mode", "value": "Fast search"},
-                {"label": "Search trajectory", "value": "21 trees from the full fast run"},
+                {
+                    "label": "Search trajectory",
+                    "value": "21 trees from the full fast run",
+                },
                 {"label": "Model", "value": "GTR+F+G4"},
                 {"label": "Seed", "value": "42"},
                 {"label": "Rooting", "value": "Input rooting preserved"},
@@ -577,7 +611,10 @@ def _build_bootstrap_provenance(
     signal: str | None = None,
 ) -> dict:
     settings = [
-        {"label": "Tree source", "value": f"Precomputed {order_label} bootstrap tree series"},
+        {
+            "label": "Tree source",
+            "value": f"Precomputed {order_label} bootstrap tree series",
+        },
         {
             "label": "Branch labels",
             "value": "Split-frequency support across 200 inferred bootstrap-replicate trees",

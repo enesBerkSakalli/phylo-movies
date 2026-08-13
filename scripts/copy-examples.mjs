@@ -70,7 +70,11 @@ for (const file of ['quick_msa_demo_30taxa_10trees.nwk', 'quick_msa_demo_30taxa_
 
 await copyFileFromPublication('figure_example/paper_example.tree');
 
-await copyMatchingFiles('precomputed', 'precomputed', (entry) => entry.endsWith('.movie.json'));
+await copyMatchingFiles(
+  'precomputed',
+  'precomputed',
+  (entry) => entry.endsWith('.movie.json') || entry.endsWith('.movie.pmb')
+);
 
 await copyTreeFromPublication(
   'bootstrap_rogue_taxa/current_results',
