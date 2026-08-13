@@ -5,7 +5,7 @@ import {
   DEMO_EXAMPLE_DATASETS,
   EXAMPLE_DATASETS,
 } from '../../../../src/pages/WorkspaceInitialization/exampleDatasets.js';
-import { validatePhyloMovieData } from '../../../../src/domain/backend/phyloMovieSchema';
+import { readMoviePayload } from '../../../../src/services/data/dataService.js';
 import { buildSprAnalyticsModel } from '../../../../src/domain/spr/sprAnalytics';
 
 function publicationPathForExampleArtifact(artifact) {
@@ -92,7 +92,7 @@ describe('example dataset configuration', () => {
 
     for (const example of generatedDemoExamples) {
       expect(example.precomputedPayloadPath).toContain('/examples/precomputed/');
-      expect(example.precomputedPayloadPath).toMatch(/\.movie\.json$/);
+      expect(example.precomputedPayloadPath).toMatch(/\.movie\.pmb$/);
     }
 
     expect(DEMO_EXAMPLE_DATASETS.some((example) => example.id.includes('msprime'))).toBe(false);
@@ -167,11 +167,13 @@ describe('example dataset configuration', () => {
         'publication_data/precomputed/'
       );
       const payloadPath = path.join(process.cwd(), precomputedRelativePath);
-      const payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
-      const validated = validatePhyloMovieData(payload, { hydrateTrees: false });
+      const bytes = fs.readFileSync(payloadPath);
+      const validated = readMoviePayload(
+        bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
+      );
 
       expect(validated.file_name).toBeTruthy();
-      expect(validated.interpolated_trees.length).toBe(validated.frames.length);
+      expect(validated.treeSource.treeCount).toBe(validated.frames.length);
     }
 
     const payloadsById = new Map(
@@ -183,7 +185,13 @@ describe('example dataset configuration', () => {
             'publication_data/precomputed/'
           )
         );
-        return [example.id, JSON.parse(fs.readFileSync(payloadPath, 'utf8'))];
+        const bytes = fs.readFileSync(payloadPath);
+        return [
+          example.id,
+          readMoviePayload(
+            bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
+          ),
+        ];
       })
     );
 
@@ -310,7 +318,7 @@ describe('example dataset configuration', () => {
       value: '1000 sites, 500-site step',
     });
     expect(norovirusExample.precomputedPayloadPath).toContain(
-      'norovirus_334_iqtree_fast_sh_alrt_window1000_step500.movie.json'
+      'norovirus_334_iqtree_fast_sh_alrt_window1000_step500.movie.pmb'
     );
     expect(norovirusExample.parameters).toMatchObject({
       treeInferenceEngine: 'iqtree',
@@ -558,7 +566,7 @@ describe('example dataset configuration', () => {
     expect(example.name).toBe('IQ-TREE Search Trajectory (500 taxa)');
     expect(example.workflow).toBe('Tree search trajectory');
     expect(example.scale).toBe('500 taxa / 21 trees');
-    expect(example.precomputedPayloadPath).toContain('iqtree500_fast_search_trajectory.movie.json');
+    expect(example.precomputedPayloadPath).toContain('iqtree500_fast_search_trajectory.movie.pmb');
     expect(example.sourceTruthFile).toMatchObject({
       label: 'Source alignment',
       fileName: 'aberer_roguenarok_dataset_500_taxa500_sites1398.phy',

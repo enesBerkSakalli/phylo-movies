@@ -75,6 +75,7 @@ const storage = {
 export const phyloData = {
   async get() {
     if (volatilePhyloData) {
+      if (isBinaryBackedPayload(volatilePhyloData)) return volatilePhyloData;
       return this.validate(volatilePhyloData, TRANSPORT_VALIDATION_OPTIONS);
     }
 
@@ -101,6 +102,7 @@ export const phyloData = {
           return null;
         }
         try {
+          if (isBinaryBackedPayload(runData)) return runData;
           return this.validate(runData, TRANSPORT_VALIDATION_OPTIONS);
         } catch (error) {
           await discardRun(data.runId);
@@ -114,6 +116,7 @@ export const phyloData = {
           console.warn(`[DataService] ${STALE_RUN_MESSAGE}`);
           return null;
         }
+        if (data.binarySource) return readMoviePayload(data.binarySource);
         return this.validate(data.data);
       }
 
@@ -129,19 +132,14 @@ export const phyloData = {
   async set(data, options = {}) {
     // readMoviePayload already validated what it returns, so re-running the
     // contract over four million nodes here would be pure waste.
-    const validatedBackendData = options.validated
-      ? data
-      : validatePhyloMovieData(data, TRANSPORT_VALIDATION_OPTIONS);
-
-    // A payload backed by a PMB1 container has no interpolated_trees array to
-    // chunk into IndexedDB. Persisting the ArrayBuffer is worth doing, but it is
-    // its own change; until then the run stays in memory for the session rather
-    // than being written out as an empty tree list.
-    if (validatedBackendData.treeSource) {
-      volatilePhyloData = validatedBackendData;
-      await storage.remove(STORAGE_KEYS.PHYLO_DATA);
-      return validatedBackendData;
-    }
+    // A binary-backed payload can never satisfy validatePhyloMovieData: it has
+    // no interpolated_trees and carries a treeSource the contract rejects. Since
+    // readMoviePayload is its only producer, and that already validated it,
+    // detect it here rather than making every caller pass the flag.
+    const validatedBackendData =
+      options.validated || isBinaryBackedPayload(data)
+        ? data
+        : validatePhyloMovieData(data, TRANSPORT_VALIDATION_OPTIONS);
 
     const run = await createRunRecord(validatedBackendData, options);
 
@@ -194,7 +192,9 @@ export const phyloData = {
 
     let validatedBackendData;
     try {
-      validatedBackendData = validatePhyloMovieData(runData, TRANSPORT_VALIDATION_OPTIONS);
+      validatedBackendData = isBinaryBackedPayload(runData)
+        ? runData
+        : validatePhyloMovieData(runData, TRANSPORT_VALIDATION_OPTIONS);
     } catch (error) {
       await discardRun(runId);
       throw error;
@@ -244,7 +244,16 @@ export function readMoviePayload(buffer) {
   return {
     ...metadata,
     treeSource: createBinaryTreeSource(binaryPayload, metadata),
+    // Kept so a run can be persisted as the bytes it arrived as. The payload
+    // object itself holds a treeSource whose members are functions, which is
+    // not structured-cloneable, so the buffer is the only storable form.
+    binarySource: buffer,
   };
+}
+
+/** A payload whose trees live in a PMB1 buffer rather than in an array. */
+function isBinaryBackedPayload(value) {
+  return Boolean(value?.treeSource);
 }
 
 function isRunReference(value) {
@@ -264,11 +273,14 @@ function isInlinePayload(value) {
 }
 
 function createInlinePayload(data) {
-  return {
+  const envelope = {
     __phyloInlinePayload: true,
     payloadSchemaVersion: RUN_PAYLOAD_SCHEMA_VERSION,
-    data,
   };
+  // Storing the payload object would try to clone a treeSource full of
+  // functions, so a binary-backed run is stored as its bytes instead.
+  if (isBinaryBackedPayload(data)) return { ...envelope, binarySource: data.binarySource };
+  return { ...envelope, data };
 }
 
 function isCompatibleInlinePayload(value) {
@@ -378,9 +390,11 @@ async function createRunRecord(data, options = {}) {
     settings.find((setting) => ['Branch support', 'Support labels'].includes(setting?.label))
       ?.value ?? null;
   const frameCount = Array.isArray(data?.frames) ? data.frames.length : null;
-  const interpolatedTreeCount = Array.isArray(data?.interpolated_trees)
-    ? data.interpolated_trees.length
-    : null;
+  const interpolatedTreeCount = data?.treeSource
+    ? data.treeSource.treeCount
+    : Array.isArray(data?.interpolated_trees)
+      ? data.interpolated_trees.length
+      : null;
 
   return {
     id: createRunId(),
@@ -401,6 +415,18 @@ async function createRunRecord(data, options = {}) {
 
 async function writeRunPayload(run, data) {
   await removeRunPayload(run);
+
+  // A PMB1 container is a single ArrayBuffer, which structured clone stores
+  // natively. There is no node graph to chunk, so it goes under one key and the
+  // metadata is left where it already lives, in the container's own header.
+  if (isBinaryBackedPayload(data)) {
+    await storage.set(runDataKey(run.id), {
+      __phyloBinaryPayload: true,
+      payloadSchemaVersion: RUN_PAYLOAD_SCHEMA_VERSION,
+      binarySource: data.binarySource,
+    });
+    return;
+  }
 
   const trees = Array.isArray(data?.interpolated_trees) ? data.interpolated_trees : [];
   const { interpolated_trees: _interpolatedTrees, ...metadata } = data;
@@ -430,6 +456,15 @@ async function writeRunPayload(run, data) {
 
 async function readRunPayload(runId) {
   const runData = await storage.get(runDataKey(runId));
+  if (isBinaryRunPayload(runData)) {
+    // The envelope says these bytes are a container, so a failed magic check is
+    // corruption. Falling through to readMoviePayload would try to parse them as
+    // JSON and report a parse error that says nothing about what went wrong.
+    if (!isBinaryMoviePayload(runData.binarySource)) {
+      throw new Error('Invalid phyloMovieData payload: stored run is not a PMB1 container');
+    }
+    return readMoviePayload(runData.binarySource);
+  }
   if (!isChunkedRunPayload(runData)) return runData;
 
   const trees = new Array(runData.treeCount);
@@ -473,6 +508,14 @@ async function getStoredTreeChunkCount(run) {
   return isChunkedRunPayload(runData) ? runData.treeChunkCount : 0;
 }
 
+function isBinaryRunPayload(value) {
+  return (
+    value?.__phyloBinaryPayload === true &&
+    value.payloadSchemaVersion === RUN_PAYLOAD_SCHEMA_VERSION &&
+    value.binarySource instanceof ArrayBuffer
+  );
+}
+
 function isChunkedRunPayload(value) {
   return (
     value?.__phyloChunkedPayload === true &&
@@ -503,9 +546,11 @@ function createPayloadHashSummary(data) {
     fileName: data?.file_name || null,
     treeCount: countInputTrees(data),
     frameCount: Array.isArray(data?.frames) ? data.frames.length : null,
-    interpolatedTreeCount: Array.isArray(data?.interpolated_trees)
-      ? data.interpolated_trees.length
-      : null,
+    interpolatedTreeCount: data?.treeSource
+      ? data.treeSource.treeCount
+      : Array.isArray(data?.interpolated_trees)
+        ? data.interpolated_trees.length
+        : null,
     pairCount: Array.isArray(data?.pairs) ? data.pairs.length : null,
     temporalEventCount: Array.isArray(data?.temporal_events) ? data.temporal_events.length : null,
     annotationDefinitionCount: Array.isArray(data?.annotation_definitions)

@@ -172,7 +172,7 @@ export const EXAMPLE_DATASETS = [
     filePath: NOROVIRUS_SOURCE_BASE + '03_trimmed/subsampled_350_gappyout_final.fasta',
     fileType: 'msa',
     precomputedPayloadPath:
-      PRECOMPUTED_EXAMPLE_BASE + 'norovirus_334_iqtree_fast_sh_alrt_window1000_step500.movie.json',
+      PRECOMPUTED_EXAMPLE_BASE + 'norovirus_334_iqtree_fast_sh_alrt_window1000_step500.movie.pmb',
     sourceTruthFile: NOROVIRUS_SOURCE_TRUTH,
     regenerationGuide: NOROVIRUS_REGENERATION_GUIDE,
     generatedArtifactFiles: [
@@ -224,7 +224,7 @@ export const EXAMPLE_DATASETS = [
     msaFileName: 'quick_msa_demo_30taxa_10windows.fasta',
     msaFilePath:
       import.meta.env.BASE_URL + 'examples/quick_msa_demo/quick_msa_demo_30taxa_10windows.fasta',
-    precomputedPayloadPath: PRECOMPUTED_EXAMPLE_BASE + 'quick_msa_demo_30taxa_10trees.movie.json',
+    precomputedPayloadPath: PRECOMPUTED_EXAMPLE_BASE + 'quick_msa_demo_30taxa_10trees.movie.pmb',
     fileType: 'tree-msa',
     provenance: {
       sourceType: 'Synthetic demo',
@@ -259,7 +259,7 @@ export const EXAMPLE_DATASETS = [
     bestFor: 'Minimal transformation walkthrough',
     fileName: 'paper_example.tree',
     filePath: import.meta.env.BASE_URL + 'examples/figure_example/paper_example.tree',
-    precomputedPayloadPath: PRECOMPUTED_EXAMPLE_BASE + 'paper_example.movie.json',
+    precomputedPayloadPath: PRECOMPUTED_EXAMPLE_BASE + 'paper_example.movie.pmb',
     fileType: 'newick',
     sourceTruthFile: PAPER_FIGURE_SOURCE_TRUTH,
     provenance: {
@@ -296,7 +296,7 @@ export const EXAMPLE_DATASETS = [
       BOOTSTRAP_SOURCE_BASE +
       `current_results/${BOOTSTRAP_24_DATASET}/ranked/all_trees_24_source-24_taxa24_sites14190.nwk`,
     precomputedPayloadPath:
-      PRECOMPUTED_EXAMPLE_BASE + 'all_trees_24_source-24_taxa24_sites14190.movie.json',
+      PRECOMPUTED_EXAMPLE_BASE + 'all_trees_24_source-24_taxa24_sites14190.movie.pmb',
     fileType: 'newick',
     sourceTruthFile: makeBootstrapSourceTruthFile({ taxa: 24, sites: 14190 }),
     regenerationGuide: BOOTSTRAP_REGENERATION_GUIDE,
@@ -343,7 +343,7 @@ export const EXAMPLE_DATASETS = [
       `current_results/${BOOTSTRAP_24_DATASET}/analysis/weighted_rf_nearest_neighbor_all_trees_24_source-24_taxa24_sites14190.nwk`,
     precomputedPayloadPath:
       PRECOMPUTED_EXAMPLE_BASE +
-      'weighted_rf_nearest_neighbor_all_trees_24_source-24_taxa24_sites14190.movie.json',
+      'weighted_rf_nearest_neighbor_all_trees_24_source-24_taxa24_sites14190.movie.pmb',
     fileType: 'newick',
     sourceTruthFile: makeBootstrapSourceTruthFile({ taxa: 24, sites: 14190 }),
     regenerationGuide: BOOTSTRAP_REGENERATION_GUIDE,
@@ -392,7 +392,7 @@ export const EXAMPLE_DATASETS = [
       BOOTSTRAP_SOURCE_BASE +
       `current_results/${BOOTSTRAP_125_DATASET}/ranked/all_trees_125_source-125_taxa125_sites29149.nwk`,
     precomputedPayloadPath:
-      PRECOMPUTED_EXAMPLE_BASE + 'all_trees_125_source-125_taxa125_sites29149.movie.json',
+      PRECOMPUTED_EXAMPLE_BASE + 'all_trees_125_source-125_taxa125_sites29149.movie.pmb',
     fileType: 'newick',
     sourceTruthFile: makeBootstrapSourceTruthFile({ taxa: 125, sites: 29149 }),
     regenerationGuide: BOOTSTRAP_REGENERATION_GUIDE,
@@ -439,7 +439,7 @@ export const EXAMPLE_DATASETS = [
       `current_results/${BOOTSTRAP_125_DATASET}/analysis/weighted_rf_nearest_neighbor_all_trees_125_source-125_taxa125_sites29149.nwk`,
     precomputedPayloadPath:
       PRECOMPUTED_EXAMPLE_BASE +
-      'weighted_rf_nearest_neighbor_all_trees_125_source-125_taxa125_sites29149.movie.json',
+      'weighted_rf_nearest_neighbor_all_trees_125_source-125_taxa125_sites29149.movie.pmb',
     fileType: 'newick',
     sourceTruthFile: makeBootstrapSourceTruthFile({ taxa: 125, sites: 29149 }),
     regenerationGuide: BOOTSTRAP_REGENERATION_GUIDE,
@@ -485,8 +485,7 @@ export const EXAMPLE_DATASETS = [
     bestFor: 'Topology-search movement diagnostics',
     fileName: 'iqtree500_fast_search_trajectory.nwk',
     filePath: TOPOLOGY_SEARCH_BASE + 'current_results/iqtree500_fast_search_trajectory.nwk',
-    precomputedPayloadPath:
-      PRECOMPUTED_EXAMPLE_BASE + 'iqtree500_fast_search_trajectory.movie.json',
+    precomputedPayloadPath: PRECOMPUTED_EXAMPLE_BASE + 'iqtree500_fast_search_trajectory.movie.pmb',
     fileType: 'newick',
     sourceTruthFile: TOPOLOGY_SEARCH_SOURCE_TRUTH,
     generatedArtifactFiles: [TOPOLOGY_SEARCH_SUMMARY],
