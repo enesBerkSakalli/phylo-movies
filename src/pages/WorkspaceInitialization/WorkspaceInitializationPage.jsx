@@ -43,19 +43,6 @@ function getEngineStatus(state) {
 
 export function WorkspaceInitializationPage({ demoOnly = false }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  // The backend alert appears only after a 750ms delay, and only while the
-  // backend is genuinely being waited on. showBackendAlert is derived from that
-  // eligibility and a delay flag; the eligibility toggle resets the flag during
-  // render (store-previous-value) so no synchronous setState runs in the effect.
-  const backendAlertEligible = !demoOnly && backendStatus.state !== 'ready';
-  const [backendAlertDelayElapsed, setBackendAlertDelayElapsed] = React.useState(false);
-  const [prevBackendAlertEligible, setPrevBackendAlertEligible] =
-    React.useState(backendAlertEligible);
-  if (backendAlertEligible !== prevBackendAlertEligible) {
-    setPrevBackendAlertEligible(backendAlertEligible);
-    setBackendAlertDelayElapsed(false);
-  }
-  const showBackendAlert = backendAlertEligible && backendAlertDelayElapsed;
   const activeTab = demoOnly || searchParams.get('tab') === 'example' ? 'example' : 'upload';
   const {
     form,
@@ -71,6 +58,20 @@ export function WorkspaceInitializationPage({ demoOnly = false }) {
     cancelOperation,
     reset,
   } = useWorkspaceInitializationForm({ skipBackendCheck: demoOnly });
+
+  // The backend alert appears only after a 750ms delay, and only while the
+  // backend is genuinely being waited on. showBackendAlert is derived from that
+  // eligibility and a delay flag; the eligibility toggle resets the flag during
+  // render (store-previous-value) so no synchronous setState runs in the effect.
+  const backendAlertEligible = !demoOnly && backendStatus.state !== 'ready';
+  const [backendAlertDelayElapsed, setBackendAlertDelayElapsed] = React.useState(false);
+  const [prevBackendAlertEligible, setPrevBackendAlertEligible] =
+    React.useState(backendAlertEligible);
+  if (backendAlertEligible !== prevBackendAlertEligible) {
+    setPrevBackendAlertEligible(backendAlertEligible);
+    setBackendAlertDelayElapsed(false);
+  }
+  const showBackendAlert = backendAlertEligible && backendAlertDelayElapsed;
 
   const backendReady = backendStatus.state === 'ready';
   const disabled = submitting || loadingExample || !backendReady;
