@@ -1,5 +1,13 @@
 import localforage from 'localforage';
-import { validatePhyloMovieData } from '../../domain/backend/phyloMovieSchema.ts';
+import {
+  validatePhyloMovieData,
+  validatePhyloMovieMetadata,
+} from '../../domain/backend/phyloMovieSchema.ts';
+import {
+  isBinaryMoviePayload,
+  parseBinaryMoviePayload,
+} from '../../domain/backend/binaryPayload.ts';
+import { createBinaryTreeSource } from '../../domain/backend/treeSource.js';
 
 /**
  * Unified data service for PhyloMovies
@@ -119,7 +127,22 @@ export const phyloData = {
   },
 
   async set(data, options = {}) {
-    const validatedBackendData = validatePhyloMovieData(data, TRANSPORT_VALIDATION_OPTIONS);
+    // readMoviePayload already validated what it returns, so re-running the
+    // contract over four million nodes here would be pure waste.
+    const validatedBackendData = options.validated
+      ? data
+      : validatePhyloMovieData(data, TRANSPORT_VALIDATION_OPTIONS);
+
+    // A payload backed by a PMB1 container has no interpolated_trees array to
+    // chunk into IndexedDB. Persisting the ArrayBuffer is worth doing, but it is
+    // its own change; until then the run stays in memory for the session rather
+    // than being written out as an empty tree list.
+    if (validatedBackendData.treeSource) {
+      volatilePhyloData = validatedBackendData;
+      await storage.remove(STORAGE_KEYS.PHYLO_DATA);
+      return validatedBackendData;
+    }
+
     const run = await createRunRecord(validatedBackendData, options);
 
     try {
@@ -196,6 +219,33 @@ export const phyloData = {
     return validatePhyloMovieData(data, options);
   },
 };
+
+/**
+ * Read a fetched movie payload in whichever encoding it arrived in.
+ *
+ * A PMB1 container is recognised by its leading magic rather than by the URL,
+ * so the caller does not have to know which encoding it asked for. Its trees
+ * stay in the ArrayBuffer as typed-array views and are expanded one at a time,
+ * where the JSON path parses every node up front.
+ *
+ * Both encodings run the same contract checks; only the tree count reaches
+ * validation differently, from the container header rather than from the length
+ * of an array.
+ */
+export function readMoviePayload(buffer) {
+  if (!isBinaryMoviePayload(buffer)) {
+    return validatePhyloMovieData(JSON.parse(new TextDecoder().decode(buffer)), {
+      hydrateTrees: false,
+    });
+  }
+
+  const binaryPayload = parseBinaryMoviePayload(buffer);
+  const metadata = validatePhyloMovieMetadata(binaryPayload.metadata, binaryPayload.treeCount);
+  return {
+    ...metadata,
+    treeSource: createBinaryTreeSource(binaryPayload, metadata),
+  };
+}
 
 function isRunReference(value) {
   return value && value.__phyloRunRef === true && typeof value.runId === 'string';

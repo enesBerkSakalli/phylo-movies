@@ -107,25 +107,76 @@ def build_payload() -> dict:
         ],
         "tree_name_definitions": ["", "A", "B", "C"],
         "split_definitions": [[0, 1, 2], [0], [1], [2], [1, 2]],
+        # A contract-valid timeline: two input frames with one generated frame
+        # between them, and the pair and metric row that must accompany them.
+        # An earlier version listed three bare input frames, which the payload
+        # validator rightly rejects.
         "frames": [
             {
-                "frame_index": index,
+                "frame_index": 0,
                 "frame_type": "input_tree",
                 "state_semantics": "processed_input_tree",
                 "is_observed_input": True,
-                "input_tree_index": index,
+                "input_tree_index": 0,
                 "pair_id": None,
                 "pair_ordinal": None,
                 "local_step_index": None,
                 "source_frame_index": None,
                 "target_frame_index": None,
-            }
-            for index in range(3)
+            },
+            {
+                "frame_index": 1,
+                "frame_type": "interpolation_frame",
+                "state_semantics": "algorithmic_intermediate",
+                "is_observed_input": False,
+                "input_tree_index": None,
+                "pair_id": "pair_0_1",
+                "pair_ordinal": 0,
+                "local_step_index": 0,
+                "source_frame_index": 0,
+                "target_frame_index": 2,
+            },
+            {
+                "frame_index": 2,
+                "frame_type": "input_tree",
+                "state_semantics": "processed_input_tree",
+                "is_observed_input": True,
+                "input_tree_index": 1,
+                "pair_id": None,
+                "pair_ordinal": None,
+                "local_step_index": None,
+                "source_frame_index": None,
+                "target_frame_index": None,
+            },
         ],
-        "pairs": [],
+        "pairs": [
+            {
+                "pair_id": "pair_0_1",
+                "pair_ordinal": 0,
+                "source_input_tree_index": 0,
+                "target_input_tree_index": 1,
+                "source_frame_index": 0,
+                "target_frame_index": 2,
+                "generated_frame_range": [1, 1],
+                "solution": {
+                    "affected_subtrees_by_split": {},
+                    "attachment_edges_by_split": {},
+                },
+            }
+        ],
         "temporal_events": [],
         "subtree_highlight_tracking": [None, None, None],
-        "pair_metrics": {"rows": [], "semantics": {}},
+        "pair_metrics": {
+            "rows": [
+                {
+                    "pair_id": "pair_0_1",
+                    "pair_ordinal": 0,
+                    "robinson_foulds": 0.0,
+                    "weighted_robinson_foulds": 0.0,
+                }
+            ],
+            "semantics": {},
+        },
         "msa": {"sequences": None, "window_size": 10, "step_size": 5},
         "file_name": "binary_payload_fixture.trees",
         "dataset_provenance": None,
@@ -134,7 +185,9 @@ def build_payload() -> dict:
 
 def render() -> tuple[str, bytes]:
     payload = build_payload()
-    return json.dumps(payload, separators=(",", ":")) + "\n", pack_movie_payload(payload)
+    return json.dumps(payload, separators=(",", ":")) + "\n", pack_movie_payload(
+        payload
+    )
 
 
 def main() -> int:

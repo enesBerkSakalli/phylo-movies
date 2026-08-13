@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { workspaceInitializationFormSchema } from './workspaceInitializationFormModel.js';
 import { getExampleById } from './exampleDatasets.js';
 import { resolveApiUrl } from '../../services/data/apiConfig.js';
-import { phyloData } from '../../services/data/dataService.js';
+import { phyloData, readMoviePayload } from '../../services/data/dataService.js';
 import {
   processMovieData,
   finalizeMovieData,
@@ -345,7 +345,7 @@ export function useWorkspaceInitializationForm({ skipBackendCheck = false } = {}
 
       setOperationState({ percent: 75, message: 'Preparing visualization...' });
       payload.file_name = payload.file_name || example.fileName;
-      await phyloData.set(payload, { label: example.name });
+      await phyloData.set(payload, { label: example.name, validated: true });
       if (!isCurrentOperation(operationRef, operation)) return;
 
       navigate('/visualization');
@@ -434,7 +434,9 @@ async function fetchPrecomputedExamplePayload(payloadPath, exampleName, signal) 
     );
   }
 
-  return JSON.parse(await resp.text());
+  // Read as bytes so the encoding can be detected from the payload itself
+  // rather than inferred from the URL.
+  return readMoviePayload(await resp.arrayBuffer());
 }
 
 function formatProcessingAlertMessage(error) {

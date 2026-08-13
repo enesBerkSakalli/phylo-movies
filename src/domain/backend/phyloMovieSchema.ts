@@ -35,48 +35,39 @@ export type PhyloMovieTransportData = Omit<PhyloMovieData, 'interpolated_trees'>
   split_definitions: number[][];
 };
 
-export function validatePhyloMovieData(data: unknown): PhyloMovieData;
-export function validatePhyloMovieData(
-  data: unknown,
-  options: { hydrateTrees: false }
-): PhyloMovieTransportData;
-export function validatePhyloMovieData(
-  data: unknown,
-  options: ValidationOptions = {}
-): PhyloMovieData | PhyloMovieTransportData {
-  assertRecord(data, 'phyloMovieData');
-  assertExactRecordKeys(data, 'phyloMovieData', [
-    'interpolated_trees',
-    'annotation_definitions',
-    'tree_name_definitions',
-    'split_definitions',
-    'frames',
-    'pairs',
-    'temporal_events',
-    'subtree_highlight_tracking',
-    'pair_metrics',
-    'msa',
-    'file_name',
-    'dataset_provenance',
-  ]);
+const PHYLO_MOVIE_PAYLOAD_KEYS = [
+  'interpolated_trees',
+  'annotation_definitions',
+  'tree_name_definitions',
+  'split_definitions',
+  'frames',
+  'pairs',
+  'temporal_events',
+  'subtree_highlight_tracking',
+  'pair_metrics',
+  'msa',
+  'file_name',
+  'dataset_provenance',
+] as const;
 
-  const annotationDefinitions = validateAnnotationDefinitions(data.annotation_definitions);
-  const treeNameDefinitions = validateTreeNameDefinitions(data.tree_name_definitions);
-  const splitDefinitions = validateSplitDefinitions(data.split_definitions);
-  const treeDictionaries = {
-    treeNameDefinitions,
-    splitDefinitions,
+/** Everything a payload carries apart from the trees themselves. */
+export type PhyloMovieMetadata = Omit<PhyloMovieTransportData, 'interpolated_trees'>;
+
+function validateDefinitionTables(data: Record<string, unknown>) {
+  return {
+    annotationDefinitions: validateAnnotationDefinitions(data.annotation_definitions),
+    treeNameDefinitions: validateTreeNameDefinitions(data.tree_name_definitions),
+    splitDefinitions: validateSplitDefinitions(data.split_definitions),
   };
-  const hydrateTrees = options.hydrateTrees !== false;
-  // The transport payload is what stays resident for the whole session, so its
-  // annotation values are normalised to the flat layout here. validateTreeList
-  // builds fresh TreeNodes and discards the compact form, so it needs no pass.
-  const interpolatedTrees = hydrateTrees
-    ? validateTreeList(data.interpolated_trees, annotationDefinitions, treeDictionaries)
-    : flattenTreeAnnotationValues(
-        validateTreePayloadList(data.interpolated_trees, annotationDefinitions, treeDictionaries)
-      );
-  const treeCount = interpolatedTrees.length;
+}
+
+/**
+ * Validate every field that is checked against the number of trees, plus the
+ * cross-field timeline contracts. Split out so a payload whose trees live
+ * outside the JSON is held to exactly the same contract as one whose trees are
+ * an array in it.
+ */
+function validateTimelineFields(data: Record<string, unknown>, treeCount: number) {
   const frames = validateFrames(data.frames, treeCount);
   const pairs = validatePairs(data.pairs, treeCount);
   const temporalEvents = validateTemporalEvents(data.temporal_events, treeCount);
@@ -92,10 +83,8 @@ export function validatePhyloMovieData(
   if (typeof data.file_name !== 'string') {
     throw new Error('Invalid phyloMovieData payload: file_name must be a string');
   }
-  const datasetProvenance = validateDatasetProvenance(data.dataset_provenance);
 
-  const validatedData = {
-    interpolated_trees: interpolatedTrees,
+  return {
     frames,
     pairs,
     temporal_events: temporalEvents,
@@ -103,7 +92,61 @@ export function validatePhyloMovieData(
     pair_metrics: pairMetrics,
     msa,
     file_name: data.file_name,
-    dataset_provenance: datasetProvenance,
+    dataset_provenance: validateDatasetProvenance(data.dataset_provenance),
+  };
+}
+
+/**
+ * Validate a payload whose trees are carried outside it, against a tree count
+ * the caller supplies. The PMB1 container keeps its trees in typed-array blocks
+ * behind the JSON header, so there is no interpolated_trees array to count, and
+ * its header is otherwise the same record the JSON payload is.
+ */
+export function validatePhyloMovieMetadata(data: unknown, treeCount: number): PhyloMovieMetadata {
+  assertRecord(data, 'phyloMovieData');
+  assertExactRecordKeys(data, 'phyloMovieData', PHYLO_MOVIE_PAYLOAD_KEYS);
+
+  const { annotationDefinitions, treeNameDefinitions, splitDefinitions } =
+    validateDefinitionTables(data);
+
+  return {
+    ...validateTimelineFields(data, treeCount),
+    annotation_definitions: annotationDefinitions,
+    tree_name_definitions: treeNameDefinitions,
+    split_definitions: splitDefinitions,
+  };
+}
+
+export function validatePhyloMovieData(data: unknown): PhyloMovieData;
+export function validatePhyloMovieData(
+  data: unknown,
+  options: { hydrateTrees: false }
+): PhyloMovieTransportData;
+export function validatePhyloMovieData(
+  data: unknown,
+  options: ValidationOptions = {}
+): PhyloMovieData | PhyloMovieTransportData {
+  assertRecord(data, 'phyloMovieData');
+  assertExactRecordKeys(data, 'phyloMovieData', PHYLO_MOVIE_PAYLOAD_KEYS);
+
+  const { annotationDefinitions, treeNameDefinitions, splitDefinitions } =
+    validateDefinitionTables(data);
+  const treeDictionaries = {
+    treeNameDefinitions,
+    splitDefinitions,
+  };
+  const hydrateTrees = options.hydrateTrees !== false;
+  // The transport payload is what stays resident for the whole session, so its
+  // annotation values are normalised to the flat layout here. validateTreeList
+  // builds fresh TreeNodes and discards the compact form, so it needs no pass.
+  const interpolatedTrees = hydrateTrees
+    ? validateTreeList(data.interpolated_trees, annotationDefinitions, treeDictionaries)
+    : flattenTreeAnnotationValues(
+        validateTreePayloadList(data.interpolated_trees, annotationDefinitions, treeDictionaries)
+      );
+  const validatedData = {
+    interpolated_trees: interpolatedTrees,
+    ...validateTimelineFields(data, interpolatedTrees.length),
   };
 
   if (!hydrateTrees) {
