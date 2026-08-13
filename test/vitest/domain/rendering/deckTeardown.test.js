@@ -7,12 +7,9 @@ import {
   teardownDeckRenderer,
 } from '../../../../src/lib/deckTeardown.js';
 
-function makeElement({ attached = true } = {}) {
+function makeElement() {
   const element = {};
-  const parent = {
-    contains: vi.fn(() => attached),
-    removeChild: vi.fn(),
-  };
+  const parent = { removeChild: vi.fn() };
   element.parentNode = parent;
   return { element, parent };
 }
@@ -56,10 +53,25 @@ describe('deck teardown helpers', () => {
     expect(parent.removeChild).toHaveBeenCalledWith(element);
   });
 
-  it('leaves an element alone when it is no longer a child', () => {
-    const { element, parent } = makeElement({ attached: false });
-    removeCreatedElement(element, '[test]');
+  it('removes the element when it is still the expected parent-s child', () => {
+    const { element, parent } = makeElement();
+    removeCreatedElement(element, '[test]', parent);
+    expect(parent.removeChild).toHaveBeenCalledWith(element);
+  });
+
+  it('leaves a reparented element alone when an expected parent was given', () => {
+    const { element, parent } = makeElement();
+    const container = { removeChild: vi.fn() };
+
+    removeCreatedElement(element, '[test]', container);
+
     expect(parent.removeChild).not.toHaveBeenCalled();
+    expect(container.removeChild).not.toHaveBeenCalled();
+  });
+
+  it('leaves a detached element alone', () => {
+    const element = { parentNode: null };
+    expect(() => removeCreatedElement(element, '[test]')).not.toThrow();
   });
 
   it('warns instead of throwing when removal fails', () => {
@@ -93,6 +105,26 @@ describe('deck teardown helpers', () => {
 
     expect(order).toEqual(['frame', 'observer', 'finalize', 'detach']);
     vi.unstubAllGlobals();
+  });
+
+  it('honours expectedParent through the full sequence', () => {
+    const resizeObserver = { disconnect: vi.fn() };
+    const deck = { finalize: vi.fn() };
+    const { element, parent } = makeElement();
+
+    teardownDeckRenderer({
+      frameId: null,
+      resizeObserver,
+      deck,
+      element,
+      expectedParent: { removeChild: vi.fn() },
+      label: '[test]',
+    });
+
+    // The deck is still finalized; only the detach is declined.
+    expect(deck.finalize).toHaveBeenCalledOnce();
+    expect(resizeObserver.disconnect).toHaveBeenCalledOnce();
+    expect(parent.removeChild).not.toHaveBeenCalled();
   });
 
   it('completes even when a renderer never got as far as creating anything', () => {

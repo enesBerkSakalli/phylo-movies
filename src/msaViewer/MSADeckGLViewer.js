@@ -972,6 +972,8 @@ export class MSADeckGLViewer {
       resizeObserver: this.resizeObserver,
       deck: this.state.deckgl,
       element: this.canvas,
+      // Leave React-managed children alone if the canvas was reparented.
+      expectedParent: this.container,
       label: '[MSA Viewer]',
     });
     this.frame = null;

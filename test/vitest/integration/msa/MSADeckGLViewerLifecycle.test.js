@@ -284,3 +284,62 @@ describe('MSADeckGLViewer lifecycle', () => {
     expect(viewer.renderThrottled).not.toHaveBeenCalled();
   });
 });
+
+describe('MSADeckGLViewer destroy', () => {
+  function makeDestroyable() {
+    const viewer = makeViewer();
+    const container = {
+      removeChild: vi.fn(),
+      removeEventListener: vi.fn(),
+    };
+    viewer.container = container;
+    viewer.canvas = { parentNode: container };
+    viewer._handleWheel = vi.fn();
+    viewer.frame = 12;
+    viewer.resizeObserver = { disconnect: vi.fn() };
+    viewer._initialLayoutObserver = { disconnect: vi.fn() };
+    viewer.state.deckgl = { finalize: vi.fn() };
+    return { viewer, container };
+  }
+
+  it('releases every resource it created', () => {
+    const cancel = vi.fn();
+    vi.stubGlobal('cancelAnimationFrame', cancel);
+    const { viewer, container } = makeDestroyable();
+    const { resizeObserver, _initialLayoutObserver: layoutObserver, state } = viewer;
+    const deck = state.deckgl;
+
+    viewer.destroy();
+
+    expect(viewer._destroyed).toBe(true);
+    expect(cancel).toHaveBeenCalledWith(12);
+    expect(layoutObserver.disconnect).toHaveBeenCalledOnce();
+    expect(resizeObserver.disconnect).toHaveBeenCalledOnce();
+    expect(container.removeEventListener).toHaveBeenCalledWith('wheel', viewer._handleWheel);
+    expect(deck.finalize).toHaveBeenCalledOnce();
+    expect(container.removeChild).toHaveBeenCalledWith(viewer.canvas);
+    expect(viewer.frame).toBeNull();
+    expect(viewer.resizeObserver).toBeNull();
+    expect(viewer.state.deckgl).toBeNull();
+    vi.unstubAllGlobals();
+  });
+
+  it('leaves the canvas alone once it has been reparented away from the container', () => {
+    const { viewer, container } = makeDestroyable();
+    const otherParent = { removeChild: vi.fn() };
+    viewer.canvas = { parentNode: otherParent };
+
+    viewer.destroy();
+
+    // Not ours to remove any more, but the deck must still be finalized.
+    expect(container.removeChild).not.toHaveBeenCalled();
+    expect(otherParent.removeChild).not.toHaveBeenCalled();
+    expect(viewer.state.deckgl).toBeNull();
+  });
+
+  it('destroys cleanly when nothing was ever created', () => {
+    const viewer = makeViewer();
+    expect(() => viewer.destroy()).not.toThrow();
+    expect(viewer._destroyed).toBe(true);
+  });
+});

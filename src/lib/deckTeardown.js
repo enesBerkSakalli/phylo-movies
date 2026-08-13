@@ -55,18 +55,28 @@ export function finalizeDeck(deck) {
 /**
  * Remove an element this renderer added, leaving anything else alone.
  *
- * Checks parentage rather than assuming it: the element may already have been
- * detached by a parent unmount, and removeChild throws when the node is not a
- * child of the node it is called on.
+ * The element may already have been detached by a parent unmount, and
+ * removeChild throws when the node is not a child of the node it is called on,
+ * so the removal is guarded and any failure is reported rather than thrown.
+ *
+ * Pass expectedParent to remove the element only while it is still a direct
+ * child of the container this renderer appended it to. A renderer whose
+ * container is managed by React wants that: if the element has been reparented,
+ * it is no longer ours to remove. Note that a bare parentNode.contains(element)
+ * check cannot express this - contains() counts a node as its own inclusive
+ * descendant, so it is true whenever parentNode is set.
  *
  * @param {Element|null|undefined} element
  * @param {string} label Prefix for the warning, e.g. '[MSA Viewer]'
+ * @param {Element|null} [expectedParent] Only remove while still its child.
  * @returns {null}
  */
-export function removeCreatedElement(element, label) {
+export function removeCreatedElement(element, label, expectedParent) {
   try {
     const parent = element?.parentNode;
-    if (parent && parent.contains(element)) parent.removeChild(element);
+    if (!parent) return null;
+    if (expectedParent && parent !== expectedParent) return null;
+    parent.removeChild(element);
   } catch (error) {
     console.warn(`${label} Failed to remove a deck.gl element during cleanup:`, error);
   }
@@ -82,11 +92,19 @@ export function removeCreatedElement(element, label) {
  * @param {ResizeObserver|null} [options.resizeObserver]
  * @param {{finalize?: () => void}|null} [options.deck]
  * @param {Element|null} [options.element]
+ * @param {Element|null} [options.expectedParent] See removeCreatedElement.
  * @param {string} options.label
  */
-export function teardownDeckRenderer({ frameId, resizeObserver, deck, element, label }) {
+export function teardownDeckRenderer({
+  frameId,
+  resizeObserver,
+  deck,
+  element,
+  expectedParent,
+  label,
+}) {
   cancelPendingFrame(frameId);
   disconnectObserver(resizeObserver);
   finalizeDeck(deck);
-  removeCreatedElement(element, label);
+  removeCreatedElement(element, label, expectedParent);
 }
