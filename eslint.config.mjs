@@ -136,10 +136,13 @@ export default tseslint.config(
     },
   },
   {
-    // These files define nested render components and a helper below their first
-    // use inside a later-running render function, which is runtime-safe. Reordering
-    // the large blocks earns no runtime benefit, so no-use-before-define is scoped
-    // off here rather than churned around.
+    // These files deliberately reference a nested render component above its
+    // definition so the expensive body mounts only when the element is rendered
+    // inside its open collapsible/portal content, not on every parent render.
+    // toolsSidebarStructureStatic.test.js enforces that <TreeStatsPanelBody />
+    // appears before `const TreeStatsPanelBody`, so this is a tested contract,
+    // not incidental ordering; reordering to satisfy no-use-before-define would
+    // break it. The rule is scoped off here and stays live everywhere else.
     files: [
       'src/components/TreeStatsPanel/AnalyticsDashboard.tsx',
       'src/components/TreeStatsPanel/TreeStatsPanel.tsx',
