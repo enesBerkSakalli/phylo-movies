@@ -82,7 +82,7 @@ export interface ContextMenuPosition {
 export interface ContextMenuNode {
   name: string;
   length: number;
-  split_indices: number[];
+  split_indices: readonly number[];
   splitKey?: string;
   treeIndex?: number;
   treeSide?: string;

@@ -1,6 +1,7 @@
 import type {
   DatasetProvenance,
   PhyloMovieData,
+  SplitDefinitions,
   TemporalEvent,
   TimelineFrame,
   TimelinePair,
@@ -32,7 +33,7 @@ export type PhyloMovieTransportData = Omit<PhyloMovieData, 'interpolated_trees'>
   interpolated_trees: unknown[];
   annotation_definitions: ReturnType<typeof validateAnnotationDefinitions>;
   tree_name_definitions: string[];
-  split_definitions: number[][];
+  split_definitions: SplitDefinitions;
 };
 
 const PHYLO_MOVIE_PAYLOAD_KEYS = [

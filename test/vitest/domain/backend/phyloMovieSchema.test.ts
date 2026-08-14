@@ -251,8 +251,12 @@ describe('validatePhyloMovieData', () => {
     const hydrated = hydrateMovieTreeAtIndex(result, 0);
     const [first, second] = hydrated.children;
 
+    expect(Object.isFrozen(result.split_definitions)).toBe(true);
     expect(first.split_indices).toBe(result.split_definitions[1]);
     expect(Object.isFrozen(first.split_indices)).toBe(true);
+    expect(() => {
+      (result.split_definitions as number[][])[1] = [99];
+    }).toThrow(TypeError);
     // push always writes, where sort on a single-element split writes nothing
     // and so would not surface the freeze.
     expect(() => {

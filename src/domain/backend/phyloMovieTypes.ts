@@ -1,5 +1,7 @@
 export type AnnotationValue = string | number | boolean | Array<string | number | boolean>;
 export type AnnotationValueType = 'string' | 'number' | 'integer' | 'boolean' | 'array';
+export type SplitIndices = readonly number[];
+export type SplitDefinitions = readonly SplitIndices[];
 
 export interface AnnotationAnalysis {
   type: string;
@@ -39,7 +41,7 @@ export interface BranchAnnotationValue {
 export interface TreeNode {
   name: string;
   length: number;
-  split_indices: number[];
+  split_indices: SplitIndices;
   splitKey?: string;
   annotations?: TreeNodeAnnotations;
   children: TreeNode[];

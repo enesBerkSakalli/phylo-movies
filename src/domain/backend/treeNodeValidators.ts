@@ -6,7 +6,7 @@
  * node validation resolves name_ref and split_ref against them.
  */
 
-import type { TreeNode } from './phyloMovieTypes';
+import type { SplitDefinitions, SplitIndices, TreeNode } from './phyloMovieTypes';
 import {
   assertExactRecordKeys,
   assertFiniteNumber,
@@ -24,7 +24,7 @@ import {
 
 type TreePayloadDictionaries = {
   treeNameDefinitions: string[];
-  splitDefinitions: number[][];
+  splitDefinitions: SplitDefinitions;
 };
 
 /**
@@ -35,7 +35,7 @@ function validateTreeNodeNameLengthAndSplits(
   value: Record<string, unknown>,
   fieldName: string,
   treeDictionaries: TreePayloadDictionaries
-): { name: string; length: number; splitIndices: number[] } {
+): { name: string; length: number; splitIndices: SplitIndices } {
   const name = validateTreeNodeName(
     value.name,
     value.name_ref,
@@ -77,7 +77,13 @@ type EnterTask = {
   siblings: TreeNode[] | null;
 };
 type ExitTask =
-  | { phase: 'exit'; fieldName: string; node: TreeNode | null; form: 'tuple'; slot: unknown }
+  | {
+      phase: 'exit';
+      fieldName: string;
+      node: TreeNode | null;
+      form: 'tuple';
+      annotationValues: unknown;
+    }
   | {
       phase: 'exit';
       fieldName: string;
@@ -133,7 +139,13 @@ function walkTreeNode(
       );
       children = requiredArray(nodeValue[4], `${nodeField}[4]`);
       if (buildNodes) node = { name, length, split_indices: splitIndices, children: [] };
-      exit = { phase: 'exit', fieldName: nodeField, node, form: 'tuple', slot: nodeValue[3] };
+      exit = {
+        phase: 'exit',
+        fieldName: nodeField,
+        node,
+        form: 'tuple',
+        annotationValues: nodeValue[3],
+      };
     } else {
       assertRecord(nodeValue, nodeField);
       assertExactRecordKeys(nodeValue, nodeField, OBJECT_NODE_KEYS);
@@ -184,11 +196,11 @@ function finishNodeAnnotations(
   buildNodes: boolean
 ): void {
   if (task.form === 'tuple') {
-    assertTupleAnnotationSlot(task.slot, task.fieldName);
+    assertTupleAnnotationSlot(task.annotationValues, task.fieldName);
     if (!buildNodes) {
-      if (task.slot !== null) {
+      if (task.annotationValues !== null) {
         validateCompactAnnotationValues(
-          task.slot,
+          task.annotationValues,
           `${task.fieldName}.annotation_values`,
           annotationDefinitions
         );
@@ -196,11 +208,11 @@ function finishNodeAnnotations(
       return;
     }
     const annotations =
-      task.slot === null
+      task.annotationValues === null
         ? undefined
         : validateNodeAnnotations(
             undefined,
-            task.slot,
+            task.annotationValues,
             `${task.fieldName}.annotations`,
             `${task.fieldName}.annotation_values`,
             annotationDefinitions
@@ -229,30 +241,6 @@ function finishNodeAnnotations(
   if (annotations !== undefined && task.node) task.node.annotations = annotations;
 }
 
-function validateTreeNode(
-  value: unknown,
-  fieldName: string,
-  annotationDefinitions: AnnotationDefinition[] = [],
-  treeDictionaries: TreePayloadDictionaries = {
-    treeNameDefinitions: [],
-    splitDefinitions: [],
-  }
-): TreeNode {
-  return walkTreeNode(value, fieldName, annotationDefinitions, treeDictionaries, true) as TreeNode;
-}
-
-function validateTreePayloadNode(
-  value: unknown,
-  fieldName: string,
-  annotationDefinitions: AnnotationDefinition[] = [],
-  treeDictionaries: TreePayloadDictionaries = {
-    treeNameDefinitions: [],
-    splitDefinitions: [],
-  }
-): void {
-  walkTreeNode(value, fieldName, annotationDefinitions, treeDictionaries, false);
-}
-
 /**
  * Validates the [length, name_ref, split_ref] leading fields of a tuple node.
  */
@@ -260,7 +248,7 @@ function validateTupleTreeNodeLengthNameAndSplits(
   value: unknown[],
   fieldName: string,
   treeDictionaries: TreePayloadDictionaries
-): { name: string; length: number; splitIndices: number[] } {
+): { name: string; length: number; splitIndices: SplitIndices } {
   assertFiniteNumber(value[0], `${fieldName}[0]`);
   const length = value[0];
   const name = validateTreeNodeName(
@@ -333,8 +321,8 @@ function validateTreeNodeSplitIndices(
   expandedSplitIndices: unknown,
   compactSplitRef: unknown,
   fieldName: string,
-  splitDefinitions: number[][]
-): number[] {
+  splitDefinitions: SplitDefinitions
+): SplitIndices {
   if (expandedSplitIndices !== undefined && compactSplitRef !== undefined) {
     throw new Error(
       `Invalid phyloMovieData payload: ${fieldName} must not include both split_indices and split_ref`
@@ -373,10 +361,10 @@ export function validateTreeNameDefinitions(value: unknown): string[] {
   });
 }
 
-export function validateSplitDefinitions(value: unknown): number[][] {
+export function validateSplitDefinitions(value: unknown): SplitDefinitions {
   if (value === undefined) return [];
   const definitions = requiredArray(value, 'split_definitions');
-  return definitions.map((definition, index) => {
+  const validatedDefinitions = definitions.map((definition, index) => {
     const split = requiredNumberArray(definition, `split_definitions[${index}]`);
     if (split.length === 0) {
       throw new Error(
@@ -388,9 +376,11 @@ export function validateSplitDefinitions(value: unknown): number[][] {
     // node. Copying per node would allocate millions of arrays on the transport
     // path, so the array is frozen instead: an in-place sort or push by a
     // consumer throws here rather than silently corrupting every node that
-    // shares the split. Nothing mutates them today.
-    return Object.freeze(split) as number[];
+    // shares the split. The outer table is frozen below so later hydration
+    // cannot resolve the same split_ref to a replacement entry.
+    return Object.freeze(split);
   });
+  return Object.freeze(validatedDefinitions);
 }
 
 export function validateTreeList(
@@ -402,8 +392,15 @@ export function validateTreeList(
   }
 ): TreeNode[] {
   const trees = requiredArray(value, 'interpolated_trees');
-  return trees.map((tree, index) =>
-    validateTreeNode(tree, `interpolated_trees[${index}]`, annotationDefinitions, treeDictionaries)
+  return trees.map(
+    (tree, index) =>
+      walkTreeNode(
+        tree,
+        `interpolated_trees[${index}]`,
+        annotationDefinitions,
+        treeDictionaries,
+        true
+      ) as TreeNode
   );
 }
 
@@ -417,11 +414,12 @@ export function validateTreePayloadList(
 ): unknown[] {
   const trees = requiredArray(value, 'interpolated_trees');
   trees.forEach((tree, index) =>
-    validateTreePayloadNode(
+    walkTreeNode(
       tree,
       `interpolated_trees[${index}]`,
       annotationDefinitions,
-      treeDictionaries
+      treeDictionaries,
+      false
     )
   );
   return trees;
