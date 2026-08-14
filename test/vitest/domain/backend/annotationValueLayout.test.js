@@ -211,6 +211,50 @@ describe('compact tuple annotation slot', () => {
   });
 });
 
+describe('contradictory node annotations', () => {
+  // A node carrying both keys is rejected before its children are walked, so a
+  // malformed root does not pay for a full subtree descent first.
+  function makeContradictoryTree(childCount) {
+    const children = Array.from({ length: childCount }, (_value, index) => ({
+      name: `taxon-${index}`,
+      length: 1,
+      split_indices: [index],
+      children: [],
+    }));
+    return {
+      name: 'root',
+      length: 0,
+      split_indices: children.map((_child, index) => index),
+      annotations: { fields: {} },
+      annotation_values: [],
+      children,
+    };
+  }
+
+  it.each([
+    ['hydrating', undefined],
+    ['transport', { hydrateTrees: false }],
+  ])('rejects a node with both keys on the %s path', (_label, options) => {
+    const tree = makeContradictoryTree(2);
+    const payload = { ...makePayload(tree), interpolated_trees: [tree, tree, tree] };
+
+    expect(() => validatePhyloMovieData(payload, options)).toThrow(
+      /must not include both annotations and annotation_values/
+    );
+  });
+
+  it('does not descend into children before rejecting', () => {
+    const tree = makeContradictoryTree(3);
+    // A child that would throw a different error if it were ever reached.
+    tree.children[0].split_indices = 'not-an-array';
+    const payload = { ...makePayload(tree), interpolated_trees: [tree, tree, tree] };
+
+    expect(() => validatePhyloMovieData(payload, { hydrateTrees: false })).toThrow(
+      /must not include both annotations and annotation_values/
+    );
+  });
+});
+
 describe('validatePhyloMovieData annotation layouts', () => {
   it('normalises the transport payload to the flat layout', () => {
     const payload = makePayload(makeTree(NESTED.map((pair) => pair.slice())));

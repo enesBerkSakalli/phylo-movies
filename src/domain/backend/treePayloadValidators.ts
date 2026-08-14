@@ -104,6 +104,12 @@ function validateTreeNode(
     treeDictionaries
   );
 
+  if (value.annotations !== undefined && value.annotation_values !== undefined) {
+    throw new Error(
+      `Invalid phyloMovieData payload: ${fieldName} must not include both annotations and annotation_values`
+    );
+  }
+
   const children = requiredArray(value.children, `${fieldName}.children`);
   const validatedChildren = children.map((child, index) =>
     validateTreeNode(
@@ -113,11 +119,6 @@ function validateTreeNode(
       treeDictionaries
     )
   );
-  if (value.annotations !== undefined && value.annotation_values !== undefined) {
-    throw new Error(
-      `Invalid phyloMovieData payload: ${fieldName} must not include both annotations and annotation_values`
-    );
-  }
   const annotations = validateNodeAnnotations(
     value.annotations,
     value.annotation_values,
@@ -163,6 +164,12 @@ function validateTreePayloadNode(
 
   validateTreeNodeNameLengthAndSplits(value, fieldName, treeDictionaries);
 
+  if (value.annotations !== undefined && value.annotation_values !== undefined) {
+    throw new Error(
+      `Invalid phyloMovieData payload: ${fieldName} must not include both annotations and annotation_values`
+    );
+  }
+
   const children = requiredArray(value.children, `${fieldName}.children`);
   children.forEach((child, index) =>
     validateTreePayloadNode(
@@ -172,11 +179,6 @@ function validateTreePayloadNode(
       treeDictionaries
     )
   );
-  if (value.annotations !== undefined && value.annotation_values !== undefined) {
-    throw new Error(
-      `Invalid phyloMovieData payload: ${fieldName} must not include both annotations and annotation_values`
-    );
-  }
   validateTransportNodeAnnotations(
     value.annotations,
     value.annotation_values,
@@ -288,7 +290,7 @@ function validateTupleTreePayloadNode(
   );
   assertTupleAnnotationSlot(value[3], fieldName);
   if (value[3] !== null) {
-    validateCompactAnnotationValuesPayload(
+    validateCompactAnnotationValues(
       value[3],
       `${fieldName}.annotation_values`,
       annotationDefinitions
@@ -419,7 +421,7 @@ function validateTransportNodeAnnotations(
     validateTreeNodeAnnotations(expandedAnnotations, expandedFieldName);
   }
   if (compactAnnotationValues !== undefined) {
-    validateCompactAnnotationValuesPayload(
+    validateCompactAnnotationValues(
       compactAnnotationValues,
       compactFieldName,
       annotationDefinitions
@@ -491,14 +493,6 @@ function validateCompactAnnotationValues(
   }
 
   return { fields };
-}
-
-function validateCompactAnnotationValuesPayload(
-  value: unknown,
-  fieldName: string,
-  annotationDefinitions: AnnotationDefinition[]
-): void {
-  validateCompactAnnotationValues(value, fieldName, annotationDefinitions);
 }
 
 export function validateAnnotationDefinitions(value: unknown): AnnotationDefinition[] {
