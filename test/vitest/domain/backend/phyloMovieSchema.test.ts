@@ -236,6 +236,31 @@ describe('validatePhyloMovieData', () => {
     });
   });
 
+  it('freezes split definitions so nodes cannot corrupt a shared split', () => {
+    // One entry is interned per distinct split and handed to every node that
+    // carries it, so an in-place mutation would reach all of them. Copying per
+    // node would allocate millions of arrays on the transport path.
+    const result = validatePhyloMovieData(
+      makePayload({
+        ...compactTreeDefinitions,
+        interpolated_trees: [compactTree, compactTree, compactTree],
+      }),
+      { hydrateTrees: false }
+    );
+
+    const hydrated = hydrateMovieTreeAtIndex(result, 0);
+    const [first, second] = hydrated.children;
+
+    expect(first.split_indices).toBe(result.split_definitions[1]);
+    expect(Object.isFrozen(first.split_indices)).toBe(true);
+    // push always writes, where sort on a single-element split writes nothing
+    // and so would not surface the freeze.
+    expect(() => {
+      (first.split_indices as number[]).push(99);
+    }).toThrow(TypeError);
+    expect(second.split_indices).toEqual([1]);
+  });
+
   it('can preserve compact tuple trees and hydrate one tree on demand', () => {
     const result = validatePhyloMovieData(
       makePayload({

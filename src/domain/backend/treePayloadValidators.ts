@@ -242,6 +242,7 @@ function validateTupleTreeNode(
       treeDictionaries
     )
   );
+  assertTupleAnnotationSlot(value[3], fieldName);
   const annotations =
     value[3] === null
       ? undefined
@@ -285,6 +286,7 @@ function validateTupleTreePayloadNode(
       treeDictionaries
     )
   );
+  assertTupleAnnotationSlot(value[3], fieldName);
   if (value[3] !== null) {
     validateCompactAnnotationValuesPayload(
       value[3],
@@ -292,6 +294,20 @@ function validateTupleTreePayloadNode(
       annotationDefinitions
     );
   }
+}
+
+/**
+ * The annotation slot of a tuple node, which the backend writes as either None
+ * or a list of pairs - never absent. Both tuple validators route through this so
+ * they cannot disagree: they previously tested `=== null` and `!== null` and
+ * then took different branches, so a slot holding undefined passed the
+ * hydrating path and was rejected by the transport one.
+ */
+function assertTupleAnnotationSlot(value: unknown, fieldName: string): void {
+  if (value === null || Array.isArray(value)) return;
+  throw new Error(
+    `Invalid phyloMovieData payload: ${fieldName}.annotation_values must be an array or null`
+  );
 }
 
 function validateTreeNodeName(
@@ -516,7 +532,13 @@ export function validateSplitDefinitions(value: unknown): number[][] {
         `Invalid phyloMovieData payload: split_definitions[${index}] must not be empty`
       );
     }
-    return split;
+    // Every node carrying this split gets this same array, because the payload
+    // interns one entry per distinct split and readers hand it straight to the
+    // node. Copying per node would allocate millions of arrays on the transport
+    // path, so the array is frozen instead: an in-place sort or push by a
+    // consumer throws here rather than silently corrupting every node that
+    // shares the split. Nothing mutates them today.
+    return Object.freeze(split) as number[];
   });
 }
 

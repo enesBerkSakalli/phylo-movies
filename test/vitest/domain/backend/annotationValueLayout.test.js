@@ -165,6 +165,52 @@ describe('annotation value layout', () => {
   });
 });
 
+describe('compact tuple annotation slot', () => {
+  // The backend writes this slot as either null or a list of pairs, never
+  // absent. The two tuple validators used to disagree about anything else:
+  // undefined passed the hydrating path and was rejected by the transport one.
+  const dictionaries = {
+    tree_name_definitions: ['root', 'A'],
+    split_definitions: [[0, 1], [0]],
+  };
+  const makeTuple = (slot) => [0, 0, 0, slot, [[1, 1, 1, null, []]]];
+
+  function validateBothPaths(slot) {
+    const payload = {
+      ...makePayload(makeTuple(slot)),
+      ...dictionaries,
+      interpolated_trees: [makeTuple(slot), makeTuple(slot), makeTuple(slot)],
+    };
+    const run = (options) => {
+      try {
+        validatePhyloMovieData(payload, options);
+        return 'ok';
+      } catch (error) {
+        return error.message;
+      }
+    };
+    return { hydrating: run(undefined), transport: run({ hydrateTrees: false }) };
+  }
+
+  it.each([
+    ['undefined', undefined],
+    ['a string', 'nope'],
+    ['a number', 7],
+    ['an object', {}],
+  ])('rejects %s in both paths alike', (_label, slot) => {
+    const { hydrating, transport } = validateBothPaths(slot);
+
+    expect(hydrating).toMatch(/annotation_values must be an array or null/);
+    expect(hydrating).toBe(transport);
+  });
+
+  it('accepts null in both paths alike', () => {
+    const { hydrating, transport } = validateBothPaths(null);
+    expect(hydrating).toBe('ok');
+    expect(transport).toBe('ok');
+  });
+});
+
 describe('validatePhyloMovieData annotation layouts', () => {
   it('normalises the transport payload to the flat layout', () => {
     const payload = makePayload(makeTree(NESTED.map((pair) => pair.slice())));
