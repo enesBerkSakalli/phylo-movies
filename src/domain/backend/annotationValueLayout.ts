@@ -59,25 +59,31 @@ function toFlatAnnotationValues(values: unknown): unknown {
   return flat;
 }
 
-function flattenNodeAnnotationValues(node: unknown): void {
-  if (!node) return;
+function flattenNodeAnnotationValues(root: unknown): void {
+  // Explicit stack rather than recursion; the rewrite is per node and in
+  // place, so visit order does not matter.
+  const stack: unknown[] = [root];
+  while (stack.length > 0) {
+    const node = stack.pop();
+    if (!node) continue;
 
-  if (Array.isArray(node)) {
-    node[3] = toFlatAnnotationValues(node[3]);
-    const children: unknown = node[4];
-    if (Array.isArray(children)) {
-      for (const child of children) flattenNodeAnnotationValues(child);
+    if (Array.isArray(node)) {
+      node[3] = toFlatAnnotationValues(node[3]);
+      const children: unknown = node[4];
+      if (Array.isArray(children)) {
+        for (const child of children) stack.push(child);
+      }
+      continue;
     }
-    return;
-  }
 
-  if (typeof node !== 'object') return;
-  const record = node as Record<string, unknown>;
-  if (record.annotation_values !== undefined) {
-    record.annotation_values = toFlatAnnotationValues(record.annotation_values);
-  }
-  if (Array.isArray(record.children)) {
-    for (const child of record.children) flattenNodeAnnotationValues(child);
+    if (typeof node !== 'object') continue;
+    const record = node as Record<string, unknown>;
+    if (record.annotation_values !== undefined) {
+      record.annotation_values = toFlatAnnotationValues(record.annotation_values);
+    }
+    if (Array.isArray(record.children)) {
+      for (const child of record.children) stack.push(child);
+    }
   }
 }
 

@@ -19,8 +19,8 @@ export const selectScaleList = (state) => {
   }
 
   // Only the input frames are scaled, so read just those from the source rather
-  // than materialising every tree. calculateScales indexes by frame, and walks
-  // a compact tuple node or an expanded one equally well.
+  // than materialising every tree. calculateScales indexes by frame, and reads
+  // a compact tuple node, an expanded node, or a PMB1 tree block.
   let scaleTreeList = treeList;
   if (useSource) {
     scaleTreeList = [];

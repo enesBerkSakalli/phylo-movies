@@ -59,6 +59,176 @@ function validateTreeNodeNameLengthAndSplits(
   return { name, length, splitIndices };
 }
 
+const OBJECT_NODE_KEYS = [
+  'name',
+  'name_ref',
+  'length',
+  'split_indices',
+  'split_ref',
+  'annotations',
+  'annotation_values',
+  'children',
+] as const;
+
+type EnterTask = {
+  phase: 'enter';
+  value: unknown;
+  fieldName: string;
+  siblings: TreeNode[] | null;
+};
+type ExitTask =
+  | { phase: 'exit'; fieldName: string; node: TreeNode | null; form: 'tuple'; slot: unknown }
+  | {
+      phase: 'exit';
+      fieldName: string;
+      node: TreeNode | null;
+      form: 'object';
+      annotations: unknown;
+      annotationValues: unknown;
+    };
+
+/**
+ * Walks one tree with an explicit stack instead of recursion, in the two modes
+ * the callers need: building TreeNodes, or checking without allocating.
+ *
+ * The per-node operation order is the one the recursive version had. Each node
+ * validates its shape, name/length/splits and the both-annotations
+ * contradiction on entry; its exit task is pushed under its children, so the
+ * whole subtree is processed before the node's own annotations - exactly where
+ * the recursion validated them.
+ */
+function walkTreeNode(
+  value: unknown,
+  fieldName: string,
+  annotationDefinitions: AnnotationDefinition[],
+  treeDictionaries: TreePayloadDictionaries,
+  buildNodes: boolean
+): TreeNode | null {
+  let root: TreeNode | null = null;
+  const stack: Array<EnterTask | ExitTask> = [{ phase: 'enter', value, fieldName, siblings: null }];
+
+  while (stack.length > 0) {
+    const task = stack.pop() as EnterTask | ExitTask;
+    if (task.phase === 'exit') {
+      finishNodeAnnotations(task, annotationDefinitions, buildNodes);
+      continue;
+    }
+
+    const nodeValue = task.value;
+    const nodeField = task.fieldName;
+    let children: unknown[];
+    let node: TreeNode | null = null;
+    let exit: ExitTask;
+
+    if (Array.isArray(nodeValue)) {
+      if (nodeValue.length !== 5) {
+        throw new Error(
+          `Invalid phyloMovieData payload: ${nodeField} tuple node must be [length, name_ref, split_ref, annotation_values, children]`
+        );
+      }
+      const { name, length, splitIndices } = validateTupleTreeNodeLengthNameAndSplits(
+        nodeValue,
+        nodeField,
+        treeDictionaries
+      );
+      children = requiredArray(nodeValue[4], `${nodeField}[4]`);
+      if (buildNodes) node = { name, length, split_indices: splitIndices, children: [] };
+      exit = { phase: 'exit', fieldName: nodeField, node, form: 'tuple', slot: nodeValue[3] };
+    } else {
+      assertRecord(nodeValue, nodeField);
+      assertExactRecordKeys(nodeValue, nodeField, OBJECT_NODE_KEYS);
+      const { name, length, splitIndices } = validateTreeNodeNameLengthAndSplits(
+        nodeValue,
+        nodeField,
+        treeDictionaries
+      );
+      if (nodeValue.annotations !== undefined && nodeValue.annotation_values !== undefined) {
+        throw new Error(
+          `Invalid phyloMovieData payload: ${nodeField} must not include both annotations and annotation_values`
+        );
+      }
+      children = requiredArray(nodeValue.children, `${nodeField}.children`);
+      if (buildNodes) node = { name, length, split_indices: splitIndices, children: [] };
+      exit = {
+        phase: 'exit',
+        fieldName: nodeField,
+        node,
+        form: 'object',
+        annotations: nodeValue.annotations,
+        annotationValues: nodeValue.annotation_values,
+      };
+    }
+
+    if (node) {
+      if (task.siblings) task.siblings.push(node);
+      else root = node;
+    }
+
+    stack.push(exit);
+    for (let index = children.length - 1; index >= 0; index -= 1) {
+      stack.push({
+        phase: 'enter',
+        value: children[index],
+        fieldName: `${nodeField}.children[${index}]`,
+        siblings: node === null ? null : node.children,
+      });
+    }
+  }
+
+  return root;
+}
+
+function finishNodeAnnotations(
+  task: ExitTask,
+  annotationDefinitions: AnnotationDefinition[],
+  buildNodes: boolean
+): void {
+  if (task.form === 'tuple') {
+    assertTupleAnnotationSlot(task.slot, task.fieldName);
+    if (!buildNodes) {
+      if (task.slot !== null) {
+        validateCompactAnnotationValues(
+          task.slot,
+          `${task.fieldName}.annotation_values`,
+          annotationDefinitions
+        );
+      }
+      return;
+    }
+    const annotations =
+      task.slot === null
+        ? undefined
+        : validateNodeAnnotations(
+            undefined,
+            task.slot,
+            `${task.fieldName}.annotations`,
+            `${task.fieldName}.annotation_values`,
+            annotationDefinitions
+          );
+    if (annotations !== undefined && task.node) task.node.annotations = annotations;
+    return;
+  }
+
+  if (!buildNodes) {
+    validateTransportNodeAnnotations(
+      task.annotations,
+      task.annotationValues,
+      `${task.fieldName}.annotations`,
+      `${task.fieldName}.annotation_values`,
+      annotationDefinitions
+    );
+    return;
+  }
+  const annotations = validateNodeAnnotations(
+    task.annotations,
+    task.annotationValues,
+    `${task.fieldName}.annotations`,
+    `${task.fieldName}.annotation_values`,
+    annotationDefinitions
+  );
+  if (annotations !== undefined && task.node) task.node.annotations = annotations;
+}
+
 function validateTreeNode(
   value: unknown,
   fieldName: string,
@@ -68,58 +238,7 @@ function validateTreeNode(
     splitDefinitions: [],
   }
 ): TreeNode {
-  if (Array.isArray(value)) {
-    return validateTupleTreeNode(value, fieldName, annotationDefinitions, treeDictionaries);
-  }
-
-  assertRecord(value, fieldName);
-  assertExactRecordKeys(value, fieldName, [
-    'name',
-    'name_ref',
-    'length',
-    'split_indices',
-    'split_ref',
-    'annotations',
-    'annotation_values',
-    'children',
-  ]);
-
-  const { name, length, splitIndices } = validateTreeNodeNameLengthAndSplits(
-    value,
-    fieldName,
-    treeDictionaries
-  );
-
-  if (value.annotations !== undefined && value.annotation_values !== undefined) {
-    throw new Error(
-      `Invalid phyloMovieData payload: ${fieldName} must not include both annotations and annotation_values`
-    );
-  }
-
-  const children = requiredArray(value.children, `${fieldName}.children`);
-  const validatedChildren = children.map((child, index) =>
-    validateTreeNode(
-      child,
-      `${fieldName}.children[${index}]`,
-      annotationDefinitions,
-      treeDictionaries
-    )
-  );
-  const annotations = validateNodeAnnotations(
-    value.annotations,
-    value.annotation_values,
-    `${fieldName}.annotations`,
-    `${fieldName}.annotation_values`,
-    annotationDefinitions
-  );
-
-  return {
-    name,
-    length,
-    split_indices: splitIndices,
-    ...(annotations === undefined ? {} : { annotations }),
-    children: validatedChildren,
-  };
+  return walkTreeNode(value, fieldName, annotationDefinitions, treeDictionaries, true) as TreeNode;
 }
 
 function validateTreePayloadNode(
@@ -131,52 +250,11 @@ function validateTreePayloadNode(
     splitDefinitions: [],
   }
 ): void {
-  if (Array.isArray(value)) {
-    validateTupleTreePayloadNode(value, fieldName, annotationDefinitions, treeDictionaries);
-    return;
-  }
-
-  assertRecord(value, fieldName);
-  assertExactRecordKeys(value, fieldName, [
-    'name',
-    'name_ref',
-    'length',
-    'split_indices',
-    'split_ref',
-    'annotations',
-    'annotation_values',
-    'children',
-  ]);
-
-  validateTreeNodeNameLengthAndSplits(value, fieldName, treeDictionaries);
-
-  if (value.annotations !== undefined && value.annotation_values !== undefined) {
-    throw new Error(
-      `Invalid phyloMovieData payload: ${fieldName} must not include both annotations and annotation_values`
-    );
-  }
-
-  const children = requiredArray(value.children, `${fieldName}.children`);
-  children.forEach((child, index) =>
-    validateTreePayloadNode(
-      child,
-      `${fieldName}.children[${index}]`,
-      annotationDefinitions,
-      treeDictionaries
-    )
-  );
-  validateTransportNodeAnnotations(
-    value.annotations,
-    value.annotation_values,
-    `${fieldName}.annotations`,
-    `${fieldName}.annotation_values`,
-    annotationDefinitions
-  );
+  walkTreeNode(value, fieldName, annotationDefinitions, treeDictionaries, false);
 }
 
 /**
- * Validates the [length, name_ref, split_ref] leading fields shared by the
- * expanded and payload-only tuple TreeNode validators.
+ * Validates the [length, name_ref, split_ref] leading fields of a tuple node.
  */
 function validateTupleTreeNodeLengthNameAndSplits(
   value: unknown[],
@@ -201,87 +279,6 @@ function validateTupleTreeNodeLengthNameAndSplits(
     throw new Error(`Invalid phyloMovieData payload: ${fieldName}.split_indices must not be empty`);
   }
   return { name, length, splitIndices };
-}
-
-function validateTupleTreeNode(
-  value: unknown[],
-  fieldName: string,
-  annotationDefinitions: AnnotationDefinition[],
-  treeDictionaries: TreePayloadDictionaries
-): TreeNode {
-  if (value.length !== 5) {
-    throw new Error(
-      `Invalid phyloMovieData payload: ${fieldName} tuple node must be [length, name_ref, split_ref, annotation_values, children]`
-    );
-  }
-
-  const { name, length, splitIndices } = validateTupleTreeNodeLengthNameAndSplits(
-    value,
-    fieldName,
-    treeDictionaries
-  );
-
-  const children = requiredArray(value[4], `${fieldName}[4]`);
-  const validatedChildren = children.map((child, index) =>
-    validateTreeNode(
-      child,
-      `${fieldName}.children[${index}]`,
-      annotationDefinitions,
-      treeDictionaries
-    )
-  );
-  assertTupleAnnotationSlot(value[3], fieldName);
-  const annotations =
-    value[3] === null
-      ? undefined
-      : validateNodeAnnotations(
-          undefined,
-          value[3],
-          `${fieldName}.annotations`,
-          `${fieldName}.annotation_values`,
-          annotationDefinitions
-        );
-
-  return {
-    name,
-    length,
-    split_indices: splitIndices,
-    ...(annotations === undefined ? {} : { annotations }),
-    children: validatedChildren,
-  };
-}
-
-function validateTupleTreePayloadNode(
-  value: unknown[],
-  fieldName: string,
-  annotationDefinitions: AnnotationDefinition[],
-  treeDictionaries: TreePayloadDictionaries
-): void {
-  if (value.length !== 5) {
-    throw new Error(
-      `Invalid phyloMovieData payload: ${fieldName} tuple node must be [length, name_ref, split_ref, annotation_values, children]`
-    );
-  }
-
-  validateTupleTreeNodeLengthNameAndSplits(value, fieldName, treeDictionaries);
-
-  const children = requiredArray(value[4], `${fieldName}[4]`);
-  children.forEach((child, index) =>
-    validateTreePayloadNode(
-      child,
-      `${fieldName}.children[${index}]`,
-      annotationDefinitions,
-      treeDictionaries
-    )
-  );
-  assertTupleAnnotationSlot(value[3], fieldName);
-  if (value[3] !== null) {
-    validateCompactAnnotationValues(
-      value[3],
-      `${fieldName}.annotation_values`,
-      annotationDefinitions
-    );
-  }
 }
 
 /**

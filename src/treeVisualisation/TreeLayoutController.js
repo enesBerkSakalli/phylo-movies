@@ -405,8 +405,8 @@ function hasUniformScaleValue(value) {
 /**
  * Scales are computed from the stored payload rather than the hydrated cache, so
  * an unhydrated frame still contributes. Only the input frames are read, because
- * calculateScales indexes by frame, and it walks a compact tuple node or an
- * expanded one equally well.
+ * calculateScales indexes by frame, and it reads a compact tuple node, an
+ * expanded node, or a PMB1 tree block.
  */
 function getScaleSourceTreeList(state, treeList, inputFrameIndices) {
   const treeSource = state?.treeSource;

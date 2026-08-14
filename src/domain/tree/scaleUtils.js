@@ -79,22 +79,56 @@ export default function calculateScales(treeList, inputFrameIndices) {
   return scaleList;
 }
 
-function _calculateScale(node, isRoot = true) {
-  if (!node) return 0;
+function _calculateScale(root) {
+  if (!root) return 0;
+  if (isBinaryTreeBlock(root)) return calculateBlockScale(root);
 
-  let maxRadius = 0;
-  const children = getScaleChildren(node);
-  if (children.length > 0) {
-    children.forEach((child) => {
-      const child_scale = _calculateScale(child, false);
-
-      if (maxRadius < child_scale) {
-        maxRadius = child_scale;
-      }
-    });
+  // Iterative walk tracking each node's distance from the root; the root's own
+  // branch length is excluded, as the recursive version excluded it.
+  let max = 0;
+  const stack = [[root, 0, true]];
+  while (stack.length > 0) {
+    const [node, distanceToParent, isRoot] = stack.pop();
+    const distance = distanceToParent + (isRoot ? 0 : getScaleBranchLength(node));
+    if (distance > max) max = distance;
+    const children = getScaleChildren(node);
+    for (let index = children.length - 1; index >= 0; index -= 1) {
+      stack.push([children[index], distance, false]);
+    }
   }
-  maxRadius = maxRadius + (isRoot ? 0 : getScaleBranchLength(node));
-  return maxRadius;
+  return max;
+}
+
+/** A PMB1 tree block, recognised by its typed parent and length columns. */
+function isBinaryTreeBlock(node) {
+  return (
+    node !== null &&
+    typeof node === 'object' &&
+    node.parent instanceof Int32Array &&
+    node.length instanceof Float64Array
+  );
+}
+
+/**
+ * One pass over the flat block: preorder guarantees a parent precedes its
+ * children, so each node's root distance is its parent's plus its own branch
+ * length. Negative or non-finite lengths count as zero, matching
+ * getScaleBranchLength, and the root's length is excluded.
+ */
+function calculateBlockScale(block) {
+  const { parent, length, nodeCount } = block;
+  if (!nodeCount) return 0;
+
+  const distances = new Float64Array(nodeCount);
+  let max = 0;
+  for (let index = 1; index < nodeCount; index += 1) {
+    const raw = length[index];
+    const branch = Number.isFinite(raw) && raw > 0 ? raw : 0;
+    const distance = distances[parent[index]] + branch;
+    distances[index] = distance;
+    if (distance > max) max = distance;
+  }
+  return max;
 }
 
 function getScaleChildren(node) {

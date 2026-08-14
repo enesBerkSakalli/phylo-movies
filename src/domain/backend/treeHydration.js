@@ -25,16 +25,28 @@ export function hydrateMovieTreeAtIndex(movieData, treeIndex) {
   );
 }
 
-function hydrateTreePayloadNode(
-  value,
-  annotationDefinitions = [],
-  treeDictionaries = {
-    treeNameDefinitions: [],
-    splitDefinitions: [],
-  }
-) {
+/** Hydrates one node of either encoding, leaving its children for the walker. */
+function hydrateNodeShell(value, annotationDefinitions, treeDictionaries) {
   if (Array.isArray(value)) {
-    return hydrateTupleTreePayloadNode(value, annotationDefinitions, treeDictionaries);
+    const annotations =
+      value[3] === null ? undefined : hydrateAnnotationValues(value[3], annotationDefinitions);
+    const splitIndices = resolveSplitIndices(
+      undefined,
+      value[2],
+      treeDictionaries.splitDefinitions
+    );
+    const splitKey = resolveSplitKey(undefined, value[2], splitIndices, treeDictionaries);
+    return {
+      node: {
+        name: resolveTreeName(undefined, value[1], treeDictionaries.treeNameDefinitions),
+        length: value[0],
+        split_indices: splitIndices,
+        ...(splitKey === null ? {} : { splitKey }),
+        ...(annotations === undefined ? {} : { annotations }),
+        children: [],
+      },
+      rawChildren: value[4],
+    };
   }
 
   const splitIndices = resolveSplitIndices(
@@ -48,35 +60,52 @@ function hydrateTreePayloadNode(
     (value.annotation_values === undefined
       ? undefined
       : hydrateAnnotationValues(value.annotation_values, annotationDefinitions));
-
   return {
-    name: resolveTreeName(value.name, value.name_ref, treeDictionaries.treeNameDefinitions),
-    length: value.length,
-    split_indices: splitIndices,
-    ...(splitKey === null ? {} : { splitKey }),
-    ...(annotations === undefined ? {} : { annotations }),
-    children: value.children.map((child) =>
-      hydrateTreePayloadNode(child, annotationDefinitions, treeDictionaries)
-    ),
+    node: {
+      name: resolveTreeName(value.name, value.name_ref, treeDictionaries.treeNameDefinitions),
+      length: value.length,
+      split_indices: splitIndices,
+      ...(splitKey === null ? {} : { splitKey }),
+      ...(annotations === undefined ? {} : { annotations }),
+      children: [],
+    },
+    rawChildren: value.children,
   };
 }
 
-function hydrateTupleTreePayloadNode(value, annotationDefinitions, treeDictionaries) {
-  const annotations =
-    value[3] === null ? undefined : hydrateAnnotationValues(value[3], annotationDefinitions);
-  const splitIndices = resolveSplitIndices(undefined, value[2], treeDictionaries.splitDefinitions);
-  const splitKey = resolveSplitKey(undefined, value[2], splitIndices, treeDictionaries);
+/**
+ * Iterative preorder walk: children are pushed reversed so they pop in source
+ * order, and each hydrated node is appended to its parent's children array as
+ * it is visited, which reproduces the order the recursion built.
+ */
+function hydrateTreePayloadNode(
+  rootValue,
+  annotationDefinitions = [],
+  treeDictionaries = {
+    treeNameDefinitions: [],
+    splitDefinitions: [],
+  }
+) {
+  const root = hydrateNodeShell(rootValue, annotationDefinitions, treeDictionaries);
+  const stack = [];
+  for (let index = root.rawChildren.length - 1; index >= 0; index -= 1) {
+    stack.push([root.rawChildren[index], root.node.children]);
+  }
 
-  return {
-    name: resolveTreeName(undefined, value[1], treeDictionaries.treeNameDefinitions),
-    length: value[0],
-    split_indices: splitIndices,
-    ...(splitKey === null ? {} : { splitKey }),
-    ...(annotations === undefined ? {} : { annotations }),
-    children: value[4].map((child) =>
-      hydrateTreePayloadNode(child, annotationDefinitions, treeDictionaries)
-    ),
-  };
+  while (stack.length > 0) {
+    const [rawNode, siblings] = stack.pop();
+    const { node, rawChildren } = hydrateNodeShell(
+      rawNode,
+      annotationDefinitions,
+      treeDictionaries
+    );
+    siblings.push(node);
+    for (let index = rawChildren.length - 1; index >= 0; index -= 1) {
+      stack.push([rawChildren[index], node.children]);
+    }
+  }
+
+  return root.node;
 }
 
 function resolveTreeName(name, nameRef, treeNameDefinitions) {

@@ -17,8 +17,9 @@ import { hydrateBinaryTreeAtIndex, hydrateMovieTreeAtIndex } from './treeHydrati
  * @property {(index: number) => object} hydrateAt
  *   Expand one tree into the canonical node shape.
  * @property {(index: number) => unknown} payloadAt
- *   The tree in whatever form is cheapest to read. Scale calculation walks this
- *   and accepts either a compact tuple node or an expanded one.
+ *   The tree in whatever form is cheapest to read. Scale calculation reads
+ *   this and accepts a compact tuple node, an expanded node, or a PMB1 tree
+ *   block.
  * @property {(index: number) => boolean} isCompactAt
  *   Whether the stored form is compact, for the hydration-progress readout.
  */
@@ -55,21 +56,18 @@ export function createTreeSource(movieData) {
  * Source over a PMB1 container, where the trees live as typed-array views and
  * only become objects when asked for.
  *
- * payloadAt expands the tree rather than returning a stored node, because the
- * binary form has no per-node object to hand back. Callers that walk payloads
- * only touch a few input frames and cache the result, so this stays cheap.
+ * payloadAt hands out the tree's typed-array block, which scale calculation
+ * reads in one pass without expanding any node into objects.
  *
  * @param {object} binaryPayload Result of parseBinaryMoviePayload.
  * @param {object} movieData Validated metadata carrying the definition tables.
  * @returns {TreeSource}
  */
 export function createBinaryTreeSource(binaryPayload, movieData) {
-  const hydrateAt = (index) => hydrateBinaryTreeAtIndex(binaryPayload, movieData, index);
-
   return {
     treeCount: binaryPayload.treeCount,
-    hydrateAt,
-    payloadAt: hydrateAt,
+    hydrateAt: (index) => hydrateBinaryTreeAtIndex(binaryPayload, movieData, index),
+    payloadAt: (index) => binaryPayload.readTreeBlock(index),
     isCompactAt: () => true,
   };
 }
