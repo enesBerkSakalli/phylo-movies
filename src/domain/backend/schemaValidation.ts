@@ -68,6 +68,12 @@ export function assertFiniteNumber(value: unknown, fieldName: string): asserts v
   }
 }
 
+/** assertFiniteNumber as an expression, for use in object literals. */
+export function validateFiniteNumber(value: unknown, fieldName: string): number {
+  assertFiniteNumber(value, fieldName);
+  return value;
+}
+
 export function validateInteger(value: unknown, fieldName: string): number {
   assertFiniteNumber(value, fieldName);
   if (!Number.isInteger(value)) {
