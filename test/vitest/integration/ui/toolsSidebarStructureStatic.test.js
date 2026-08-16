@@ -119,9 +119,15 @@ describe('tools sidebar structure', () => {
     expect(source('src/index.html')).toContain('%BASE_URL%icons/favicon-16.png');
     expect(source('src/index.html')).toContain('%BASE_URL%icons/apple-touch-icon.png');
     expect(source('src/pages/Splash/splash.html')).toContain('%BASE_URL%icons/phylo-tree-icon.svg');
+    // The splash icon is a bundled module asset rather than a BASE_URL path:
+    // the Electron build uses base './' and serves the page from pages/Splash/,
+    // where a document-relative icons/ path resolved two directories deep and
+    // 404ed. The bundler resolves an imported asset against the emitted chunk,
+    // which respects the deployed base path in every environment.
     expect(source('src/pages/Splash/SplashApp.jsx')).toContain(
-      'const phyloTreeIcon = `${import.meta.env.BASE_URL}icons/phylo-tree-icon.svg`'
+      "import phyloTreeIcon from '../../../assets/brand/phylo-movies-mark.svg'"
     );
+    expect(source('src/pages/Splash/SplashApp.jsx')).not.toContain('import.meta.env.BASE_URL');
     expect(source('src/pages/GitHubPages/GitHubPagesInfoPage.jsx')).toContain(
       'const phyloTreeIcon = `${import.meta.env.BASE_URL}icons/phylo-tree-icon.svg`'
     );

@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Progress } from '../../components/ui/progress';
-
-const phyloTreeIcon = `${import.meta.env.BASE_URL}icons/phylo-tree-icon.svg`;
+// Imported as a module asset rather than composed from BASE_URL: the Electron
+// build uses base './', and this page is served from pages/Splash/, so a
+// BASE_URL-relative path resolved against the document pointed two directories
+// deep and 404ed in the packaged app. A bundled asset resolves against the
+// emitted chunk instead, which is correct at any page depth. The import is the
+// canonical brand source that generate-brand-icons.mjs copies to
+// public/icons/phylo-tree-icon.svg.
+import phyloTreeIcon from '../../../assets/brand/phylo-movies-mark.svg';
 
 const SplashApp = () => {
   const [status, setStatus] = useState('Initializing...');
