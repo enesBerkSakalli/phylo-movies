@@ -70,11 +70,11 @@ for (const file of ['quick_msa_demo_30taxa_10trees.nwk', 'quick_msa_demo_30taxa_
 
 await copyFileFromPublication('figure_example/paper_example.tree');
 
-await copyMatchingFiles(
-  'precomputed',
-  'precomputed',
-  (entry) => entry.endsWith('.movie.json') || entry.endsWith('.movie.pmb')
-);
+// Only the PMB1 payloads ship. The generator also writes a `.movie.json` twin
+// per example, but nothing in the app fetches it: every
+// `precomputedPayloadPath` in exampleDatasets.js points at `.movie.pmb`, and
+// the JSON copies are kept locally for fixture regeneration and diffing only.
+await copyMatchingFiles('precomputed', 'precomputed', (entry) => entry.endsWith('.movie.pmb'));
 
 await copyTreeFromPublication(
   'bootstrap_rogue_taxa/current_results',

@@ -263,7 +263,7 @@ describe('example dataset configuration', () => {
       'norovirus_334_iqtree_fast_sh_alrt_window1000_step500.nwk',
       'current_results/window_tables',
       'paper_example.tree',
-      "entry.endsWith('.movie.json')",
+      "entry.endsWith('.movie.pmb')",
       'bootstrap_rogue_taxa/source_alignments/${file}',
       'MANIFEST.tsv',
       'aberer_roguenarok_dataset_24_taxa24_sites14190.phy',
@@ -276,6 +276,9 @@ describe('example dataset configuration', () => {
       expect(copyScript).toContain(expectedSourceArtifact);
     }
     expect(copyScript).not.toContain('norovirus_334_iqtree_fast_window750_step500.nwk');
+    // The JSON twins stay out of dist/: nothing fetches them, and shipping both
+    // encodings doubles the GitHub Pages artifact.
+    expect(copyScript).not.toContain("entry.endsWith('.movie.json')");
   });
 
   it('keeps the norovirus example on the default IQ-TREE fast-search path', () => {

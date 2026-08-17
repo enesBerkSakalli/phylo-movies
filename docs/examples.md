@@ -13,7 +13,7 @@ Built-in examples are declared in `src/pages/WorkspaceInitialization/exampleData
 | Desktop app                             | Bundled examples and uploads run through the packaged local backend.                                                                                                         |
 | GitHub Pages                            | `/demo` opens generated movie payloads without backend processing. Downloaded examples can be saved, but uploads and **Example Library** processing require a local backend. |
 
-The browser demo uses the same direct Phylo-Movies payload contract as backend runs. The reviewer-facing norovirus, bootstrap, tree-search, quick MSA, and paper examples include generated interpolation frames in their bundled `.movie.json` payloads.
+The browser demo uses the same direct Phylo-Movies payload contract as backend runs. The reviewer-facing norovirus, bootstrap, tree-search, quick MSA, and paper examples include generated interpolation frames in their bundled `.movie.pmb` payloads.
 
 ## Example Library
 
@@ -60,6 +60,6 @@ npm run build
 
 5. Verify the example appears in **Example Library** and loads through the backend.
 
-For browser-demo payloads, `npm run fixtures:generate` refreshes local `.movie.json` files and reruns configured tree inference when needed. CI uses `npm run fixtures:generate:ci` on pushes to `main`; `npm run build:gh` also runs that CI fixture mode before packaging `/demo`. This regenerates interpolated demo payloads from the checked-in source trees without rerunning IQ-TREE, then packages the generated files into `dist/examples/precomputed/`. The generated `.movie.json` files under `publication_data/precomputed/` are ignored so large reviewer payloads are not committed to Git.
+For browser-demo payloads, `npm run fixtures:generate` refreshes local `.movie.json` and `.movie.pmb` files and reruns configured tree inference when needed. CI uses `npm run fixtures:generate:ci` on pushes to `main`; `npm run build:gh` also runs that CI fixture mode before packaging `/demo`. This regenerates interpolated demo payloads from the checked-in source trees without rerunning IQ-TREE, then packages the `.movie.pmb` files into `dist/examples/precomputed/`. Only the PMB1 payloads ship: the app fetches `.movie.pmb`, and the `.movie.json` twins stay local for fixture regeneration and diffing. Both encodings under `publication_data/precomputed/` are ignored so large reviewer payloads are not committed to Git.
 
 Current limitation: no JSON schema currently enforces `exampleDatasets.js`; keep entries consistent with existing objects.

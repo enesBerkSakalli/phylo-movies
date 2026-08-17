@@ -31,7 +31,7 @@ The root package has:
 npm run build:gh
 ```
 
-This regenerates the static browser-demo `.movie.json` payloads with CI fixture mode, sets `VITE_DOCS_ONLY=true`, builds with base `/phylo-movies/`, applies SEO metadata, injects crawlable landing-page HTML into `dist/index.html`, copies examples, builds the Docusaurus manual, and copies that manual into `dist/manual/`. In docs-only mode the app serves the information page at `/` and exposes `/demo`, which loads generated movie JSON into browser storage before opening `/visualization`. The public manual is served from `/manual/`.
+This regenerates the static browser-demo `.movie.pmb` payloads with CI fixture mode, sets `VITE_DOCS_ONLY=true`, builds with base `/phylo-movies/`, applies SEO metadata, injects crawlable landing-page HTML into `dist/index.html`, copies examples, builds the Docusaurus manual, and copies that manual into `dist/manual/`. In docs-only mode the app serves the information page at `/` and exposes `/demo`, which loads a generated PMB1 payload into browser storage before opening `/visualization`. The public manual is served from `/manual/`.
 
 The static demo does not use a second payload contract. It ships the same direct movie payload shape as backend runs, with compact tuple tree nodes and lazy frontend hydration. Future chunked sidecar payloads would require a broader backend and static-example contract change; that is intentionally outside the reviewer-ready build.
 

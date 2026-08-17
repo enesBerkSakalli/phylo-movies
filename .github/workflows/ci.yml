@@ -67,7 +67,9 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: precomputed-browser-demo-payloads
-          path: publication_data/precomputed/*.movie.json
+          path: |
+            publication_data/precomputed/*.movie.json
+            publication_data/precomputed/*.movie.pmb
           if-no-files-found: error
           retention-days: 7
 
