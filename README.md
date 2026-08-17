@@ -20,7 +20,7 @@ The project information page at [enesberksakalli.github.io/phylo-movies](https:/
 
 ## Quick Path
 
-For revision review, use the current `main` branch unless the submission system points to the new `0.98.1` tagged release. A new GitHub/Zenodo release should be minted from the final reviewer-facing state before submission archival.
+For revision review, use the current `main` branch unless the submission system points to the new `0.98.2` tagged release. A new GitHub/Zenodo release should be minted from the final reviewer-facing state before submission archival.
 
 1. Browser-only demo: open <https://enesberksakalli.github.io/phylo-movies/demo/>.
 2. Full local run:
@@ -147,7 +147,7 @@ Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). P
 
 For the archived software release, cite:
 
-Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). Phylo-Movies: Interactive Phylogenetic Tree Interpolation and Visualization, version 0.98.1. Zenodo. <https://doi.org/10.5281/zenodo.20488923>
+Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). Phylo-Movies: Interactive Phylogenetic Tree Interpolation and Visualization, version 0.98.2. Zenodo. <https://doi.org/10.5281/zenodo.20488923>
 
 Software citation metadata is in [CITATION.cff](CITATION.cff).
 

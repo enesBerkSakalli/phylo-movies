@@ -324,7 +324,7 @@ export function GitHubPagesInfoPage() {
               <div className="rounded-lg border bg-muted p-4 text-xs leading-relaxed text-foreground">
                 Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026).{' '}
                 <em>Phylo-Movies: Interactive Phylogenetic Tree Interpolation and Visualization</em>
-                , version 0.98.1. Zenodo. doi:10.5281/zenodo.20488923
+                , version 0.98.2. Zenodo. doi:10.5281/zenodo.20488923
               </div>
               <div className="flex flex-wrap gap-3 pt-2">
                 <Button asChild>

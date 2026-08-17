@@ -2,6 +2,17 @@
 
 All notable changes to Phylo-Movies are documented in this file.
 
+## [0.98.2] — 2026-08-17
+
+### Fixed
+
+- Carried the generated `.movie.pmb` payloads through the CI fixture artifact, which had globbed `*.movie.json` only and left every downstream job without the PMB1 encoding
+- Bundled the splash window icon as a module asset so it resolves in the packaged desktop app
+
+### Changed
+
+- Shipped only `.movie.pmb` demo payloads to `dist/`, halving the GitHub Pages payload directory from 609 MB to 306 MB
+
 ## [0.98.1] — 2026-06-08
 
 ### Added

@@ -4,7 +4,7 @@
   "description": "Phylo-Movies is an open-source React and Flask web application, also available as a desktop app, for inspecting ordered phylogenetic tree series. It computes and visualizes subtree-prune-and-regraft transition frames between consecutive trees, helping users see which taxa or subtrees move across sliding-window analyses, bootstrap replicates, and curated tree-series comparisons. The viewer includes timeline playback, tree comparison, MSA context, coloring, analytics, image export, and recording tools.",
   "homepage": "https://enesberksakalli.github.io/phylo-movies/",
   "version": [
-    "0.98.1"
+    "0.98.2"
   ],
   "toolType": [
     "Web application",
@@ -171,13 +171,13 @@
       "url": "https://github.com/enesBerkSakalli/phylo-movies",
       "type": "Source code",
       "note": "Source checkout for full web application and backend workflows.",
-      "version": "0.98.1"
+      "version": "0.98.2"
     },
     {
-      "url": "https://github.com/enesBerkSakalli/phylo-movies/releases/tag/v0.98.1",
+      "url": "https://github.com/enesBerkSakalli/phylo-movies/releases/tag/v0.98.2",
       "type": "Binaries",
       "note": "Desktop convenience builds for macOS, Windows, and Linux.",
-      "version": "0.98.1"
+      "version": "0.98.2"
     }
   ],
   "documentation": [

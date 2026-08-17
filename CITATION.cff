@@ -15,8 +15,8 @@ authors:
     given-names: "Heiko A."
     affiliation: "Max Perutz Labs, University of Vienna"
 title: "Phylo-Movies: Interactive Phylogenetic Tree Interpolation and Visualization"
-version: 0.98.1
-date-released: 2026-06-08
+version: 0.98.2
+date-released: 2026-08-17
 doi: "10.5281/zenodo.20488923"
 url: "https://enesberksakalli.github.io/phylo-movies/"
 repository-code: "https://github.com/enesBerkSakalli/phylo-movies"
