@@ -1,6 +1,7 @@
 # Phylo-Movies Brand Assets
 
-This directory contains the canonical Phylo-Movies logo mark.
+This directory contains the canonical Phylo-Movies logo mark and the repository
+social preview image.
 
 ## Source Of Truth
 
@@ -34,6 +35,28 @@ Run this to verify the generated files:
 ```sh
 npm run check:brand
 ```
+
+## Social Preview
+
+`phylo-movies-social-preview.png` is the image GitHub shows when the repository
+URL is shared. It is 1280x640 (GitHub's recommended size) and 625 KB, under the
+1 MB upload limit that rejects the full-size screenshot.
+
+It is derived from `src/public/og/phylo-movies-preview.png` (3456x1992):
+
+```sh
+magick src/public/og/phylo-movies-preview.png \
+  -resize 1280x -gravity north -extent 1280x640 \
+  -strip -define png:compression-level=9 \
+  assets/brand/phylo-movies-social-preview.png
+```
+
+The crop is anchored north rather than centered so the application header stays
+in frame and the bottom edge lands on the timeline legend instead of slicing a
+label in half.
+
+GitHub exposes no API for the social preview. Upload this file by hand under
+repository Settings, General, Social preview.
 
 ## Usage Rules
 
