@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { readMoviePayload } from '../../../../src/services/data/dataService.js';
 import { hydrateMovieTreeAtIndex } from '../../../../src/domain/backend/treeHydration.js';
+import { TimelineDataProcessor } from '../../../../src/timeline/data/TimelineDataProcessor.js';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 const fixtureDir = path.join(repoRoot, 'test/fixtures/binary');
@@ -88,6 +89,18 @@ describe('readMoviePayload encoding dispatch', () => {
         hydrateMovieTreeAtIndex(fromJson, treeIndex)
       );
     }
+  });
+
+  it('builds timeline segments from a PMB1 payload', () => {
+    // The demo bootstrap creates segments straight from the validated payload.
+    // A PMB1 payload has no interpolated_trees array, so segment creation must
+    // not index one; this pins the /demo crash at buildInputTreeSegment.
+    const fromJson = readMoviePayload(jsonBuffer);
+    const fromBinary = readMoviePayload(binaryBuffer);
+
+    const fromBinarySegments = TimelineDataProcessor.createSegments(fromBinary);
+    expect(fromBinarySegments.length).toBeGreaterThan(0);
+    expect(fromBinarySegments).toEqual(TimelineDataProcessor.createSegments(fromJson));
   });
 
   it('applies the same contract checks to a PMB1 header as to a JSON payload', () => {

@@ -2,7 +2,7 @@ import { flattenSplitSets, getBackendSplitMapValue } from '../../domain/tree/spl
 import { TimelineTimingBuilder } from './TimelineTimingBuilder.js';
 
 export class TimelineSegmentBuilder {
-  static buildInputTreeSegment({ segmentIndex, frame, interpolatedTrees }) {
+  static buildInputTreeSegment({ segmentIndex, frame }) {
     const globalIndex = frame.frame_index;
     const treeIndex = frame.input_tree_index;
 
@@ -18,7 +18,6 @@ export class TimelineSegmentBuilder {
       interpolationData: [
         {
           frame,
-          tree: interpolatedTrees[globalIndex],
           originalIndex: globalIndex,
         },
       ],
@@ -32,7 +31,6 @@ export class TimelineSegmentBuilder {
     segmentEndFrameIndex = null,
     sprEvents,
     frames,
-    interpolatedTrees,
   }) {
     const [globalStart, globalEnd] = event.frame_range;
     const [localStepStart, localStepEnd] = event.local_step_range;
@@ -41,7 +39,6 @@ export class TimelineSegmentBuilder {
       startFrameIndex: contextStart,
       endFrameIndex: Number.isInteger(segmentEndFrameIndex) ? segmentEndFrameIndex : globalEnd,
       frames,
-      interpolatedTrees,
     });
     const affectedSubtrees = getBackendSplitMapValue(
       pair.solution.affected_subtrees_by_split,
@@ -66,19 +63,11 @@ export class TimelineSegmentBuilder {
     });
   }
 
-  static buildFulfillmentSegment({
-    segmentIndex,
-    pair,
-    startFrameIndex,
-    endFrameIndex,
-    frames,
-    interpolatedTrees,
-  }) {
+  static buildFulfillmentSegment({ segmentIndex, pair, startFrameIndex, endFrameIndex, frames }) {
     const interpolationData = collectInterpolationData({
       startFrameIndex,
       endFrameIndex,
       frames,
-      interpolatedTrees,
     });
 
     return this._buildTransitionSegment({
@@ -99,18 +88,11 @@ export class TimelineSegmentBuilder {
     });
   }
 
-  static buildBranchLengthOnlySegment({
-    segmentIndex,
-    pair,
-    isNoOpPair,
-    frames,
-    interpolatedTrees,
-  }) {
+  static buildBranchLengthOnlySegment({ segmentIndex, pair, isNoOpPair, frames }) {
     const interpolationData = collectInterpolationData({
       startFrameIndex: pair.source_frame_index,
       endFrameIndex: pair.target_frame_index,
       frames,
-      interpolatedTrees,
     });
 
     return this._buildTransitionSegment({
@@ -185,13 +167,17 @@ export class TimelineSegmentBuilder {
   }
 }
 
-function collectInterpolationData({ startFrameIndex, endFrameIndex, frames, interpolatedTrees }) {
+// Carries frame rows and their indices only. Segments used to embed the tree
+// for each frame as well, but no consumer ever read it, and resolving it meant
+// indexing an `interpolated_trees` array - a field the PMB1 container does not
+// have, so a binary-backed payload crashed here on the first segment. Renderers
+// resolve trees through the store's tree source using `originalIndex`.
+function collectInterpolationData({ startFrameIndex, endFrameIndex, frames }) {
   const interpolationData = [];
 
   for (let frameIndex = startFrameIndex; frameIndex <= endFrameIndex; frameIndex += 1) {
     interpolationData.push({
       frame: frames[frameIndex],
-      tree: interpolatedTrees[frameIndex],
       originalIndex: frameIndex,
     });
   }

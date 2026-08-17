@@ -118,4 +118,21 @@ describe('TimelineDataset', () => {
     expect(dataset.isInputFrame(22)).toBe(true);
     expect(dataset.isInputFrame(7)).toBe(false);
   });
+
+  it('builds segments from a binary-backed payload without interpolated_trees', () => {
+    // A PMB1 payload carries a treeSource instead of an interpolated_trees
+    // array. Segment creation must not index that array; this pins the demo
+    // bootstrap crash where buildInputTreeSegment read undefined[0].
+    const { interpolated_trees: trees, ...binaryBackedMovieData } = smallExampleMovieData;
+    const dataset = TimelineDataset.fromMovieData(binaryBackedMovieData, { treeList: trees });
+
+    expect(dataset.segments.length).toBeGreaterThan(0);
+    expect(dataset.treeList).toHaveLength(trees.length);
+    expect(dataset.segments[0]).toMatchObject({ isInputTreeSegment: true, globalIndex: 0 });
+    for (const segment of dataset.segments) {
+      for (const entry of segment.interpolationData) {
+        expect(entry).not.toHaveProperty('tree');
+      }
+    }
+  });
 });

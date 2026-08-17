@@ -22,17 +22,10 @@ export class TimelineDataProcessor {
       pairs: movieData.pairs,
       temporalEvents: movieData.temporal_events,
       pairMetricRows: movieData.pair_metrics.rows,
-      interpolatedTrees: movieData.interpolated_trees,
     });
   }
 
-  static _createSegmentsFromRows({
-    frames,
-    pairs,
-    temporalEvents,
-    pairMetricRows,
-    interpolatedTrees,
-  }) {
+  static _createSegmentsFromRows({ frames, pairs, temporalEvents, pairMetricRows }) {
     const segments = [];
     const eventIndex = TimelineEventIndex.from({ pairs, temporalEvents });
     const pairMetricsById = new Map(pairMetricRows.map((row) => [row.pair_id, row]));
@@ -43,7 +36,7 @@ export class TimelineDataProcessor {
 
     for (let index = 0; index < inputFrames.length - 1; index += 1) {
       const frame = inputFrames[index];
-      this._appendInputTreeSegment(frame, frames, interpolatedTrees, segments);
+      this._appendInputTreeSegment(frame, segments);
       const pair = pairs[index];
 
       this._appendPairTransitionSegments({
@@ -52,16 +45,10 @@ export class TimelineDataProcessor {
         splitEvents: eventIndex.getEventsForPair(pair.pair_id, 'split_change'),
         sprEvents: eventIndex.getEventsForPair(pair.pair_id, 'spr_move'),
         frames,
-        interpolatedTrees,
         segments,
       });
     }
-    this._appendInputTreeSegment(
-      inputFrames[inputFrames.length - 1],
-      frames,
-      interpolatedTrees,
-      segments
-    );
+    this._appendInputTreeSegment(inputFrames[inputFrames.length - 1], segments);
 
     return segments;
   }
@@ -100,12 +87,11 @@ export class TimelineDataProcessor {
     };
   }
 
-  static _appendInputTreeSegment(frame, _frames, interpolatedTrees, segments) {
+  static _appendInputTreeSegment(frame, segments) {
     segments.push(
       TimelineSegmentBuilder.buildInputTreeSegment({
         segmentIndex: segments.length,
         frame,
-        interpolatedTrees,
       })
     );
   }
@@ -116,7 +102,6 @@ export class TimelineDataProcessor {
     splitEvents,
     sprEvents,
     frames,
-    interpolatedTrees,
     segments,
   }) {
     if (splitEvents.length === 0) {
@@ -126,7 +111,6 @@ export class TimelineDataProcessor {
           pair,
           isNoOpPair: isExactNoOpPair(pair, pairMetric),
           frames,
-          interpolatedTrees,
         })
       );
       return;
@@ -152,7 +136,6 @@ export class TimelineDataProcessor {
             startFrameIndex: coveredThroughFrameIndex,
             endFrameIndex: gapEnd,
             frames,
-            interpolatedTrees,
           })
         );
       }
@@ -165,7 +148,6 @@ export class TimelineDataProcessor {
           segmentEndFrameIndex,
           sprEvents,
           frames,
-          interpolatedTrees,
         })
       );
       coveredThroughFrameIndex = Math.max(coveredThroughFrameIndex, segmentEndFrameIndex);
@@ -179,7 +161,6 @@ export class TimelineDataProcessor {
           startFrameIndex: coveredThroughFrameIndex,
           endFrameIndex: pair.target_frame_index,
           frames,
-          interpolatedTrees,
         })
       );
     }
