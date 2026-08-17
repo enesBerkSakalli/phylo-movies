@@ -6,7 +6,38 @@ on:
       - 'v*'
 
 jobs:
+  # Each platform job publishes with electron-builder's `-p always`, and that
+  # publisher creates a draft release only when it cannot find one for the tag.
+  # The four matrix jobs used to start within two seconds of each other, so all
+  # four looked, all four missed, and all four created their own draft — the
+  # v0.98.2 artifacts landed split across four releases. Creating the draft once
+  # up front gives every platform job an existing release to append to.
+  create-release:
+    name: Create Draft Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v5
+
+      - name: Create the draft release the platform builds publish into
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "Release $GITHUB_REF_NAME already exists; platform builds will append to it."
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              --draft \
+              --title "Phylo-Movies $GITHUB_REF_NAME" \
+              --notes "Desktop builds for macOS (Apple Silicon and Intel), Windows, and Linux."
+          fi
+
   release:
+    needs: [create-release]
     strategy:
       fail-fast: false
       matrix:
