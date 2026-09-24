@@ -418,7 +418,7 @@ export function GitHubPagesInfoPage() {
                   </a>
                 </Button>
                 <Button variant="outline" asChild>
-                  <a href={PREPRINT_URL} target="_blank" rel="noopener noreferrer">
+                  <a href={PUBLICATION_URL} target="_blank" rel="noopener noreferrer">
                     Publication
                   </a>
                 </Button>
