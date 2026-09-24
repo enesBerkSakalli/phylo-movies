@@ -2,14 +2,14 @@
 
 [![CI](https://github.com/enesBerkSakalli/phylo-movies/actions/workflows/ci.yml/badge.svg)](https://github.com/enesBerkSakalli/phylo-movies/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![bioRxiv](https://img.shields.io/badge/bioRxiv-10.64898%2F2026.04.01.715821-B31B1B.svg)](https://doi.org/10.64898/2026.04.01.715821)
+[![Molecular Biology and Evolution](https://img.shields.io/badge/MBE-10.1093%2Fmolbev%2Fmsag194-B31B1B.svg)](https://doi.org/10.1093/molbev/msag194)
 [![Zenodo DOI](https://img.shields.io/badge/Zenodo-10.5281%2Fzenodo.20488923-1682D4?logo=zenodo&logoColor=white)](https://doi.org/10.5281/zenodo.20488923)
 
 [Website](https://enesberksakalli.github.io/phylo-movies/) ·
 [Manual](https://enesberksakalli.github.io/phylo-movies/manual/) ·
 [Browser demo](https://enesberksakalli.github.io/phylo-movies/demo/) ·
 [Source code](https://github.com/enesBerkSakalli/phylo-movies) ·
-[Publication](https://doi.org/10.64898/2026.04.01.715821) ·
+[Publication](https://doi.org/10.1093/molbev/msag194) ·
 [Software archive](https://doi.org/10.5281/zenodo.20488923)
 
 Phylo-Movies is a React and Flask web tool for inspecting ordered phylogenetic tree series. It uses the BranchArchitect backend to compute subtree-prune-and-regraft transition frames between input trees, then renders the resulting movie in a WebGL tree viewer with timeline, comparison, MSA, coloring, analytics, image, and recording tools. It is intended for computational biologists, phylogenetics method developers, and instructors who need to see which taxa or subtrees move between neighboring trees.
@@ -143,7 +143,7 @@ poetry run pytest test/ -v
 
 If you use Phylo-Movies please cite:
 
-Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). Phylo-Movies: Animating Phylogenetic Trees from Sliding-Window Analyses. bioRxiv. <https://doi.org/10.64898/2026.04.01.715821>
+Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). Phylo-Movies: Animating Phylogenetic Trees from Sliding-Window Analyses. Molecular Biology and Evolution, 43(8), msag194. <https://doi.org/10.1093/molbev/msag194>
 
 For the archived software release, cite:
 

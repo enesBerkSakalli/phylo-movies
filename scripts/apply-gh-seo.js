@@ -20,9 +20,9 @@ const DEMO_URL = `${SITE_ROOT}/demo/`;
 const USAGE_URL = `${SITE_ROOT}/usage/`;
 const MANUAL_URL = `${SITE_ROOT}/manual/`;
 const BIOTOOLS_URL = 'https://bio.tools/phylo-movies';
-const PUBLICATION_URL = 'https://www.biorxiv.org/content/10.64898/2026.04.01.715821v1';
-const PUBLICATION_PDF_URL = 'https://www.biorxiv.org/content/10.64898/2026.04.01.715821v1.full.pdf';
-const PUBLICATION_DOI = '10.64898/2026.04.01.715821';
+const PUBLICATION_URL = 'https://academic.oup.com/mbe/article/43/8/msag194/8759530';
+const PREPRINT_URL = 'https://www.biorxiv.org/content/10.64898/2026.04.01.715821v1';
+const PUBLICATION_DOI = '10.1093/molbev/msag194';
 const PUBLICATION_DOI_URL = `https://doi.org/${PUBLICATION_DOI}`;
 const SOFTWARE_DOI = '10.5281/zenodo.20488923';
 const SOFTWARE_CONCEPT_DOI = '10.5281/zenodo.20488923';
@@ -51,14 +51,22 @@ const DEMONSTRATION_VIDEOS = [
   },
 ];
 const PUBLICATION_TITLE = 'Phylo-Movies: Animating Phylogenetic Trees from Sliding-Window Analyses';
-const PUBLICATION_DATE = '2026-04-01';
-const PUBLICATION_JOURNAL = 'bioRxiv';
+const PUBLICATION_DATE = '2026-08-12';
+const PUBLICATION_JOURNAL = 'Molecular Biology and Evolution';
 const PUBLICATION_AUTHORS = [
-  'E. B. Sakalli',
-  'S. E. Haendeler',
-  'A. von Haeseler',
-  'H. A. Schmidt',
+  'Enes Berk Sakalli',
+  'Simon E. Haendeler',
+  'Arndt von Haeseler',
+  'Heiko A. Schmidt',
 ];
+const PROJECT_AUTHOR = {
+  '@type': 'Person',
+  '@id': 'https://enesberksakalli.github.io/#enes-sakalli',
+  name: 'Enes Sakalli',
+  alternateName: 'Enes Berk Sakalli',
+  url: 'https://enesberksakalli.github.io/',
+  sameAs: ['https://orcid.org/0009-0009-5027-2470'],
+};
 const PRIMARY_URL = `${SITE_ROOT}/`;
 const PAGE_TITLE = IS_DOCS_ONLY
   ? 'Phylo-Movies | Animated Phylogenetic Tree Comparison'
@@ -80,7 +88,7 @@ const USAGE_DESCRIPTION =
 const USAGE_OG_DESCRIPTION =
   'A concise Phylo-Movies workflow guide for generated examples, tree-series uploads, sliding-window MSA inference, transition inspection, and export.';
 const KEYWORDS = IS_DOCS_ONLY
-  ? 'phylogenetics, phylogenetic tree interpolation, phylogenetic tree visualization, tree morphing, sliding-window phylogenetics, desktop app, electron app, multiple sequence alignment, MSA, recombination detection, rogue taxa, Robinson-Foulds, computational biology, bioRxiv, scientific software'
+  ? 'phylogenetics, phylogenetic tree interpolation, phylogenetic tree visualization, tree morphing, sliding-window phylogenetics, desktop app, electron app, multiple sequence alignment, MSA, recombination detection, rogue taxa, Robinson-Foulds, computational biology, scientific software'
   : 'phylogenetics, phylogenetic trees, tree visualization, tree morphing, bioinformatics, Robinson-Foulds, recombination, MSA, rogue taxa, computational biology';
 const OG_IMAGE_WIDTH = '1914';
 const OG_IMAGE_HEIGHT = '930';
@@ -118,7 +126,7 @@ const FAQ_ITEMS = [
   },
   {
     question: 'How should I cite Phylo-Movies?',
-    answer: `Cite the bioRxiv preprint ${PUBLICATION_TITLE} using DOI ${PUBLICATION_DOI}, and cite the archived software release using DOI ${SOFTWARE_DOI}.`,
+    answer: `Cite the ${PUBLICATION_JOURNAL} article ${PUBLICATION_TITLE} using DOI ${PUBLICATION_DOI}, and cite the archived software release using DOI ${SOFTWARE_DOI}.`,
   },
 ];
 
@@ -218,18 +226,16 @@ const STRUCTURED_DATA = [
     runtimePlatform: ['Web Browser', 'Electron', 'Docker'],
     applicationCategory: 'ScientificApplication',
     downloadUrl: RELEASES_URL,
-    citation: SOFTWARE_DOI_URL,
+    creator: PROJECT_AUTHOR,
+    citation: PUBLICATION_DOI_URL,
     identifier: SOFTWARE_DOI,
     sameAs: [
       REPOSITORY_URL,
       README_URL,
       RELEASES_URL,
-      PUBLICATION_URL,
-      PUBLICATION_DOI_URL,
       SOFTWARE_DOI_URL,
       SOFTWARE_CONCEPT_DOI_URL,
       BIOTOOLS_URL,
-      ...DEMONSTRATION_VIDEOS.map((video) => video.url),
     ],
     subjectOf: PUBLICATION_URL,
     keywords: KEYWORDS.split(',').map((keyword) => keyword.trim()),
@@ -246,7 +252,8 @@ const STRUCTURED_DATA = [
     downloadUrl: RELEASES_URL,
     codeRepository: REPOSITORY_URL,
     screenshot: SOCIAL_IMAGE_URL,
-    citation: SOFTWARE_DOI_URL,
+    creator: PROJECT_AUTHOR,
+    citation: PUBLICATION_DOI_URL,
     identifier: SOFTWARE_DOI,
     sameAs: [
       REPOSITORY_URL,
@@ -254,7 +261,6 @@ const STRUCTURED_DATA = [
       SOFTWARE_DOI_URL,
       SOFTWARE_CONCEPT_DOI_URL,
       BIOTOOLS_URL,
-      ...DEMONSTRATION_VIDEOS.map((video) => video.url),
     ],
     keywords: KEYWORDS.split(',').map((keyword) => keyword.trim()),
   },
@@ -268,10 +274,12 @@ const STRUCTURED_DATA = [
     identifier: PUBLICATION_DOI,
     isPartOf: {
       '@type': 'Periodical',
-      name: 'bioRxiv',
+      name: PUBLICATION_JOURNAL,
     },
     datePublished: PUBLICATION_DATE,
-    author: PUBLICATION_AUTHORS.map((name) => ({ '@type': 'Person', name })),
+    author: PUBLICATION_AUTHORS.map((name, index) =>
+      index === 0 ? PROJECT_AUTHOR : { '@type': 'Person', name }
+    ),
     about: [
       'Phylogenetics',
       'Sliding-window analyses',
@@ -502,10 +510,11 @@ function renderStaticLandingHtml() {
         <section style="${sectionStyle()}">
           <h2 style="${headingStyle()}">Publication and Citation</h2>
           <p style="${bodyStyle()}"><strong>${PUBLICATION_TITLE}</strong> presents the Phylo-Movies workflow for recombination-focused sliding-window phylogenetics and rogue-taxon exploration across bootstrap tree sets.</p>
-          <p style="${bodyStyle()}">Authors: ${PUBLICATION_AUTHORS.join(', ')}.</p>
+          <p style="${bodyStyle()}">Authors: <a href="${PROJECT_AUTHOR.url}">Enes Berk Sakalli (Enes Sakalli)</a>, ${PUBLICATION_AUTHORS.slice(1).join(', ')}.</p>
+          <p style="${bodyStyle()}">Published in ${PUBLICATION_JOURNAL}, 12 August 2026. <a href="${PREPRINT_URL}">Read the earlier preprint</a>.</p>
           <p style="${bodyStyle()}">Publication DOI: <a href="${PUBLICATION_DOI_URL}">${PUBLICATION_DOI}</a></p>
           <p style="${bodyStyle()}">Software DOI: <a href="${SOFTWARE_DOI_URL}">${SOFTWARE_DOI}</a></p>
-          <pre style="white-space: pre-wrap; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb; padding: 16px; color: #111827; font-size: 13px; line-height: 1.55;">Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). Phylo-Movies: Animating Phylogenetic Trees from Sliding-Window Analyses. bioRxiv. doi:10.64898/2026.04.01.715821</pre>
+          <pre style="white-space: pre-wrap; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb; padding: 16px; color: #111827; font-size: 13px; line-height: 1.55;">Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). Phylo-Movies: Animating Phylogenetic Trees from Sliding-Window Analyses. Molecular Biology and Evolution, 43(8), msag194. doi:10.1093/molbev/msag194</pre>
           <pre style="white-space: pre-wrap; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb; padding: 16px; color: #111827; font-size: 13px; line-height: 1.55;">Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). Phylo-Movies: Interactive Phylogenetic Tree Interpolation and Visualization, version 0.98.2. Zenodo. doi:10.5281/zenodo.20488923</pre>
         </section>
 
@@ -531,7 +540,7 @@ docker compose up --build</code></pre>
           <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Can I try it in the browser?</h3><p style="${bodyStyle()}">Yes. The GitHub Pages site includes generated publication examples that open the visualization workspace without backend processing.</p></article>
           <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">When do I need the backend?</h3><p style="${bodyStyle()}">You need the BranchArchitect backend for uploaded tree files, local example processing, interpolation, morphing animations, and MSA-driven workflows.</p></article>
           <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">Why did a GitHub Pages action say Failed to fetch?</h3><p style="${bodyStyle()}">That usually means a backend-dependent action was started on the static site. Use the generated demo here, or run the desktop app, Docker, or source checkout for uploads.</p></article>
-          <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">How should I cite Phylo-Movies?</h3><p style="${bodyStyle()}">Cite the bioRxiv preprint ${PUBLICATION_TITLE} using DOI ${PUBLICATION_DOI}, and cite the archived software release using DOI ${SOFTWARE_DOI}.</p></article>
+          <article style="${cardStyle()}"><h3 style="${subheadingStyle()}">How should I cite Phylo-Movies?</h3><p style="${bodyStyle()}">Cite the ${PUBLICATION_JOURNAL} article ${PUBLICATION_TITLE} using DOI ${PUBLICATION_DOI}, and cite the archived software release using DOI ${SOFTWARE_DOI}.</p></article>
         </section>
       </main>`;
 }
@@ -688,7 +697,7 @@ function buildSeoInjection({ pageTitle, ogDescription, pageUrl, structuredData }
 
   return `
     <meta name="keywords" content="${KEYWORDS}">
-    <meta name="author" content="Phylo-Movies Contributors">
+    <meta name="author" content="Enes Berk Sakalli, Simon E. Haendeler, Arndt von Haeseler, Heiko A. Schmidt">
     <meta name="application-name" content="Phylo-Movies">
     <meta name="generator" content="Vite">
     <meta name="robots" content="index, follow, max-image-preview:large">
@@ -719,7 +728,6 @@ function buildSeoInjection({ pageTitle, ogDescription, pageUrl, structuredData }
     <meta name="citation_journal_title" content="${PUBLICATION_JOURNAL}">
     <meta name="citation_publication_date" content="${PUBLICATION_DATE}">
     <meta name="citation_public_url" content="${PUBLICATION_URL}">
-    <meta name="citation_pdf_url" content="${PUBLICATION_PDF_URL}">
     <meta name="citation_doi" content="${PUBLICATION_DOI}">
     <meta property="article:published_time" content="${PUBLICATION_DATE}">
     <link rel="canonical" href="${pageUrl}">
@@ -797,7 +805,6 @@ Sitemap: ${SITE_ROOT}/manual/sitemap.xml`;
 }
 
 function writeSitemapXml() {
-  const today = new Date().toISOString().slice(0, 10);
   const urls = IS_DOCS_ONLY
     ? [`${SITE_ROOT}/`, DEMO_URL, USAGE_URL]
     : [`${SITE_ROOT}/`, `${SITE_ROOT}/visualization`];
@@ -806,7 +813,6 @@ function writeSitemapXml() {
     .map(
       (url) => `  <url>
     <loc>${url}</loc>
-    <lastmod>${today}</lastmod>
   </url>`
     )
     .join('\n');
@@ -875,6 +881,8 @@ function writeLlmsTxt() {
 - Source code: ${REPOSITORY_URL}
 - Releases: ${RELEASES_URL}
 - Publication: ${PUBLICATION_DOI_URL}
+- Earlier preprint: ${PREPRINT_URL}
+- Project author: Enes Sakalli (Enes Berk Sakalli), ${PROJECT_AUTHOR.url}
 - Archived software: ${SOFTWARE_DOI_URL}
 - bio.tools registry: ${BIOTOOLS_URL}
 

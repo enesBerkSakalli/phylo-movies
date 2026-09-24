@@ -15,8 +15,8 @@ const REPO_URL = 'https://github.com/enesBerkSakalli/phylo-movies';
 const README_URL = `${REPO_URL}#readme`;
 const RELEASES_URL = `${REPO_URL}/releases`;
 const PREPRINT_URL = 'https://www.biorxiv.org/content/10.64898/2026.04.01.715821v1';
-const PREPRINT_DOI_URL = 'https://doi.org/10.64898/2026.04.01.715821';
-const PREPRINT_PDF_URL = 'https://www.biorxiv.org/content/10.64898/2026.04.01.715821v1.full.pdf';
+const PUBLICATION_DOI_URL = 'https://doi.org/10.1093/molbev/msag194';
+const PUBLICATION_URL = 'https://academic.oup.com/mbe/article/43/8/msag194/8759530';
 const SOFTWARE_DOI_URL = 'https://doi.org/10.5281/zenodo.20488923';
 const BIOTOOLS_URL = 'https://bio.tools/phylo-movies';
 const DEMONSTRATION_VIDEOS = [
@@ -141,10 +141,10 @@ const FAQ_ITEMS = [
   {
     question: 'How should I cite the project?',
     answer:
-      'Cite the bioRxiv preprint for the method and the Zenodo DOI 10.5281/zenodo.20488923 for the archived software release.',
+      'Cite the Molecular Biology and Evolution article (10.1093/molbev/msag194) for the method and the Zenodo DOI 10.5281/zenodo.20488923 for the archived software release.',
   },
   {
-    question: 'Which search intents should this page answer?',
+    question: 'Which analyses can I explore with Phylo-Movies?',
     answer:
       'Phylo-Movies supports phylogenetic tree interpolation, sliding-window phylogenetics, recombination visualization, rogue taxa detection, tree-search trajectory inspection, and MSA-linked tree analysis.',
   },
@@ -189,7 +189,7 @@ export function GitHubPagesInfoPage() {
               </p>
               <div className="flex flex-wrap gap-3 pt-2">
                 <Button asChild>
-                  <a href={PREPRINT_URL} target="_blank" rel="noopener noreferrer">
+                  <a href={PUBLICATION_URL} target="_blank" rel="noopener noreferrer">
                     Read Publication
                   </a>
                 </Button>
@@ -281,8 +281,8 @@ export function GitHubPagesInfoPage() {
             <CardHeader>
               <SectionCardTitle>Publication</SectionCardTitle>
               <CardDescription>
-                Method details, benchmarks, and case studies are described in the current bioRxiv
-                preprint.
+                Method details, benchmarks, and case studies are described in the Molecular Biology
+                and Evolution article, published 12 August 2026.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-muted-foreground">
@@ -293,16 +293,25 @@ export function GitHubPagesInfoPage() {
                 also include a 500-taxon IQ-TREE fast-search trajectory for inspecting topology
                 changes during tree search.
               </p>
-              <p>Authors: E. B. Sakalli, S. E. Haendeler, A. von Haeseler, and H. A. Schmidt.</p>
+              <p>
+                Authors:{' '}
+                <a
+                  href="https://enesberksakalli.github.io/"
+                  className="underline underline-offset-4"
+                >
+                  Enes Berk Sakalli (Enes Sakalli)
+                </a>
+                , Simon E. Haendeler, Arndt von Haeseler, and Heiko A. Schmidt.
+              </p>
               <p>
                 Publication DOI:{' '}
                 <a
-                  href={PREPRINT_DOI_URL}
+                  href={PUBLICATION_DOI_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline underline-offset-4"
                 >
-                  10.64898/2026.04.01.715821
+                  10.1093/molbev/msag194
                 </a>
               </p>
               <p>
@@ -319,7 +328,7 @@ export function GitHubPagesInfoPage() {
               <div className="rounded-lg border bg-muted p-4 text-xs leading-relaxed text-foreground">
                 Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026).{' '}
                 <em>Phylo-Movies: Animating Phylogenetic Trees from Sliding-Window Analyses</em>.
-                bioRxiv. doi:10.64898/2026.04.01.715821
+                Molecular Biology and Evolution, 43(8), msag194. doi:10.1093/molbev/msag194
               </div>
               <div className="rounded-lg border bg-muted p-4 text-xs leading-relaxed text-foreground">
                 Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026).{' '}
@@ -333,7 +342,7 @@ export function GitHubPagesInfoPage() {
                   </a>
                 </Button>
                 <Button variant="outline" asChild>
-                  <a href={PREPRINT_DOI_URL} target="_blank" rel="noopener noreferrer">
+                  <a href={PUBLICATION_DOI_URL} target="_blank" rel="noopener noreferrer">
                     DOI Link
                   </a>
                 </Button>
@@ -343,8 +352,8 @@ export function GitHubPagesInfoPage() {
                   </a>
                 </Button>
                 <Button variant="outline" asChild>
-                  <a href={PREPRINT_PDF_URL} target="_blank" rel="noopener noreferrer">
-                    PDF
+                  <a href={PUBLICATION_URL} target="_blank" rel="noopener noreferrer">
+                    Read Journal Article
                   </a>
                 </Button>
               </div>

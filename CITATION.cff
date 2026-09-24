@@ -53,7 +53,10 @@ preferred-citation:
     - family-names: "Schmidt"
       given-names: "Heiko A."
   title: "Phylo-Movies: Animating Phylogenetic Trees from Sliding-Window Analyses"
-  journal: "bioRxiv"
+  journal: "Molecular Biology and Evolution"
+  volume: 43
+  issue: 8
+  start: "msag194"
   year: 2026
-  doi: "10.64898/2026.04.01.715821"
-  url: "https://www.biorxiv.org/content/10.64898/2026.04.01.715821v1"
+  doi: "10.1093/molbev/msag194"
+  url: "https://academic.oup.com/mbe/article/43/8/msag194/8759530"
