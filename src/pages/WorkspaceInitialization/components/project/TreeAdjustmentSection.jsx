@@ -26,7 +26,7 @@ export function TreeAdjustmentSection({ disabled, embedded = false }) {
       )}
 
       <p className="text-2xs leading-relaxed text-muted-foreground">
-        Normalize roots before SPR move comparison.
+        Applied to every tree before the movie is built.
       </p>
 
       <FormField
@@ -37,7 +37,8 @@ export function TreeAdjustmentSection({ disabled, embedded = false }) {
             <div className="flex min-w-0 flex-col gap-1">
               <FormLabel className="cursor-pointer text-sm font-medium">Midpoint Rooting</FormLabel>
               <FormDescription className="text-2xs leading-tight">
-                Root each tree at its diameter midpoint.
+                Roots each tree halfway along its longest path, so unrooted trees line up between
+                frames.
               </FormDescription>
             </div>
             <FormControl>

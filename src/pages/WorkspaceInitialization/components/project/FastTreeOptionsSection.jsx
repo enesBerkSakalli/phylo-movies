@@ -11,18 +11,14 @@ export function FastTreeOptionsSection({ hasMsa, disabled }) {
   return (
     <TreeInferenceOptionGroup
       icon={Wrench}
-      title="FastTree-only options"
-      description="FastTree-specific flags."
+      title="FastTree options"
+      description="Only used when FastTree is the engine."
     >
       <LabeledCheckboxField
         control={control}
         name="usePseudo"
         label="Pseudocounts"
-        description={
-          <>
-            Sends FastTree <code>-pseudo</code>.
-          </>
-        }
+        description="Stabilises distances for gappy alignments or short windows."
         disabled={disabled || !hasMsa}
         muted={!hasMsa}
       />
@@ -30,12 +26,8 @@ export function FastTreeOptionsSection({ hasMsa, disabled }) {
       <LabeledCheckboxField
         control={control}
         name="noMl"
-        label="Skip ML Optimization"
-        description={
-          <>
-            Sends FastTree <code>-noml</code>.
-          </>
-        }
+        label="Skip ML optimization (faster)"
+        description="Keeps the quick distance-based tree, so branch lengths are approximate. Turn off for more accurate trees."
         disabled={disabled || !hasMsa}
         muted={!hasMsa}
       />

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
+import { describeProcessingProgress, formatElapsed } from '../processingProgress.js';
 import { Progress } from '../../../components/ui/progress';
 import { Button } from '../../../components/ui/button';
 import {
@@ -17,6 +18,15 @@ import {
  * Matches the visual branding of the Electron splash screen.
  */
 export function ProcessingOverlay({ operationState, onCancel }) {
+  const [startedAt] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(startedAt);
+  React.useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  const elapsedMs = now - startedAt;
+  const progress = describeProcessingProgress(operationState.message, elapsedMs);
+
   return (
     <Dialog open>
       <DialogContent
@@ -36,14 +46,17 @@ export function ProcessingOverlay({ operationState, onCancel }) {
             <div className="flex flex-col gap-1">
               <DialogTitle>Processing dataset</DialogTitle>
               <DialogDescription className="text-xs">
-                Please wait while we process your data.
+                Large alignments can take a few minutes. Cancelling keeps your files and settings.
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
-        <p className="text-center text-sm font-medium" role="status" aria-live="polite">
-          {operationState.message || 'Processing…'}
-        </p>
+        <div className="flex flex-col items-center gap-0.5 text-center" role="status">
+          <p className="text-sm font-medium tabular-nums">{progress.headline}</p>
+          {progress.detail && (
+            <p className="text-xs text-muted-foreground tabular-nums">{progress.detail}</p>
+          )}
+        </div>
         <div className="flex flex-col gap-2">
           <Progress
             value={operationState.percent}
@@ -51,8 +64,8 @@ export function ProcessingOverlay({ operationState, onCancel }) {
             aria-label="Processing progress"
           />
           <div className="flex items-center justify-between px-1">
-            <p className="text-2xs uppercase tracking-tighter text-muted-foreground">
-              Status: Active
+            <p className="text-2xs text-muted-foreground tabular-nums">
+              Elapsed {formatElapsed(elapsedMs)}
             </p>
             <p className="text-2xs font-medium tabular-nums text-primary">
               {Math.round(operationState.percent)}%

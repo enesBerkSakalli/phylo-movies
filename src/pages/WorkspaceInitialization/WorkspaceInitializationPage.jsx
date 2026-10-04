@@ -1,5 +1,13 @@
 import React from 'react';
-import { AlertTriangle, CheckCircle2, CircleDashed, Database, Film, Upload } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  CircleDashed,
+  Database,
+  Film,
+  Info,
+  Upload,
+} from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
 import { Badge } from '../../components/ui/badge';
@@ -153,8 +161,8 @@ export function WorkspaceInitializationPage({ demoOnly = false }) {
           {demoOnly ? (
             <section className="min-w-0 flex-1 px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6 xl:px-10">
               {alert && (
-                <Alert variant="destructive" className="mb-5">
-                  <AlertTriangle />
+                <Alert variant={alert.tone === 'info' ? 'default' : 'destructive'} className="mb-5">
+                  {alert.tone === 'info' ? <Info /> : <AlertTriangle />}
                   <AlertTitle>{alert.title || 'Action needed'}</AlertTitle>
                   <AlertDescription>{alert.message}</AlertDescription>
                 </Alert>
@@ -187,8 +195,11 @@ export function WorkspaceInitializationPage({ demoOnly = false }) {
 
               <section className="min-w-0 px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6 xl:px-10">
                 {alert && (
-                  <Alert variant="destructive" className="mb-5">
-                    <AlertTriangle />
+                  <Alert
+                    variant={alert.tone === 'info' ? 'default' : 'destructive'}
+                    className="mb-5"
+                  >
+                    {alert.tone === 'info' ? <Info /> : <AlertTriangle />}
                     <AlertTitle>{alert.title || 'Action needed'}</AlertTitle>
                     <AlertDescription>{alert.message}</AlertDescription>
                   </Alert>

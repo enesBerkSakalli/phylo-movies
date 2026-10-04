@@ -33,10 +33,12 @@ The backend status badge reports whether upload processing and MSA inference are
 
 These settings apply when an MSA is uploaded.
 
-| Setting                 | Meaning                                                                                                         |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------- |
-| **Window Size (sites)** | Number of alignment columns included in each window.                                                            |
-| **Step Size (sites)**   | Distance between consecutive window starts. Smaller steps create more overlapping windows and more input trees. |
+| Setting                 | Meaning                                                                                                                                          |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Window Size (sites)** | Number of alignment columns included in each window.                                                                                             |
+| **Step Size (sites)**   | Distance between consecutive window centres. The number of windows (and inferred trees) is the alignment length divided by the step, rounded up. |
+
+After you choose an alignment, the panel shows its size (sequences × sites) and the resulting window count. Untouched fields are filled with suggested values: for an MSA alone, a window of about a fifth of the alignment with a step of half a window; with uploaded trees, one window per tree. Warnings appear when the window count does not match the number of uploaded trees, when the window covers the whole alignment, or when more than 100 trees would be inferred.
 
 When trees and an MSA are uploaded together, the same window and step values map alignment coordinates onto the uploaded tree sequence. When only an MSA is uploaded, they control the slices used for inference.
 
@@ -59,23 +61,23 @@ Tree inference settings apply only to MSA-only workflows.
 
 ## IQ-TREE Settings
 
-| Setting                        | Meaning                                                                                               |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| **IQ-TREE Fast Search**        | Sends IQ-TREE fast-search options for more responsive runs. This is disabled when UFBoot is selected. |
-| **Substitution Model: JC/GTR** | JC assumes equal rates and frequencies. GTR estimates rates and base frequencies.                     |
-| **Gamma Rate Heterogeneity**   | Adds site-rate variation to the selected model.                                                       |
-| **Support Mode**               | Selects no support run, UFBoot, SH-aLRT, or SH-aLRT plus UFBoot.                                      |
-| **UFBoot replicates**          | Number of ultrafast bootstrap replicates when UFBoot is enabled.                                      |
-| **SH-aLRT replicates**         | Number of SH-aLRT replicates when SH-aLRT is enabled.                                                 |
-| **Bootstrap NNI**              | Sends IQ-TREE `-bnni` for bootstrap support refinement.                                               |
+| Setting                  | Meaning                                                                                                                        |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| **IQ-TREE Fast Search**  | Much faster search that may miss the best tree on difficult windows (IQ-TREE `-fast`). Turned off while UFBoot is selected.    |
+| **Model: JC/GTR**        | JC treats all substitutions as equally likely. GTR gives each substitution type its own rate (recommended for real data).      |
+| **Gamma rate variation** | Lets some sites evolve faster than others (recommended for most real data).                                                    |
+| **Support Mode**         | Selects no support values, UFBoot (ultrafast bootstrap), SH-aLRT (likelihood ratio test), or both. Support increases run time. |
+| **UFBoot replicates**    | Number of ultrafast bootstrap replicates when UFBoot is enabled.                                                               |
+| **SH-aLRT replicates**   | Number of SH-aLRT replicates when SH-aLRT is enabled.                                                                          |
+| **Bootstrap NNI**        | Refines each bootstrap tree to reduce overestimated UFBoot support (IQ-TREE `-bnni`). Slower.                                  |
 
 Branch support annotations can later be selected in the workspace under **Style -> Geometry & Labels -> Branch Annotation**.
 
 ## FastTree Settings
 
-| Setting                  | Meaning                   |
-| ------------------------ | ------------------------- |
-| **Pseudocounts**         | Sends FastTree `-pseudo`. |
-| **Skip ML Optimization** | Sends FastTree `-noml`.   |
+| Setting                           | Meaning                                                                                    |
+| --------------------------------- | ------------------------------------------------------------------------------------------ |
+| **Pseudocounts**                  | Stabilises distances for gappy alignments or short windows (FastTree `-pseudo`).           |
+| **Skip ML optimization (faster)** | Keeps the quick distance-based tree, so branch lengths are approximate (FastTree `-noml`). |
 
 FastTree settings trade detail for speed. They are most useful for exploratory datasets where rapid feedback is more important than a final inference run.

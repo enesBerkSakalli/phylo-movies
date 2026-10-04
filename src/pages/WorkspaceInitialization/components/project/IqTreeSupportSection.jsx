@@ -41,8 +41,8 @@ export function IqTreeSupportSection({
   return (
     <TreeInferenceOptionGroup
       icon={ShieldCheck}
-      title="Branch support annotations"
-      description="Optional IQ-TREE labels for SPR move review."
+      title="Branch support"
+      description="Adds a confidence value to each branch, shown in labels and SPR analytics. Increases run time."
     >
       <FormField
         control={control}
@@ -65,16 +65,16 @@ export function IqTreeSupportSection({
               <SelectContent>
                 <SelectGroup>
                   <SelectItem value="none">None</SelectItem>
-                  <SelectItem value="ufboot">UFBoot</SelectItem>
-                  <SelectItem value="sh_alrt">SH-aLRT</SelectItem>
-                  <SelectItem value="sh_alrt_ufboot">SH-aLRT + UFBoot</SelectItem>
+                  <SelectItem value="ufboot">UFBoot (ultrafast bootstrap)</SelectItem>
+                  <SelectItem value="sh_alrt">SH-aLRT (likelihood ratio test)</SelectItem>
+                  <SelectItem value="sh_alrt_ufboot">SH-aLRT + UFBoot (both values)</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
             <FormDescription className="text-2xs leading-tight">
               {field.value === 'none'
-                ? 'No support run will be requested.'
-                : 'Replicates and optional BNNI are sent with the support run.'}
+                ? 'No support values. Fastest.'
+                : 'More replicates give steadier support values but take longer.'}
             </FormDescription>
           </FormItem>
         )}
@@ -107,11 +107,7 @@ export function IqTreeSupportSection({
             control={control}
             name="iqtreeBnni"
             label="Bootstrap NNI"
-            description={
-              <>
-                Enables IQ-TREE <code>-bnni</code>.
-              </>
-            }
+            description="Refines each bootstrap tree to reduce overestimated UFBoot support. Slower."
             disabled={disabled || !hasMsa}
             muted={!hasMsa}
           />

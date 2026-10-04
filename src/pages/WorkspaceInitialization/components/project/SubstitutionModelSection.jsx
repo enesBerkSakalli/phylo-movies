@@ -21,7 +21,7 @@ export function SubstitutionModelSection({ hasMsa, disabled }) {
     <TreeInferenceOptionGroup
       icon={Microscope}
       title="Substitution model"
-      description="Model and rate variation."
+      description="How DNA changes are modelled along branches."
     >
       <FormField
         control={control}
@@ -30,7 +30,7 @@ export function SubstitutionModelSection({ hasMsa, disabled }) {
           <FormItem className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-3">
               <FormLabel className={cn('text-sm font-normal', !hasMsa && 'text-muted-foreground')}>
-                Substitution Model
+                Model
               </FormLabel>
               <div className="flex items-center gap-2">
                 <span
@@ -60,8 +60,8 @@ export function SubstitutionModelSection({ hasMsa, disabled }) {
             </div>
             <FormDescription className="text-2xs leading-tight">
               {field.value
-                ? 'GTR estimates rates and base frequencies.'
-                : 'JC assumes equal rates and frequencies.'}
+                ? 'GTR: each type of substitution gets its own rate. Recommended for real data.'
+                : 'JC: all substitutions equally likely. Simplest and fastest model.'}
             </FormDescription>
           </FormItem>
         )}
@@ -70,8 +70,8 @@ export function SubstitutionModelSection({ hasMsa, disabled }) {
       <LabeledCheckboxField
         control={control}
         name="useGamma"
-        label="Gamma Rate Heterogeneity"
-        description="Adds site-rate variation."
+        label="Gamma rate variation"
+        description="Lets some sites evolve faster than others. Recommended for most real data."
         disabled={disabled || !hasMsa}
         muted={!hasMsa}
       />

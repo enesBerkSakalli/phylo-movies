@@ -1,5 +1,8 @@
 import * as z from 'zod';
 
+// The form's primary action; focus returns here after a cancelled run.
+export const CREATE_VISUALIZATION_BUTTON_ID = 'create-visualization-button';
+
 export const WINDOW_MIN = 1;
 export const WINDOW_MAX = 100000;
 export const STEP_MIN = 1;

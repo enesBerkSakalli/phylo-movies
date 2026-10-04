@@ -2,6 +2,7 @@ import React from 'react';
 import { Rocket } from 'lucide-react';
 import { Button } from '../../../../components/ui/button';
 import { cn } from '../../../../lib/utils';
+import { CREATE_VISUALIZATION_BUTTON_ID } from '../../workspaceInitializationFormModel.js';
 
 export function ProjectActions({ disabled, reset, canSubmit, className }) {
   return (
@@ -22,6 +23,7 @@ export function ProjectActions({ disabled, reset, canSubmit, className }) {
         Reset form
       </Button>
       <Button
+        id={CREATE_VISUALIZATION_BUTTON_ID}
         type="submit"
         size="sm"
         disabled={disabled || !canSubmit}

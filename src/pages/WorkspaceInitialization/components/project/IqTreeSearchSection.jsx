@@ -12,7 +12,11 @@ export function IqTreeSearchSection({ hasMsa, disabled, supportsUfboot }) {
     <TreeInferenceOptionGroup
       icon={Gauge}
       title="Search strategy"
-      description={supportsUfboot ? 'UFBoot disables fast search.' : 'Speed versus thoroughness.'}
+      description={
+        supportsUfboot
+          ? 'UFBoot runs its own thorough search, so fast search is off.'
+          : 'Trade speed for how hard IQ-TREE searches for the best tree.'
+      }
     >
       <LabeledCheckboxField
         control={control}
@@ -20,8 +24,8 @@ export function IqTreeSearchSection({ hasMsa, disabled, supportsUfboot }) {
         label="IQ-TREE Fast Search"
         description={
           supportsUfboot
-            ? 'UFBoot disables IQ-TREE -fast.'
-            : 'Use IQ-TREE -fast for responsive runs.'
+            ? 'Turned off while UFBoot is selected.'
+            : 'Much faster; may miss the best tree on difficult windows. Turn off for final analyses.'
         }
         disabled={disabled || !hasMsa || supportsUfboot}
         muted={!hasMsa || supportsUfboot}

@@ -49,8 +49,8 @@ export function TreeInferenceEngineField({ hasMsa, disabled, isFastTree }) {
           </Select>
           <FormDescription className="text-2xs leading-tight">
             {isFastTree
-              ? 'Fast exploratory window inference.'
-              : 'Default maximum-likelihood window inference.'}
+              ? 'Faster, approximate trees. Good for a first look at large alignments.'
+              : 'Recommended. Maximum-likelihood trees that can carry branch support values.'}
           </FormDescription>
         </FormItem>
       )}

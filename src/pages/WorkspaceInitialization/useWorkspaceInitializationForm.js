@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import { workspaceInitializationFormSchema } from './workspaceInitializationFormModel.js';
+import {
+  CREATE_VISUALIZATION_BUTTON_ID,
+  workspaceInitializationFormSchema,
+} from './workspaceInitializationFormModel.js';
 import { getExampleById } from './exampleDatasets.js';
 import { resolveApiUrl } from '../../services/data/apiConfig.js';
 import { phyloData, readMoviePayload } from '../../services/data/dataService.js';
@@ -18,6 +21,9 @@ import {
 const BACKEND_STATUS_TIMEOUT_MS = 1500;
 const BACKEND_READY_POLL_MS = 15000;
 const BACKEND_UNAVAILABLE_POLL_MS = 30000;
+// A cold first request can miss the short timeout; retry soon before settling
+// into the slow unavailable poll.
+const BACKEND_FIRST_RETRY_MS = 2000;
 
 export function reconcileBackendStatus(current, next) {
   const currentCapabilities = current.capabilities || [];
@@ -91,13 +97,23 @@ export function useWorkspaceInitializationForm({ skipBackendCheck = false } = {}
     let controller = null;
     let timeoutId = null;
     let pollId = null;
+    let hasReachedBackend = false;
+    let firstRetryUsed = false;
+    let latestCheck = 0;
 
     async function checkBackendStatus() {
+      if (pollId) {
+        clearTimeout(pollId);
+        pollId = null;
+      }
       if (document.visibilityState === 'hidden') {
-        pollId = setTimeout(checkBackendStatus, BACKEND_READY_POLL_MS);
+        // Re-checked by the visibilitychange listener as soon as the tab is shown.
         return;
       }
 
+      const check = ++latestCheck;
+      // A newer check (e.g. the tab became visible) supersedes this one.
+      const isCurrent = () => !cancelled && check === latestCheck;
       controller?.abort();
       if (timeoutId) clearTimeout(timeoutId);
       controller = new AbortController();
@@ -117,7 +133,7 @@ export function useWorkspaceInitializationForm({ skipBackendCheck = false } = {}
         if (!payload?.ready || payload.status !== 'ready') {
           throw new Error(`Backend is not ready (${payload?.status || 'unknown'})`);
         }
-        if (!cancelled) {
+        if (isCurrent()) {
           const nextStatus = {
             state: 'ready',
             capabilities: Array.isArray(payload.capabilities) ? payload.capabilities : [],
@@ -125,34 +141,45 @@ export function useWorkspaceInitializationForm({ skipBackendCheck = false } = {}
           };
           setBackendStatus((current) => reconcileBackendStatus(current, nextStatus));
           nextPollDelay = BACKEND_READY_POLL_MS;
+          hasReachedBackend = true;
         }
       } catch {
-        if (!cancelled) {
+        if (isCurrent()) {
           setBackendStatus((current) => reconcileBackendStatus(current, { state: 'unavailable' }));
+          if (!hasReachedBackend && !firstRetryUsed) {
+            firstRetryUsed = true;
+            nextPollDelay = BACKEND_FIRST_RETRY_MS;
+          }
         }
       } finally {
-        if (timeoutId) {
+        if (timeoutId && check === latestCheck) {
           clearTimeout(timeoutId);
           timeoutId = null;
         }
-        if (!cancelled) {
+        if (isCurrent()) {
           pollId = setTimeout(checkBackendStatus, nextPollDelay);
         }
       }
     }
 
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible') checkBackendStatus();
+    }
+
     checkBackendStatus();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       cancelled = true;
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (pollId) clearTimeout(pollId);
       if (timeoutId) clearTimeout(timeoutId);
       controller?.abort();
     };
   }, [skipBackendCheck]);
 
-  function showAlert(message, title = 'Action needed') {
-    setAlert({ title, message });
+  function showAlert(message, title = 'Action needed', tone = 'error') {
+    setAlert({ title, message, tone });
   }
 
   function clearAlert() {
@@ -379,7 +406,10 @@ export function useWorkspaceInitializationForm({ skipBackendCheck = false } = {}
     setLoadingExample(false);
     setLoadingExampleId(null);
     setOperationState({ percent: 0, message: '' });
-    showAlert('Processing was cancelled before completion.', 'Processing cancelled');
+    showAlert('Your files and settings are kept.', 'Processing cancelled', 'info');
+    // The overlay unmounts without a trigger to return to; put focus back on the
+    // action the user will most likely take next.
+    setTimeout(() => document.getElementById(CREATE_VISUALIZATION_BUTTON_ID)?.focus(), 0);
   }
 
   return {

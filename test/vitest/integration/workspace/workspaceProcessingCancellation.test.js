@@ -145,7 +145,8 @@ describe('workspace initialization cancellation ownership', () => {
     expect(getHookValue().submitting).toBe(false);
     expect(getHookValue().alert).toMatchObject({
       title: 'Processing cancelled',
-      message: 'Processing was cancelled before completion.',
+      message: 'Your files and settings are kept.',
+      tone: 'info',
     });
 
     pendingProcessing.resolve({ interpolated_trees: [] });

@@ -8,6 +8,14 @@ import { SlidingWindowSection } from './project/SlidingWindowSection.jsx';
 import { TreeAdjustmentSection } from './project/TreeAdjustmentSection.jsx';
 import { ProjectActions } from './project/ProjectActions.jsx';
 import { cn } from '../../../lib/utils';
+import { useFileSummary } from '../useFileSummary.js';
+import {
+  assessWindowPlan,
+  countNewickTrees,
+  countWindows,
+  suggestWindowSettings,
+  summarizeAlignmentText,
+} from '../windowPlan.js';
 
 // Engine/model subforms (IQ-TREE, FastTree, substitution model) only matter once an
 // MSA is uploaded, so they're split out of the initial workspace bundle.
@@ -18,7 +26,7 @@ const TreeConstructionSection = React.lazy(() =>
 );
 
 export function NewProjectTab({ disabled: globalDisabled, reset }) {
-  const { watch, setValue } = useFormContext();
+  const { watch, setValue, getFieldState } = useFormContext();
 
   const msaFile = watch('msaFile');
   const treesFile = watch('treesFile');
@@ -33,6 +41,45 @@ export function NewProjectTab({ disabled: globalDisabled, reset }) {
 
   const hasMsa = !!msaFile;
   const hasTrees = !!treesFile;
+  const alignment = useFileSummary(msaFile, summarizeAlignmentText);
+  const treeCount = useFileSummary(treesFile, countNewickTrees);
+  const suggestion = alignment
+    ? suggestWindowSettings({ siteCount: alignment.siteCount, treeCount })
+    : null;
+  const windowPlan = alignment
+    ? {
+        alignment,
+        treeCount,
+        suggestion,
+        windowCount: countWindows(alignment.siteCount, Number(stepSize)),
+        warnings: assessWindowPlan({
+          siteCount: alignment.siteCount,
+          treeCount,
+          windowSize: Number(windowSize),
+          stepSize: Number(stepSize),
+        }),
+      }
+    : null;
+
+  // Fit untouched window settings to the data once it has been read; values the
+  // user typed are kept and offered the suggestion instead.
+  const suggestedWindowSize = suggestion?.windowSize;
+  const suggestedStepSize = suggestion?.stepSize;
+  React.useEffect(() => {
+    if (!suggestedWindowSize || !suggestedStepSize) return;
+    if (!getFieldState('windowSize').isDirty) {
+      setValue('windowSize', suggestedWindowSize, { shouldValidate: true });
+    }
+    if (!getFieldState('stepSize').isDirty) {
+      setValue('stepSize', suggestedStepSize, { shouldValidate: true });
+    }
+  }, [suggestedWindowSize, suggestedStepSize, getFieldState, setValue]);
+
+  const applySuggestion = () => {
+    if (!suggestion) return;
+    setValue('windowSize', suggestion.windowSize, { shouldValidate: true, shouldDirty: true });
+    setValue('stepSize', suggestion.stepSize, { shouldValidate: true, shouldDirty: true });
+  };
   const canSubmit = hasMsa || hasTrees;
   const processingPath = getProcessingPath({ hasMsa, hasTrees });
   const showWindowSettings = hasMsa;
@@ -85,13 +132,17 @@ export function NewProjectTab({ disabled: globalDisabled, reset }) {
                   <SettingsPanel
                     icon={SlidersHorizontal}
                     title={hasTrees ? 'MSA Window Mapping' : 'Sliding Windows'}
-                    summary={`${windowSize} sites / ${stepSize} step`}
+                    summary={`${windowSize} sites / ${stepSize} step${
+                      windowPlan?.windowCount ? ` · ${windowPlan.windowCount} windows` : ''
+                    }`}
                   >
                     <SlidingWindowSection
                       hasMsa={hasMsa}
                       hasTrees={hasTrees}
                       disabled={globalDisabled}
                       embedded
+                      windowPlan={windowPlan}
+                      onApplySuggestion={applySuggestion}
                     />
                   </SettingsPanel>
                 )}
