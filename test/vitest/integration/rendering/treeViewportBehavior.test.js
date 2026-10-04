@@ -96,12 +96,12 @@ describe('tree viewport behavior', () => {
     expect(source).toContain('onFocus={preloadWorkspaceTour}');
   });
 
-  it('automatic static fit uses branch geometry while still rendering labels', () => {
+  it('automatic static fit frames full label text when labels are visible', () => {
     const node = { id: 'node-1', position: [0, 0, 0] };
     const label = {
       id: 'label-1',
       position: [1000, 0, 0],
-      text: 'Long visible label should not define automatic camera zoom',
+      text: 'Long visible label must stay inside the automatic camera fit',
     };
     const link = { id: 'link-1', path: new Float32Array([0, 0, 0, 10, 0, 0]) };
     const extension = { id: 'extension-1', path: new Float32Array([10, 0, 0, 605, 0, 0]) };
@@ -132,8 +132,7 @@ describe('tree viewport behavior', () => {
     );
 
     expect(controller.viewportManager.focusOnTree).toHaveBeenCalledWith([node], [label], {
-      fitMode: VIEWPORT_FIT_MODES.BRANCH,
-      includeLabelAnchorBounds: true,
+      fitMode: VIEWPORT_FIT_MODES.LABELS,
       obstructionScope: VIEWPORT_FIT_OBSTRUCTION_SCOPES.CANVAS,
       maxFitAreaCenterDriftRatio: 0.2,
       links: [link, extension],
@@ -171,7 +170,6 @@ describe('tree viewport behavior', () => {
 
     expect(controller.viewportManager.focusOnTree).toHaveBeenCalledWith([treeOneNode], [], {
       fitMode: VIEWPORT_FIT_MODES.BRANCH,
-      includeLabelAnchorBounds: false,
       obstructionScope: VIEWPORT_FIT_OBSTRUCTION_SCOPES.CANVAS,
       maxFitAreaCenterDriftRatio: 0.2,
       links: [],
@@ -316,7 +314,7 @@ describe('tree viewport behavior', () => {
       extensions: [extension],
       connectors: [],
     };
-    controller._hasUserViewportInteraction = false;
+    controller._hasUserViewportInteraction = true;
     controller.viewportManager = {
       focusOnTree: vi.fn(),
     };
@@ -329,7 +327,8 @@ describe('tree viewport behavior', () => {
       padding: undefined,
       links: [link, extension],
     });
-    expect(controller._hasUserViewportInteraction).toBe(true);
+    // A fitted view keeps refitting on later canvas resizes.
+    expect(controller._hasUserViewportInteraction).toBe(false);
   });
 
   it('labels the manual viewport control as fitting visible content', () => {
@@ -384,7 +383,7 @@ describe('tree viewport behavior', () => {
     expect(controller.renderAllElements).toHaveBeenCalledOnce();
   });
 
-  it('resize before interaction refits the next static render with branch bounds', async () => {
+  it('resize before interaction refits the next static render with label bounds', async () => {
     useAppStore.setState({ playing: false });
     const node = { id: 'node-1', position: [0, 0, 0] };
     const label = { id: 'label-1', position: [900, 0, 0], text: 'Visible long label' };
@@ -424,8 +423,7 @@ describe('tree viewport behavior', () => {
     await Promise.resolve();
 
     expect(controller.viewportManager.focusOnTree).toHaveBeenCalledWith([node], [label], {
-      fitMode: VIEWPORT_FIT_MODES.BRANCH,
-      includeLabelAnchorBounds: true,
+      fitMode: VIEWPORT_FIT_MODES.LABELS,
       obstructionScope: VIEWPORT_FIT_OBSTRUCTION_SCOPES.CANVAS,
       maxFitAreaCenterDriftRatio: 0.2,
       links: [link, extension],

@@ -4,6 +4,7 @@ import {
   getCenteredViewState,
   getInitialAlignmentViewState,
   getFitAlignmentViewState,
+  getRegionFocusViewState,
 } from '../../../../src/msaViewer/cameraUtils.js';
 
 describe('MSA viewer camera utilities', () => {
@@ -61,5 +62,34 @@ describe('MSA viewer camera utilities', () => {
       target: [66, 42, 0],
       zoom: 2,
     });
+  });
+
+  it('zooms out just enough to show the whole region when it is wider than the view', () => {
+    const viewState = getRegionFocusViewState({
+      currentViewState: { target: [0, 77, 0], zoom: 0 },
+      containerWidth: 500,
+      labelsWidth: 100,
+      cellSize: 10,
+      startCol: 201,
+      endCol: 400,
+    });
+
+    // 200 columns * 10px * 1.1 padding = 2200px of content into 400px of view.
+    expect(viewState.zoom).toBeCloseTo(Math.log2(400 / 2200));
+    expect(viewState.target).toEqual([3000, 77, 0]);
+  });
+
+  it('keeps the current zoom when the region already fits', () => {
+    const viewState = getRegionFocusViewState({
+      currentViewState: { target: [0, 77, 0], zoom: -1 },
+      containerWidth: 500,
+      labelsWidth: 100,
+      cellSize: 10,
+      startCol: 11,
+      endCol: 20,
+    });
+
+    expect(viewState.zoom).toBe(-1);
+    expect(viewState.target).toEqual([150, 77, 0]);
   });
 });

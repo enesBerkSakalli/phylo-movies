@@ -2,7 +2,9 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import { ViewportManager } from '../../../../src/treeVisualisation/viewport/ViewportManager.js';
 import {
+  AUTO_FIT_FULL_LABEL_MAX_COUNT,
   calculateFocusViewport,
+  getAutoFitLabelOptions,
   selectFitAreaForBounds,
   VIEWPORT_FIT_MODES,
   VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO,
@@ -530,6 +532,24 @@ describe('TreeBoundsUtils normalized data contract', () => {
     });
   });
 
+  it('rotates label text bounds the way deck.gl draws them in the y-down view', () => {
+    // deck.gl getAngle is counter-clockwise on screen, and the orthographic view
+    // has flipY, so a label at -90 degrees reads downward (towards larger world y).
+    const down = calculateLabelBounds(
+      [{ position: [0, 0, 0], text: 'abcdefghij', rotation: -Math.PI / 2 }],
+      { labelSizePx: 10 }
+    );
+    expect(down.minY).toBeCloseTo(0);
+    expect(down.maxY).toBeCloseTo(60);
+
+    const up = calculateLabelBounds(
+      [{ position: [0, 0, 0], text: 'abcdefghij', rotation: Math.PI / 2 }],
+      { labelSizePx: 10 }
+    );
+    expect(up.minY).toBeCloseTo(-60);
+    expect(up.maxY).toBeCloseTo(0);
+  });
+
   it('surfaces label bounds inputs outside the normalized contract', () => {
     const error = new Error('label size failed');
 
@@ -563,5 +583,19 @@ describe('TreeBoundsUtils normalized data contract', () => {
 
     expect(calculateTreeVisualRadius(layerData, [0, 0], 10)).toBe(44);
     expect(calculateSafeVisualRadius(layerData.nodes, layerData.labels, [0, 0], 12)).toBe(28);
+  });
+});
+
+describe('automatic fit label policy', () => {
+  it('frames full label text for ordinary trees and only glyph height for huge ones', () => {
+    expect(getAutoFitLabelOptions(0)).toEqual({ fitMode: VIEWPORT_FIT_MODES.BRANCH });
+    expect(getAutoFitLabelOptions(24)).toEqual({ fitMode: VIEWPORT_FIT_MODES.LABELS });
+    expect(getAutoFitLabelOptions(AUTO_FIT_FULL_LABEL_MAX_COUNT)).toEqual({
+      fitMode: VIEWPORT_FIT_MODES.LABELS,
+    });
+    expect(getAutoFitLabelOptions(AUTO_FIT_FULL_LABEL_MAX_COUNT + 1)).toEqual({
+      fitMode: VIEWPORT_FIT_MODES.BRANCH,
+      includeLabelAnchorBounds: true,
+    });
   });
 });

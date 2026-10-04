@@ -27,9 +27,12 @@ export function PlaybackSpeedControl({ value, setValue }) {
         step={0.1}
         value={[value]}
         onValueChange={handleChange}
-        aria-label="Animation speed"
+        aria-label="Playback speed"
         className="w-32"
       />
+      <span className="w-9 text-right text-xs font-semibold tabular-nums" aria-hidden>
+        {value.toFixed(1)}×
+      </span>
     </div>
   );
 }

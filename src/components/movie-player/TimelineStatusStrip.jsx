@@ -10,6 +10,7 @@ import {
   selectMsaColumnCount,
   selectMsaStepSize,
   selectMsaWindowSize,
+  selectPlaying,
   selectTimelineCursor,
   useAppStore,
 } from '../../state/phyloStore/store.js';
@@ -25,6 +26,7 @@ export function TimelineStatusStrip() {
   const msaWindowSize = useAppStore(selectMsaWindowSize);
   const msaStepSize = useAppStore(selectMsaStepSize);
   const msaColumnCount = useAppStore(selectMsaColumnCount);
+  const playing = useAppStore(selectPlaying);
 
   const status = useMemo(() => {
     const statusRequest = {
@@ -61,6 +63,8 @@ export function TimelineStatusStrip() {
       className="flex min-w-0 flex-nowrap overflow-hidden items-center gap-2 rounded-md border border-border/40 bg-muted/20 backdrop-blur-sm px-2 py-1 text-2xs"
       role="status"
       aria-label="Movie timeline status"
+      // Announcing every frame during playback would flood screen readers.
+      aria-live={playing ? 'off' : 'polite'}
     >
       <CursorStatus status={status} />
 
@@ -95,7 +99,7 @@ function CursorStatus({ status }) {
         }
         contentClassName="border-border/60 bg-popover text-2xs font-mono text-popover-foreground"
       >
-        <span className="inline-flex w-[12rem] max-w-[30vw] shrink-0 items-center justify-center rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-primary cursor-help">
+        <span className="inline-flex w-auto max-w-[30vw] shrink-0 items-center sm:w-[12rem] justify-center rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-primary cursor-help">
           <CursorPositionValue position={status.position} />
         </span>
       </AppTooltip>
@@ -106,7 +110,7 @@ function CursorStatus({ status }) {
 function CursorPositionValue({ position }) {
   if (position?.kind === 'transition') {
     return (
-      <span className="inline-flex min-w-0 items-center justify-center gap-1 text-[10px] leading-tight font-semibold tabular-nums">
+      <span className="inline-flex min-w-0 items-center justify-center gap-1 text-xs leading-tight font-semibold tabular-nums">
         <GitBranch className="size-3 shrink-0 text-primary" aria-hidden />
         <span className="min-w-[1rem] shrink-0 text-center text-foreground">
           {position.sourceInputTreeIndex + 1}
@@ -126,7 +130,7 @@ function CursorPositionValue({ position }) {
 
   if (position?.kind === 'input') {
     return (
-      <span className="inline-flex min-w-0 items-center justify-center gap-1 text-[10px] leading-tight font-semibold tabular-nums">
+      <span className="inline-flex min-w-0 items-center justify-center gap-1 text-xs leading-tight font-semibold tabular-nums">
         <GitBranch className="size-3 shrink-0 text-primary" aria-hidden />
         <span className="min-w-0 truncate text-center text-foreground">
           {position.inputTreeIndex + 1}/{position.inputTreeCount}
@@ -136,7 +140,7 @@ function CursorPositionValue({ position }) {
   }
 
   return (
-    <span className="min-w-0 truncate text-center text-[10px] text-foreground leading-tight font-semibold tabular-nums">
+    <span className="min-w-0 truncate text-center text-xs text-foreground leading-tight font-semibold tabular-nums">
       {position.display}
     </span>
   );
@@ -147,7 +151,7 @@ function StatusItem({ icon: Icon, label, children }) {
     <div className="flex shrink-0 items-center gap-2">
       <Icon className="size-3.5 shrink-0 text-primary" aria-hidden />
       <div className="flex shrink-0 items-center gap-2">
-        <div className="shrink-0 text-xs font-bold leading-tight tracking-tight uppercase">
+        <div className="sr-only shrink-0 text-xs font-bold leading-tight tracking-tight uppercase sm:not-sr-only">
           {label}
         </div>
         <div className="min-w-0">{children}</div>
@@ -160,7 +164,7 @@ function MsaWindowStatus({ msaWindow }) {
   if (!msaWindow) {
     return (
       <span className="inline-flex w-[6.5rem] shrink-0 items-center justify-center rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-primary">
-        <span className="truncate text-center text-[10px] text-muted-foreground/80 leading-tight font-medium">
+        <span className="truncate text-center text-xs text-muted-foreground/80 leading-tight font-medium">
           Unavailable
         </span>
       </span>
@@ -169,7 +173,7 @@ function MsaWindowStatus({ msaWindow }) {
 
   return (
     <span className="inline-flex w-[6.5rem] shrink-0 items-center justify-center rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-primary">
-      <span className="min-w-0 truncate text-center text-[10px] text-foreground leading-tight font-semibold tabular-nums">
+      <span className="min-w-0 truncate text-center text-xs text-foreground leading-tight font-semibold tabular-nums">
         <span>{msaWindow.startPosition}</span>
         <span className="mx-1 text-muted-foreground/50 text-2xs">-</span>
         <span>{msaWindow.midPosition}</span>
@@ -193,7 +197,7 @@ function MsaWindowConfigStatus({ msaWindowSize, msaStepSize }) {
         className="hidden w-[7rem] shrink-0 items-center justify-center rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-primary xl:inline-flex"
         aria-label={fullLabel}
       >
-        <span className="truncate text-center text-[10px] text-foreground leading-tight font-semibold tabular-nums">
+        <span className="truncate text-center text-xs text-foreground leading-tight font-semibold tabular-nums">
           {compactLabel}
         </span>
       </span>

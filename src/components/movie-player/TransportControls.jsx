@@ -29,6 +29,7 @@ import {
   useAppStore,
 } from '../../state/phyloStore/store.js';
 import { TRANSPORT_CONTROL_GROUP_LABELS } from './TransportControls.contract.js';
+import { PinnedTreeControl } from './PinnedTreeControl.jsx';
 
 export function TransportControls({ onBackward, onForward }) {
   const playing = useAppStore(selectPlaying);
@@ -91,7 +92,7 @@ export function TransportControls({ onBackward, onForward }) {
         role="group"
         aria-label={TRANSPORT_CONTROL_GROUP_LABELS.playback}
       >
-        <AppTooltip content="Previous input tree">
+        <AppTooltip content="Previous input tree (Shift+←)">
           <Button
             className="transport-button"
             id="backwardInputTreeButton"
@@ -105,7 +106,7 @@ export function TransportControls({ onBackward, onForward }) {
           </Button>
         </AppTooltip>
 
-        <AppTooltip content="Previous generated frame">
+        <AppTooltip content="Previous generated frame (←)">
           <Button
             className="transport-button"
             id="backward-button"
@@ -119,7 +120,7 @@ export function TransportControls({ onBackward, onForward }) {
           </Button>
         </AppTooltip>
 
-        <AppTooltip content={playbackLabel}>
+        <AppTooltip content={`${playbackLabel} (Space)`}>
           <Button
             className="transport-button"
             id="play-button"
@@ -134,7 +135,7 @@ export function TransportControls({ onBackward, onForward }) {
           </Button>
         </AppTooltip>
 
-        <AppTooltip content="Next generated frame">
+        <AppTooltip content="Next generated frame (→)">
           <Button
             className="transport-button"
             id="forward-button"
@@ -148,7 +149,7 @@ export function TransportControls({ onBackward, onForward }) {
           </Button>
         </AppTooltip>
 
-        <AppTooltip content="Next input tree">
+        <AppTooltip content="Next input tree (Shift+→)">
           <Button
             className="transport-button"
             id="forwardInputTreeButton"
@@ -202,6 +203,10 @@ export function TransportControls({ onBackward, onForward }) {
           </AppTooltip>
         )}
       </div>
+
+      <Separator orientation="vertical" className="h-5" />
+
+      <PinnedTreeControl />
     </div>
   );
 }

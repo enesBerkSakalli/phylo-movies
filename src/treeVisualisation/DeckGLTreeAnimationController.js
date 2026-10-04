@@ -353,7 +353,9 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
   fitTreeToViewport(options = {}) {
     const nodes = this._lastLayerData?.nodes;
     if (!Array.isArray(nodes) || nodes.length === 0 || !this.viewportManager) return;
-    this._hasUserViewportInteraction = true;
+    // Fit means "show everything": later canvas resizes (window, docked
+    // inspector, sidebar) keep refitting instead of preserving a stale camera.
+    this._hasUserViewportInteraction = false;
     const labelsVisible = useAppStore.getState().labelsVisible !== false;
     const links = [
       ...(this._lastLayerData.links || []),

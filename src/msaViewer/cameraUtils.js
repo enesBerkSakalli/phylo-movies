@@ -39,6 +39,35 @@ export function getFitAlignmentViewState({
   };
 }
 
+const REGION_FOCUS_PADDING = 1.1;
+
+/**
+ * Center a 1-based inclusive column region, zooming out only as far as needed
+ * for the whole region to fit the main viewport width. Never zooms in.
+ */
+export function getRegionFocusViewState({
+  currentViewState,
+  containerWidth,
+  labelsWidth,
+  cellSize,
+  startCol,
+  endCol,
+  padding = REGION_FOCUS_PADDING,
+}) {
+  const target = normalizeTarget(currentViewState?.target);
+  const currentZoom = Number.isFinite(currentViewState?.zoom) ? currentViewState.zoom : 0;
+  const viewportWidth = Math.max(1, containerWidth - labelsWidth);
+  const regionWidth = Math.max(1, (endCol - startCol + 1) * cellSize * padding);
+
+  target[0] = ((startCol - 1 + endCol) / 2) * cellSize;
+
+  return {
+    ...currentViewState,
+    target,
+    zoom: Math.min(currentZoom, Math.log2(viewportWidth / regionWidth)),
+  };
+}
+
 export function deriveSynchronizedViewStates({ mainViewState, labelsWidth, axisHeight }) {
   const scale = getZoomScale(mainViewState?.zoom);
   const main = {

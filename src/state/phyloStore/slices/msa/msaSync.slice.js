@@ -20,7 +20,9 @@ export const createMsaViewerSlice = (set, get) => ({
   // ==========================================================================
   isMsaViewerOpen: false,
   syncMSAEnabled: true,
-  msaWindow: { x: 40, y: 40, width: 960, height: 620 },
+  // Non-finite values mean "not placed by the user yet": the window anchors to
+  // the bottom-right of the tree canvas and is sized from it.
+  msaWindow: { x: Infinity, y: Infinity, width: Infinity, height: Infinity },
 
   // ==========================================================================
   // ACTIONS: MSA Data

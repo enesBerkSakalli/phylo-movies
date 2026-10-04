@@ -7,6 +7,12 @@ export function createDeckCanvas(container) {
   canvas.style.width = '100%';
   canvas.style.height = '100%';
   canvas.style.display = 'block';
+  // deck.gl makes the canvas focusable for keyboard panning; give it a name.
+  canvas.setAttribute('role', 'img');
+  canvas.setAttribute(
+    'aria-label',
+    'Phylogenetic tree view. Drag to pan, scroll to zoom, use the bottom bar to play the movie.'
+  );
   container.appendChild(canvas);
   return canvas;
 }

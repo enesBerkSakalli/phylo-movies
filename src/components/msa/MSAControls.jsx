@@ -2,7 +2,6 @@ import React from 'react';
 import { useMSA } from './useMSA.js';
 import { Button } from '../ui/button';
 import { Switch } from '../ui/switch';
-import { Badge } from '../ui/badge';
 import { Label } from '../ui/label';
 import { Separator } from '../ui/separator';
 import {
@@ -10,6 +9,7 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
@@ -22,11 +22,23 @@ import {
   selectTreeController,
   useAppStore,
 } from '../../state/phyloStore/store.js';
-import { MSARegionStatus } from './controls/MSARegionStatus.jsx';
 import { MSAViewActions } from './controls/MSAViewActions.jsx';
+import { MSAColorLegend } from './controls/MSAColorLegend.jsx';
+import {
+  getColorSchemeGroups,
+  isColorSchemeAvailable,
+} from '../../msaViewer/utils/colorSchemeCatalog.js';
 
 export function MSAControls() {
-  const { processedData, showLetters, setShowLetters, colorScheme, setColorScheme } = useMSA();
+  const {
+    processedData,
+    msaRegion,
+    showLetters,
+    setShowLetters,
+    colorScheme,
+    setColorScheme,
+    rowColorMap,
+  } = useMSA();
   const canMatchTreeOrder = useAppStore((state) =>
     Boolean(selectTreeController(state) && selectCurrentTree(state))
   );
@@ -67,16 +79,25 @@ export function MSAControls() {
     selectClearMsaRowOrder(useAppStore.getState())();
   };
 
+  const sequenceType = processedData?.type;
+  const colorSchemeGroups = getColorSchemeGroups(sequenceType);
+
+  // A protein-only scheme makes no sense for DNA (and vice versa).
+  React.useEffect(() => {
+    if (sequenceType && !isColorSchemeAvailable(colorScheme, sequenceType)) {
+      setColorScheme('default');
+    }
+  }, [colorScheme, sequenceType, setColorScheme]);
+
   return (
     <div
       className="flex shrink-0 flex-wrap items-center gap-2 overflow-visible border-b border-border/60 bg-muted/30 px-2 py-1"
       role="toolbar"
       aria-label="Alignment viewer controls"
     >
-      <MSARegionStatus />
-
-      <Separator orientation="vertical" className="h-4 mx-2 opacity-40" />
-
+      <span className="sr-only" aria-live="polite">
+        {msaRegion ? `Alignment window ${msaRegion.start} to ${msaRegion.end}` : ''}
+      </span>
       <div
         className="flex items-center gap-1"
         role="group"
@@ -85,7 +106,10 @@ export function MSAControls() {
         <MSAViewActions />
       </div>
 
-      <Separator orientation="vertical" className="h-4 mx-2 opacity-40" />
+      <Separator
+        orientation="vertical"
+        className="mx-1 self-center opacity-40 data-[orientation=vertical]:h-4"
+      />
 
       <div
         className="flex items-center gap-2"
@@ -98,7 +122,7 @@ export function MSAControls() {
           variant="secondary"
           onClick={handleMatchTreeOrder}
           disabled={!canMatchTreeOrder}
-          className="h-7 text-[11px] font-medium"
+          className="h-7 text-2xs font-medium"
         >
           Match Tree Order
         </Button>
@@ -108,7 +132,7 @@ export function MSAControls() {
           variant="outline"
           onClick={handleResetOrder}
           disabled={!canResetOrder}
-          className="h-7 border-border/40 text-[11px] text-muted-foreground hover:text-foreground"
+          className="h-7 border-border/40 text-2xs text-muted-foreground hover:text-foreground"
         >
           Reset Order
         </Button>
@@ -121,7 +145,7 @@ export function MSAControls() {
       >
         <Label
           htmlFor="msa-color-scheme"
-          className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider"
+          className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider"
         >
           Coloring
         </Label>
@@ -133,32 +157,24 @@ export function MSAControls() {
             <SelectValue placeholder="Color Scheme" />
           </SelectTrigger>
           <SelectContent className="z-[2000]">
-            <SelectGroup>
-              <SelectItem value="none">None (Empty)</SelectItem>
-              <SelectItem value="taxa">Taxa</SelectItem>
-              <SelectItem value="default">Default</SelectItem>
-              <SelectItem value="clustal">Clustal</SelectItem>
-              <SelectItem value="clustal2">Clustal2</SelectItem>
-              <SelectItem value="hydrophobicity">Hydrophobicity</SelectItem>
-              <SelectItem value="zappo">Zappo</SelectItem>
-              <SelectItem value="taylor">Taylor</SelectItem>
-              <SelectItem value="buried">Buried</SelectItem>
-              <SelectItem value="cinema">Cinema</SelectItem>
-              <SelectItem value="helix">Helix</SelectItem>
-              <SelectItem value="lesk">Lesk</SelectItem>
-              <SelectItem value="mae">Mae</SelectItem>
-              <SelectItem value="strand">Strand</SelectItem>
-              <SelectItem value="turn">Turn</SelectItem>
-              <SelectItem value="nucleotide">Nucleotide (DNA)</SelectItem>
-              <SelectItem value="purine">Purine (DNA)</SelectItem>
-              <SelectItem value="identity">Identity to Consensus</SelectItem>
-              <SelectItem value="grayscale">Grayscale</SelectItem>
-            </SelectGroup>
+            {colorSchemeGroups.map((group) => (
+              <SelectGroup key={group.label}>
+                <SelectLabel>{group.label}</SelectLabel>
+                {group.schemes.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            ))}
           </SelectContent>
         </Select>
       </div>
 
-      <Separator orientation="vertical" className="h-4 mx-2 opacity-40" />
+      <Separator
+        orientation="vertical"
+        className="mx-1 self-center opacity-40 data-[orientation=vertical]:h-4"
+      />
 
       <div
         className="flex items-center gap-2"
@@ -177,15 +193,15 @@ export function MSAControls() {
         </Label>
       </div>
 
-      <div className="ml-auto">
+      <div className="ml-auto min-w-0">
         {processedData ? (
-          <Badge variant="secondary" className="text-xs">
-            {processedData.type.toUpperCase()}
-          </Badge>
+          <MSAColorLegend
+            colorScheme={colorScheme}
+            sequenceType={sequenceType}
+            hasTaxonColors={Object.keys(rowColorMap ?? {}).length > 0}
+          />
         ) : (
-          <Badge variant="destructive" className="text-xs">
-            No data
-          </Badge>
+          <span className="text-xs font-medium text-destructive">No alignment data</span>
         )}
       </div>
     </div>

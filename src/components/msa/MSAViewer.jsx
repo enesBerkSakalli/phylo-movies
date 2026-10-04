@@ -11,6 +11,7 @@ import {
 import { AppTooltip } from '../ui/app-tooltip';
 import { Button } from '../ui/button';
 import { MSADeckGLViewer } from '../../msaViewer/MSADeckGLViewer';
+import { MSA_VIEWER_CONSTANTS } from '../../msaViewer/config.js';
 import { useMSA, useMSAViewport, useSetMSAVisibleRange } from './useMSA.js';
 import { MSAScrollbars } from './MSAScrollbars';
 import {
@@ -181,11 +182,15 @@ function MSAStatusOverlay() {
   const treeStatus = buildMsaTreeStatus(timelineCursor);
 
   return (
-    <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex justify-end">
+    <div
+      className="pointer-events-none absolute left-3 right-5 z-10 flex justify-end"
+      // Sit just below the column ruler.
+      style={{ top: MSA_VIEWER_CONSTANTS.AXIS_HEIGHT + 8 }}
+    >
       {statusClipped ? (
         <MSAStatusClipButton clipped onToggle={() => setStatusClipped(false)} />
       ) : (
-        <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-end gap-1.5 rounded-md border border-border/60 bg-background/85 px-2 py-1.5 text-[11px] text-foreground shadow-md backdrop-blur-sm tabular-nums">
+        <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-end gap-1.5 rounded-md border border-border/60 bg-background/85 px-2 py-1 text-2xs text-foreground shadow-md backdrop-blur-sm tabular-nums">
           <span>
             Rows: {visibleRange.r0 + 1}-{visibleRange.r1 + 1}
           </span>
@@ -255,7 +260,7 @@ function MSAWindowOverlapStatus({ status }) {
         </span>
       </div>
       <MSAWindowOverlapTrack status={status} />
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px]">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-2xs">
         <OverlapLegendItem className="bg-amber-500/45" label="leaving" />
         <OverlapLegendItem className="bg-primary/35" label="shared" />
         <OverlapLegendItem className="bg-emerald-500/45" label="entering" />
@@ -286,7 +291,7 @@ function MSAWindowOverlapTrack({ status }) {
       className="grid w-[24rem] max-w-[70vw] shrink-0 grid-cols-[4.75rem_minmax(14rem,1fr)] gap-x-2 gap-y-1"
       aria-hidden
     >
-      <span className="self-center text-[10px] font-semibold uppercase leading-none text-sky-700 dark:text-sky-300">
+      <span className="self-center text-2xs font-semibold uppercase leading-none text-sky-700 dark:text-sky-300">
         Source W{status.sourceWindowIndex + 1}
       </span>
       <div className="relative row-span-2 h-10">
@@ -333,7 +338,7 @@ function MSAWindowOverlapTrack({ status }) {
           </>
         )}
       </div>
-      <span className="self-center text-[10px] font-semibold uppercase leading-none text-emerald-700 dark:text-emerald-300">
+      <span className="self-center text-2xs font-semibold uppercase leading-none text-emerald-700 dark:text-emerald-300">
         Target W{status.targetWindowIndex + 1}
       </span>
     </div>

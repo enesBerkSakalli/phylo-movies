@@ -23,9 +23,6 @@ export const VIEWPORT_FIT_ANCHORED_OBSTRUCTION_SELECTORS = Object.freeze([
 ]);
 
 export const VIEWPORT_FIT_FLOATING_OBSTRUCTION_SELECTORS = Object.freeze([
-  '[role="complementary"][aria-label="Pinned Tree Panel"]',
-  '.phylo-hud',
-  '.phylo-hud-restore',
   '[aria-label="Transition Inspector"]',
 ]);
 

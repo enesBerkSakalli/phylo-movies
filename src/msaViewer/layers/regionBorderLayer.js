@@ -81,3 +81,54 @@ export function createPreviousRegionBorderLayer(borderData) {
     getLineColor: [128, 128, 128, 180], // Gray with transparency
   });
 }
+
+export const REGION_AXIS_MARKER_HEIGHT_PX = 4;
+
+/**
+ * Build the ruler marker that spans the current region in the axis view.
+ * The axis view is zoom-locked vertically, so heights are divided by the zoom
+ * scale to stay a constant number of screen pixels.
+ */
+export function buildRegionAxisMarker(cellSize, region, cols, axisHeight, zoomScale) {
+  if (!region || !cols) {
+    return [];
+  }
+
+  const scale = Math.max(0.0001, zoomScale || 1);
+  const startCol = Math.max(1, Math.min(cols, region.startCol));
+  const endCol = Math.max(1, Math.min(cols, region.endCol));
+  const startX = (startCol - 1) * cellSize;
+  const endX = endCol * cellSize;
+  const bottomY = axisHeight / scale;
+  const topY = (axisHeight - REGION_AXIS_MARKER_HEIGHT_PX) / scale;
+
+  return [
+    {
+      polygon: [
+        [startX, topY],
+        [endX, topY],
+        [endX, bottomY],
+        [startX, bottomY],
+      ],
+    },
+  ];
+}
+
+/**
+ * Creates the ruler marker layer for the current region (axis view)
+ * @param {Array} markerData - The marker data from buildRegionAxisMarker
+ * @returns {PolygonLayer} The region axis marker layer
+ */
+export function createRegionAxisMarkerLayer(markerData) {
+  return new PolygonLayer({
+    id: 'current-region-axis-marker',
+    viewId: 'axis',
+    data: markerData,
+    pickable: false,
+    stroked: false,
+    filled: true,
+    getPolygon: (d) => d.polygon,
+    // Matches the black current-region border in the main view
+    getFillColor: [0, 0, 0, 255],
+  });
+}

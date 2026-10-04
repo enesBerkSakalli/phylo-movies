@@ -52,9 +52,6 @@ describe('spatial viewport fit layout helpers', () => {
       '[role="group"][aria-label="Canvas export controls"]',
     ]);
     expect(VIEWPORT_FIT_FLOATING_OBSTRUCTION_SELECTORS).toEqual([
-      '[role="complementary"][aria-label="Pinned Tree Panel"]',
-      '.phylo-hud',
-      '.phylo-hud-restore',
       '[aria-label="Transition Inspector"]',
     ]);
     expect(VIEWPORT_FIT_OBSTRUCTION_SELECTORS).toEqual([
@@ -62,9 +59,6 @@ describe('spatial viewport fit layout helpers', () => {
       '#top-scale-bar-container',
       '[role="group"][aria-label="Tree viewport controls"]',
       '[role="group"][aria-label="Canvas export controls"]',
-      '[role="complementary"][aria-label="Pinned Tree Panel"]',
-      '.phylo-hud',
-      '.phylo-hud-restore',
       '[aria-label="Transition Inspector"]',
     ]);
     expect(VIEWPORT_FIT_OBSTRUCTION_PADDING_PX).toBe(20);
@@ -105,11 +99,9 @@ describe('spatial viewport fit layout helpers', () => {
     controls.setAttribute('role', 'group');
     controls.setAttribute('aria-label', 'Tree viewport controls');
     const panel = elementWithRect({
-      className: 'phylo-hud',
       bounds: rect(116, 550, 180, 120),
     });
-    panel.setAttribute('role', 'complementary');
-    panel.setAttribute('aria-label', 'Pinned Tree Panel');
+    panel.setAttribute('aria-label', 'Transition Inspector');
 
     expect(calculateViewportFitAreas(container)[0]).toEqual({
       left: 216,
@@ -127,11 +119,9 @@ describe('spatial viewport fit layout helpers', () => {
     controls.setAttribute('role', 'group');
     controls.setAttribute('aria-label', 'Tree viewport controls');
     const panel = elementWithRect({
-      className: 'phylo-hud',
       bounds: rect(14, 328, 142, 112),
     });
-    panel.setAttribute('role', 'complementary');
-    panel.setAttribute('aria-label', 'Pinned Tree Panel');
+    panel.setAttribute('aria-label', 'Transition Inspector');
 
     expect(
       calculateViewportFitAreas(container, {

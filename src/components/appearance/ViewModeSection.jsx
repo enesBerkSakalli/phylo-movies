@@ -54,8 +54,8 @@ export function ViewModeSection() {
                 <div className="flex items-start gap-2 text-2xs leading-relaxed text-muted-foreground/80 italic">
                   <Info className="mt-1 size-3 shrink-0" />
                   <span>
-                    3D camera reveals depth for Walrus 3D layouts; radial layouts remain flat while
-                    topology, rooting, and branch lengths stay unchanged.
+                    3D camera reveals depth for hyperbolic 3D (Walrus) layouts; radial layouts
+                    remain flat while topology, rooting, and branch lengths stay unchanged.
                   </span>
                 </div>
               </div>

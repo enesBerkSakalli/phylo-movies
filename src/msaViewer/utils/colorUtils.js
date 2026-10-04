@@ -390,16 +390,18 @@ Object.keys(SCHEMES).forEach((scheme) => {
  * @returns {number[]} RGBA color array
  */
 function dnaColor(ch) {
+  // Okabe-Ito colours: keeps the conventional A green / C blue / G orange
+  // families but stays distinguishable with red-green colour vision deficiency.
   switch (ch) {
     case 'A':
-      return rgba(0, 200, 0); // Bright green
+      return rgba(0, 158, 115); // Bluish green
     case 'C':
-      return rgba(0, 100, 255); // Bright blue
+      return rgba(0, 114, 178); // Blue
     case 'G':
-      return rgba(255, 165, 0); // Orange
+      return rgba(230, 159, 0); // Orange
     case 'T':
     case 'U':
-      return rgba(255, 0, 0); // Red
+      return rgba(204, 121, 167); // Reddish purple
     case '-':
       return gray(220); // Light gray for gaps
     default:

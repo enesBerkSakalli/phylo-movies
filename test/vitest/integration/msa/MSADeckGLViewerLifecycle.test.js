@@ -146,6 +146,29 @@ describe('MSADeckGLViewer lifecycle', () => {
     expect(viewer.centerViewportOn).toHaveBeenCalledWith({ column: 2.5 });
   });
 
+  it('zooms out to the region until the user picks a zoom, then only centers', () => {
+    const viewer = makeViewer();
+    viewer.state.seqs = [{ id: 'taxon-a', seq: 'ACGT' }];
+    viewer.state.rows = 1;
+    viewer.state.cols = 1000;
+    viewer.state.viewState = { target: [0, 6, 0], zoom: 0 };
+    viewer.options = { cellSize: 12 };
+    viewer.container = { clientWidth: 500 };
+    viewer.LABELS_WIDTH = 100;
+    viewer.centerViewportOn = vi.fn();
+    viewer.handleViewStateChange = vi.fn();
+
+    viewer.centerRegion(201, 400);
+    expect(viewer.handleViewStateChange).toHaveBeenCalledOnce();
+    expect(viewer.handleViewStateChange.mock.calls[0][0].main.zoom).toBeLessThan(0);
+    expect(viewer.centerViewportOn).not.toHaveBeenCalled();
+
+    viewer._userZoomed = true;
+    viewer.centerRegion(201, 400);
+    expect(viewer.centerViewportOn).toHaveBeenCalledWith({ column: 300 });
+    expect(viewer.handleViewStateChange).toHaveBeenCalledOnce();
+  });
+
   it('does not expose compatibility method aliases', () => {
     expect(MSADeckGLViewer.prototype).not.toHaveProperty('setSelection');
     expect(MSADeckGLViewer.prototype).not.toHaveProperty('clearSelection');

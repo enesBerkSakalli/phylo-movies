@@ -80,7 +80,9 @@ export function LayoutTransform({
                   <SelectItem value={LAYOUT_PROJECTION_MODES.HYPERBOLIC}>
                     Hyperbolic Focus
                   </SelectItem>
-                  <SelectItem value={LAYOUT_PROJECTION_MODES.WALRUS_3D}>Walrus 3D</SelectItem>
+                  <SelectItem value={LAYOUT_PROJECTION_MODES.WALRUS_3D}>
+                    Hyperbolic 3D (Walrus)
+                  </SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>

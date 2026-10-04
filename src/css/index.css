@@ -5,9 +5,14 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  /* Custom font size for compact UI elements */
-  --text-2xs: 10px;
+  /* Compact type scale for the dense analysis UI. Pixel values keep text
+     legible while the 14px root keeps rem-based spacing dense. */
+  --text-2xs: 11px;
   --text-2xs--line-height: 1.4;
+  --text-xs: 12px;
+  --text-xs--line-height: 1.4;
+  --text-sm: 13px;
+  --text-sm--line-height: 1.45;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -131,7 +136,7 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-size: 0.875rem; /* 14px */
+    font-size: 1rem; /* 14px */
     line-height: 1.5;
     overflow: hidden;
     height: 100%;

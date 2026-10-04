@@ -85,7 +85,7 @@ export function TransitionInspectorPanel() {
 
   return (
     <aside
-      className="absolute right-4 top-4 bottom-4 z-[70] flex w-[22rem] max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-lg border border-border bg-card/95 text-card-foreground shadow-xl backdrop-blur-md"
+      className="z-[70] flex w-[22rem] shrink-0 flex-col overflow-hidden border-l border-border bg-card text-card-foreground max-md:absolute max-md:inset-x-3 max-md:bottom-3 max-md:max-h-[50%] max-md:w-auto max-md:rounded-lg max-md:border max-md:shadow-xl"
       aria-label="Transition Inspector"
     >
       <div className="flex items-start gap-3 border-b border-border p-4">
@@ -139,9 +139,11 @@ export function TransitionInspectorPanel() {
           <Metric icon={Gauge} label="Source input tree scale" value={details.scaleLabel} />
         </Section>
 
-        <Section title="Alignment">
-          <Metric icon={Dna} label="MSA window" value={details.msaWindowLabel} />
-        </Section>
+        {hasMsa ? (
+          <Section title="Alignment">
+            <Metric icon={Dna} label="MSA window" value={details.msaWindowLabel} />
+          </Section>
+        ) : null}
       </div>
     </aside>
   );

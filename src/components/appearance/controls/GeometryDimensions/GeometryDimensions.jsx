@@ -150,7 +150,7 @@ export function GeometryDimensions({
             label="Label Size"
             title="Adjust label text size"
             ariaLabel="Label size control"
-            valueDisplay={`${clampValue(fontSizeNumber, 1.8).toFixed(1)}em`}
+            valueDisplay={`${clampValue(fontSizeNumber, 1.8).toFixed(1)}×`}
             value={clampValue(fontSizeNumber, 1.8)}
             min={0.5}
             max={10}
@@ -192,12 +192,12 @@ export function GeometryDimensions({
                       branchAnnotationOptions || [
                         {
                           value: 'none',
-                          label: 'Hide labels; analytics auto-selects primary support',
+                          label: 'None',
                         },
                       ]
                     ).map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
+                      <SelectItem key={option.value} value={option.value} title={option.label}>
+                        {option.value === 'none' ? 'None' : option.label}
                       </SelectItem>
                     ))}
                   </SelectGroup>

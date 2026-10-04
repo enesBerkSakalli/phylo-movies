@@ -8,7 +8,7 @@ The visualization workspace is organized into the left sidebar, central tree can
 
 <figure className="manual-screenshot">
   <img src="/phylo-movies/manual/img/screenshots/workspace-overview.png" alt="Phylo-Movies visualization workspace with sidebar, tree canvas, and movie timeline" />
-  <figcaption>The loaded workspace shows the sidebar, tree canvas, pinned tree panel, and timeline.</figcaption>
+  <figcaption>The loaded workspace shows the sidebar, tree canvas, and timeline with playback, comparison, and pinned-tree controls.</figcaption>
 </figure>
 
 ## Sidebar Groups

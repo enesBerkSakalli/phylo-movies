@@ -15,6 +15,8 @@ import {
   createCurrentRegionBorderLayer,
   createPreviousRegionBorderLayer,
   buildRegionBorder,
+  buildRegionAxisMarker,
+  createRegionAxisMarkerLayer,
 } from './layers/regionBorderLayer.js';
 import { createLettersLayer, buildTextData } from './layers/lettersLayer.js';
 import { createRowLabelsLayer, buildRowLabels } from './layers/rowLabelsLayer.js';
@@ -26,6 +28,7 @@ import {
   getCenteredViewState,
   getFitAlignmentViewState,
   getInitialAlignmentViewState,
+  getRegionFocusViewState,
 } from './cameraUtils.js';
 import { normalizeViewerRegion, resolveRegionTargetColumn } from './regionUtils.js';
 
@@ -107,6 +110,9 @@ export class MSADeckGLViewer {
     this.resizeObserver = null; // ResizeObserver for container resize handling
     this._labelMeasuredWidth = this.DEFAULT_LABELS_WIDTH; // raw text-based width before zoom scaling
     this._scrollZoomSpeed = 0.08; // Custom wheel zoom speed multiplier
+    // Set once the user picks a zoom; region sync then only centers so a
+    // zoomed-in reading view survives timeline steps.
+    this._userZoomed = false;
     this._handleWheel = this.handleWheel.bind(this);
 
     this.initializeDeckWhenReady();
@@ -274,6 +280,7 @@ export class MSADeckGLViewer {
    * Zoom in by a fixed step
    */
   zoomIn() {
+    this._userZoomed = true;
     const { zoom, target } = this.state.viewState;
     this.handleViewStateChange({
       target,
@@ -285,6 +292,7 @@ export class MSADeckGLViewer {
    * Zoom out by a fixed step
    */
   zoomOut() {
+    this._userZoomed = true;
     const { zoom, target } = this.state.viewState;
     this.handleViewStateChange({
       target,
@@ -332,6 +340,12 @@ export class MSADeckGLViewer {
     canvas.style.top = '0';
     canvas.style.width = '100%';
     canvas.style.height = '100%';
+    // deck.gl makes the canvas focusable for keyboard panning; give it a name.
+    canvas.setAttribute('role', 'img');
+    canvas.setAttribute(
+      'aria-label',
+      'Sequence alignment view. Scroll to pan, Ctrl or Cmd plus scroll to zoom.'
+    );
     this.container.appendChild(canvas);
     this.canvas = canvas;
 
@@ -504,6 +518,7 @@ export class MSADeckGLViewer {
    */
   fitAlignment() {
     if (!this.hasSequences() || !this.container) return;
+    this._userZoomed = false;
 
     const newViewState = getFitAlignmentViewState({
       containerWidth: this.container.clientWidth,
@@ -542,6 +557,7 @@ export class MSADeckGLViewer {
     const currentRegionLayer = this.buildCurrentRegionBorderLayer(cs);
     const lettersLayer = this.buildLettersLayer(cs, renderRange);
     const rowLabelsLayer = this.buildRowLabelsLayer(cs, renderRange);
+    const regionAxisMarkerLayer = this.buildRegionAxisMarkerLayer(cs);
     const columnAxisLayer = this.buildColumnAxisLayer(cs, renderRange);
 
     const layers = [
@@ -550,6 +566,7 @@ export class MSADeckGLViewer {
       currentRegionLayer,
       lettersLayer,
       rowLabelsLayer,
+      regionAxisMarkerLayer,
       columnAxisLayer,
     ];
 
@@ -581,6 +598,7 @@ export class MSADeckGLViewer {
     const zoomScale = getZoomScale(zoom);
 
     if (ctrlZoom) {
+      this._userZoomed = true;
       // Pinch/ctrl+wheel zoom; scale delta to keep feel snappy
       const delta = -event.deltaY * 0.001 * this._scrollZoomSpeed;
       this.handleViewStateChange({
@@ -722,6 +740,23 @@ export class MSADeckGLViewer {
   }
 
   /**
+   * Build the ruler marker spanning the current region, so both window edges
+   * stay readable on the column axis
+   * @param {number} cellSize - Size of each cell
+   * @returns {PolygonLayer} The region axis marker layer
+   */
+  buildRegionAxisMarkerLayer(cellSize) {
+    const markerData = buildRegionAxisMarker(
+      cellSize,
+      this.state.currentRegion,
+      this.state.cols,
+      this.AXIS_HEIGHT,
+      getZoomScale(this.state.viewState.zoom)
+    );
+    return createRegionAxisMarkerLayer(markerData);
+  }
+
+  /**
    * Build the previous region border polygon layer (behind current)
    * @param {number} cellSize - Size of each cell
    * @returns {PolygonLayer} The previous region border layer
@@ -820,7 +855,23 @@ export class MSADeckGLViewer {
     const targetColumn = resolveRegionTargetColumn(region, 'center');
     if (!Number.isFinite(targetColumn)) return;
 
-    this.centerViewportOn({ column: Math.max(0, targetColumn) });
+    if (!this.container || this._userZoomed) {
+      this.centerViewportOn({ column: Math.max(0, targetColumn) });
+      return;
+    }
+
+    // Both window edges must stay on screen: zoom out when the region is wider
+    // than the viewport, otherwise keep the current zoom and just center it.
+    this.handleViewStateChange({
+      main: getRegionFocusViewState({
+        currentViewState: this.state.viewState,
+        containerWidth: this.container.clientWidth,
+        labelsWidth: this.LABELS_WIDTH,
+        cellSize: this.options.cellSize,
+        startCol: region.startCol,
+        endCol: region.endCol,
+      }),
+    });
   }
 
   initializeCameraIfReady() {

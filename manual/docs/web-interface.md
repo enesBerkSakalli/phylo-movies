@@ -18,7 +18,7 @@ The workspace is organized around the tree canvas, sidebar, and movie timeline.
 
 <figure className="manual-screenshot">
   <img src="/phylo-movies/manual/img/screenshots/workspace-overview.png" alt="Phylo-Movies visualization workspace with sidebar, tree canvas, and movie timeline" />
-  <figcaption>The workspace combines the tool sidebar, central tree canvas, pinned tree panel, and bottom movie timeline.</figcaption>
+  <figcaption>The workspace combines the tool sidebar, central tree canvas, and bottom movie timeline with playback, comparison, and pinned-tree controls.</figcaption>
 </figure>
 
 | Area                 | Purpose                                                                      |

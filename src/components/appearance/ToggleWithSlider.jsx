@@ -13,6 +13,10 @@ export function ToggleWithSlider({
   onSliderChange,
   sliderLabel,
 }) {
+  // sliderValue is the opacity of unfocused branches; the control shows how
+  // strongly they are dimmed, so moving right always means fainter.
+  const dimStrength = 1 - sliderValue;
+
   return (
     <div className="flex flex-col gap-3">
       <ToggleWithLabel
@@ -33,7 +37,7 @@ export function ToggleWithSlider({
               {sliderLabel}
             </Label>
             <span className="text-xs font-medium tabular-nums text-muted-foreground">
-              {Math.round((1 - sliderValue) * 100)}%
+              {Math.round(dimStrength * 100)}%
             </span>
           </div>
           <Slider
@@ -41,12 +45,12 @@ export function ToggleWithSlider({
             min={0}
             max={1}
             step={0.05}
-            value={[sliderValue]}
-            onValueChange={onSliderChange}
+            value={[dimStrength]}
+            onValueChange={([strength]) => onSliderChange([1 - strength])}
             className="w-full py-1"
           />
           <div className="text-2xs text-muted-foreground/80 leading-tight">
-            Lower values make unfocused branches fainter.
+            Higher values make unfocused branches fainter.
           </div>
         </div>
       )}

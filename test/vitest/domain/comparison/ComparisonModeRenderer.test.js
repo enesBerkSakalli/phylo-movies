@@ -2,7 +2,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ComparisonModeRenderer } from '../../../../src/treeVisualisation/comparison/ComparisonModeRenderer.js';
 import { useAppStore } from '../../../../src/state/phyloStore/store.js';
 import { VIEWPORT_FIT_OBSTRUCTION_SCOPES } from '../../../../src/treeVisualisation/spatial/layout.js';
-import { VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO } from '../../../../src/treeVisualisation/viewport/viewportFit.js';
+import {
+  VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO,
+  VIEWPORT_FIT_MODES,
+} from '../../../../src/treeVisualisation/viewport/viewportFit.js';
 
 describe('ComparisonModeRenderer', () => {
   const initialState = useAppStore.getState();
@@ -88,7 +91,7 @@ describe('ComparisonModeRenderer', () => {
     await renderer.renderStatic(0, 1);
 
     expect(focusOnTree).toHaveBeenCalledOnce();
-    expect(focusOnTree.mock.calls[0][2].includeLabelAnchorBounds).toBe(true);
+    expect(focusOnTree.mock.calls[0][2].fitMode).toBe(VIEWPORT_FIT_MODES.BRANCH);
     expect(focusOnTree.mock.calls[0][2].obstructionScope).toBe(
       VIEWPORT_FIT_OBSTRUCTION_SCOPES.CANVAS
     );

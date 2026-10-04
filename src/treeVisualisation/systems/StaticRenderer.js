@@ -8,7 +8,7 @@ import { VIEWPORT_FIT_OBSTRUCTION_SCOPES } from '../spatial/layout.js';
 import { tagTreeSide } from '../utils/layerDataUtils.js';
 import {
   VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO,
-  VIEWPORT_FIT_MODES,
+  getAutoFitLabelOptions,
 } from '../viewport/viewportFit.js';
 import { detectAnimationStage } from '../deckgl/interpolation/stages/animationStageDetector.js';
 
@@ -132,8 +132,7 @@ export class StaticRenderer {
     if (!options.skipAutoFit && this.controller._lastFocusedTreeIndex !== targetIndex) {
       const visibleLabels = state.labelsVisible === false ? [] : layerData.labels;
       this.controller.viewportManager.focusOnTree(layerData.nodes, visibleLabels, {
-        fitMode: VIEWPORT_FIT_MODES.BRANCH,
-        includeLabelAnchorBounds: visibleLabels.length > 0,
+        ...getAutoFitLabelOptions(visibleLabels.length),
         obstructionScope: VIEWPORT_FIT_OBSTRUCTION_SCOPES.CANVAS,
         maxFitAreaCenterDriftRatio: VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO,
         links: [...layerData.links, ...layerData.extensions],

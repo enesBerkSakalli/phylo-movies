@@ -25,6 +25,19 @@ export const VIEWPORT_HIGH_DENSITY_PADDING = 0.15;
 export const VIEWPORT_MEDIUM_DENSITY_PADDING = 0.1;
 export const VIEWPORT_LOW_DENSITY_PADDING = 0.05;
 
+// Automatic fits frame full label text so tip names are not clipped. Above this
+// many visible labels, long names would dominate the zoom, so the fit only
+// reserves label glyph height around the branches.
+export const AUTO_FIT_FULL_LABEL_MAX_COUNT = 100;
+
+export function getAutoFitLabelOptions(visibleLabelCount) {
+  if (visibleLabelCount <= 0) return { fitMode: VIEWPORT_FIT_MODES.BRANCH };
+  if (visibleLabelCount <= AUTO_FIT_FULL_LABEL_MAX_COUNT) {
+    return { fitMode: VIEWPORT_FIT_MODES.LABELS };
+  }
+  return { fitMode: VIEWPORT_FIT_MODES.BRANCH, includeLabelAnchorBounds: true };
+}
+
 export function calculateFocusViewport({
   nodes,
   labels,

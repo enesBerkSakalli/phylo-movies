@@ -42,7 +42,7 @@ function MovieChartSectionComponent() {
           aria-expanded={chartExpanded}
           aria-controls="distance-chart-panel"
           onClick={() => setChartExpanded((expanded) => !expanded)}
-          className="min-w-0 truncate text-left text-2xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground"
+          className="min-h-6 min-w-0 truncate text-left text-2xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground"
         >
           {chartExpanded ? 'Hide' : 'Show'} {getDistanceChartSectionLabel(barOptionValue, hasMsa)}
         </button>
@@ -51,6 +51,7 @@ function MovieChartSectionComponent() {
           <Select value={barOptionValue} onValueChange={setBarOption}>
             <SelectTrigger
               className="h-7 w-[176px] bg-card/95"
+              aria-label="Chart metric"
               aria-describedby="chart-select-help"
             >
               <SelectValue placeholder="Metric" />

@@ -9,7 +9,6 @@ import { TransitionInspectorPanel } from './components/TransitionInspectorPanel.
 import { Toaster } from './components/ui/sonner';
 import { TooltipProvider } from './components/ui/tooltip';
 import { Button } from './components/ui/button';
-import { HUD } from './components/HUD/HUD.jsx';
 import { SidebarProvider, SidebarInset } from './components/ui/sidebar';
 import { Loader2 } from 'lucide-react';
 
@@ -132,12 +131,16 @@ export function App() {
           />
 
           <SidebarInset className="min-w-0 overflow-hidden">
-            <div className="relative min-h-0 flex-1 overflow-hidden">
-              <DeckGLCanvas />
-              <TreeCanvasControls />
-              <HUD />
+            <div className="relative flex min-h-0 flex-1 overflow-hidden">
+              <div
+                className="relative min-h-0 min-w-0 flex-1 overflow-hidden"
+                data-tree-canvas-area
+              >
+                <DeckGLCanvas />
+                <TreeCanvasControls />
+                <VisualizationTreeRenderOverlay />
+              </div>
               <TransitionInspectorPanel />
-              <VisualizationTreeRenderOverlay />
             </div>
           </SidebarInset>
         </div>

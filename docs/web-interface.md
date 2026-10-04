@@ -12,7 +12,7 @@ This guide describes the UI surfaces that exist in the current React app.
 - Use the bottom transport buttons to move between input trees and generated frames. Select or hover timeline segments to inspect topology changes.
 - Use the left sidebar for dataset, layout, style, analysis, and view controls. MSA and taxa-color tools open as floating windows when those data are available.
 - Use the top-right canvas buttons, mouse wheel, or two-finger trackpad gesture to fit, zoom, reset, export a PNG, or record a WebM movie.
-- Use the floating **Pinned tree** panel to pin one input tree as an overlay reference. Use the bottom-bar comparison button for the true side-by-side two-tree view.
+- Use the **Pinned tree** control in the bottom bar, next to the comparison button, to pin one input tree as an overlay reference. Use the comparison button for the true side-by-side two-tree view.
 
 ## Setup Screen
 
@@ -83,9 +83,9 @@ Top-right canvas controls:
 
 The tree-size, label-size, branch-width, and label-spacing controls are in **Style -> Geometry & Labels**. These controls are useful when tip labels occupy more space than the tree, especially in circular layouts.
 
-### Pinned Tree Panel
+### Pinned Tree
 
-The floating **Pinned tree** panel starts in the lower-left corner of the canvas. It pins a selected input tree as a translucent overlay reference while the active tree remains in the main view. Previous/next controls choose which input tree is pinned. The viewport fits the active tree and pinned tree together so both remain visible after the pinned tree changes. The drag handle moves the panel, the close button hides the pinned overlay, and the eye button restores the panel.
+The **Pinned tree** control sits in the bottom bar, right after the comparison button. It pins a selected input tree as a translucent overlay reference while the active tree remains in the main view. Previous/next controls choose which input tree is pinned, the label shows the pinned input tree (or **None**), and the remove button clears the pinned overlay. The viewport fits the active tree and pinned tree together so both remain visible after the pinned tree changes.
 
 ### Bottom Movie Player
 

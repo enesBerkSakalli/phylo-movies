@@ -146,7 +146,7 @@ export function ColoringPanel({ onOpenTaxaColoring, onPreloadTaxaColoring }) {
         <div className="flex items-center justify-between px-2 py-2 w-full">
           <div className="flex items-center gap-2 overflow-hidden">
             <RefreshCw className="size-4 text-primary/80 shrink-0" />
-            <span className="text-xs text-foreground/70 truncate">Change Edges</span>
+            <span className="text-xs text-foreground/70 truncate">Changed edges</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="size-5 rounded-md border border-border/60 overflow-hidden shrink-0 group-hover:border-primary/40 transition-colors">

@@ -5,6 +5,7 @@ import { TransportControls } from './TransportControls.jsx';
 import { TimelineScrollControls } from './TimelineScrollControls/TimelineScrollControls.jsx';
 import { PlaybackSpeedControl } from './PlaybackSpeedControl/PlaybackSpeedControl.jsx';
 import { TimelineStatusStrip } from './TimelineStatusStrip.jsx';
+import { usePlaybackShortcuts } from './playbackShortcuts.js';
 import { TimelineSegmentTooltip } from '../timeline/TimelineSegmentTooltip.jsx';
 import {
   selectAnimationSpeed,
@@ -48,6 +49,7 @@ export function MoviePlayerBar() {
   const playerBarRef = useRef(null);
 
   const hasTimeline = Boolean(movieTimelineManager);
+  usePlaybackShortcuts(hasTimeline);
   const hasTransitionSegments = React.useMemo(
     () => (hasTimeline ? (movieTimelineManager?.hasTransitionSegments?.() ?? false) : false),
     [hasTimeline, movieTimelineManager]
@@ -111,12 +113,12 @@ export function MoviePlayerBar() {
       >
         <div className="flex flex-col">
           <div
-            className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-border/70 bg-muted/20 px-2 py-1 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]"
+            className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-border/70 bg-muted/20 px-2 py-1 xl:grid xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]"
             role="group"
             aria-label={MOVIE_PLAYER_ARIA_LABELS.primaryControls}
           >
             <div
-              className="flex min-w-0 items-center gap-1"
+              className="flex min-w-0 basis-full items-center gap-1 xl:basis-auto"
               role="group"
               aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineNavigation}
             >
@@ -142,12 +144,12 @@ export function MoviePlayerBar() {
               )}
             </div>
 
-            <div className="justify-self-end rounded-md border border-border/70 bg-background/80 px-1 py-0.5 shadow-sm lg:justify-self-center">
+            <div className="rounded-md border border-border/70 bg-background/80 px-1 py-0.5 shadow-sm xl:justify-self-center">
               <TransportControls onBackward={backward} onForward={forward} />
             </div>
 
             <div
-              className="col-span-2 flex min-w-0 flex-wrap items-center justify-end gap-2 lg:col-span-1"
+              className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2"
               role="group"
               aria-label={MOVIE_PLAYER_ARIA_LABELS.playbackSettings}
             >
@@ -383,7 +385,7 @@ function MotionStatusSlot() {
           contentClassName="border-border/60 bg-popover text-2xs font-mono text-popover-foreground"
         >
           <span className="inline-flex w-[7rem] shrink-0 items-center justify-center rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-primary cursor-help">
-            <span className="truncate text-center text-[10px] text-foreground leading-tight font-semibold">
+            <span className="truncate text-center text-xs text-foreground leading-tight font-semibold">
               {label}
             </span>
           </span>

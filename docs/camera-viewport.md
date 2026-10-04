@@ -14,17 +14,18 @@
 
 ## Auto-Fit Rules
 
-- Initial single-tree static render auto-fits branch and extension geometry. When labels are visible, it also reserves label-anchor glyph height, but it does not fit full label text width.
+- Automatic fits (initial single-tree render and comparison mode) cover branch and extension geometry. When up to 100 labels are visible they also fit full label text bounds (the same `labels` mode as manual fit) so no taxon name is clipped. Above 100 visible labels, long names would dominate the zoom, so the fit only reserves label-anchor glyph height. With labels hidden it fits branch geometry only.
 - Discrete tree changes auto-fit once when `_lastFocusedTreeIndex` changes.
 - Layout-affecting changes and untouched resizes clear the last focused tree so the next static render refits.
 - Animation and scrub interpolation frames do not auto-fit.
 - Label visibility changes redraw the layers with `skipAutoFit: true`; they do not move the camera.
 - Manual "fit visible content" includes label text only when labels are visible. With labels hidden, hidden label text is not part of the fit.
+- Manual fit returns the camera to the untouched state, so later canvas resizes (window, sidebar, docked inspector) refit instead of preserving the previous camera. Pan and zoom still mark the view as user-adjusted.
 
 ## Bounds Vocabulary
 
 - Branch bounds: node positions plus explicit link/path geometry passed to the fit calculation.
-- Label anchor bounds: visible label anchor positions expanded by one rendered label line height. Automatic branch fit may use these to keep glyphs away from the canvas edge without making long label text control zoom.
+- Label anchor bounds: visible label anchor positions expanded by one rendered label line height. Automatic fits of trees with more than 100 visible labels use these to keep glyphs away from the canvas edge without making long label text control zoom.
 - Label text bounds: label anchor positions expanded by the rendered text size heuristic.
 - Visible fit bounds: manual fit semantics, which include label text only when text labels are currently visible.
 - Comparison spacing bounds: side-by-side tree spacing uses each tree's local rendered radius and ignores hidden label text.

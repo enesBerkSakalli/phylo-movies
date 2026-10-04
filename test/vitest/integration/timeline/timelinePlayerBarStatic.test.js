@@ -32,6 +32,7 @@ describe('movie timeline player bar semantics', () => {
       root: 'Playback and comparison controls',
       playback: 'Movie playback controls',
       comparison: 'Comparison view controls',
+      pinnedTree: 'Pinned reference tree controls',
     });
   });
 
@@ -88,10 +89,11 @@ describe('movie timeline player bar semantics', () => {
     expect(playerBarSource).toContain('TimelineStatusStrip');
     expect(playerBarSource).toContain('selectOpenMsaViewer');
     expect(playerBarSource).toContain('Open alignment viewer');
-    expect(playerBarSource).toContain('grid-cols-[minmax(0,1fr)_auto] items-center gap-2');
-    expect(playerBarSource).toContain('lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]');
-    expect(playerBarSource).toContain('col-span-2 flex min-w-0 flex-wrap');
-    expect(playerBarSource).toContain('lg:col-span-1');
+    // Below xl the status strip takes its own row and the controls wrap under it.
+    expect(playerBarSource).toContain('flex flex-wrap items-center gap-x-2 gap-y-1');
+    expect(playerBarSource).toContain('xl:grid xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]');
+    expect(playerBarSource).toContain('basis-full items-center gap-1 xl:basis-auto');
+    expect(playerBarSource).toContain('ml-auto flex min-w-0 flex-wrap');
     expect(managerSource).toContain('getTimelineStatusSnapshot');
     expect(managerSource).toContain('buildTimelineStatusSnapshot');
     expect(statusStripSource).toContain('selectMovieTimelineManager');
@@ -111,10 +113,12 @@ describe('movie timeline player bar semantics', () => {
     expect(statusStripSource).toContain('border-border/40 bg-muted/20 backdrop-blur-sm');
     expect(statusStripSource).toContain('text-xs font-bold leading-tight tracking-tight uppercase');
     expect(statusStripSource).toContain(
-      'text-[10px] text-muted-foreground/80 leading-tight font-medium'
+      'text-xs text-muted-foreground/80 leading-tight font-medium'
     );
     expect(statusStripSource).toContain('<StatusItem icon={Film} label="Cursor">');
-    expect(statusStripSource).toContain('inline-flex w-[12rem] max-w-[30vw] shrink-0');
+    expect(statusStripSource).toContain(
+      'inline-flex w-auto max-w-[30vw] shrink-0 items-center sm:w-[12rem]'
+    );
     expect(statusStripSource).toContain('inline-flex w-[6.5rem] shrink-0');
     expect(statusStripSource).toContain('hidden w-[7rem] shrink-0');
     expect(statusStripSource).toContain('xl:inline-flex');
@@ -122,7 +126,7 @@ describe('movie timeline player bar semantics', () => {
       "Window size ${msaWindowSize ?? '-'} / Step size ${msaStepSize ?? '-'}"
     );
     expect(statusStripSource).toContain("W ${msaWindowSize ?? '-'} / S ${msaStepSize ?? '-'}");
-    expect(statusStripSource).toContain('text-[10px] text-foreground leading-tight font-semibold');
+    expect(statusStripSource).toContain('text-xs text-foreground leading-tight font-semibold');
     expect(playerBarSource).toContain('text-xs font-bold leading-tight tracking-tight uppercase');
     expect(playerBarSource).toContain('inline-flex w-[7rem] shrink-0');
     expect(statusStripSource).not.toContain('Tree Type');

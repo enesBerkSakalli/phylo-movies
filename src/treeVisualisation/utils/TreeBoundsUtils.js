@@ -60,7 +60,9 @@ export function calculateLabelBounds(labels, options = {}) {
     const [x, y] = label.position;
     const text = label.text || '';
     const width = Math.min(LABEL_BOUNDS_MAX_WIDTH_PX, text.length * charWidth);
-    const rotationRad = label.rotation || 0;
+    // deck.gl draws getAngle counter-clockwise on screen, and the orthographic
+    // view is y-down (flipY), so the world-space rotation is the negated angle.
+    const rotationRad = -(label.rotation || 0);
     const anchor = label.textAnchor || 'start';
     const xStartLocal = anchor === 'end' ? -width : 0;
     const xEndLocal = anchor === 'end' ? 0 : width;
