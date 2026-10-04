@@ -28,6 +28,7 @@ import { useSidebar } from '../ui/sidebar';
 import { Button } from '../ui/button';
 import { Activity, Menu, ChevronUp, ChevronDown, Dna } from 'lucide-react';
 import { AppTooltip } from '../ui/app-tooltip';
+import { cn } from '../../lib/utils';
 import { MOVIE_PLAYER_ARIA_LABELS, TIMELINE_LEGEND_ITEMS } from './MoviePlayerBar.contract.js';
 
 // ==========================================================================
@@ -113,12 +114,12 @@ export function MoviePlayerBar() {
       >
         <div className="flex flex-col">
           <div
-            className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-border/70 bg-muted/20 px-2 py-1 xl:grid xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]"
+            className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-border/70 bg-muted/20 px-2 py-1 lg:grid lg:grid-cols-[minmax(0,1fr)_auto_auto] xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]"
             role="group"
             aria-label={MOVIE_PLAYER_ARIA_LABELS.primaryControls}
           >
             <div
-              className="flex min-w-0 basis-full items-center gap-1 xl:basis-auto"
+              className="flex min-w-0 basis-full items-center gap-1 lg:basis-auto"
               role="group"
               aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineNavigation}
             >
@@ -140,6 +141,7 @@ export function MoviePlayerBar() {
                 <div className="flex min-w-0 items-center gap-2 overflow-hidden">
                   <TimelineStatusStrip />
                   <MsaPlayerBarAction hasMsa={hasMsa} onOpen={handleOpenMsaViewer} />
+                  <MotionStageLabel />
                 </div>
               )}
             </div>
@@ -153,8 +155,6 @@ export function MoviePlayerBar() {
               role="group"
               aria-label={MOVIE_PLAYER_ARIA_LABELS.playbackSettings}
             >
-              {hasTimeline && <MotionStatusSlot />}
-
               {toolbarExpanded && (
                 <PlaybackSpeedControl value={animationSpeed} setValue={setAnimationSpeed} />
               )}
@@ -189,12 +189,6 @@ export function MoviePlayerBar() {
             role="group"
             aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineTrack}
           >
-            {hasTimeline && (
-              <TimelineLayerControls
-                hasTransitionSegments={hasTransitionSegments}
-                showViewportControls={toolbarExpanded}
-              />
-            )}
             {hasTimeline ? (
               <div className="interpolation-timeline-container">
                 <div ref={timelineHostRef} className="timeline-visual-layer" />
@@ -210,7 +204,20 @@ export function MoviePlayerBar() {
             )}
           </div>
 
-          <MovieChartSection />
+          <div
+            className="flex flex-wrap items-center gap-x-3 gap-y-1 bg-muted/10 px-2 py-1"
+            role="group"
+            aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineFooter}
+          >
+            {/* Chart toggle (first), metric picker and chart panel (last, full width). */}
+            <MovieChartSection />
+            {hasTimeline && <TimelineLegend hasTransitionSegments={hasTransitionSegments} />}
+            {hasTimeline && toolbarExpanded && (
+              <div className="order-4 shrink-0">
+                <TimelineScrollControls />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -366,32 +373,28 @@ function MsaPlayerBarAction({ hasMsa, onOpen }) {
   );
 }
 
-function MotionStatusSlot() {
+// Topology-change phase of the current transition. Its own component so stage
+// updates during playback do not re-render the status strip; the slot keeps its
+// width while idle (where there is room) so nothing shifts when a transition starts.
+function MotionStageLabel() {
   const stage = useAppStore(selectCurrentAnimationStage);
+  const active = Boolean(stage);
   const label = formatAnimationStage(stage);
-  const tooltip = stage
-    ? `Current topology-change phase: ${label}`
-    : 'No topology-change motion is active.';
 
   return (
-    <div className="flex shrink-0 items-center gap-2" data-motion-status="stable">
-      <Activity className="size-3.5 shrink-0 text-primary" aria-hidden />
-      <div className="flex shrink-0 items-center gap-2">
-        <div className="shrink-0 text-xs font-bold leading-tight tracking-tight uppercase">
-          Motion
-        </div>
-        <AppTooltip
-          content={tooltip}
-          contentClassName="border-border/60 bg-popover text-2xs font-mono text-popover-foreground"
-        >
-          <span className="inline-flex w-[7rem] shrink-0 items-center justify-center rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-primary cursor-help">
-            <span className="truncate text-center text-xs text-foreground leading-tight font-semibold">
-              {label}
-            </span>
-          </span>
-        </AppTooltip>
-      </div>
-    </div>
+    <span
+      className={cn(
+        'inline-flex shrink-0 items-center gap-1.5 text-xs font-semibold text-primary sm:w-[5.5rem]',
+        !active && 'invisible max-sm:hidden'
+      )}
+      aria-hidden={!active}
+    >
+      <Activity className="size-3.5 shrink-0" aria-hidden />
+      <span className="truncate">
+        <span className="sr-only">Transition phase: </span>
+        {label}
+      </span>
+    </span>
   );
 }
 
@@ -412,23 +415,10 @@ function formatAnimationStage(stage) {
   }
 }
 
-function TimelineLayerControls({ hasTransitionSegments, showViewportControls }) {
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 bg-muted/10 px-2 py-1">
-      <TimelineLegend hasTransitionSegments={hasTransitionSegments} />
-      {showViewportControls && (
-        <div className="shrink-0">
-          <TimelineScrollControls />
-        </div>
-      )}
-    </div>
-  );
-}
-
 function TimelineLegend({ hasTransitionSegments }) {
   return (
     <div
-      className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1 overflow-hidden text-2xs font-medium text-muted-foreground"
+      className="order-5 flex min-w-0 basis-full flex-wrap items-center gap-x-3 gap-y-1 overflow-hidden text-2xs font-medium text-muted-foreground sm:order-2 sm:flex-1 sm:basis-auto"
       role="group"
       aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineLegend}
     >

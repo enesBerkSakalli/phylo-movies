@@ -57,15 +57,12 @@ describe('movie timeline player bar semantics', () => {
     expect(existsSync(toolbarPath)).toBe(true);
     expect(playerBarSource).toContain('TimelineScrollControls');
     expect(playerBarSource).toContain('MOVIE_PLAYER_ARIA_LABELS.timelineTrack');
-    expect(playerBarSource).toContain('<TimelineLayerControls');
-    expect(playerBarSource.indexOf('<TimelineLayerControls')).toBeLessThan(
+    // View controls sit in the footer row under the track, in one quiet style.
+    expect(playerBarSource.indexOf('<TimelineScrollControls />')).toBeGreaterThan(
       playerBarSource.indexOf('className="interpolation-timeline-container"')
     );
-    expect(playerBarSource).toContain('<TimelineScrollControls />');
-    expect(toolbarSource).toContain('TIMELINE_ZOOM_BUTTON_CLASS');
-    expect(toolbarSource).toContain('bg-background/85');
-    expect(toolbarSource).toContain('border border-border/50');
-    expect(toolbarSource).toContain('hover:bg-primary/10');
+    expect(toolbarSource).toContain('TIMELINE_VIEW_BUTTON_CLASS');
+    expect(toolbarSource).not.toContain('TIMELINE_ZOOM_BUTTON_CLASS');
     expect(toolbarSource).not.toContain('opacity-45');
     expect(toolbarSource).not.toContain('hover:opacity-100');
     expect(toolbarSource).not.toContain('focus-within:opacity-100');
@@ -89,35 +86,34 @@ describe('movie timeline player bar semantics', () => {
     expect(playerBarSource).toContain('TimelineStatusStrip');
     expect(playerBarSource).toContain('selectOpenMsaViewer');
     expect(playerBarSource).toContain('Open alignment viewer');
-    // Below xl the status strip takes its own row and the controls wrap under it.
+    // One row from lg up (status strip takes the remaining width, transport centred
+    // from xl); below lg the status strip takes its own row and the controls wrap.
     expect(playerBarSource).toContain('flex flex-wrap items-center gap-x-2 gap-y-1');
-    expect(playerBarSource).toContain('xl:grid xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]');
-    expect(playerBarSource).toContain('basis-full items-center gap-1 xl:basis-auto');
+    expect(playerBarSource).toContain(
+      'lg:grid lg:grid-cols-[minmax(0,1fr)_auto_auto] xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]'
+    );
+    expect(playerBarSource).toContain('basis-full items-center gap-1 lg:basis-auto');
     expect(playerBarSource).toContain('ml-auto flex min-w-0 flex-wrap');
     expect(managerSource).toContain('getTimelineStatusSnapshot');
     expect(managerSource).toContain('buildTimelineStatusSnapshot');
     expect(statusStripSource).toContain('selectMovieTimelineManager');
     expect(playerBarSource).toContain('selectCurrentAnimationStage');
-    expect(playerBarSource).toContain('<MotionStatusSlot />');
+    // The transition stage lives in its own component next to the status strip,
+    // so stage updates during playback never re-render the strip.
+    expect(playerBarSource).toContain('<MotionStageLabel />');
     expect(playerBarSource).toContain(
-      'function MotionStatusSlot() {\n  const stage = useAppStore(selectCurrentAnimationStage);'
+      'function MotionStageLabel() {\n  const stage = useAppStore(selectCurrentAnimationStage);'
     );
-    expect(playerBarSource).toContain('data-motion-status="stable"');
-    expect(playerBarSource).toContain('No topology-change motion is active.');
+    expect(playerBarSource).not.toContain('MotionStatusSlot');
     expect(statusStripSource).not.toContain('selectCurrentAnimationStage');
     expect(statusStripSource).not.toContain('AnimationStageStatus');
     expect(statusStripSource).toContain('getTimelineStatusSnapshot');
     expect(statusStripSource).toContain('buildTimelineStatusSnapshot');
     expect(statusStripSource).toContain('Movie timeline status');
     expect(statusStripSource).toContain('flex-nowrap overflow-hidden');
-    expect(statusStripSource).toContain('border-border/40 bg-muted/20 backdrop-blur-sm');
-    expect(statusStripSource).toContain('text-xs font-bold leading-tight tracking-tight uppercase');
-    expect(statusStripSource).toContain(
-      'text-xs text-muted-foreground/80 leading-tight font-medium'
-    );
     expect(statusStripSource).toContain('<StatusItem icon={Film} label="Cursor">');
     expect(statusStripSource).toContain(
-      'inline-flex w-auto max-w-[30vw] shrink-0 items-center sm:w-[12rem]'
+      'inline-flex w-auto max-w-[30vw] shrink-0 items-center cursor-help sm:w-[12rem]'
     );
     expect(statusStripSource).toContain('inline-flex w-[6.5rem] shrink-0');
     expect(statusStripSource).toContain('hidden w-[7rem] shrink-0');
@@ -126,21 +122,29 @@ describe('movie timeline player bar semantics', () => {
       "Window size ${msaWindowSize ?? '-'} / Step size ${msaStepSize ?? '-'}"
     );
     expect(statusStripSource).toContain("W ${msaWindowSize ?? '-'} / S ${msaStepSize ?? '-'}");
-    expect(statusStripSource).toContain('text-xs text-foreground leading-tight font-semibold');
-    expect(playerBarSource).toContain('text-xs font-bold leading-tight tracking-tight uppercase');
-    expect(playerBarSource).toContain('inline-flex w-[7rem] shrink-0');
+    // One flat strip: no bordered chips inside it.
+    expect(statusStripSource).not.toContain('border-primary/20 bg-primary/10');
     expect(statusStripSource).not.toContain('Tree Type');
     expect(statusStripSource).not.toContain('Badge');
     const timelineStatusPosition = playerBarSource.indexOf('<TimelineStatusStrip />');
     const msaActionPosition = playerBarSource.indexOf('<MsaPlayerBarAction');
+    const motionStagePosition = playerBarSource.indexOf('<MotionStageLabel />');
     const playbackSettingsPosition = playerBarSource.indexOf(
       'aria-label={MOVIE_PLAYER_ARIA_LABELS.playbackSettings}'
     );
-    const motionStatusPosition = playerBarSource.indexOf('<MotionStatusSlot />');
 
     expect(timelineStatusPosition).toBeLessThan(msaActionPosition);
-    expect(msaActionPosition).toBeLessThan(playbackSettingsPosition);
-    expect(playbackSettingsPosition).toBeLessThan(motionStatusPosition);
+    expect(msaActionPosition).toBeLessThan(motionStagePosition);
+    expect(motionStagePosition).toBeLessThan(playbackSettingsPosition);
+  });
+
+  it('puts legend, timeline view controls, and metrics in one footer row', () => {
+    const playerBarSource = readRepoFile('src', 'components', 'movie-player', 'MoviePlayerBar.jsx');
+    expect(playerBarSource).toContain('aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineFooter}');
+    expect(playerBarSource).not.toContain('TimelineLayerControls');
+    const footerPosition = playerBarSource.indexOf('MOVIE_PLAYER_ARIA_LABELS.timelineFooter');
+    expect(playerBarSource.indexOf('<MovieChartSection />')).toBeGreaterThan(footerPosition);
+    expect(playerBarSource.indexOf('<TimelineScrollControls />')).toBeGreaterThan(footerPosition);
   });
 
   it('isolates high-frequency timeline and chart state from the player shell', () => {

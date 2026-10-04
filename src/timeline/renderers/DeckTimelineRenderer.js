@@ -201,7 +201,18 @@ export class DeckTimelineRenderer {
       layers: [],
       onViewStateChange: () => {},
       glOptions: { alpha: true, preserveDrawingBuffer: true },
+      onLoad: () => this._removeDeckCanvasFromTabOrder(),
     });
+    this._removeDeckCanvasFromTabOrder();
+  }
+
+  // The wrapper element is the keyboard-operable slider; deck.gl's own canvas
+  // would otherwise be a second, unnamed tab stop inside it.
+  _removeDeckCanvasFromTabOrder() {
+    const deckCanvas = this.canvas?.querySelector?.('canvas');
+    if (!deckCanvas) return;
+    deckCanvas.setAttribute('tabindex', '-1');
+    deckCanvas.setAttribute('aria-hidden', 'true');
   }
 
   _setupAccessibility() {

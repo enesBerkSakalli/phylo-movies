@@ -17,7 +17,7 @@ export function PlaybackSpeedControl({ value, setValue }) {
       <span id="speed-control-label" className="sr-only">
         Playback speed
       </span>
-      <AppTooltip content={<p>Playback Speed: {value}x</p>}>
+      <AppTooltip content={<p>Playback speed: {value.toFixed(1)}×</p>}>
         <Gauge className="size-4" />
       </AppTooltip>
       <Slider
@@ -28,7 +28,7 @@ export function PlaybackSpeedControl({ value, setValue }) {
         value={[value]}
         onValueChange={handleChange}
         aria-label="Playback speed"
-        className="w-32"
+        className="w-32 [&_[data-slot=slider-thumb]]:size-[18px]"
       />
       <span className="w-9 text-right text-xs font-semibold tabular-nums" aria-hidden>
         {value.toFixed(1)}×

@@ -12,11 +12,8 @@ import {
   useAppStore,
 } from '../../../state/phyloStore/store.js';
 
-const TIMELINE_SCROLL_BUTTON_CLASS =
-  'size-7 text-muted-foreground hover:bg-background/80 hover:text-foreground focus-visible:text-foreground';
-
-const TIMELINE_ZOOM_BUTTON_CLASS =
-  'size-7 border border-border/50 bg-background/85 text-foreground shadow-sm hover:border-primary/50 hover:bg-primary/10 hover:text-primary focus-visible:border-primary/60 focus-visible:text-primary';
+const TIMELINE_VIEW_BUTTON_CLASS =
+  'size-7 text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:text-foreground';
 
 export function TimelineScrollControls() {
   const scrollToStartTimeline = useAppStore(selectScrollToStartTimeline);
@@ -41,7 +38,6 @@ export function TimelineScrollControls() {
       tooltip: 'Zoom out timeline',
       Icon: ZoomOut,
       onClick: zoomOutTimeline,
-      emphasis: true,
     },
     {
       id: 'fitToWindowBtn',
@@ -49,7 +45,6 @@ export function TimelineScrollControls() {
       tooltip: 'Fit timeline to window',
       Icon: Scan,
       onClick: fitTimeline,
-      emphasis: true,
     },
     {
       id: 'zoomInBtn',
@@ -57,7 +52,6 @@ export function TimelineScrollControls() {
       tooltip: 'Zoom in timeline',
       Icon: ZoomIn,
       onClick: zoomInTimeline,
-      emphasis: true,
     },
     {
       id: 'scrollToEndBtn',
@@ -70,11 +64,11 @@ export function TimelineScrollControls() {
 
   return (
     <div
-      className="timeline-view-controls flex items-center gap-1 rounded-md border border-border/60 bg-background/85 p-1 shadow-sm backdrop-blur-sm transition-colors duration-150 hover:border-primary/35 focus-within:border-primary/45"
+      className="timeline-view-controls flex items-center gap-0.5"
       role="group"
       aria-label="Timeline viewport controls"
     >
-      {controls.map(({ id, label, tooltip, Icon, onClick, emphasis }) => (
+      {controls.map(({ id, label, tooltip, Icon, onClick }) => (
         <AppTooltip key={id} content={tooltip}>
           <Button
             id={id}
@@ -84,9 +78,9 @@ export function TimelineScrollControls() {
             aria-label={label}
             disabled={disabled}
             onClick={onClick}
-            className={emphasis ? TIMELINE_ZOOM_BUTTON_CLASS : TIMELINE_SCROLL_BUTTON_CLASS}
+            className={TIMELINE_VIEW_BUTTON_CLASS}
           >
-            <Icon className={emphasis ? 'size-3.5' : 'size-3'} aria-hidden />
+            <Icon className="size-3.5" aria-hidden />
           </Button>
         </AppTooltip>
       ))}

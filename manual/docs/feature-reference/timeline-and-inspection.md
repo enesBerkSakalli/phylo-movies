@@ -8,15 +8,18 @@ The movie timeline controls navigation through input trees and generated transit
 
 ## Transport Controls
 
-| Control                         | Meaning                                                                   |
-| ------------------------------- | ------------------------------------------------------------------------- |
-| **Previous input tree**         | Jumps to the previous original input tree.                                |
-| **Previous generated frame**    | Moves one generated frame backward.                                       |
-| **Play / Pause**                | Starts or stops animated playback.                                        |
-| **Next generated frame**        | Moves one generated frame forward.                                        |
-| **Next input tree**             | Jumps to the next original input tree.                                    |
-| **Show / Hide comparison view** | Displays or hides a neighboring comparison tree.                          |
-| **Link / Unlink tree views**    | Keeps comparison views synchronized or lets each view move independently. |
+| Control                         | Meaning                                                                                                |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| **Previous input tree**         | Jumps to the previous original input tree.                                                             |
+| **Previous generated frame**    | Moves one generated frame backward.                                                                    |
+| **Play / Pause**                | Starts or stops animated playback.                                                                     |
+| **Next generated frame**        | Moves one generated frame forward.                                                                     |
+| **Next input tree**             | Jumps to the next original input tree.                                                                 |
+| **Show / Hide comparison view** | Displays or hides a neighboring comparison tree.                                                       |
+| **Link / Unlink tree views**    | Keeps comparison views synchronized or lets each view move independently.                              |
+| **Pinned tree ‹ ›**             | Pins a neighbouring input tree as a translucent overlay reference; starts from the tree at the cursor. |
+
+Keyboard: **Space** plays or pauses, **← / →** step one generated frame, and **Shift + ← / →** jump between input trees. The keys are ignored while a text field, slider, or menu has focus.
 
 Input tree jumps skip generated interpolation frames. Generated-frame stepping is for detailed review of the transition between neighboring input trees.
 
@@ -30,12 +33,12 @@ Input tree jumps skip generated interpolation frames. Generated-frame stepping i
 
 ## Playback Settings
 
-| Control                                 | Meaning                                                                                |
-| --------------------------------------- | -------------------------------------------------------------------------------------- |
-| **Motion status**                       | Reports the current topology-change phase, such as Collapse, Expand, Reorder, or Idle. |
-| **Playback Speed**                      | Adjusts animation speed from slow review to faster playback.                           |
-| **Collapse / Expand timeline controls** | Hides or shows secondary timeline controls.                                            |
-| **Timeline scroll controls**            | Moves the visible timeline range when the sequence is wider than the screen.           |
+| Control                                 | Meaning                                                                          |
+| --------------------------------------- | -------------------------------------------------------------------------------- |
+| **Transition phase**                    | Shown next to the cursor while a transition plays: Collapse, Expand, or Reorder. |
+| **Playback Speed**                      | Adjusts animation speed from slow review to faster playback.                     |
+| **Collapse / Expand timeline controls** | Hides or shows secondary timeline controls.                                      |
+| **Timeline scroll controls**            | Moves the visible timeline range when the sequence is wider than the screen.     |
 
 ## Metric Chart
 
