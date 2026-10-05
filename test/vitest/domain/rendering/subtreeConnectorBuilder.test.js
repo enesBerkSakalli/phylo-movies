@@ -1,10 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { buildSubtreeConnectors } from '../../../../src/treeVisualisation/deckgl/data/transforms/SubtreeConnectorBuilder.js';
 import { buildConnectorPathConnections } from '../../../../src/treeVisualisation/deckgl/data/transforms/ConnectorPathBuilder.js';
-import {
-  sortConnectorConnectionsByAngle,
-  splitActivePassiveConnectorConnections,
-} from '../../../../src/treeVisualisation/deckgl/data/transforms/ConnectorConnectionOrdering.js';
 import { toSubtreeKey } from '../../../../src/domain/tree/splits.js';
 
 const makeLeaf = (index, name, position, parentId = null) => ({
@@ -161,42 +157,6 @@ describe('SubtreeConnectorBuilder', function () {
     ).toBe(true);
     expect(isMoving(makeColorManager())).toBe(false);
     expect(isMoving(null)).toBe(false);
-  });
-
-  it('orders connectors by angle and splits active from passive', function () {
-    const activeLowTarget = {
-      id: 'active-low-target',
-      isCurrentlyMoving: true,
-      sourceInfo: { angle: 2 },
-      targetInfo: { angle: 1 },
-    };
-    const passiveLowestSource = {
-      id: 'passive-lowest-source',
-      isCurrentlyMoving: false,
-      sourceInfo: { angle: 1 },
-      targetInfo: { angle: 3 },
-    };
-    const passiveHighTarget = {
-      id: 'passive-high-target',
-      isCurrentlyMoving: false,
-      sourceInfo: { angle: 2 },
-      targetInfo: { angle: 4 },
-    };
-    const ordered = sortConnectorConnectionsByAngle(
-      [passiveHighTarget, activeLowTarget, passiveLowestSource],
-      [0, 0],
-      [160, 0]
-    );
-
-    expect(ordered.map((connection) => connection.id)).toEqual([
-      'passive-lowest-source',
-      'active-low-target',
-      'passive-high-target',
-    ]);
-
-    const split = splitActivePassiveConnectorConnections(ordered);
-    expect(split.activeConnections).toEqual([activeLowTarget]);
-    expect(split.passiveConnections).toEqual([passiveLowestSource, passiveHighTarget]);
   });
 
   it('builds passive paths first, then active paths', function () {

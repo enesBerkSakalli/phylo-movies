@@ -2,17 +2,6 @@ import { buildBundledBezierPath } from '../../builders/geometry/connectors/Conne
 import { getBundleAncestor, pushOutward, chooseBundlePoint } from './ComparisonGeometryUtils.js';
 
 const CONNECTOR_PATH_SAMPLES = 24;
-const PASSIVE_CONNECTOR_STYLE = Object.freeze({
-  isActive: false,
-  bundlingStrength: 0.85,
-  width: 1.5,
-});
-const ACTIVE_CONNECTOR_STYLE = Object.freeze({
-  isActive: true,
-  bundlingStrength: 0.5,
-  width: 3.0,
-  outwardPushFactor: 1.08,
-});
 
 const indexById = (positions) =>
   new Map(
@@ -21,196 +10,70 @@ const indexById = (positions) =>
       .map((info) => [info.id, info])
   );
 
-export function buildConnectorPathConnections(params) {
-  const {
-    activeConnections,
-    passiveConnections,
-    leftCenter,
-    rightCenter,
-    leftRadius,
-    rightRadius,
-    leftPositions,
-    rightPositions,
-  } = params;
-  const leftInfoById = indexById(leftPositions);
-  const rightInfoById = indexById(rightPositions);
-
-  const passivePaths = buildBundledConnectorPaths({
-    connectionGroups: groupPassiveConnections(passiveConnections, leftInfoById, rightInfoById),
-    leftCenter,
-    rightCenter,
-    leftRadius,
-    rightRadius,
-    leftInfoById,
-    rightInfoById,
-    ...PASSIVE_CONNECTOR_STYLE,
-  });
-
-  const activePaths = buildBundledConnectorPaths({
-    connections: activeConnections,
-    leftCenter,
-    rightCenter,
-    leftRadius,
-    rightRadius,
-    leftInfoById,
-    rightInfoById,
-    ...ACTIVE_CONNECTOR_STYLE,
-  });
-
-  return passivePaths.concat(activePaths);
-}
-
-function buildBundledConnectorPaths(params) {
-  const {
-    connections = [],
-    connectionGroups = [],
-    leftCenter,
-    rightCenter,
-    leftRadius,
-    rightRadius,
-    leftInfoById,
-    rightInfoById,
-    isActive,
-    bundlingStrength,
-    width,
-    outwardPushFactor,
-  } = params;
-
-  const results = [];
-
-  if (isActive) {
-    if (!connections.length) {
-      return [];
-    }
-
-    const activeGroups = groupActiveConnectorConnections(connections);
-    activeGroups.forEach((group, groupIndex) => {
-      let srcBundlePoint = chooseBundlePoint(
-        group.connections,
-        leftCenter,
-        leftRadius,
-        true,
-        leftInfoById
-      );
-      let dstBundlePoint = chooseBundlePoint(
-        group.connections,
-        rightCenter,
-        rightRadius,
-        false,
-        rightInfoById
-      );
-
-      if (outwardPushFactor) {
-        srcBundlePoint = pushOutward(srcBundlePoint, leftCenter, outwardPushFactor);
-        dstBundlePoint = pushOutward(dstBundlePoint, rightCenter, outwardPushFactor);
-      }
-
-      group.connections.forEach((connection, index) => {
-        const path = buildPathForConnection(
-          connection,
-          srcBundlePoint,
-          dstBundlePoint,
-          leftCenter,
-          rightCenter,
-          bundlingStrength
-        );
-
-        if (path.length) {
-          results.push({
-            ...connection,
-            id: `${connection.id}-active-${groupIndex}-${index}`,
-            path,
-            width,
-          });
-        }
-      });
-    });
-    return results;
-  }
-
-  for (const group of connectionGroups) {
-    const groupBundlePoint = chooseBundlePoint(
-      group.connections,
-      leftCenter,
-      leftRadius,
-      true,
-      leftInfoById
-    );
-    const groupDstBundlePoint = chooseBundlePoint(
-      group.connections,
-      rightCenter,
-      rightRadius,
-      false,
-      rightInfoById
-    );
-
-    group.connections.forEach((connection, index) => {
-      const path = buildPathForConnection(
-        connection,
-        groupBundlePoint,
-        groupDstBundlePoint,
-        leftCenter,
-        rightCenter,
-        bundlingStrength
-      );
-
-      if (path.length) {
-        results.push({ ...connection, id: `${connection.id}-${index}`, path, width });
-      }
-    });
-  }
-
-  return results;
-}
-
-function groupPassiveConnections(connections, leftInfoById, rightInfoById) {
+const groupBy = (items, keyOf) => {
   const groups = new Map();
-
-  connections.forEach((connection) => {
-    const groupKey = `${getBundleAncestor(connection.sourceInfo, leftInfoById).id}|${
-      getBundleAncestor(connection.targetInfo, rightInfoById).id
-    }`;
-    if (!groups.has(groupKey)) {
-      groups.set(groupKey, { connections: [] });
-    }
-    groups.get(groupKey).connections.push(connection);
-  });
-
+  for (const item of items) {
+    const key = keyOf(item);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(item);
+  }
   return Array.from(groups.values());
-}
+};
 
-function groupActiveConnectorConnections(connections) {
-  const groups = new Map();
-
-  connections.forEach((connection, index) => {
-    const groupKey = connection.bundleGroupKey || `active-${index}`;
-    if (!groups.has(groupKey)) {
-      groups.set(groupKey, { key: groupKey, connections: [] });
-    }
-    groups.get(groupKey).connections.push(connection);
-  });
-
-  return Array.from(groups.values());
-}
-
-function buildPathForConnection(
-  connection,
-  srcBundlePoint,
-  dstBundlePoint,
+export function buildConnectorPathConnections({
+  activeConnections,
+  passiveConnections,
   leftCenter,
   rightCenter,
-  bundlingStrength
-) {
-  return buildBundledBezierPath(
-    connection.source,
-    connection.target,
-    srcBundlePoint,
-    dstBundlePoint,
-    CONNECTOR_PATH_SAMPLES,
-    {
-      bundlingStrength,
-      sourceCenter: leftCenter,
-      targetCenter: rightCenter,
+  leftRadius,
+  rightRadius,
+  leftPositions,
+  rightPositions,
+}) {
+  const leftInfoById = indexById(leftPositions);
+  const rightInfoById = indexById(rightPositions);
+  const paths = [];
+
+  const bundlePoints = (group) => [
+    chooseBundlePoint(group, leftCenter, leftRadius, true, leftInfoById),
+    chooseBundlePoint(group, rightCenter, rightRadius, false, rightInfoById),
+  ];
+  const emit = (group, srcPoint, dstPoint, bundlingStrength, width, idPrefix) =>
+    group.forEach((connection, index) => {
+      const path = buildBundledBezierPath(
+        connection.source,
+        connection.target,
+        srcPoint,
+        dstPoint,
+        CONNECTOR_PATH_SAMPLES,
+        { bundlingStrength, sourceCenter: leftCenter, targetCenter: rightCenter }
+      );
+      if (path.length) {
+        paths.push({ ...connection, id: `${connection.id}${idPrefix}${index}`, path, width });
+      }
+    });
+
+  // Passive: loose, thin bundles per pair of top-level ancestors; drawn first.
+  groupBy(
+    passiveConnections,
+    ({ sourceInfo, targetInfo }) =>
+      `${getBundleAncestor(sourceInfo, leftInfoById).id}|${getBundleAncestor(targetInfo, rightInfoById).id}`
+  ).forEach((group) => emit(group, ...bundlePoints(group), 0.85, 1.5, '-'));
+
+  // Active: tight, thick bundles per moving subtree, pushed outward to ride over the passive ones.
+  groupBy(activeConnections, (connection) => connection.bundleGroupKey).forEach(
+    (group, groupIndex) => {
+      const [srcPoint, dstPoint] = bundlePoints(group);
+      emit(
+        group,
+        pushOutward(srcPoint, leftCenter, 1.08),
+        pushOutward(dstPoint, rightCenter, 1.08),
+        0.5,
+        3.0,
+        `-active-${groupIndex}-`
+      );
     }
   );
+
+  return paths;
 }

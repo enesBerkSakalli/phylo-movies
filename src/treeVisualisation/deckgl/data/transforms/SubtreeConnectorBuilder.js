@@ -8,10 +8,6 @@ import {
   toSubtreeKey,
 } from '../../../../domain/tree/splits.js';
 import { computeConnectionColor } from './ComparisonColorUtils.js';
-import {
-  sortConnectorConnectionsByAngle,
-  splitActivePassiveConnectorConnections,
-} from './ConnectorConnectionOrdering.js';
 import { buildConnectorPathConnections } from './ConnectorPathBuilder.js';
 
 const DEFAULT_CENTER = [0, 0];
@@ -96,12 +92,9 @@ export function buildSubtreeConnectors(options) {
     });
   }
 
-  const { activeConnections, passiveConnections } = splitActivePassiveConnectorConnections(
-    sortConnectorConnectionsByAngle(connections, leftCenter, rightCenter)
-  );
   return buildConnectorPathConnections({
-    activeConnections,
-    passiveConnections,
+    activeConnections: connections.filter((connection) => connection.isCurrentlyMoving),
+    passiveConnections: connections.filter((connection) => !connection.isCurrentlyMoving),
     leftCenter,
     rightCenter,
     leftRadius,

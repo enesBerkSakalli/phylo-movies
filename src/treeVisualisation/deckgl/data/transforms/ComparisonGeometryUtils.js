@@ -25,15 +25,6 @@ export const pushOutward = (pt, center, factor = 1.05) => {
   return [center[0] + dx * factor, center[1] + dy * factor, 0];
 };
 
-export const getAngle = (nodeOrPoint, center) => {
-  if (!nodeOrPoint) return 0;
-  if (nodeOrPoint.angle !== undefined) return nodeOrPoint.angle;
-  if (nodeOrPoint.rotatedAngle !== undefined) return nodeOrPoint.rotatedAngle;
-  const pt = nodeOrPoint.position || nodeOrPoint;
-  if (!Array.isArray(pt)) return 0;
-  return Math.atan2(pt[1] - center[1], pt[0] - center[0]);
-};
-
 export function getBundleAncestor(entry, entryById, targetDepth = 2) {
   let current = entry;
 
