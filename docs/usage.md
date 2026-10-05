@@ -25,16 +25,16 @@ Backend upload validation requires at least one of `treeFile` or `msaFile`. Empt
 
 ## Outputs
 
-| Output                                         | Where it appears                                                                       |
-| ---------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Processed movie payload                        | Stored in browser storage under the app data service and loaded by `/visualization`.   |
-| Tree movie                                     | Main WebGL tree canvas.                                                                |
-| Timeline                                       | Bottom movie player bar.                                                               |
-| RF, weighted RF, scale, and movement summaries | Timeline/chart panels, sidebar stats, and transition inspector when data is available. |
-| MSA view                                       | Floating **Sequence Alignment** window when MSA data is loaded.                        |
-| Moved-subtree analytics                        | **Analysis -> Moved Subtrees** floating window.                                        |
-| Static image export                            | Top-right canvas export button.                                                        |
-| WebM recording                                 | Top-right recording controls.                                                          |
+| Output                                         | Where it appears                                                                                  |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Processed movie payload                        | Stored in browser storage under the app data service and loaded by `/visualization`.              |
+| Tree movie                                     | Main WebGL tree canvas.                                                                           |
+| Timeline                                       | Bottom movie player bar.                                                                          |
+| RF, weighted RF, scale, and movement summaries | Timeline strip and hover tooltip, sidebar stats, and transition inspector when data is available. |
+| MSA view                                       | Floating **Sequence Alignment** window when MSA data is loaded.                                   |
+| Moved-subtree analytics                        | **Analysis -> Moved Subtrees** floating window.                                                   |
+| Static image export                            | Top-right canvas export button.                                                                   |
+| WebM recording                                 | Top-right recording controls.                                                                     |
 
 ## Workflow Cards
 

@@ -8,7 +8,7 @@ The visualization workspace is a docking layout. The central tree canvas, the Se
 
 <figure className="manual-screenshot">
   <img src="/phylo-movies/manual/img/screenshots/workspace-overview.png" alt="Phylo-Movies visualization workspace with settings panel, tree canvas, and movie timeline" />
-  <figcaption>The loaded workspace shows the Settings panel, tree canvas, and timeline with playback, comparison, and pinned-tree controls.</figcaption>
+  <figcaption>The loaded workspace shows the Settings panel, tree canvas, and the two-row player bar with transport controls and the timeline strip.</figcaption>
 </figure>
 
 ## Workspace Layout
@@ -109,6 +109,9 @@ The tree canvas can also be magnified with the top-right zoom controls, mouse wh
 | Control                                       | Meaning                                                                                                                                        |
 | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Switch to 2D Camera / Switch to 3D Camera** | Toggles the camera controls only. The 3D view tilts and orbits the same flat tree layout; topology, rooting, and branch lengths are unchanged. |
+| **Show / Hide comparison view**               | Displays or hides a neighboring comparison tree beside the active tree.                                                                        |
+| **Link / Unlink tree views**                  | Shown only in comparison mode. Keeps the two views synchronized or lets each move independently.                                               |
+| **Pinned tree ‹ ›**                           | Pins an input tree as a translucent overlay reference behind the active tree. **None** means no pin; the remove button clears it.              |
 
 ## Focus Effects
 

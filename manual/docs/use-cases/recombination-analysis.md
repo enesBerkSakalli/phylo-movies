@@ -5,7 +5,7 @@ description: Explore local phylogenetic changes and candidate recombination inte
 
 # Exploring Recombination with Local Phylogenetic Trees
 
-Phylo-Movies helps inspect how local phylogenetic relationships change across an alignment. In a sliding-window analysis, the timeline, tree animation, distance plots, and synchronized MSA view make it easier to connect a candidate breakpoint region with the taxa and subtrees involved in the topology change.
+Phylo-Movies helps inspect how local phylogenetic relationships change across an alignment. In a sliding-window analysis, the timeline, tree animation, per-transition RF distances, and synchronized MSA view make it easier to connect a candidate breakpoint region with the taxa and subtrees involved in the topology change.
 
 ## What Phylo-Movies Contributes
 
@@ -22,7 +22,7 @@ This supports questions such as:
 
 1. Infer an ordered tree series from overlapping MSA windows using a model and support procedure appropriate for the dataset.
 2. Load the MSA and trees into the full application, or run the integrated MSA workflow.
-3. Use the distance plot to find intervals with pronounced tree change.
+3. Use the timeline strip to find intervals with pronounced tree change (tall bars are large RF changes).
 4. Step through the corresponding transition and inspect highlighted moving subtrees.
 5. Compare source and target placement and review branch-support context.
 6. Use taxa coloring to mark known genotypes, hosts, locations, or other metadata groups.

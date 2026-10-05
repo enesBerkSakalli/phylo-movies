@@ -20,7 +20,7 @@ Phylo-Movies is an exploratory visualization tool. It helps researchers locate a
 3. Configure window size, step size, inference engine, model, support calculation, and rooting as required by the analysis.
 4. Create the visualization and use the timeline to move between input trees and generated transition frames.
 5. Open the MSA viewer when alignment context is available and enable window synchronization.
-6. Review tree-distance plots, moving-subtree highlights, source/target placement, branch support, and recurrent movements together.
+6. Review the RF distances shown on the timeline strip, moving-subtree highlights, source/target placement, branch support, and recurrent movements together.
 
 The static [browser demo](https://enesberksakalli.github.io/phylo-movies/demo/) contains precomputed examples. Processing a new MSA requires the desktop app, Docker, or a source checkout with the BranchArchitect backend.
 

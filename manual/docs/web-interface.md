@@ -18,7 +18,7 @@ The workspace is a docking layout: the tree canvas, the Settings panel, and opti
 
 <figure className="manual-screenshot">
   <img src="/phylo-movies/manual/img/screenshots/workspace-overview.png" alt="Phylo-Movies visualization workspace with settings panel, tree canvas, and movie timeline" />
-  <figcaption>The workspace combines the Settings panel, central tree canvas, and bottom movie timeline with playback, comparison, and pinned-tree controls.</figcaption>
+  <figcaption>The workspace combines the Settings panel, central tree canvas, and bottom movie player bar with transport controls and the timeline strip.</figcaption>
 </figure>
 
 | Area                 | Purpose                                                                                                                                                           |
@@ -26,7 +26,7 @@ The workspace is a docking layout: the tree canvas, the Settings panel, and opti
 | Settings panel       | Dataset, layout, style, analysis, and view controls.                                                                                                              |
 | Tree canvas          | Main deck.gl visualization for the current tree or comparison view.                                                                                               |
 | Canvas controls      | Fit, zoom, reset, PNG export, and WebM recording.                                                                                                                 |
-| Movie timeline       | Input tree markers, one bar per transition, transport controls, speed, and charts. Fixed strip below the dock, never a tab.                                       |
+| Movie timeline       | Two rows: transport controls, position, and speed above; input tree markers and one bar per transition below. Fixed strip below the dock, never a tab.            |
 | Transition Inspector | Detailed report for the selected topology-change transition. Opens in the right column on demand, from **Inspect transition** or by double-clicking a transition. |
 | Other panels         | Alignment (MSA viewer), Moved Subtrees (SPR analytics), and Taxa colouring.                                                                                       |
 
