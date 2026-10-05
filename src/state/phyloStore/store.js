@@ -4,7 +4,6 @@ import { createTreeDatasetSlice } from './slices/dataset/treeDataset.slice.js';
 import { createDatasetLifecycleSlice } from './slices/dataset/datasetLifecycle.slice.js';
 import { createPlaybackSlice } from '../../core/slices/playbackSlice.js';
 import { createTreeControllerRuntimeSlice } from './slices/runtime/treeControllerRuntime.slice.js';
-import { createTimelineRuntimeSlice } from './slices/runtime/timelineRuntime.slice.js';
 import { createTimelineSlice } from './slices/playback/treeTimeline.slice.js';
 import { createTreeAppearanceSlice } from './slices/appearance/treeAppearance.slice.js';
 import { createTreeLayoutSlice } from './slices/appearance/treeLayout.slice.js';
@@ -34,8 +33,7 @@ export const useAppStore = create(
     ...createDatasetLifecycleSlice(set, get),
     ...createPlaybackSlice(set, get),
     ...createTreeControllerRuntimeSlice(set, get),
-    ...createTimelineRuntimeSlice(set, get),
-    ...createTimelineSlice(set, get),
+    ...createTimelineSlice(set),
     ...createTreeAppearanceSlice(set, get),
     ...createTreeLayoutSlice(set, get),
     ...createTreeViewportSlice(set, get),

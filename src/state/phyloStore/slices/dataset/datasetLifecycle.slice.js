@@ -21,7 +21,6 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       ...createTreeDatasetInitialState(),
       datasetVersion: (get().datasetVersion ?? 0) + 1,
       timeline: null,
-      timelineCursor: null,
       selectedTimelineSegmentIndex: null,
     });
   },

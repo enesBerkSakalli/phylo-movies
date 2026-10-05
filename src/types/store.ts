@@ -44,8 +44,7 @@ export interface TimelineRuntime {
 }
 
 export interface TimelineViewRuntime {
-  zoomIn: (pct?: number) => void;
-  zoomOut: (pct?: number) => void;
+  zoom: (factor: number, center?: number) => void;
   fit: () => void;
   [key: string]: unknown;
 }
@@ -157,12 +156,10 @@ export interface AppStoreState {
   // From treeControllerRuntime.slice
   treeController: TreeControllerRuntime | null;
 
-  // From timelineRuntime.slice
+  // From treeTimeline.slice
   timeline: TimelineRuntime | null;
   timelineView: TimelineViewRuntime | null;
   isScrubbing: boolean;
-
-  // From treeTimeline.slice
   hoveredSegment: { index: number; x: number } | null;
   selectedTimelineSegmentIndex: number | null;
 
@@ -282,9 +279,6 @@ export interface AppStoreState {
 
   setHoveredSegment: (hoveredSegment: { index: number; x: number } | null) => void;
   setSelectedTimelineSegment: (segmentIndex: number | null) => void;
-  zoomInTimeline: () => void;
-  zoomOutTimeline: () => void;
-  fitTimeline: () => void;
 
   setFontSize: (size: string | number) => void;
   setStrokeWidth: (width: number) => void;

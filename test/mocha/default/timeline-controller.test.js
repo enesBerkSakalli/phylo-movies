@@ -213,19 +213,6 @@ describe('TimelineController', () => {
     expect(host.children.length).to.equal(0);
   });
 
-  it('keeps one strip when the same host is mounted twice', async () => {
-    const controller = createController();
-    const host = makeContainer();
-
-    const view = await controller.mount(host);
-    await controller.mount(host);
-
-    expect(controller.view).to.equal(view);
-    expect(host.children.length).to.equal(1);
-
-    controller.unmount();
-  });
-
   it('remounts into a new host without leaving stale DOM behind', async () => {
     const controller = createController();
     const firstHost = makeContainer(640, 60);
@@ -266,21 +253,6 @@ describe('TimelineController', () => {
     expect(() => controller.unmount()).to.not.throw();
     expect(controller.view).to.equal(null);
     expect(controller.container).to.equal(null);
-  });
-
-  it('routes the store zoom controls to the mounted strip', async () => {
-    const controller = createController();
-    await controller.mount(makeContainer());
-    const span = () => controller.view._rangeEnd - controller.view._rangeStart;
-
-    useAppStore.getState().zoomInTimeline();
-    expect(span()).to.be.closeTo(timeline.totalDuration * 0.8, 1e-6);
-
-    useAppStore.getState().fitTimeline();
-    expect(span()).to.equal(timeline.totalDuration);
-
-    controller.unmount();
-    expect(() => useAppStore.getState().zoomInTimeline()).to.not.throw();
   });
 
   it('clears transient tooltip and hover state on unmount', () => {
@@ -493,9 +465,8 @@ describe('TimelineController', () => {
     });
 
     // A store double: just what select() reads and writes.
-    function makeStore({ segments, cursorAt, frameIndex = 0 }) {
+    function makeStore({ segments, cursorAt }) {
       const state = {
-        frameIndex,
         timeline: { segments, cursorAt },
         timelineCursor: { movieTimeMs: 1234 },
         goToPositionCalls: [],
@@ -516,23 +487,28 @@ describe('TimelineController', () => {
       start: 0,
       end: 3000,
     });
+    const cursorOnFrame = (frameIndex) => (movieTimeMs) => ({
+      frameIndex,
+      segmentIndex: 0,
+      movieTimeMs,
+    });
 
     it('pins a clicked input tree and moves to it', () => {
       const store = makeStore({
-        segments: [{ isInputTreeSegment: true, firstFrame: 4, lastFrame: 4 }],
-        frameIndex: 1,
+        segments: [{ isInputTreeSegment: true, firstFrame: 4, lastFrame: 4, start: 0, end: 1500 }],
+        cursorAt: cursorOnFrame(4),
       });
       const controller = new TimelineController(store);
       const setCustomTimeCalls = [];
       controller.view = { setCustomTime: (ms) => setCustomTimeCalls.push(ms) };
 
-      controller.select(0);
+      controller.select(0, 700);
 
       const state = store.getState();
       expect(state.selected).to.deep.equal([0]);
       expect(state.setClipboardTreeIndexCalls).to.deep.equal([4]);
       expect(state.goToPositionCalls).to.deep.equal([
-        { position: 4, direction: 'forward', options: undefined },
+        { position: 4, direction: 'jump', options: { movieTimeMs: 700 } },
       ]);
       expect(scheduledFrames).to.have.length(1);
 
@@ -541,23 +517,14 @@ describe('TimelineController', () => {
     });
 
     it('navigates to transition segments without updating the clipboard', () => {
-      const store = makeStore({ segments: [transition(2, 2)], frameIndex: 5 });
+      const store = makeStore({ segments: [transition(2, 2)], cursorAt: cursorOnFrame(2) });
 
-      new TimelineController(store).select(0);
+      new TimelineController(store).select(0, 1000);
 
       expect(store.getState().setClipboardTreeIndexCalls).to.deep.equal([]);
       expect(store.getState().goToPositionCalls).to.deep.equal([
-        { position: 2, direction: 'backward', options: undefined },
+        { position: 2, direction: 'jump', options: { movieTimeMs: 1000 } },
       ]);
-    });
-
-    it('clears the selection and goes nowhere for a click outside any segment', () => {
-      const store = makeStore({ segments: [transition(2, 2)] });
-
-      new TimelineController(store).select(null);
-
-      expect(store.getState().selected).to.deep.equal([null]);
-      expect(store.getState().goToPositionCalls).to.deep.equal([]);
     });
 
     it('uses click time to resolve the nearest transition frame', () => {
@@ -573,7 +540,7 @@ describe('TimelineController', () => {
       new TimelineController(store).select(0, 2600);
 
       expect(store.getState().goToPositionCalls).to.deep.equal([
-        { position: 4, direction: 'forward', options: { movieTimeMs: 2600 } },
+        { position: 4, direction: 'jump', options: { movieTimeMs: 2600 } },
       ]);
     });
 
@@ -588,32 +555,9 @@ describe('TimelineController', () => {
       });
 
       new TimelineController(store).select(0, 9999);
+      new TimelineController(store).select(0, -50);
 
-      expect(asked).to.deep.equal([2999]);
-    });
-
-    it('uses jump direction and preserves exact timeline position when clicking the already active tree', () => {
-      const store = makeStore({
-        segments: [transition(2, 4)],
-        frameIndex: 3,
-        cursorAt: () => ({ frameIndex: 3, segmentIndex: 0, movieTimeMs: 1500 }),
-      });
-
-      new TimelineController(store).select(0, 1500);
-
-      expect(store.getState().goToPositionCalls).to.deep.equal([
-        { position: 3, direction: 'jump', options: { movieTimeMs: 1500 } },
-      ]);
-    });
-
-    it('throws when a timed click resolves outside its segment', () => {
-      const store = makeStore({
-        segments: [transition(2, 3)],
-        cursorAt: () => ({ frameIndex: 3, segmentIndex: 1, movieTimeMs: 1000 }),
-      });
-
-      expect(() => new TimelineController(store).select(0, 500)).to.throw(/outside its segment/);
-      expect(store.getState().goToPositionCalls).to.deep.equal([]);
+      expect(asked).to.deep.equal([2999, 1]);
     });
   });
 

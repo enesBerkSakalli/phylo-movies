@@ -199,14 +199,6 @@ export class TimelineView {
     this._scheduleUpdate();
   }
 
-  zoomIn(pct = 0.2) {
-    this.zoom(1 - pct);
-  }
-
-  zoomOut(pct = 0.2) {
-    this.zoom(1 + pct);
-  }
-
   /** Resets zoom to show the entire timeline. */
   fit() {
     this._rangeStart = 0;

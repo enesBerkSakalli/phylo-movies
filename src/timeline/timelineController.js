@@ -36,12 +36,6 @@ export class TimelineController {
   }
 
   mount(container) {
-    if (!container) return Promise.resolve(null);
-    if (this.container === container && this.view && container.contains(this.view.container)) {
-      this.syncPosition();
-      return Promise.resolve(this.view);
-    }
-
     this.unmount();
     this.container = container;
     return this._create(container);
@@ -64,7 +58,6 @@ export class TimelineController {
   async _create(container) {
     const token = this.token;
     const { timeline, pairChanges } = this.store.getState();
-    if (!(timeline?.totalDuration > 0)) return null;
 
     let TimelineView;
     try {
@@ -146,29 +139,14 @@ export class TimelineController {
     const state = this.store.getState();
     state.setSelectedTimelineSegment(segmentIndex);
 
-    const segment = state.timeline.segments[segmentIndex];
-    if (!segment) return;
-    if (segment.isInputTreeSegment) state.setClipboardTreeIndex(segment.firstFrame);
+    const { timeline } = state;
+    const { start, end, isInputTreeSegment, firstFrame } = timeline.segments[segmentIndex];
+    if (isInputTreeSegment) state.setClipboardTreeIndex(firstFrame);
 
-    // A timed click lands strictly inside the segment, so a boundary click stays on it.
-    const cursor = Number.isFinite(ms) ? this._cursorInSegment(segmentIndex, ms) : null;
-    const target = cursor ? cursor.frameIndex : segment.firstFrame;
-    const direction =
-      target === state.frameIndex ? 'jump' : target > state.frameIndex ? 'forward' : 'backward';
-    state.goToPosition(target, direction, cursor ? { movieTimeMs: cursor.movieTimeMs } : undefined);
+    // A click lands strictly inside the segment, so one on a boundary stays on it.
+    const cursor = timeline.cursorAt(Math.max(start + EDGE_MS, Math.min(ms, end - EDGE_MS)));
+    state.goToPosition(cursor.frameIndex, 'jump', { movieTimeMs: cursor.movieTimeMs });
     requestAnimationFrame(() => this.syncPosition());
-  }
-
-  _cursorInSegment(segmentIndex, ms) {
-    const { timeline } = this.store.getState();
-    const { start, end } = timeline.segments[segmentIndex];
-    const inside =
-      end - start <= EDGE_MS ? start : Math.max(start + EDGE_MS, Math.min(ms, end - EDGE_MS));
-    const cursor = timeline.cursorAt(inside);
-    if (cursor?.segmentIndex !== segmentIndex) {
-      throw new Error('[TimelineController] movie time resolved outside its segment');
-    }
-    return cursor;
   }
 
   startScrub(ms) {
