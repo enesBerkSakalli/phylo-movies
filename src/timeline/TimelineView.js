@@ -35,6 +35,10 @@ import {
 import { attachTimelineInput } from './timelineInput.js';
 import { describeCursor } from './describeCursor.js';
 
+// What the strip answers to (timelineInput, and the playback shortcuts it defers to)
+const SLIDER_KEYS =
+  'Space ArrowLeft ArrowRight Shift+ArrowLeft Shift+ArrowRight PageUp PageDown Home End Enter Plus Minus 0';
+
 /**
  * The timeline strip, drawn with deck.gl: input trees as circles or ticks, each transition pair as
  * an RF bar with SPR-move pips, and the scrubber handle. It draws what it is told (`selected`,
@@ -127,12 +131,13 @@ export class TimelineView {
     this._removeDeckCanvasFromTabOrder();
   }
 
-  // The wrapper element is the keyboard-operable slider; deck.gl's own canvas
-  // would otherwise be a second, unnamed tab stop inside it.
+  // The wrapper element is the keyboard-operable slider. deck.gl makes its own canvas focusable,
+  // which would be a second, unnamed tab stop, and a click on the strip would focus it instead of
+  // the slider; unfocusable, the click focuses the slider around it.
   _removeDeckCanvasFromTabOrder() {
     const deckCanvas = this.canvas?.querySelector?.('canvas');
     if (!deckCanvas) return;
-    deckCanvas.setAttribute('tabindex', '-1');
+    deckCanvas.removeAttribute('tabindex');
     deckCanvas.setAttribute('aria-hidden', 'true');
   }
 
@@ -145,6 +150,8 @@ export class TimelineView {
     target.setAttribute('tabindex', '0');
     target.setAttribute('role', 'slider');
     target.setAttribute('aria-label', 'Movie timeline position');
+    target.setAttribute('aria-keyshortcuts', SLIDER_KEYS);
+    target.setAttribute('data-playback-keys', ''); // Space and the arrows go to playbackShortcuts
     target.setAttribute('aria-valuemin', '0');
     target.setAttribute('aria-valuemax', String(Math.round(this._totalDuration)));
     this._updateAccessibilityAttributes();

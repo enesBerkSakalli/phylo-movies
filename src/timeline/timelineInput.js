@@ -10,11 +10,16 @@ const SCRUB_KNOB_TOUCH_GRAB_PX = 12;
 const PAN_SLOP_PX = 4; // a press that moves less is a click
 const WHEEL_LINE_PX = 16;
 const KNOB_CENTRE_Y = TIMELINE_THEME.scrubberKnobDepth / 2; // from the top of the strip
+const ZOOM_IN = 0.8; // each + key or wheel notch shows 20% less time
+const ZOOM_OUT = 1.2;
 
 /**
  * Turns pointer and keyboard events on the strip into callbacks. It holds no selection: it asks
  * the view where things are and reports what the user meant. Pointer events, so a finger drags
  * the handle as a mouse does; only the mouse hovers. A drag on empty strip pans a zoomed view.
+ * Keys: PageUp/PageDown, Home/End, Enter and + - 0 are the strip's own; Space, the arrows and
+ * Shift+arrows go to the app-wide playback shortcuts (playbackShortcuts), which act from the
+ * playhead and which the strip leaves alone.
  *
  * @param {TimelineView} view
  * @param {Object} callbacks
@@ -87,6 +92,7 @@ export function attachTimelineInput(view, { onScrub, onSelect, onHover, onInspec
 
   const onPointerDown = (event) => {
     if (drag) return;
+    target.focus({ preventScroll: true }); // the keys work after a click, and :focus-visible stays off
     const x = localX(event);
     const fromLine = Math.abs(x - view.msToX(view.scrubberMs));
     const knobReach = event.pointerType === 'touch' ? SCRUB_KNOB_TOUCH_GRAB_PX : SCRUB_KNOB_GRAB_PX;
@@ -133,21 +139,41 @@ export function attachTimelineInput(view, { onScrub, onSelect, onHover, onInspec
     onInspect(index);
   };
 
-  const onKeyDown = (event) => {
-    if (event.altKey || event.ctrlKey || event.metaKey) return;
+  const playheadSegment = () => stepAt(steps, view.scrubberMs).segment;
 
-    const last = segments.length - 1;
-    const current = view.selected ?? stepAt(steps, view.scrubberMs).segment;
-    const wanted = { Home: 0, End: last, ArrowLeft: current - 1, ArrowRight: current + 1 }[
-      event.key
-    ];
-    if (wanted === undefined) return;
-
-    event.preventDefault();
-    const index = Math.max(0, Math.min(last, wanted));
+  const goToSegment = (wanted) => {
+    const index = Math.max(0, Math.min(segments.length - 1, wanted));
     const { start, end } = segments[index];
     view.setCustomTime((start + end) / 2);
     onSelect(index, view.scrubberMs);
+  };
+
+  // The selection, or else the segment under the playhead (selected first); an input tree has
+  // nothing to inspect.
+  const inspect = () => {
+    const index = view.selected ?? playheadSegment();
+    if (index !== view.selected) onSelect(index, view.scrubberMs);
+    if (!segments[index].isInputTreeSegment) onInspect(index);
+  };
+
+  const onKeyDown = (event) => {
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
+
+    const action = {
+      PageUp: () => goToSegment(playheadSegment() - 1),
+      PageDown: () => goToSegment(playheadSegment() + 1),
+      Home: () => goToSegment(0),
+      End: () => goToSegment(segments.length - 1),
+      Enter: inspect,
+      '+': () => view.zoom(ZOOM_IN),
+      '=': () => view.zoom(ZOOM_IN),
+      '-': () => view.zoom(ZOOM_OUT),
+      0: () => view.fit(),
+    }[event.key];
+    if (!action) return;
+
+    event.preventDefault();
+    action();
   };
 
   // Shift+wheel and sideways swipes pan; the plain wheel zooms about the pointer
@@ -157,7 +183,7 @@ export function attachTimelineInput(view, { onScrub, onSelect, onHover, onInspec
       const px = (event.deltaX || event.deltaY) * (event.deltaMode === 1 ? WHEEL_LINE_PX : 1);
       view.pan(view.xToMs(px) - view.xToMs(0));
     } else {
-      view.zoom(event.deltaY < 0 ? 0.8 : 1.2, msAt(event));
+      view.zoom(event.deltaY < 0 ? ZOOM_IN : ZOOM_OUT, msAt(event));
     }
   };
 

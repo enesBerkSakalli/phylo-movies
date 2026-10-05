@@ -135,10 +135,17 @@ describe('TimelineView', () => {
   const clickTimeline = (view, ms) => dispatchMouse(view.canvas, 'click', view.msToX(ms));
   const pointerDownTimeline = (view, x, init) =>
     dispatchPointer(view.canvas, 'pointerdown', x, 10, init);
-  const keyDown = (view, key, init = {}) =>
-    view.canvas.dispatchEvent(
-      new global.window.KeyboardEvent('keydown', { bubbles: true, key, ...init })
-    );
+  // A keydown that can be cancelled, returned so the test can ask whether it was handled
+  const press = (view, key, init = {}) => {
+    const event = new global.window.KeyboardEvent('keydown', {
+      bubbles: true,
+      cancelable: true,
+      key,
+      ...init,
+    });
+    view.canvas.dispatchEvent(event);
+    return event;
+  };
 
   it('initializes and sets layers with a fresh timeline', () => {
     const { timeline } = makeTimelineFixture();
@@ -680,34 +687,178 @@ describe('TimelineView', () => {
       expect(events.inspects).to.have.length(0);
     });
 
-    it('moves timeline selection with keyboard navigation', () => {
-      const { timeline } = makeTimelineFixture();
-      const { view, events } = mountView(timeline);
+    describe('keyboard and focus', () => {
+      // input tree, transition, input tree, transition, input tree: 1000 ms each, so the segment
+      // under a time is its thousands
+      function fiveSegments() {
+        const transition = (n) => ({
+          isInputTreeSegment: false,
+          pairId: `pair_${n}_${n + 1}`,
+          pairOrdinal: n,
+          sourceInputTreeIndex: n,
+          targetInputTreeIndex: n + 1,
+          sourceGlobalIndex: n * 10,
+          targetGlobalIndex: n * 10 + 10,
+          globalStart: n * 10 + 1,
+          globalEnd: n * 10 + 9,
+          localStepStart: 0,
+        });
+        const inputTree = (n) => ({ isInputTreeSegment: true, originalTreeIndex: n });
+        return timelineOf(
+          [inputTree(0), transition(0), inputTree(1), transition(1), inputTree(2)],
+          undefined,
+          (ms) => ({
+            segmentIndex: Math.min(4, Math.floor(ms / 1000)),
+            frameIndex: 5,
+            movieTimeMs: ms,
+          })
+        );
+      }
 
-      keyDown(view, 'ArrowRight');
+      it('focuses the slider on a press, and keeps deck canvas out of focus', () => {
+        const { view } = mountView(fiveSegments());
+        const deckCanvas = view.canvas.querySelector('canvas');
+        const focus = sinon.spy(view.canvas, 'focus');
 
-      expect(events.selects).to.have.length(1);
-      expect(events.selects[0].index).to.equal(1);
-      expect(view.selected).to.equal(1);
+        expect(deckCanvas.hasAttribute('tabindex')).to.equal(false);
+        dispatchPointer(deckCanvas, 'pointerdown', 100);
 
-      keyDown(view, 'End');
+        expect(global.document.activeElement).to.equal(view.canvas);
+        expect(focus.calledWith({ preventScroll: true })).to.equal(true);
+      });
 
-      expect(events.selects).to.have.length(2);
-      expect(events.selects[1].index).to.equal(2);
-      expect(view.selected).to.equal(2);
-      expect(view.canvas.getAttribute('aria-valuenow')).to.equal('2500');
+      it('steps whole segments with PageUp and PageDown, from the playhead, not the selection', () => {
+        const { view, events } = mountView(fiveSegments());
+        view.setSelection(0);
+        view.setCustomTime(3500); // the playhead has moved on; the selection stays where it was clicked
 
-      keyDown(view, 'ArrowLeft', { shiftKey: true });
-      expect(view.selected).to.equal(1);
+        expect(press(view, 'PageUp').defaultPrevented).to.equal(true);
+        expect(events.selects.map(({ index }) => index)).to.deep.equal([2]);
+        expect(view.scrubberMs).to.equal(2500);
 
-      keyDown(view, 'Home');
-      expect(view.selected).to.equal(0);
-      expect(view.canvas.getAttribute('aria-valuenow')).to.equal('500');
+        press(view, 'PageDown');
+        press(view, 'PageDown');
+        expect(events.selects.map(({ index }) => index)).to.deep.equal([2, 3, 4]);
 
-      // Modified and unrelated keys are left alone
-      keyDown(view, 'ArrowRight', { ctrlKey: true });
-      keyDown(view, 'a');
-      expect(events.selects).to.have.length(4);
+        press(view, 'PageDown'); // stops at the last
+        expect(events.selects.at(-1).index).to.equal(4);
+      });
+
+      it('jumps to the first and last segment with Home and End', () => {
+        const { view, events } = mountView(fiveSegments());
+
+        press(view, 'End');
+        expect(events.selects.at(-1).index).to.equal(4);
+        expect(view.canvas.getAttribute('aria-valuenow')).to.equal('4500');
+
+        press(view, 'Home');
+        expect(events.selects.at(-1).index).to.equal(0);
+        expect(view.canvas.getAttribute('aria-valuenow')).to.equal('500');
+      });
+
+      // Space, the arrows and Shift+arrows are the app's (playbackShortcuts), which step from
+      // the playhead; the strip must neither act on them nor cancel them
+      it('leaves Space, the arrows and Shift+arrows to the app-wide shortcuts', () => {
+        const { view, events } = mountView(fiveSegments());
+        view.setSelection(1);
+        view.setCustomTime(3500);
+
+        for (const [key, init] of [
+          [' '],
+          ['ArrowRight'],
+          ['ArrowLeft'],
+          ['ArrowRight', { shiftKey: true }],
+          ['ArrowLeft', { shiftKey: true }],
+        ]) {
+          expect(press(view, key, init).defaultPrevented, key).to.equal(false);
+        }
+        expect(events.selects).to.have.length(0);
+        expect(view.scrubberMs).to.equal(3500);
+      });
+
+      it('inspects the selected transition on Enter, and does not move the playhead', () => {
+        const { view, events } = mountView(fiveSegments());
+        view.setSelection(3);
+        view.setCustomTime(500);
+
+        expect(press(view, 'Enter').defaultPrevented).to.equal(true);
+
+        expect(events.inspects).to.deep.equal([3]);
+        expect(events.selects).to.have.length(0);
+        expect(view.scrubberMs).to.equal(500);
+      });
+
+      it('selects the transition under the playhead on Enter when nothing is selected, then inspects it', () => {
+        const { view, events } = mountView(fiveSegments());
+        view.setCustomTime(1500);
+
+        press(view, 'Enter');
+
+        expect(events.selects).to.deep.equal([{ index: 1, ms: 1500 }]);
+        expect(events.inspects).to.deep.equal([1]);
+      });
+
+      it('only selects an input tree on Enter: there is nothing to inspect', () => {
+        const { view, events } = mountView(fiveSegments());
+        view.setCustomTime(2500);
+
+        press(view, 'Enter');
+        press(view, 'Enter');
+
+        expect(events.selects.map(({ index }) => index)).to.deep.equal([2]);
+        expect(events.inspects).to.have.length(0);
+      });
+
+      it('zooms about the playhead with + and -, and fits with 0', () => {
+        const { view } = mountView(fiveSegments());
+        view.setCustomTime(2500);
+        const span = () => view._rangeEnd - view._rangeStart;
+
+        expect(press(view, '+').defaultPrevented).to.equal(true);
+        expect(span()).to.be.closeTo(4000, 1e-6);
+        press(view, '=');
+        expect(span()).to.be.closeTo(3200, 1e-6);
+        press(view, '-');
+        expect(span()).to.be.closeTo(3840, 1e-6);
+        expect(view.msToX(2500)).to.be.closeTo(view._width / 2, 1e-6); // the playhead stays put
+
+        expect(press(view, '0').defaultPrevented).to.equal(true);
+        expect([view._rangeStart, view._rangeEnd]).to.deep.equal([0, 5000]);
+      });
+
+      it('leaves modified and unrelated keys alone', () => {
+        const { view, events } = mountView(fiveSegments());
+
+        for (const key of ['PageDown', 'Home', 'End', 'Enter', '+', '-', '0']) {
+          for (const modifier of ['ctrlKey', 'metaKey', 'altKey']) {
+            expect(press(view, key, { [modifier]: true }).defaultPrevented, key).to.equal(false);
+          }
+        }
+        expect(press(view, 'a').defaultPrevented).to.equal(false);
+        expect(events.selects).to.have.length(0);
+        expect(events.inspects).to.have.length(0);
+        expect(view.zoomed).to.equal(false);
+      });
+
+      it('lists its keys for assistive tech', () => {
+        const { view } = mountView(fiveSegments());
+
+        expect(view.canvas.getAttribute('aria-keyshortcuts').split(' ')).to.include.members([
+          'Space',
+          'ArrowLeft',
+          'ArrowRight',
+          'Shift+ArrowLeft',
+          'Shift+ArrowRight',
+          'PageUp',
+          'PageDown',
+          'Home',
+          'End',
+          'Enter',
+          'Plus',
+          'Minus',
+          '0',
+        ]);
+      });
     });
 
     it('reports the hovered segment, again while it stays hovered', () => {

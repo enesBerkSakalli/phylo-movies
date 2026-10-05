@@ -31,16 +31,15 @@ export const playbackCommands = {
   },
 };
 
-// Controls that own both Space and the arrow keys (typing, sliders, menus, and
-// the deck.gl canvases, whose controllers pan with the arrow keys).
+// Controls that own both Space and the arrow keys (typing, sliders, menus). The timeline strip is a
+// slider too, but it hands both to the playback shortcuts.
 const KEY_OWNING_SELECTOR = [
-  'canvas',
   'input',
   'textarea',
   'select',
   '[contenteditable=""]',
   '[contenteditable="true"]',
-  '[role="slider"]',
+  '[role="slider"]:not([data-playback-keys])',
   '[role="scrollbar"]',
   '[role="combobox"]',
   '[role="listbox"]',
@@ -49,6 +48,9 @@ const KEY_OWNING_SELECTOR = [
   '[role="option"]',
   '[role="dialog"]',
 ].join(',');
+
+// The deck.gl canvases pan with the arrow keys, and ignore Space.
+const ARROW_OWNING_SELECTOR = 'canvas';
 
 // Buttons and links activate on Space, but arrows stay free for stepping.
 const SPACE_OWNING_SELECTOR = 'button, a[href], [role="button"], [role="switch"]';
@@ -69,6 +71,7 @@ export function resolvePlaybackShortcut(event) {
   if (event.key === ' ' && !event.shiftKey) {
     return closest(event.target, SPACE_OWNING_SELECTOR) ? null : 'toggle';
   }
+  if (closest(event.target, ARROW_OWNING_SELECTOR)) return null;
   if (event.key === 'ArrowRight') {
     return event.shiftKey ? 'nextInputTree' : 'nextFrame';
   }
