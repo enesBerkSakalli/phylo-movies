@@ -215,8 +215,18 @@ describe('TimelineView', () => {
 
     expect(findLayer(view, 'pair-hover-layer').props.data).to.have.length(1);
     expect(findLayer(view, 'pair-selection-layer').props.data).to.have.length(1);
-    expect(findLayer(view, 'pair-selection-span-layer').props.data).to.have.length(1);
     expect(findLayer(view, 'pair-selection-pip-layer').props.data).to.have.length(1);
+  });
+
+  it('brackets the selected transition in a dark mark, not only in emerald', () => {
+    const { timeline } = makeTimelineFixture();
+    const { view } = mountView(timeline, { strip: pairStrip, container: makeContainer(800, 44) });
+
+    view.setSelection(1);
+    const bracket = findLayer(view, 'pair-selection-span-layer');
+
+    expect(bracket.props.data).to.have.length(3);
+    expect(bracket.props.getFillColor).to.deep.equal([...TIMELINE_THEME.stripMarkHoverRGB, 255]);
   });
 
   it('leaves pair marks alone when an input tree is selected', () => {

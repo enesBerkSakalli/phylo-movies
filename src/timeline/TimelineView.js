@@ -395,7 +395,7 @@ export class TimelineView {
       createPairMarkLayer(
         'pair-selection-span-layer',
         pairStrip.selectionSpan,
-        theme.connectionSelectionRGB
+        theme.stripMarkHoverRGB
       ),
       // Circles sit on the baseline, so they draw over the bars they overlap
       createInputTreeLayer(inputTreePoints, theme.inputTreeStrokeWidth),

@@ -25,6 +25,7 @@ export const TIMELINE_THEME = {
   stripDashLength: 4,
   stripDashGap: 3,
   stripSelectionSpanWidth: 2,
+  stripSelectionBracketDepth: 4, // px under the baseline, clear of the dots
   stripPipY: 39,
   stripPipRGB: [51, 65, 85],
   stripPipAlpha: 220,
@@ -150,16 +151,7 @@ export function projectPairStrip({
     pips,
     selectionPips: pips.filter((pip) => pip.pairId === selectedPairId),
     selectionSpan: selectedBounds
-      ? [
-          {
-            polygon: rect(
-              toX(selectedBounds.start),
-              toX(selectedBounds.end),
-              baseline,
-              toY(theme.stripBaselineY + theme.stripSelectionSpanWidth)
-            ),
-          },
-        ]
+      ? bracket(toX(selectedBounds.start), toX(selectedBounds.end), toY)
       : [],
   };
 }
@@ -188,6 +180,18 @@ function spanPips({ pairId, pips }, left, right, toX, pipY) {
     (right - left - theme.stripMergedPipGapPx) / 2
   );
   return [{ pairId, position: [(left + right) / 2, pipY], radius: Math.max(1, radius) }];
+}
+
+// A bracket under the selected span: selection as a shape, not hue alone
+function bracket(left, right, toY) {
+  const width = theme.stripSelectionSpanWidth;
+  const top = toY(theme.stripBaselineY);
+  const bottom = toY(theme.stripBaselineY + theme.stripSelectionBracketDepth);
+  return [
+    rect(left, right, bottom + width, bottom),
+    rect(left, left + width, top, bottom),
+    rect(right - width, right, top, bottom),
+  ].map((polygon) => ({ polygon }));
 }
 
 function insetBar(left, right) {

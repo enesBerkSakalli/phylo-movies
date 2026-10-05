@@ -251,16 +251,29 @@ describe('projectPairStrip', () => {
     expect(out.pips).toHaveLength(2);
     expect(out.selectionPips).toHaveLength(1);
     expect(out.selectionPips[0].position[0]).toBeCloseTo(x(5000));
-    expect(out.selectionSpan).toEqual([
-      {
-        polygon: [
-          [x(4500), y(30)],
-          [x(5500), y(30)],
-          [x(5500), y(32)],
-          [x(4500), y(32)],
-        ],
-      },
-    ]);
+    expect(out.selectionSpan).toHaveLength(3);
+  });
+
+  it('brackets the exact selected span under the baseline, so selection is not hue alone', () => {
+    const { selectionSpan } = projectPairStrip({
+      ...view,
+      maxRf: 0.4,
+      spans: [topology('b', 4000, 6000, 0.4, [{ ms: 5000, taxaCount: 100 }])],
+      selectedPairId: 'b',
+      selectedBounds: { start: 4500, end: 5500 },
+    });
+    const points = selectionSpan.flatMap(({ polygon }) => polygon);
+    const [xs, ys] = [0, 1].map((axis) => points.map((point) => point[axis]));
+
+    // A bar along the span with a cap at each end
+    expect(selectionSpan).toHaveLength(3);
+    expect(Math.min(...xs)).toBeCloseTo(x(4500));
+    expect(Math.max(...xs)).toBeCloseTo(x(5500));
+    // From the baseline to 4px under it: clear of the biggest dot, which starts 35px from the top
+    expect(Math.max(...ys)).toBeCloseTo(y(30));
+    expect(Math.min(...ys)).toBeCloseTo(y(34));
+    const bar = selectionSpan[0].polygon.map(([, py]) => py);
+    expect(Math.max(...bar) - Math.min(...bar)).toBeCloseTo(TIMELINE_THEME.stripSelectionSpanWidth);
   });
 
   it('has no selection or hover marks when nothing is hovered or selected', () => {
