@@ -16,9 +16,9 @@ Phylo-Movies supports four common workflows.
 ## Inspect a Transition
 
 1. Load a dataset.
-2. Use the movie timeline to find a segment between input trees.
-3. Hover for a compact tooltip or select the segment for the Transition Inspector.
-4. Review moving taxa, generated frame count, pivot edge, RF metrics, and MSA window data when available.
+2. Use the movie timeline to find a transition between input trees. Taller bars mean a larger RF change.
+3. Hover for a compact tooltip, select the transition to highlight it, then click **Inspect transition** (or double-click the transition) to open the Transition Inspector.
+4. Review moving taxa, animation steps, pivot edge, RF metrics, and MSA window data when available.
 
 See [Timeline and inspection](feature-reference/timeline-and-inspection.md) for the full control reference.
 

@@ -4,7 +4,7 @@ title: Timeline and Inspection
 
 # Timeline and Inspection
 
-The movie timeline controls navigation through input trees and generated transition frames. It also exposes comparison mode, playback speed, tree-distance charts, and the Transition Inspector.
+The movie timeline controls navigation through input trees and generated transition frames. Its strip summarizes each transition (RF change and SPR moves) so you can pick one to inspect. It also exposes comparison mode, playback speed, tree-distance charts, and the Transition Inspector.
 
 ## Transport Controls
 
@@ -25,11 +25,17 @@ Input tree jumps skip generated interpolation frames. Generated-frame stepping i
 
 ## Timeline Legend
 
-| Marker               | Meaning                                            |
-| -------------------- | -------------------------------------------------- |
-| **Input trees**      | Original trees in the ordered series.              |
-| **Generated frames** | Interpolated frames created between input trees.   |
-| **Selected segment** | Timeline segment selected for detailed inspection. |
+The strip draws one gray bar per transition, between each pair of consecutive input trees.
+
+| Marker                  | Meaning                                                                                                              |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| **RF change (max …)**   | Bar height: the transition's normalized Robinson-Foulds distance, scaled to the dataset's largest RF (shown as max). |
+| **SPR move**            | One dot below the baseline per SPR move. Dot size is the number of taxa moved.                                       |
+| **Branch lengths only** | Dashed segment: only branch lengths changed (RF 0, weighted RF above 0).                                             |
+| **Input tree**          | Short tick for each original input tree (a circle at high zoom).                                                     |
+| **Selected**            | The selected transition turns green, with a green line under the exact selected part.                                |
+
+The blue line is the playhead. Numbering is 1-based and per transition throughout: the status strip reads "Tree a → b · step i of N" (or "Input tree n"), and the tooltip and Inspector use "Transition k of P".
 
 ## Playback Settings
 
@@ -48,21 +54,23 @@ Use peaks in the chart as candidate regions for closer review in the timeline, T
 
 ## Hover and Selection
 
-| Action              | Result                                        |
-| ------------------- | --------------------------------------------- |
-| Hover a segment     | Shows a compact tooltip with segment context. |
-| Select a segment    | Opens the Transition Inspector.               |
-| Close the inspector | Clears the selected segment.                  |
+| Action                        | Result                                                                                                                                                                                                         |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hover a transition            | Shows a compact tooltip above the player bar, so it never covers the controls. Header "Transition k of P · Tree a → b", then "RF x · weighted RF y" and "n SPR moves · m taxa moved" or "Branch lengths only". |
+| Select a transition           | Turns it green and updates the status strip. It does not open the Inspector.                                                                                                                                   |
+| **Inspect transition** button | Opens the Transition Inspector. Sits next to the status strip and is enabled when a transition is selected.                                                                                                    |
+| Double-click a transition     | Selects it and opens the Transition Inspector.                                                                                                                                                                 |
+| Close the Inspector tab       | Keeps the selected transition.                                                                                                                                                                                 |
 
 ## Transition Inspector
 
 The Transition Inspector reports:
 
-| Section       | Fields                                                                                         |
-| ------------- | ---------------------------------------------------------------------------------------------- |
-| **Selection** | Segment name, direction, global frame range, local step range.                                 |
-| **SPR Move**  | Moved taxa count, generated frame count, animation steps, pivot edge, affected subtree groups. |
-| **Metrics**   | RF distance, weighted RF distance, and source input-tree scale.                                |
-| **Alignment** | MSA window coordinates when alignment data are mapped.                                         |
+| Section       | Fields                                                                                                                                          |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Selection** | Header "Transition k of P", name "Tree a → Tree b", direction, "Steps s–e of N", and "Event j of m" when a transition has several split events. |
+| **SPR Move**  | Moved taxa count, animation steps, pivot edge, affected subtree groups.                                                                         |
+| **Metrics**   | RF distance, weighted RF distance, and source input-tree scale.                                                                                 |
+| **Alignment** | MSA window coordinates when alignment data are mapped.                                                                                          |
 
-Unavailable values usually mean the loaded dataset does not include that metric or the selected segment is an input-tree marker rather than a generated transition segment.
+Unavailable values usually mean the loaded dataset does not include that metric or the selection is an input tree rather than a transition.

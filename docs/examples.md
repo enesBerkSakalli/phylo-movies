@@ -40,7 +40,7 @@ Expected result:
 
 - The setup page shows processing progress.
 - The app opens `/visualization`.
-- The timeline contains input tree markers and generated frames.
+- The timeline contains input tree markers and one bar per transition between neighboring input trees.
 - The transport controls can step between frames.
 
 ## Publication Data

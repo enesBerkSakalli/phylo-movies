@@ -9,7 +9,7 @@ This guide describes the UI surfaces that exist in the current React app.
 - Start on the setup screen. Use **Example Library** for bundled data or **New Project** for your own tree/MSA files.
 - Confirm the top status says **Engine Connected** before loading examples or processing uploads.
 - After processing, the visualization workspace opens with the tree canvas in the center, the **Settings** panel (analysis/style tools) docked on the left, and the movie timeline in a fixed strip at the bottom.
-- Use the bottom transport buttons to move between input trees and generated frames. Select or hover timeline segments to inspect topology changes.
+- Use the bottom transport buttons to move between input trees and generated frames. Hover a transition on the timeline to read its summary, select it to highlight it, and open the Transition Inspector on demand for the full report.
 - Use the **Settings** panel for dataset, layout, style, analysis, and view controls. Alignment, Moved Subtrees, Taxa colouring, and the Transition Inspector open as tabs you can dock, split, or close.
 - Use the top-right canvas buttons, mouse wheel, or two-finger trackpad gesture to fit, zoom, reset, export a PNG, or record a WebM movie.
 - Use the **Pinned tree** control in the bottom bar, next to the comparison button, to pin one input tree as an overlay reference. Use the comparison button for the true side-by-side two-tree view.
@@ -60,14 +60,14 @@ Actions:
 
 The workspace is a docking layout. Every view is a tab in the dock:
 
-| Tab                  | Default placement                                     |
-| -------------------- | ----------------------------------------------------- |
-| Tree                 | Center. Permanent: it cannot be closed.               |
-| Settings             | Left column on the first visit.                       |
-| Transition Inspector | Right column, opened by selecting a timeline segment. |
-| Moved Subtrees       | Right column, as a tab beside the Inspector.          |
-| Alignment            | Below the tree, about 40% of the height.              |
-| Taxa colouring       | Floating window; drag its tab to dock it.             |
+| Tab                  | Default placement                                                                                         |
+| -------------------- | --------------------------------------------------------------------------------------------------------- |
+| Tree                 | Center. Permanent: it cannot be closed.                                                                   |
+| Settings             | Left column on the first visit.                                                                           |
+| Transition Inspector | Right column, opened on demand from the **Inspect transition** button or by double-clicking a transition. |
+| Moved Subtrees       | Right column, as a tab beside the Inspector.                                                              |
+| Alignment            | Below the tree, about 40% of the height.                                                                  |
+| Taxa colouring       | Floating window; drag its tab to dock it.                                                                 |
 
 Tabs can be closed, reopened, dragged into splits or tab groups, and resized. The Tree tab can be moved and split like any other tab, but not closed. The arrangement is saved in the browser (`localStorage`) and restored on the next visit. Floating panels are not remembered. If the saved layout cannot be restored, the default layout is used.
 
@@ -116,10 +116,10 @@ The bottom bar contains:
 - Playback speed control
 - Timeline expand/collapse button
 - Timeline legend and scroll controls
-- Timeline visualization
+- Timeline visualization (see [Reading the timeline](#reading-the-timeline))
 - Chart section
 
-Hover the timeline status strip to show the current segment, cursor position, and normalized sequence coordinate. When MSA data are available, the same strip also reports the active alignment window and the configured window/step size.
+The status strip shows the current position as "Tree a → b · step i of N" (or "Input tree n" on an input tree), the cursor position, and the normalized sequence coordinate. The **Inspect transition** button next to it opens the Transition Inspector for the selected transition and is disabled until a transition is selected. When MSA data are available, the same strip also reports the active alignment window and the configured window/step size.
 
 Transport buttons:
 
@@ -131,14 +131,25 @@ Transport buttons:
 - Show/hide side-by-side comparison view
 - Link/unlink the two trees when comparison mode is active
 
+#### Reading the timeline
+
+The timeline strip draws one gray bar per transition, that is, between each pair of consecutive input trees:
+
+- Bar height is the normalized Robinson-Foulds (RF) distance of that transition, scaled to the largest RF in the dataset. The legend shows **RF change (max …)** with that maximum.
+- Below the baseline, one dot marks each SPR move. Dot size is the number of taxa moved.
+- A dashed segment marks a transition where only branch lengths changed (RF 0, weighted RF above 0): **Branch lengths only**.
+- Short ticks mark input trees (circles at high zoom).
+- The selected transition turns green, with a green line under the exact selected part. The blue line is the playhead.
+
+Numbering is 1-based and per transition. The hover tooltip appears above the player bar, so it never covers the controls. Its header reads "Transition k of P · Tree a → b", followed by "RF x · weighted RF y" and either "n SPR moves · m taxa moved" or "Branch lengths only".
+
 ### Transition Inspector
 
-Selecting a timeline segment opens the **Transition Inspector** as a tab in the right column. Closing its tab clears the selection. It reports:
+The **Transition Inspector** opens on demand, as a tab in the right column. Selecting a transition on the timeline does not open it. Click **Inspect transition** next to the status strip (enabled when a transition is selected) or double-click a transition on the strip. Closing the Inspector tab keeps the selection. It reports:
 
-- Segment name and direction
-- Global frame range and local steps
+- Header "Transition k of P", name "Tree a → Tree b", and the direction
+- Steps "s–e of N" (global frame range and local steps), plus "Event j of m" when a transition has several split events
 - Moving taxa count
-- Generated frame count
 - Animation steps
 - Pivot edge
 - Affected subtree groups
@@ -194,4 +205,4 @@ contexts.
 | Timeline input tree markers        | Observed input trees from the uploaded or inferred series.              | Jump with previous/next input tree controls.                                                        |
 | Generated frame controls enabled   | At least two frames exist in the active sequence.                       | Step or play the movie.                                                                             |
 | MSA window unavailable             | No MSA data is loaded or mapped for the current dataset.                | Use an MSA example or upload an MSA.                                                                |
-| Some inspector metrics unavailable | The processed payload lacks that metric for the selected segment.       | Check source data and backend output contract.                                                      |
+| Some inspector metrics unavailable | The processed payload lacks that metric for the selected transition.    | Check source data and backend output contract.                                                      |

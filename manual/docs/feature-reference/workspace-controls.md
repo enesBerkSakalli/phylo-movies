@@ -15,14 +15,14 @@ The visualization workspace is a docking layout. The central tree canvas, the Se
 
 Every view is a tab in the dock:
 
-| Tab                      | Default placement                                                                             |
-| ------------------------ | --------------------------------------------------------------------------------------------- |
-| **Tree**                 | Center. Permanent: it cannot be closed, but it can be moved and split.                        |
-| **Settings**             | Left column on the first visit.                                                               |
-| **Transition Inspector** | Right column. Opens when you select a timeline segment; closing the tab clears the selection. |
-| **Moved Subtrees**       | Right column, as a tab beside the Inspector.                                                  |
-| **Alignment**            | Below the tree, about 40% of the height.                                                      |
-| **Taxa colouring**       | Floating window. Drag its tab to dock it.                                                     |
+| Tab                      | Default placement                                                                                                                  |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Tree**                 | Center. Permanent: it cannot be closed, but it can be moved and split.                                                             |
+| **Settings**             | Left column on the first visit.                                                                                                    |
+| **Transition Inspector** | Right column. Opens on demand from **Inspect transition** or by double-clicking a transition; closing the tab keeps the selection. |
+| **Moved Subtrees**       | Right column, as a tab beside the Inspector.                                                                                       |
+| **Alignment**            | Below the tree, about 40% of the height.                                                                                           |
+| **Taxa colouring**       | Floating window. Drag its tab to dock it.                                                                                          |
 
 Tabs can be closed, reopened, dragged into splits or tab groups, and resized. The arrangement is saved in the browser (`localStorage`) and restored on the next visit. Floating panels are not remembered. If the saved layout cannot be restored, the default layout is used.
 

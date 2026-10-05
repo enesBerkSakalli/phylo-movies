@@ -114,6 +114,6 @@ Do not use this workaround for artifacts downloaded from any location other than
 3. Load a small example dataset.
 4. Wait for the visualization workspace to open.
 5. Use the bottom transport controls to step through generated frames.
-6. Hover or select a timeline segment to inspect topology-change details.
+6. Hover or select a transition on the timeline to inspect topology-change details; use **Inspect transition** to open the full report.
 
 If the setup screen reports an offline backend, use the browser demo for generated examples or start the backend locally.
