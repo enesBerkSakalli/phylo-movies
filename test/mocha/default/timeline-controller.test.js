@@ -581,7 +581,21 @@ describe('TimelineController', () => {
       global.cancelAnimationFrame = originalCancelAnimationFrame;
     });
 
+    // Frames run only when the test says so; returns the function that runs the pending ones.
+    const holdFrames = () => {
+      const pending = new Map();
+      let lastId = 0;
+      global.requestAnimationFrame = (callback) => pending.set(++lastId, callback) && lastId;
+      global.cancelAnimationFrame = (id) => pending.delete(id);
+      return () => {
+        const callbacks = [...pending.values()];
+        pending.clear();
+        callbacks.forEach((callback) => callback(0));
+      };
+    };
+
     it('does not block the strip on slow tree renders', async () => {
+      const runFrame = holdFrames();
       const renders = [];
       useAppStore.setState({
         treeController: {
@@ -595,12 +609,43 @@ describe('TimelineController', () => {
       const controller = createController();
 
       controller.startScrub(0);
-      controller.lastScrubAt = -1000;
       controller.scrub(at(first, 0.5));
+      runFrame();
       await flushMicrotasks();
 
       expect(renders).to.have.length(1);
       expect(renders[0][3]).to.include({ fromTreeIndex: first.from, toTreeIndex: first.to });
+    });
+
+    it('renders a drag once per frame, at its latest position', async () => {
+      const runFrame = holdFrames();
+      const renders = [];
+      useAppStore.setState({
+        treeController: {
+          renderAllElements: () => {},
+          renderComparisonAwareScrubFrame: async (...args) => {
+            renders.push(args);
+          },
+        },
+      });
+      const controller = createController();
+
+      controller.startScrub(0);
+      controller.scrub(at(first, 0.2));
+      controller.scrub(at(first, 0.4));
+      controller.scrub(at(first, 0.6));
+      await flushMicrotasks();
+      expect(renders).to.have.length(0);
+
+      runFrame();
+      await flushMicrotasks();
+      expect(renders).to.have.length(1);
+      expect(renders[0][2]).to.be.closeTo(0.6, 1e-6);
+
+      controller.scrub(at(second, 0.5));
+      runFrame();
+      await flushMicrotasks();
+      expect(renders).to.have.length(2);
     });
 
     it('cancels a scheduled stale scrub update before flushing the final position', async () => {
@@ -625,7 +670,6 @@ describe('TimelineController', () => {
       const controller = createController();
 
       controller.startScrub(0);
-      controller.lastScrubAt = performance.now();
       controller.scrub(at(first, 0.2));
 
       expect(rafCallback).to.be.a('function');

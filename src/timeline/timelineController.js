@@ -4,7 +4,6 @@ import { rightComparisonIndex } from '../domain/indexing/treeIndexSemantics.js';
 import { selectInputFrameIndices } from '../state/phyloStore/selectors/treeSelectors.js';
 
 const EDGE_MS = 1;
-const SCRUB_THROTTLE_MS = 16;
 
 const cancelFrame = (id) => id !== null && cancelAnimationFrame(id);
 
@@ -24,8 +23,6 @@ export class TimelineController {
     this.unsubscribe = null;
     this.positionFrame = null;
     this.scrubFrame = null;
-    this.lastScrubAt = 0;
-    this.pendingScrubMs = null;
     this.lastRenderMs = null;
     this.pendingRenderMs = null;
     this.rendering = null;
@@ -47,7 +44,7 @@ export class TimelineController {
     this.unsubscribe = null;
     cancelFrame(this.positionFrame);
     cancelFrame(this.scrubFrame);
-    this.positionFrame = this.scrubFrame = this.pendingScrubMs = this.pendingRenderMs = null;
+    this.positionFrame = this.scrubFrame = this.pendingRenderMs = null;
     this.view?.destroy();
     this.view = null;
     this.container = null;
@@ -155,32 +152,26 @@ export class TimelineController {
     const { playing, stop } = this.store.getState();
     if (playing) stop();
     this.store.setState({ isScrubbing: true });
-    this.lastScrubAt = 0;
     this.lastRenderMs = ms;
-    this.pendingScrubMs = this.pendingRenderMs = null;
+    this.pendingRenderMs = null;
     cancelFrame(this.scrubFrame);
     this.scrubFrame = null;
   }
 
-  // Tree renders are throttled: a drag faster than that keeps only its latest position.
+  // A drag renders its latest position once per frame.
   scrub(ms) {
     if (!this.isScrubbing) return this.startScrub(ms);
 
-    this.pendingScrubMs = ms;
-    if (performance.now() - this.lastScrubAt < SCRUB_THROTTLE_MS) {
-      this.scrubFrame ??= requestAnimationFrame(() => {
-        this.scrubFrame = null;
-        if (this.isScrubbing && this.pendingScrubMs !== null) this._flushScrub();
-      });
-      return;
-    }
-    this._flushScrub();
+    cancelFrame(this.scrubFrame);
+    this.scrubFrame = requestAnimationFrame(() => {
+      this.scrubFrame = null;
+      this.renderScrub(ms);
+    });
   }
 
   async endScrub(ms) {
     if (!this.isScrubbing) return;
 
-    this.pendingScrubMs = null;
     cancelFrame(this.scrubFrame);
     this.scrubFrame = null;
     if (ms !== this.lastRenderMs || this.pendingRenderMs !== null) await this.renderScrub(ms);
@@ -188,13 +179,6 @@ export class TimelineController {
     // Clear the flag first: the tree hook skips cursor writes while it is set.
     this.store.setState({ isScrubbing: false });
     this.store.getState().seek(ms);
-  }
-
-  _flushScrub() {
-    const ms = this.pendingScrubMs;
-    this.pendingScrubMs = null;
-    this.lastScrubAt = performance.now();
-    this.renderScrub(ms);
   }
 
   // One tree render at a time; while it runs, only the latest requested time is kept.
