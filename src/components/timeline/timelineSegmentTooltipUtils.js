@@ -7,7 +7,7 @@ export function extractAffectedSubtreeGroups(affectedSubtrees, leafNamesByIndex)
     .filter((names) => names.length > 0);
 }
 
-/** A subtree as one short badge label: its name, both names, or the first name and a count. */
+/** A subtree as one short tooltip badge: its name, both names, or the first name and a count. */
 export function formatSubtreeNames(names) {
   if (names.length <= 2) return names.join(', ');
   return `${names[0]}, +${names.length - 1}`;

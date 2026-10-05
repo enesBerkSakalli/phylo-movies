@@ -19,7 +19,6 @@ import { Badge } from './ui/badge';
 import {
   extractAffectedSubtreeGroups,
   formatPivotEdgePreview,
-  formatSubtreeNames,
   getSegmentStepRange,
 } from './timeline/timelineSegmentTooltipUtils.js';
 
@@ -170,7 +169,7 @@ function SubtreeList({ groups }) {
           variant="secondary"
           className="max-w-full text-2xs"
         >
-          <span className="truncate">{formatSubtreeNames(names)}</span>
+          <span className="truncate">{names.join(', ')}</span>
         </Badge>
       ))}
       {hiddenCount > 0 && (
