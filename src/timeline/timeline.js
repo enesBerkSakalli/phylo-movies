@@ -9,7 +9,7 @@
  *   `start` and `end`; `from === to` is a hold on that frame (`hold` names why). Steps are
  *   contiguous and sorted: each segment's `steps` laid end to end, once.
  */
-import { TimelineEventIndex } from './data/TimelineEventIndex.js';
+import { groupEvents } from './data/groupEvents.js';
 import { isInputFrame } from '../domain/backend/inputFrame.js';
 import { resolveCursorTreeIndex } from '../domain/indexing/treeIndexSemantics.js';
 import {
@@ -146,7 +146,7 @@ export function cursorForFrame(steps, frameIndex, last = false) {
 /** The segments of a movie: one per input tree, and between trees the pair's transition pieces. */
 export function createSegments(movieData) {
   const { frames, pairs } = movieData;
-  const eventIndex = TimelineEventIndex.from({ pairs, temporalEvents: movieData.temporal_events });
+  const eventsOf = groupEvents(pairs, movieData.temporal_events);
   const metricsByPairId = new Map(movieData.pair_metrics.rows.map((row) => [row.pair_id, row]));
   const inputFrames = frames.filter(isInputFrame);
   const segments = [];
@@ -159,8 +159,8 @@ export function createSegments(movieData) {
     segments.push(
       ...pairSegments(
         pair,
-        eventIndex.getEventsForPair(pair.pair_id, 'split_change'),
-        eventIndex.getEventsForPair(pair.pair_id, 'spr_move'),
+        eventsOf(pair.pair_id, 'split_change'),
+        eventsOf(pair.pair_id, 'spr_move'),
         metricsByPairId.get(pair.pair_id)
       )
     );

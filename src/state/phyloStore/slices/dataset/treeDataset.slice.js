@@ -1,5 +1,4 @@
 import { selectTreeContext } from '../../selectors/treeSelectors.js';
-import { buildPairChangeProfile } from '../../../../timeline/data/pairChangeProfile.js';
 import { selectInputFrameIndicesFromRows } from '../../../../domain/backend/inputFrame.js';
 
 const EMPTY_PAIR_METRICS = Object.freeze({
@@ -28,7 +27,7 @@ export function createTreeDatasetInitialState() {
 
     // STATE: Change Tracking
     pairs: [],
-    pairChanges: buildPairChangeProfile({}),
+    pairChanges: { byPairId: new Map(), maxRf: 0 },
     subtreeHighlightTracking: [],
     temporalEvents: [],
   };

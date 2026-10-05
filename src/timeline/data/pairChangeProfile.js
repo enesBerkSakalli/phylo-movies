@@ -1,21 +1,13 @@
+import { groupEvents } from './groupEvents.js';
+
 /**
  * What changed between each pair of consecutive input trees, in the terms a researcher reads:
  * the transition (1-based trees), its RF distances, and the SPR moves that make it up.
  * The pair, not the playback segment, is the unit of change.
  */
-export function buildPairChangeProfile({ pairs = [], pairMetrics, temporalEvents = [] }) {
-  const metricsByPairId = new Map((pairMetrics?.rows ?? []).map((row) => [row.pair_id, row]));
-  const movesByPairId = new Map();
-  for (const event of temporalEvents) {
-    if (event.event_type !== 'spr_move') continue;
-    const moves = movesByPairId.get(event.pair_id) ?? [];
-    moves.push({
-      frameStart: event.frame_range[0],
-      frameEnd: event.frame_range[1],
-      taxaCount: event.driver_subtree?.length ?? 0,
-    });
-    movesByPairId.set(event.pair_id, moves);
-  }
+export function buildPairChangeProfile({ pairs, pairMetrics, temporalEvents }) {
+  const metricsByPairId = new Map(pairMetrics.rows.map((row) => [row.pair_id, row]));
+  const eventsOf = groupEvents(pairs, temporalEvents);
 
   const byPairId = new Map();
   let maxRf = 0;
@@ -23,7 +15,11 @@ export function buildPairChangeProfile({ pairs = [], pairMetrics, temporalEvents
     const metrics = metricsByPairId.get(pair.pair_id);
     const rf = metrics?.robinson_foulds ?? null;
     const weightedRf = metrics?.weighted_robinson_foulds ?? null;
-    const sprMoves = movesByPairId.get(pair.pair_id) ?? [];
+    const sprMoves = eventsOf(pair.pair_id, 'spr_move').map((event) => ({
+      frameStart: event.frame_range[0],
+      frameEnd: event.frame_range[1],
+      taxaCount: event.driver_subtree?.length ?? 0,
+    }));
     maxRf = Math.max(maxRf, rf ?? 0);
     byPairId.set(pair.pair_id, {
       pairId: pair.pair_id,

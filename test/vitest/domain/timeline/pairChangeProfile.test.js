@@ -65,7 +65,11 @@ describe('buildPairChangeProfile', () => {
   });
 
   it('copes with missing metrics and events', () => {
-    const { byPairId, maxRf } = buildPairChangeProfile({ pairs: [pair(0, [1, 3])] });
+    const { byPairId, maxRf } = buildPairChangeProfile({
+      pairs: [pair(0, [1, 3])],
+      pairMetrics: { rows: [] },
+      temporalEvents: [],
+    });
     expect(byPairId.get('pair_0_1')).toMatchObject({
       rf: null,
       weightedRf: null,

@@ -5,7 +5,7 @@ import {
 } from '../tree/splits.js';
 import { classifyMovementBranchValues } from '../tree/branchSupportIndex.js';
 import { SubtreeExtractor } from '../tree/subtreeExtractor.js';
-import { TimelineEventIndex } from '../../timeline/data/TimelineEventIndex.js';
+import { groupEvents } from '../../timeline/data/groupEvents.js';
 
 /**
  * Normalize a moving subtree split into a stable, sorted list of leaf indices.
@@ -120,7 +120,7 @@ function createSprAnalyticsContext(pairs, options) {
 
   return {
     metricByPairId: buildMetricByPairId(pairMetrics),
-    eventIndex: TimelineEventIndex.from({ pairs, temporalEvents }),
+    eventsOf: groupEvents(pairs, temporalEvents),
   };
 }
 
@@ -131,7 +131,7 @@ function buildSprMoveEventRowsFromContext(pairs, options, context) {
     branchValueThreshold = 70,
     interpolatedTrees,
   } = options;
-  const { metricByPairId, eventIndex } = context;
+  const { metricByPairId, eventsOf } = context;
   const topologySnapshotCache = new Map();
 
   const getMovedSubtreeTopologySnapshot = (frameIndex, splitIndices) => {
@@ -151,7 +151,7 @@ function buildSprMoveEventRowsFromContext(pairs, options, context) {
       const sourceInputTreeIndex = pair.source_input_tree_index;
       const targetInputTreeIndex = pair.target_input_tree_index;
       const solution = pair.solution;
-      const rawEvents = eventIndex.getEventsForPair(pairId, 'spr_move');
+      const rawEvents = eventsOf(pairId, 'spr_move');
       const metric = getPairMetric(metricByPairId, pairId);
 
       return rawEvents
@@ -450,7 +450,7 @@ export function calculateSprPairActivity(pairs, options = {}) {
 }
 
 function buildSprPairActivityRows(pairs, eventRows, context) {
-  const { metricByPairId, eventIndex } = context;
+  const { metricByPairId, eventsOf } = context;
   const eventsByPair = eventRows.reduce(
     (map, event) => {
       map.get(event.pairId).push(event);
@@ -489,7 +489,7 @@ function buildSprPairActivityRows(pairs, eventRows, context) {
         uniqueMovedSubtreeCount: movedSubtrees.length,
         singleTaxonMoveEventCount,
         multiTaxonMoveEventCount,
-        transitionEventCount: eventIndex.countEventsForPair(pairId, 'split_change'),
+        transitionEventCount: eventsOf(pairId, 'split_change').length,
         sprMoveEventCount,
         totalPathHops: pathStats.totalPathHops,
         averagePathHops: pathStats.averagePathHops,
