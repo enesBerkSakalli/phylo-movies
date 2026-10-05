@@ -224,6 +224,19 @@ describe('useTreeController static render scheduling', () => {
     });
   });
 
+  it('clears the single-tree auto-fit sentinel when the pinned tree changes', async () => {
+    const { root } = await renderHookHarness();
+    controllerInstance._lastFocusedTreeIndex = 0;
+
+    updateStore({ clipboardTreeIndex: 3 });
+
+    expect(controllerInstance._lastFocusedTreeIndex).toBeNull();
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
   it('prefetches the current tree hydration window before rendering', async () => {
     const { root } = await renderHookHarness();
 

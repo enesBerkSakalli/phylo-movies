@@ -25,7 +25,7 @@ import {
 } from './interaction/InteractionHandlers.js';
 import { ViewportManager } from './viewport/ViewportManager.js';
 import { VIEWPORT_FIT_MODES } from './viewport/viewportFit.js';
-import { getClipboardLayers } from './utils/ClipboardUtils.js';
+import { getClipboardOverlay } from './utils/ClipboardUtils.js';
 import { createLayoutCacheKey } from './utils/layoutCacheKey.js';
 import { getSplitKey } from '../domain/tree/splits.js';
 import { TransitionFrame } from './TransitionFrame.js';
@@ -122,6 +122,7 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
 
     // Track last tree index we auto-fit to
     this._lastFocusedTreeIndex = null;
+    this._clipboardFit = null; // offset geometry of the pinned tree, joins the auto-fit
     this._hasUserViewportInteraction = false;
 
     // --- PERFORMANCE OPTIMIZATION: Coalesce static renders ---
@@ -752,8 +753,9 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
       this._createLayerRenderContext(interpolatedFrameData)
     );
 
-    // Add clipboard layers if clipboard is active
-    const clipboardLayers = getClipboardLayers(this);
+    // Add the pinned tree overlay; the auto-fit reads its offset geometry from _clipboardFit
+    const { layers: clipboardLayers, fitData } = getClipboardOverlay(this);
+    this._clipboardFit = fitData;
     const combinedLayers = clipboardLayers.length > 0 ? [...layers, ...clipboardLayers] : layers;
     this.deckContext.setLayers(combinedLayers);
   }

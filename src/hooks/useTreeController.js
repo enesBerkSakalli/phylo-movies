@@ -182,6 +182,9 @@ export function useTreeController() {
       }
 
       if (state.clipboardTreeIndex !== prevState.clipboardTreeIndex) {
+        // Pinning or unpinning changes what the auto-fit must frame.
+        const ctrl = controllerRef.current || state.treeController;
+        if (ctrl) ctrl._lastFocusedTreeIndex = null;
         scheduleRender();
       }
 

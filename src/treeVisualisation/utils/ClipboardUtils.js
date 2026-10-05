@@ -11,15 +11,6 @@ const EMPTY_CLIPBOARD_OVERLAY = Object.freeze({
 });
 
 /**
- * Get clipboard layers if clipboard is active
- * @param {Object} controller - The DeckGLTreeAnimationController instance
- * @returns {Array} Clipboard layers or empty array
- */
-export function getClipboardLayers(controller) {
-  return getClipboardOverlay(controller).layers;
-}
-
-/**
  * Get clipboard layers plus world-space fit data for the pinned tree overlay.
  * The rendered layers are offset by a modelMatrix, so the viewport fitter needs
  * equivalent CPU-side offset coordinates to include the pinned tree in auto-fit.

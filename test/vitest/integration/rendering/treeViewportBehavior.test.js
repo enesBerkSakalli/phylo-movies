@@ -140,6 +140,43 @@ describe('tree viewport behavior', () => {
     expect(controller._lastFocusedTreeIndex).toBe(0);
   });
 
+  it('automatic static fit frames the pinned tree overlay with the active tree', () => {
+    const node = { id: 'node-1', position: [0, 0, 0] };
+    const pinnedNode = { id: 'pinned-node', position: [0, -900, 0] };
+    const pinnedLabel = { id: 'pinned-label', position: [0, -800, 0], text: 'Ostrich' };
+    const pinnedLink = { id: 'pinned-link', path: new Float32Array([0, -900, 0, 10, -900, 0]) };
+    const controller = {
+      _lastFocusedTreeIndex: null,
+      _clipboardFit: { nodes: [pinnedNode], labels: [pinnedLabel], links: [pinnedLink] },
+      calculateLayout: vi.fn(() => ({ layoutTree: {}, max_radius: 10 })),
+      _getConsistentRadii: vi.fn(() => ({ extensionRadius: 15, labelRadius: 35 })),
+      dataConverter: {
+        convertTreeToLayerData: vi.fn(() => ({
+          nodes: [node],
+          labels: [],
+          links: [],
+          extensions: [],
+        })),
+      },
+      _updateLayersEfficiently: vi.fn(),
+      viewportManager: { focusOnTree: vi.fn() },
+    };
+
+    new StaticRenderer(controller)._renderSingleTree(
+      0,
+      0,
+      [{ id: 'tree-0' }],
+      { labelsVisible: true },
+      'radial-elbow'
+    );
+
+    expect(controller.viewportManager.focusOnTree).toHaveBeenCalledWith(
+      [node, pinnedNode],
+      [pinnedLabel],
+      expect.objectContaining({ links: [pinnedLink] })
+    );
+  });
+
   it('automatic static fit updates when the rendered tree index changes', () => {
     const treeOneNode = { id: 'node-1', position: [200, 50, 0] };
     const controller = {

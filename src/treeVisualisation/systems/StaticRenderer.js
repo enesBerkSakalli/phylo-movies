@@ -128,13 +128,25 @@ export class StaticRenderer {
     this.controller._updateLayersEfficiently(layerData);
 
     if (!options.skipAutoFit && this.controller._lastFocusedTreeIndex !== targetIndex) {
-      const visibleLabels = state.labelsVisible === false ? [] : layerData.labels;
-      this.controller.viewportManager.focusOnTree(layerData.nodes, visibleLabels, {
-        ...getAutoFitLabelOptions(visibleLabels.length),
-        obstructionScope: VIEWPORT_FIT_OBSTRUCTION_SCOPES.CANVAS,
-        maxFitAreaCenterDriftRatio: VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO,
-        links: [...layerData.links, ...layerData.extensions],
-      });
+      // The pinned tree is drawn above the active one: fit both, or its lowest labels peek in at the top edge.
+      const pinned = this.controller._clipboardFit;
+      const visibleLabels =
+        state.labelsVisible === false ? [] : [...layerData.labels, ...(pinned?.labels ?? [])];
+      this.controller.viewportManager.focusOnTree(
+        [...layerData.nodes, ...(pinned?.nodes ?? [])],
+        visibleLabels,
+        {
+          ...getAutoFitLabelOptions(visibleLabels.length),
+          obstructionScope: VIEWPORT_FIT_OBSTRUCTION_SCOPES.CANVAS,
+          maxFitAreaCenterDriftRatio: VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO,
+          links: [
+            ...layerData.links,
+            ...layerData.extensions,
+            ...(pinned?.links ?? []),
+            ...(pinned?.extensions ?? []),
+          ],
+        }
+      );
     }
 
     this.controller._lastFocusedTreeIndex = targetIndex;
