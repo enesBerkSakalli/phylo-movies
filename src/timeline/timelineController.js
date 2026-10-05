@@ -137,8 +137,7 @@ export class TimelineController {
     state.setSelectedTimelineSegment(segmentIndex);
 
     const { timeline } = state;
-    const { start, end, isInputTreeSegment, firstFrame } = timeline.segments[segmentIndex];
-    if (isInputTreeSegment) state.setClipboardTreeIndex(firstFrame);
+    const { start, end } = timeline.segments[segmentIndex];
 
     // A click lands strictly inside the segment, so one on a boundary stays on it.
     const cursor = timeline.cursorAt(Math.max(start + EDGE_MS, Math.min(ms, end - EDGE_MS)));

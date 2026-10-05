@@ -493,7 +493,7 @@ describe('TimelineController', () => {
       movieTimeMs,
     });
 
-    it('pins a clicked input tree and moves to it', () => {
+    it('moves to a clicked input tree without pinning it', () => {
       const store = makeStore({
         segments: [{ isInputTreeSegment: true, firstFrame: 4, lastFrame: 4, start: 0, end: 1500 }],
         cursorAt: cursorOnFrame(4),
@@ -506,7 +506,7 @@ describe('TimelineController', () => {
 
       const state = store.getState();
       expect(state.selected).to.deep.equal([0]);
-      expect(state.setClipboardTreeIndexCalls).to.deep.equal([4]);
+      expect(state.setClipboardTreeIndexCalls).to.deep.equal([]);
       expect(state.goToPositionCalls).to.deep.equal([
         { position: 4, direction: 'jump', options: { movieTimeMs: 700 } },
       ]);
