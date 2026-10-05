@@ -56,9 +56,9 @@ function partitionKey(indices) {
 function collectMotionEdges(segments) {
   const edges = new Set();
   segments.forEach((segment) => {
-    segment.timing
-      .filter((interval) => interval.type === 'motion')
-      .forEach((interval) => edges.add(`${interval.fromIndex}->${interval.toIndex}`));
+    segment.steps
+      .filter((step) => step.from !== step.to)
+      .forEach((step) => edges.add(`${step.from}->${step.to}`));
   });
   return edges;
 }
@@ -66,9 +66,9 @@ function collectMotionEdges(segments) {
 function collectNoOpHoldTargets(segments) {
   const targets = new Set();
   segments.forEach((segment) => {
-    segment.timing
-      .filter((interval) => interval.type === 'hold' && interval.holdKind === 'no_op_pair')
-      .forEach((interval) => targets.add(`${segment.pairId}:${interval.holdIndex}`));
+    segment.steps
+      .filter((step) => step.hold === 'no_op_pair')
+      .forEach((step) => targets.add(`${segment.pairId}:${step.to}`));
   });
   return targets;
 }
@@ -341,31 +341,7 @@ function makeSyntheticTimingMovieData() {
 }
 
 describe('Timeline construction from normalized backend result', () => {
-  it('does not keep unused timeline constants or obsolete input-tree labels', () => {
-    const constantsSource = fs.readFileSync(
-      path.join(repoRoot, 'src', 'timeline', 'constants.js'),
-      'utf8'
-    );
-    const removedConstantNames = [
-      'MIN_ZOOM_MS',
-      'ZOOM_PERCENTAGE_UI',
-      'TIMELINE_HEIGHT',
-      'MAX_ZOOM_FACTOR',
-      'SCRUB_END_TIMEOUT_MS',
-      'DEFAULT_TREE_INDEX',
-      'MAX_TOOLTIP_LEAVES',
-      'DURATION_COMPLEXITY_WEIGHT',
-      'EDGE_COMPLEXITY_WEIGHT',
-      'DEFAULT_COMPLEXITY',
-      'DEFAULT_MAX_EDGES',
-      'FALLBACK_MAX_EDGES',
-    ];
-
-    const remainingConstants = removedConstantNames.filter((name) =>
-      constantsSource.includes(name)
-    );
-    expect(remainingConstants).to.deep.equal([]);
-
+  it('does not keep obsolete input-tree labels', () => {
     const inputTreeLabelFiles = [
       path.join(repoRoot, 'src', 'components', 'timeline', 'TimelineSegmentTooltip.jsx'),
       path.join(repoRoot, 'src', 'components', 'TransitionInspectorPanel.jsx'),
@@ -429,7 +405,7 @@ describe('Timeline construction from normalized backend result', () => {
     expect(segments.length).to.be.greaterThan(0);
     const frameIndices = new Set(data.frames.map((frame) => frame.frame_index));
 
-    expect(timeline.cumulativeDurations.at(-1)).to.equal(timeline.totalDuration);
+    expect(segments.at(-1).end).to.equal(timeline.totalDuration);
 
     const firstEvent = data.temporal_events.find((event) => event.event_type === 'split_change');
     const firstInterpSeg = segments.find((segment) => !segment.isInputTreeSegment);
@@ -480,14 +456,9 @@ describe('Timeline construction from normalized backend result', () => {
         expect(segment.sourceGlobalIndex).to.be.a('number');
         expect(segment.targetGlobalIndex).to.be.a('number');
       }
-      for (const interval of segment.timing) {
-        if (interval.type === 'motion') {
-          expect(frameIndices.has(interval.fromIndex)).to.equal(true);
-          expect(frameIndices.has(interval.toIndex)).to.equal(true);
-        }
-        if (interval.type === 'hold') {
-          expect(frameIndices.has(interval.holdIndex)).to.equal(true);
-        }
+      for (const step of segment.steps) {
+        expect(frameIndices.has(step.from)).to.equal(true);
+        expect(frameIndices.has(step.to)).to.equal(true);
       }
       for (const field of redundantSegmentFields) {
         expect(segment).to.not.have.property(field);
@@ -548,11 +519,7 @@ describe('Timeline construction from normalized backend result', () => {
       [8, 9, 10, 11, 12, 13],
     ]);
     expect(transitionSegments[1]).to.include({ firstFrame: 7, lastFrame: 12 });
-    expect(transitionSegments[1].timing.at(-1)).to.deep.include({
-      type: 'motion',
-      fromIndex: 11,
-      toIndex: 12,
-    });
+    expect(transitionSegments[1].steps.at(-1)).to.deep.include({ from: 11, to: 12 });
   });
 
   it('keeps final fulfillment motion separate after a single split-event segment', () => {
@@ -581,6 +548,8 @@ describe('Timeline construction from normalized backend result', () => {
       subtreeMoveCount: 0,
     });
     expect(splitEventSegment).to.include({ firstFrame: 0, lastFrame: 2, subtreeMoveCount: 2 });
+    expect(splitEventSegment).to.include({ splitIndex: 1, splitCount: 1 });
+    expect(separateFulfillmentSegment).to.not.have.property('splitCount');
   });
 
   it('keeps the ostrich zero-shrink final fulfillment as a separate transition segment', () => {
@@ -595,9 +564,7 @@ describe('Timeline construction from normalized backend result', () => {
       [13, 14],
     ]);
     expect(transitionSegments[1].pivotEdge).to.deep.equal([]);
-    expect(transitionSegments[1].timing).to.deep.equal([
-      { type: 'motion', fromIndex: 13, toIndex: 14, durationMs: 1000 },
-    ]);
+    expect(transitionSegments[1].steps).to.deep.equal([{ from: 13, to: 14, ms: 1000 }]);
   });
 
   it('canonicalizes transition splits before affected-subtree lookup', () => {
@@ -685,14 +652,7 @@ describe('Timeline construction from normalized backend result', () => {
     );
 
     expect(inputTree).to.include({ firstFrame: 0, lastFrame: 0 });
-    expect(inputTree.timing).to.deep.equal([
-      {
-        type: 'hold',
-        holdIndex: 0,
-        holdKind: 'input_tree',
-        durationMs: 1500,
-      },
-    ]);
+    expect(inputTree.steps).to.deep.equal([{ from: 0, to: 0, hold: 'input_tree', ms: 1500 }]);
   });
 
   it('uses a short static hold for exact no-op adjacent input pairs', () => {
@@ -700,14 +660,7 @@ describe('Timeline construction from normalized backend result', () => {
     const segments = createSegments(movieData);
     const transition = segments.find((segment) => segment.pairId === 'pair_0_1');
 
-    expect(transition.timing).to.deep.equal([
-      {
-        type: 'hold',
-        holdIndex: 1,
-        holdKind: 'no_op_pair',
-        durationMs: 300,
-      },
-    ]);
+    expect(transition.steps).to.deep.equal([{ from: 1, to: 1, hold: 'no_op_pair', ms: 300 }]);
   });
 
   it('keeps branch-length-only pairs as motion when weighted distance changes', () => {
@@ -715,14 +668,7 @@ describe('Timeline construction from normalized backend result', () => {
     const segments = createSegments(movieData);
     const transition = segments.find((segment) => segment.pairId === 'pair_0_1');
 
-    expect(transition.timing).to.deep.equal([
-      {
-        type: 'motion',
-        fromIndex: 0,
-        toIndex: 1,
-        durationMs: 1000,
-      },
-    ]);
+    expect(transition.steps).to.deep.equal([{ from: 0, to: 1, ms: 1000 }]);
   });
 
   it('builds semantic mover and pivot timing from temporal SPR events', () => {
@@ -743,12 +689,12 @@ describe('Timeline construction from normalized backend result', () => {
       expect(event).to.not.have.property('moving_taxa');
     }
     expect(transition).to.include({ firstFrame: 0, lastFrame: 2 });
-    expect(transition.timing).to.deep.equal([
-      { type: 'motion', fromIndex: 0, toIndex: 1, durationMs: 1000 },
-      { type: 'hold', holdIndex: 1, holdKind: 'mover', durationMs: 200 },
-      { type: 'motion', fromIndex: 1, toIndex: 2, durationMs: 1000 },
-      { type: 'hold', holdIndex: 2, holdKind: 'mover', durationMs: 200 },
-      { type: 'hold', holdIndex: 2, holdKind: 'pivot', durationMs: 900 },
+    expect(transition.steps).to.deep.equal([
+      { from: 0, to: 1, ms: 1000 },
+      { from: 1, to: 1, hold: 'mover', ms: 200 },
+      { from: 1, to: 2, ms: 1000 },
+      { from: 2, to: 2, hold: 'mover', ms: 200 },
+      { from: 2, to: 2, hold: 'pivot', ms: 900 },
     ]);
   });
 });

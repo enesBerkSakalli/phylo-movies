@@ -14,14 +14,12 @@ import {
   selectPairChanges,
   selectScaleList,
   selectSelectedTimelineSegmentIndex,
-  selectTemporalEvents,
 } from '../state/phyloStore/store.js';
 import { Badge } from './ui/badge';
 import {
   extractAffectedSubtreeGroups,
   formatPivotEdgePreview,
   getSegmentStepRange,
-  getSplitEventPosition,
 } from './timeline/timelineSegmentTooltipUtils.js';
 
 export function TransitionInspectorPanel() {
@@ -30,7 +28,6 @@ export function TransitionInspectorPanel() {
     timeline,
     leafNamesByIndex,
     pairChanges,
-    temporalEvents,
     scaleList,
     hasMsa,
     msaStepSize,
@@ -42,7 +39,6 @@ export function TransitionInspectorPanel() {
       timeline: selectTimeline(state),
       leafNamesByIndex: selectLeafNamesByIndex(state),
       pairChanges: selectPairChanges(state),
-      temporalEvents: selectTemporalEvents(state),
       scaleList: selectScaleList(state),
       hasMsa: selectHasMsa(state),
       msaStepSize: selectMsaStepSize(state),
@@ -60,7 +56,6 @@ export function TransitionInspectorPanel() {
         segment,
         leafNamesByIndex,
         pairChanges,
-        temporalEvents,
         scaleList,
         hasMsa,
         msaStepSize,
@@ -71,7 +66,6 @@ export function TransitionInspectorPanel() {
       segment,
       leafNamesByIndex,
       pairChanges,
-      temporalEvents,
       scaleList,
       hasMsa,
       msaStepSize,
@@ -207,7 +201,6 @@ function buildInspectorDetails({
   segment,
   leafNamesByIndex,
   pairChanges,
-  temporalEvents,
   scaleList,
   hasMsa,
   msaStepSize,
@@ -223,9 +216,6 @@ function buildInspectorDetails({
   const sourceGlobalIndex = resolveSourceGlobalIndex(segment);
   const scaleValue = getScaleValue(scaleList, sourceGlobalIndex);
   const stepRange = segment.isInputTreeSegment ? null : getSegmentStepRange(segment);
-  const splitEvent = segment.isInputTreeSegment
-    ? null
-    : getSplitEventPosition(segment, temporalEvents);
   const msaFrameIndex = resolveMsaFrameIndex(segment, pair);
   const msaWindow =
     hasMsa &&
@@ -245,7 +235,7 @@ function buildInspectorDetails({
     stepLabel: stepRange
       ? `${formatRange(stepRange.start, stepRange.end, '–')} of ${stepRange.total}`
       : null,
-    eventLabel: splitEvent ? `${splitEvent.index} of ${splitEvent.count}` : null,
+    eventLabel: segment.splitCount > 1 ? `${segment.splitIndex} of ${segment.splitCount}` : null,
     positionLabel: formatPosition(segment, pairChanges.byPairId.size),
     movingTaxaLabel: formatCount(segment.subtreeMoveCount, 'taxon', 'taxa'),
     animationStepLabel: formatCount(segment.lastFrame - segment.firstFrame, 'step', 'steps'),

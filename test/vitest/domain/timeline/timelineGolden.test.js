@@ -24,13 +24,11 @@ const FIXTURES = {
 
 function goldenRows(movieData) {
   const timeline = buildTimeline(movieData);
-  const { segments } = timeline;
-  const ends = timeline.cumulativeDurations;
-  const total = ends[ends.length - 1];
+  const { segments, totalDuration: total } = timeline;
 
   const times = new Set([0, total]);
   for (let ms = 0; ms < total; ms += STEP_MS) times.add(ms);
-  for (const end of ends) {
+  for (const { end } of segments) {
     for (const ms of [end - 1, end, end + 1]) times.add(Math.max(0, Math.min(ms, total)));
   }
 
@@ -45,13 +43,7 @@ function goldenRows(movieData) {
   }
 
   return {
-    segments: segments.map((s, i) => [
-      i,
-      s.isInputTreeSegment,
-      s.pairId ?? null,
-      i === 0 ? 0 : ends[i - 1],
-      ends[i],
-    ]),
+    segments: segments.map((s, i) => [i, s.isInputTreeSegment, s.pairId ?? null, s.start, s.end]),
     cursors: sortedTimes.map((ms) => {
       const cursor = timeline.cursorAt(ms);
       return [ms, cursor?.frameIndex ?? null, cursor?.segmentIndex ?? null];

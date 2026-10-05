@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { buildTimeline, cursorForFrame, stepAt } from '../../../../src/timeline/timeline.js';
 import { smallExampleMovieData } from '../../../fixtures/timeline/generatedMovieData.js';
 
-const { steps, totalDuration, cumulativeDurations } = buildTimeline(smallExampleMovieData);
+const { segments, steps, totalDuration } = buildTimeline(smallExampleMovieData);
 
 describe('timeline steps', () => {
   it('tile the movie in order, each inside its segment', () => {
@@ -10,8 +10,22 @@ describe('timeline steps', () => {
     expect(steps.at(-1).end).toBe(totalDuration);
     steps.forEach((step, i) => {
       if (i > 0) expect(step.start).toBe(steps[i - 1].end);
-      expect(step.start).toBeGreaterThanOrEqual(cumulativeDurations[step.segment - 1] ?? 0);
-      expect(step.end).toBeLessThanOrEqual(cumulativeDurations[step.segment]);
+      expect(step.start).toBeGreaterThanOrEqual(segments[step.segment].start);
+      expect(step.end).toBeLessThanOrEqual(segments[step.segment].end);
+    });
+  });
+
+  it('give each segment the span of its own steps, and name the segment playing at a time', () => {
+    expect(segments[0].start).toBe(0);
+    expect(segments.at(-1).end).toBe(totalDuration);
+    segments.forEach((segment, i) => {
+      const own = steps.filter((step) => step.segment === i);
+      expect(own.length).toBeGreaterThan(0);
+      expect([segment.start, segment.end]).toEqual([own[0].start, own.at(-1).end]);
+      expect(segment.end).toBeGreaterThan(segment.start);
+      if (i > 0) expect(segment.start).toBe(segments[i - 1].end);
+      expect(stepAt(steps, segment.start).segment).toBe(i);
+      expect(stepAt(steps, segment.end - 0.001).segment).toBe(i);
     });
   });
 

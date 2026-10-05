@@ -82,15 +82,6 @@ export function getSegmentStepRange(segment) {
   };
 }
 
-/** Which of a pair's several split events a segment is; null when the pair has just one. */
-export function getSplitEventPosition(segment, temporalEvents) {
-  const events = (temporalEvents ?? []).filter(
-    (event) => event.event_type === 'split_change' && event.pair_id === segment.pairId
-  );
-  const index = events.findIndex((event) => event.frame_range[0] === segment.globalStart);
-  return events.length > 1 && index >= 0 ? { index: index + 1, count: events.length } : null;
-}
-
 /** Left edge that keeps a tooltip centred on the pointer, margin px inside the viewport. */
 export function clampTooltipLeft(anchorX, width, viewportWidth, margin = 8) {
   return Math.max(margin, Math.min(anchorX - width / 2, viewportWidth - margin - width));

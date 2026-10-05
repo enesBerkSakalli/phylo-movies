@@ -6,8 +6,7 @@ import { buildTimeline } from '../../../../src/timeline/timeline.js';
 import { smallExampleMovieData } from '../../../fixtures/timeline/generatedMovieData.js';
 
 const movie = smallExampleMovieData;
-const timelineData = buildTimeline(movie);
-const { segments } = timelineData;
+const { segments } = buildTimeline(movie);
 const profile = buildPairChangeProfile({
   pairs: movie.pairs,
   pairMetrics: movie.pair_metrics,
@@ -15,12 +14,7 @@ const profile = buildPairChangeProfile({
 });
 
 describe('buildPairSpans', () => {
-  const spans = buildPairSpans({
-    segments,
-    timelineData,
-    profile,
-    frameToMs: (frame) => frame * 100,
-  });
+  const spans = buildPairSpans({ segments, profile, frameToMs: (frame) => frame * 100 });
   const bySpanId = new Map(spans.map((span) => [span.pairId, span]));
 
   it('makes one span per pair, covering the union of its transition segments', () => {
@@ -45,18 +39,13 @@ describe('buildPairSpans', () => {
   });
 
   it('interpolates between frames when the midpoint falls between two of them', () => {
-    const uneven = buildPairSpans({
-      segments,
-      timelineData,
-      profile,
-      frameToMs: (frame) => frame * frame,
-    });
+    const uneven = buildPairSpans({ segments, profile, frameToMs: (frame) => frame * frame });
     // midpoint 2.5 of frames 2 (4ms) and 3 (9ms)
     expect(uneven[0].pips[0].ms).toBeCloseTo(6.5);
   });
 
   it('drops a move whose frames have no time on the timeline', () => {
-    const none = buildPairSpans({ segments, timelineData, profile, frameToMs: () => null });
+    const none = buildPairSpans({ segments, profile, frameToMs: () => null });
     expect(none[0].pips).toEqual([]);
   });
 });

@@ -40,6 +40,18 @@ describe('TimelineView', () => {
     return container;
   }
 
+  // Segments laid end to end, `durations[i]` ms each: the spans and steps the view reads
+  function timelineOf(segments, durations = segments.map(() => 1000), cursorAt = () => null) {
+    let clock = 0;
+    const steps = segments.map((segment, index) => {
+      const step = { start: clock, end: clock + durations[index], segment: index };
+      Object.assign(segment, { start: step.start, end: step.end });
+      clock = step.end;
+      return step;
+    });
+    return { segments, steps, totalDuration: clock, cursorAt };
+  }
+
   function makeTimelineFixture() {
     const segments = [
       { isInputTreeSegment: true, originalTreeIndex: 0 },
@@ -57,18 +69,12 @@ describe('TimelineView', () => {
       },
       { isInputTreeSegment: true, originalTreeIndex: 1 },
     ];
-    const timeline = {
-      segments,
-      // 3 segments of 1000ms
-      totalDuration: 3000,
-      cumulativeDurations: [1000, 2000, 3000],
-      // The cursor at a time: its segment, and frame 5 for any transition
-      cursorAt: (ms) => ({
-        segmentIndex: Math.min(2, Math.floor(ms / 1000)),
-        frameIndex: 5,
-        movieTimeMs: ms,
-      }),
-    };
+    // 3 segments of 1000ms; the cursor at a time: its segment, and frame 5 for any transition
+    const timeline = timelineOf(segments, undefined, (ms) => ({
+      segmentIndex: Math.min(2, Math.floor(ms / 1000)),
+      frameIndex: 5,
+      movieTimeMs: ms,
+    }));
     return { timeline, segments };
   }
 
@@ -146,13 +152,7 @@ describe('TimelineView', () => {
   });
 
   it('draws input-window ticks on a baseline for dense tree-only timelines', () => {
-    const segments = Array.from({ length: 100 }, () => ({ isInputTreeSegment: true }));
-    const timeline = {
-      segments,
-      totalDuration: 100000,
-      cumulativeDurations: segments.map((_, index) => (index + 1) * 1000),
-      cursorAt: () => null,
-    };
+    const timeline = timelineOf(Array.from({ length: 100 }, () => ({ isInputTreeSegment: true })));
     const { view } = mountView(timeline, { container: makeContainer(800, 44) });
 
     expect(findLayer(view, 'baseline-layer').props.data).to.have.length(1);
@@ -511,12 +511,7 @@ describe('TimelineView', () => {
         { isInputTreeSegment: false },
         { isInputTreeSegment: true },
       ];
-      const timeline = {
-        segments,
-        totalDuration: 2400,
-        cumulativeDurations: [1000, 1400, 2400],
-        cursorAt: () => null,
-      };
+      const timeline = timelineOf(segments, [1000, 400, 1000]);
       const { view, events } = mountView(timeline);
 
       // 10 ms before the end of the input tree: 490 from its centre, 210 from the transition's
@@ -526,26 +521,20 @@ describe('TimelineView', () => {
       expect(events.selects.map(({ index }) => index)).to.deep.equal([1, 0]);
     });
 
-    it('clears the selection for a click past the end of the timeline', () => {
+    it('selects the last segment for a click on the far edge of the timeline', () => {
       const { timeline } = makeTimelineFixture();
       const { view, events } = mountView(timeline);
 
       clickTimeline(view, 3000);
 
-      expect(events.selects).to.deep.equal([{ index: null, ms: 3000 }]);
-      expect(view.selected).to.equal(null);
+      expect(events.selects).to.deep.equal([{ index: 2, ms: 3000 }]);
+      expect(view.selected).to.equal(2);
     });
 
     it('selects the expected segment in dense timelines', () => {
-      const segments = Array.from({ length: 100 }, (_, index) => ({
-        isInputTreeSegment: index % 2 === 0,
-      }));
-      const timeline = {
-        segments,
-        totalDuration: 100000,
-        cumulativeDurations: segments.map((_, index) => (index + 1) * 1000),
-        cursorAt: () => null,
-      };
+      const timeline = timelineOf(
+        Array.from({ length: 100 }, (_, index) => ({ isInputTreeSegment: index % 2 === 0 }))
+      );
       const { view, events } = mountView(timeline, { container: makeContainer(800, 120) });
 
       clickTimeline(view, 51500);

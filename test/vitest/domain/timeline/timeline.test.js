@@ -109,18 +109,33 @@ describe('buildTimeline', () => {
 
   it('resolves exact timeline boundaries consistently', () => {
     const timeline = buildTimeline(smallExampleMovieData);
-    const { segments, cumulativeDurations, totalDuration } = timeline;
+    const { segments, totalDuration } = timeline;
     const firstMotion = segments.findIndex(
       (segment, index) => index > 0 && segment.lastFrame > segment.firstFrame
     );
 
-    const atBoundary = timeline.cursorAt(cumulativeDurations[firstMotion - 1]);
+    const atBoundary = timeline.cursorAt(segments[firstMotion].start);
     expect(atBoundary.segmentIndex).toBe(firstMotion);
     expect(atBoundary.frameIndex).toBe(segments[firstMotion].firstFrame);
 
     const atEnd = timeline.cursorAt(totalDuration);
     expect(atEnd.segmentIndex).toBe(segments.length - 1);
     expect(atEnd.frameIndex).toBe(segments.at(-1).lastFrame);
+  });
+
+  it('numbers the split-event segments of a pair with several, and nothing else', () => {
+    const { segments } = buildTimeline(smallExampleMovieData);
+
+    const numbered = segments.filter((segment) => segment.splitCount);
+    expect(numbered.slice(0, 4).map((s) => [s.pairId, s.splitIndex, s.splitCount])).toEqual([
+      ['pair_0_1', 1, 3],
+      ['pair_0_1', 2, 3],
+      ['pair_0_1', 3, 3],
+      ['pair_2_3', 1, 3],
+    ]);
+    // A pair without split events is one unnumbered segment, and so is an input tree
+    expect(segments.find((segment) => segment.pairId === 'pair_1_2').splitCount).toBeUndefined();
+    expect(segments[0].splitCount).toBeUndefined();
   });
 
   it('builds segments from a binary-backed payload without interpolated_trees', () => {

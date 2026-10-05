@@ -486,7 +486,7 @@ describe('TimelineController', () => {
     function makeStore({ segments, cursorAt, frameIndex = 0 }) {
       const state = {
         frameIndex,
-        timeline: { segments, cumulativeDurations: segments.map(() => 3000), cursorAt },
+        timeline: { segments, cursorAt },
         timelineCursor: { movieTimeMs: 1234 },
         goToPositionCalls: [],
         setClipboardTreeIndexCalls: [],
@@ -503,6 +503,8 @@ describe('TimelineController', () => {
       isInputTreeSegment: false,
       firstFrame,
       lastFrame,
+      start: 0,
+      end: 3000,
     });
 
     it('pins a clicked input tree and moves to it', () => {

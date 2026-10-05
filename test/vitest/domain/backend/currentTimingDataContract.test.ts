@@ -159,11 +159,11 @@ describe('current backend timing data contract', () => {
       (segment) => segment.pairId === 'pair_7_8' && !segment.isInputTreeSegment
     );
 
-    expect(transition?.timing).toEqual([
-      { type: 'motion', fromIndex: 0, toIndex: 1, durationMs: 1000 },
-      { type: 'hold', holdIndex: 1, holdKind: 'mover', durationMs: 200 },
-      { type: 'motion', fromIndex: 1, toIndex: 2, durationMs: 1000 },
-      { type: 'hold', holdIndex: 2, holdKind: 'pivot', durationMs: 900 },
+    expect(transition?.steps).toEqual([
+      { from: 0, to: 1, ms: 1000 },
+      { from: 1, to: 1, hold: 'mover', ms: 200 },
+      { from: 1, to: 2, ms: 1000 },
+      { from: 2, to: 2, hold: 'pivot', ms: 900 },
     ]);
   });
 });

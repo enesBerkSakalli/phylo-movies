@@ -18,7 +18,7 @@ import {
   calculateSeparatorWidth,
 } from './deckLayers.js';
 import { msToX, xToMs, calculateZoomScale } from './math/coordinateUtils.js';
-import { getSegmentBounds, timeToSegmentIndex } from './utils/segmentTiming.js';
+import { stepAt } from './timeline.js';
 import { getDevicePixelRatio, processSegments, projectPairStrip } from './stripGeometry.js';
 import { attachTimelineInput } from './timelineInput.js';
 import { describeCursor } from './describeCursor.js';
@@ -240,7 +240,7 @@ export class TimelineView {
 
   /** Viewport point on top of a segment's middle: where its tooltip hangs. */
   anchorOf(segmentIndex) {
-    const { start, end } = getSegmentBounds(segmentIndex, this.timeline);
+    const { start, end } = this.timeline.segments[segmentIndex];
     const rect = this.container.getBoundingClientRect();
     return { x: rect.left + this.msToX((start + end) / 2), y: rect.top };
   }
@@ -289,7 +289,6 @@ export class TimelineView {
       visEnd,
       zoomScale,
       theme: TIMELINE_THEME,
-      timelineData: this.timeline,
       segments: this.timeline.segments,
       selectedSegmentIndex: this.selected,
       hoverIndex: this.hovered,
@@ -334,10 +333,7 @@ export class TimelineView {
       theme: TIMELINE_THEME,
       hoverPairId: hoveredSegment?.isInputTreeSegment === false ? hoveredSegment.pairId : null,
       selectedPairId: selectedSegment?.isInputTreeSegment === false ? selectedSegment.pairId : null,
-      selectedBounds:
-        selectedSegment?.isInputTreeSegment === false
-          ? getSegmentBounds(this.selected, this.timeline)
-          : null,
+      selectedBounds: selectedSegment?.isInputTreeSegment === false ? selectedSegment : null,
     });
   }
 
@@ -348,9 +344,9 @@ export class TimelineView {
     const visStart = rangeStart - buffer;
     const visEnd = rangeEnd + buffer;
 
-    const startIdx = Math.max(0, timeToSegmentIndex(Math.max(0, visStart), this.timeline) - 1);
-    const rawEndIdx = timeToSegmentIndex(Math.min(this._totalDuration - 1, visEnd), this.timeline);
-    const endIdx = Math.min(this.timeline.segments.length - 1, rawEndIdx + 1);
+    const { steps, segments } = this.timeline;
+    const startIdx = Math.max(0, stepAt(steps, visStart).segment - 1);
+    const endIdx = Math.min(segments.length - 1, stepAt(steps, visEnd).segment + 1);
 
     const zoomScale = calculateZoomScale(rangeStart, rangeEnd, this._totalDuration);
 

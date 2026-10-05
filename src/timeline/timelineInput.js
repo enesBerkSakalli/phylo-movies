@@ -1,4 +1,4 @@
-import { getSegmentBounds, timeToSegmentIndex } from './utils/segmentTiming.js';
+import { stepAt } from './timeline.js';
 
 const HOVER_CLEAR_DELAY_MS = 150;
 const SCRUB_GRAB_PX = 24;
@@ -18,7 +18,7 @@ const SCRUB_GRAB_PX = 24;
  */
 export function attachTimelineInput(view, { onScrub, onSelect, onHover, onInspect }) {
   const { timeline } = view;
-  const { segments } = timeline;
+  const { segments, steps } = timeline;
   const target = view.deck.canvas ?? view.canvas;
 
   let dragging = false; // the handle is held
@@ -32,13 +32,8 @@ export function attachTimelineInput(view, { onScrub, onSelect, onHover, onInspec
   // A click on an input tree may mean the transition beside it: the nearest centre wins.
   const segmentAt = (event) => {
     const ms = msAt(event);
-    const found = timeToSegmentIndex(ms, timeline);
-    if (found < 0) return { ms, index: null };
-
-    const centre = (i) => {
-      const { start, end } = getSegmentBounds(i, timeline);
-      return Math.abs(ms - (start + end) / 2);
-    };
+    const found = stepAt(steps, ms).segment;
+    const centre = (i) => Math.abs(ms - (segments[i].start + segments[i].end) / 2);
     const candidates = [found, found - 1, found + 1].filter(
       (i) =>
         i === found ||
@@ -63,9 +58,7 @@ export function attachTimelineInput(view, { onScrub, onSelect, onHover, onInspec
     if (dragging) return scrubTo(event, 'move');
 
     // Hover reports the segment under the pointer, not the nearest centre
-    const found = timeToSegmentIndex(msAt(event), timeline);
-    const index = found < 0 ? null : found;
-    if (index !== null || hovered !== null) hover(index);
+    hover(stepAt(steps, msAt(event)).segment);
   };
 
   const onMouseDown = (event) => {
@@ -101,7 +94,7 @@ export function attachTimelineInput(view, { onScrub, onSelect, onHover, onInspec
     if (event.altKey || event.ctrlKey || event.metaKey) return;
 
     const last = segments.length - 1;
-    const current = view.selected ?? Math.max(0, timeToSegmentIndex(view.scrubberMs, timeline));
+    const current = view.selected ?? stepAt(steps, view.scrubberMs).segment;
     const wanted = { Home: 0, End: last, ArrowLeft: current - 1, ArrowRight: current + 1 }[
       event.key
     ];
@@ -109,7 +102,7 @@ export function attachTimelineInput(view, { onScrub, onSelect, onHover, onInspec
 
     event.preventDefault();
     const index = Math.max(0, Math.min(last, wanted));
-    const { start, end } = getSegmentBounds(index, timeline);
+    const { start, end } = segments[index];
     view.setCustomTime((start + end) / 2);
     onSelect(index, view.scrubberMs);
   };

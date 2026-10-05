@@ -3,12 +3,12 @@
  *
  * - input tree: observed tree from a sliding window or bootstrap replicate
  * - timeline segment: selectable run on the scrubber, either an input tree or a piece of one
- *   pair's transition; it plays backend frames `firstFrame..lastFrame`
+ *   pair's transition; it plays backend frames `firstFrame..lastFrame` during its steps, from
+ *   `start` to `end`
  * - step: `{start, end, from, to, hold?, segment}`: frame `from` moves to frame `to` between
  *   `start` and `end`; `from === to` is a hold on that frame (`hold` names why). Steps are
- *   contiguous and sorted, built once from the segments' timing.
+ *   contiguous and sorted: each segment's `steps` laid end to end, once.
  */
-import { TIMING_PROFILE } from './constants.js';
 import { TimelineEventIndex } from './data/TimelineEventIndex.js';
 import { isInputFrame } from '../domain/backend/inputFrame.js';
 import { resolveCursorTreeIndex } from '../domain/indexing/treeIndexSemantics.js';
@@ -18,6 +18,14 @@ import {
   toBackendSplitKey,
 } from '../domain/tree/splits.js';
 
+const TIMING_PROFILE = {
+  motionStepMs: 1000,
+  moverHoldMs: 200,
+  pivotHoldMs: 900,
+  inputTreeHoldMs: 1500,
+  noOpPairHoldMs: 300,
+};
+
 /**
  * Everything the player reads about the movie, without any tree or UI state.
  * @param {Object} movieData - Validated backend movie data
@@ -25,11 +33,7 @@ import {
 export function buildTimeline(movieData) {
   const segments = createSegments(movieData);
   const steps = buildSteps(segments);
-  const segmentDurations = segments.map(({ timing }) =>
-    timing.reduce((sum, { durationMs }) => sum + (durationMs > 0 ? durationMs : 0), 0)
-  );
-  let totalDuration = 0;
-  const cumulativeDurations = segmentDurations.map((duration) => (totalDuration += duration));
+  const totalDuration = steps.at(-1)?.end ?? 0;
 
   const { frames } = movieData;
   const pairById = new Map(movieData.pairs.map((pair) => [pair.pair_id, pair]));
@@ -70,7 +74,6 @@ export function buildTimeline(movieData) {
     segments,
     steps,
     totalDuration,
-    cumulativeDurations,
 
     /** What the tree renderer draws at `movieTimeMs`: two tree indices and how far between them. */
     frameAt(movieTimeMs) {
@@ -101,27 +104,19 @@ export function buildTimeline(movieData) {
   };
 }
 
+// Lays the segments' steps end to end on the clock, and gives each segment its span.
 function buildSteps(segments) {
-  const steps = [];
-  let start = 0;
+  let clock = 0;
   segments.forEach((segment, index) => {
-    for (const interval of segment.timing) {
-      const duration = interval.durationMs;
-      if (!(duration > 0)) continue;
-      const hold = interval.type === 'hold';
-      const end = start + duration;
-      steps.push({
-        start,
-        end,
-        from: hold ? interval.holdIndex : interval.fromIndex,
-        to: hold ? interval.holdIndex : interval.toIndex,
-        hold: hold ? interval.holdKind : undefined,
-        segment: index,
-      });
-      start = end;
+    segment.start = clock;
+    for (const step of segment.steps) {
+      step.start = clock;
+      step.end = clock += step.ms;
+      step.segment = index;
     }
+    segment.end = clock;
   });
-  return steps;
+  return segments.flatMap((segment) => segment.steps);
 }
 
 /** The step with `start <= ms < end`; the last step from the movie's end on. */
@@ -177,12 +172,7 @@ export function createSegments(movieData) {
   return segments;
 }
 
-const hold = (holdIndex, holdKind, durationMs) => ({
-  type: 'hold',
-  holdIndex,
-  holdKind,
-  durationMs,
-});
+const hold = (frame, kind, ms) => ({ from: frame, to: frame, hold: kind, ms });
 
 function inputTreeSegment(frame) {
   const frameIndex = frame.frame_index;
@@ -193,7 +183,7 @@ function inputTreeSegment(frame) {
     originalTreeIndex: frame.input_tree_index,
     firstFrame: frameIndex,
     lastFrame: frameIndex,
-    timing: [hold(frameIndex, 'input_tree', TIMING_PROFILE.inputTreeHoldMs)],
+    steps: [hold(frameIndex, 'input_tree', TIMING_PROFILE.inputTreeHoldMs)],
   };
 }
 
@@ -223,7 +213,11 @@ function pairSegments(pair, splitEvents, sprEvents, metric) {
     const last = foldsTarget ? target : end;
 
     if (covered < start - 1) segments.push(transitionSegment(pair, covered, start - 1));
-    segments.push(transitionSegment(pair, Math.max(source, start - 1), last, { event, sprEvents }));
+    segments.push({
+      ...transitionSegment(pair, Math.max(source, start - 1), last, { event, sprEvents }),
+      splitIndex: index + 1,
+      splitCount: splitEvents.length,
+    });
     covered = Math.max(covered, last);
   });
   if (covered < target) segments.push(transitionSegment(pair, covered, target));
@@ -257,15 +251,15 @@ function transitionSegment(
     globalEnd: event ? event.frame_range[1] : lastFrame,
     firstFrame,
     lastFrame,
-    timing: isNoOp
+    steps: isNoOp
       ? [hold(lastFrame, 'no_op_pair', TIMING_PROFILE.noOpPairHoldMs)]
-      : transitionTiming(pair, firstFrame, lastFrame, event, sprEvents),
+      : transitionSteps(pair, firstFrame, lastFrame, event, sprEvents),
   };
 }
 
 // One motion per frame step. A hold lands after the motion that reaches its frame: first the
 // movers of this pivot's SPR moves, then the pivot itself. Several holds may share a frame.
-function transitionTiming(pair, firstFrame, lastFrame, event, sprEvents) {
+function transitionSteps(pair, firstFrame, lastFrame, event, sprEvents) {
   const holds = event
     ? [
         ...sprEvents
@@ -280,16 +274,11 @@ function transitionTiming(pair, firstFrame, lastFrame, event, sprEvents) {
         hold(event.frame_range[1], 'pivot', TIMING_PROFILE.pivotHoldMs),
       ]
     : [];
-  const timing = [];
+  const steps = [];
 
   for (let to = firstFrame + 1; to <= lastFrame; to += 1) {
-    timing.push({
-      type: 'motion',
-      fromIndex: to - 1,
-      toIndex: to,
-      durationMs: TIMING_PROFILE.motionStepMs,
-    });
-    timing.push(...holds.filter((entry) => entry.holdIndex === to));
+    steps.push({ from: to - 1, to, ms: TIMING_PROFILE.motionStepMs });
+    steps.push(...holds.filter((entry) => entry.to === to));
   }
-  return timing;
+  return steps;
 }

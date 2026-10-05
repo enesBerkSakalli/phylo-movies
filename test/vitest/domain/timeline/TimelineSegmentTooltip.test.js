@@ -6,7 +6,6 @@ import {
   formatPivotEdgePreview,
   formatTransitionHeading,
   getSegmentStepRange,
-  getSplitEventPosition,
 } from '../../../../src/components/timeline/timelineSegmentTooltipUtils.js';
 
 describe('TimelineSegmentTooltip subtree extraction', () => {
@@ -94,20 +93,6 @@ describe('TimelineSegmentTooltip step numbering', () => {
     expect(
       getSegmentStepRange({ ...transition, targetGlobalIndex: 11, globalStart: 10, globalEnd: 11 })
     ).toBeNull();
-  });
-
-  it('places a segment among its pair split events only when there are several', () => {
-    const events = [
-      { event_type: 'split_change', pair_id: 'p', frame_range: [1, 5] },
-      { event_type: 'spr_move', pair_id: 'p', frame_range: [1, 5] },
-      { event_type: 'split_change', pair_id: 'p', frame_range: [6, 9] },
-      { event_type: 'split_change', pair_id: 'q', frame_range: [20, 25] },
-    ];
-    expect(getSplitEventPosition({ pairId: 'p', globalStart: 6 }, events)).toEqual({
-      index: 2,
-      count: 2,
-    });
-    expect(getSplitEventPosition({ pairId: 'q', globalStart: 20 }, events)).toBeNull();
   });
 });
 

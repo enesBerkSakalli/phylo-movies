@@ -1,5 +1,4 @@
 import { msToX } from './math/coordinateUtils.js';
-import { getSegmentBounds } from './utils/segmentTiming.js';
 import { rgba } from '../services/ui/colorUtils.js';
 
 /**
@@ -20,28 +19,26 @@ export function createSnapFunction(dpr) {
 /**
  * @param {Object} args
  * @param {Object[]} args.segments
- * @param {{cumulativeDurations: number[]}} args.timelineData
  * @param {{byPairId: Map<string, Object>}} args.profile - buildPairChangeProfile() result
  * @param {(frameIndex: number) => number|null} args.frameToMs
  * @returns {{pairId: string, startMs: number, endMs: number, kind: string, rf: number|null, pips: {ms: number, taxaCount: number}[]}[]}
  */
-export function buildPairSpans({ segments, timelineData, profile, frameToMs }) {
+export function buildPairSpans({ segments, profile, frameToMs }) {
   const spansByPairId = new Map();
-  segments.forEach((segment, index) => {
-    if (segment.isInputTreeSegment) return;
-    const bounds = getSegmentBounds(index, timelineData);
+  for (const segment of segments) {
+    if (segment.isInputTreeSegment) continue;
     const change = profile.byPairId.get(segment.pairId);
-    if (!bounds || !change) return;
+    if (!change) continue;
 
     const span = spansByPairId.get(segment.pairId);
     if (span) {
-      span.endMs = bounds.end;
-      return;
+      span.endMs = segment.end;
+      continue;
     }
     spansByPairId.set(segment.pairId, {
       pairId: segment.pairId,
-      startMs: bounds.start,
-      endMs: bounds.end,
+      startMs: segment.start,
+      endMs: segment.end,
       kind: change.kind,
       rf: change.rf,
       pips: change.sprMoves.flatMap((move) => {
@@ -49,7 +46,7 @@ export function buildPairSpans({ segments, timelineData, profile, frameToMs }) {
         return ms === null ? [] : [{ ms, taxaCount: move.taxaCount }];
       }),
     });
-  });
+  }
   return [...spansByPairId.values()];
 }
 
@@ -187,25 +184,12 @@ export function processSegments({
   visEnd,
   zoomScale,
   theme,
-  timelineData,
   segments,
   selectedSegmentIndex,
   hoverIndex,
   rangeStart,
   rangeEnd,
 }) {
-  if (!timelineData?.cumulativeDurations || !Array.isArray(segments) || segments.length === 0) {
-    return {
-      inputTreeTicks: [],
-      baselines: [],
-      separators: [],
-      inputTreePoints: [],
-      activeInputTreeTicks: [],
-      selectionInputTrees: [],
-      hoverInputTrees: [],
-    };
-  }
-
   const snap = createSnapFunction(getDevicePixelRatio());
 
   const inputTrees = { normal: [], selected: [], hovered: [] };
@@ -216,15 +200,12 @@ export function processSegments({
   for (let i = startIdx; i <= endIdx; i++) {
     const segment = segments[i];
 
-    const bounds = getSegmentBounds(i, timelineData);
-    if (!bounds) continue;
-
-    if (bounds.end < visStart || bounds.start > visEnd) continue;
+    if (segment.end < visStart || segment.start > visEnd) continue;
 
     const state = i === selectedSegmentIndex ? 'selected' : i === hoverIndex ? 'hovered' : 'normal';
 
-    const startX = msToX(bounds.start, rangeStart, rangeEnd, width);
-    const endX = msToX(bounds.end, rangeStart, rangeEnd, width);
+    const startX = msToX(segment.start, rangeStart, rangeEnd, width);
+    const endX = msToX(segment.end, rangeStart, rangeEnd, width);
 
     const separator = createSeparator(startX, width, height, theme, snap, markerProfile.mode);
     if (separator) separators.push(separator);

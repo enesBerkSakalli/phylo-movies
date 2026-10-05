@@ -1,11 +1,10 @@
-import { TIMELINE_CONSTANTS } from './constants.js';
 import { buildPairSpans } from './stripGeometry.js';
 import { cursorForFrame } from './timeline.js';
-import { getSegmentBounds } from './utils/segmentTiming.js';
 import { rightComparisonIndex } from '../domain/indexing/treeIndexSemantics.js';
 import { selectInputFrameIndices } from '../state/phyloStore/selectors/treeSelectors.js';
 
 const EDGE_MS = 1;
+const SCRUB_THROTTLE_MS = 16;
 
 const cancelFrame = (id) => id !== null && cancelAnimationFrame(id);
 
@@ -83,7 +82,6 @@ export class TimelineController {
       {
         spans: buildPairSpans({
           segments: timeline.segments,
-          timelineData: timeline,
           profile: pairChanges,
           frameToMs: (frameIndex) => cursorForFrame(timeline.steps, frameIndex)?.ms ?? null,
         }),
@@ -163,7 +161,7 @@ export class TimelineController {
 
   _cursorInSegment(segmentIndex, ms) {
     const { timeline } = this.store.getState();
-    const { start, end } = getSegmentBounds(segmentIndex, timeline);
+    const { start, end } = timeline.segments[segmentIndex];
     const inside =
       end - start <= EDGE_MS ? start : Math.max(start + EDGE_MS, Math.min(ms, end - EDGE_MS));
     const cursor = timeline.cursorAt(inside);
@@ -191,7 +189,7 @@ export class TimelineController {
     if (!this.isScrubbing) return this.startScrub(ms);
 
     this.pendingScrubMs = ms;
-    if (performance.now() - this.lastScrubAt < TIMELINE_CONSTANTS.SCRUB_THROTTLE_MS) {
+    if (performance.now() - this.lastScrubAt < SCRUB_THROTTLE_MS) {
       this.scrubFrame ??= requestAnimationFrame(() => {
         this.scrubFrame = null;
         if (this.isScrubbing && this.pendingScrubMs !== null) this._flushScrub();
