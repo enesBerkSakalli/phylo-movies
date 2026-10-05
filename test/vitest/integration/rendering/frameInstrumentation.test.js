@@ -51,8 +51,8 @@ describe('tree animation frame instrumentation', () => {
     context.setProps = vi.fn();
     context.setLayers([]);
 
-    const comparisonRenderer = Object.create(ComparisonModeRenderer.prototype);
-    comparisonRenderer.controller = {
+    const comparisonRenderer = new ComparisonModeRenderer({
+      _createLayoutCacheKey: () => 'right-layout-cache-key',
       calculateLayout: vi.fn(() => ({ width: 100, height: 100, nodes: [], links: [], leaves: [] })),
       _getConsistentRadii: vi.fn(() => ({ extensionRadius: 1, labelRadius: 2 })),
       dataConverter: {
@@ -71,7 +71,7 @@ describe('tree animation frame instrumentation', () => {
         focusOnTree: vi.fn(),
       },
       _updateLayersEfficiently: vi.fn(),
-    };
+    });
     comparisonRenderer._buildConnectors = vi.fn(() => []);
     comparisonRenderer._lastFittedIndices = { right: 0 };
     await comparisonRenderer.renderAnimated(

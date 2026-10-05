@@ -32,8 +32,6 @@ export class ComparisonModeRenderer {
     this._lastFittedIndices = null;
     this._animatedRightBaseCache = new Map();
     this._animatedRightPreparedCache = new Map();
-    this._objectCacheIds = new WeakMap();
-    this._nextObjectCacheId = 1;
   }
 
   resetAutoFit() {
@@ -57,7 +55,6 @@ export class ComparisonModeRenderer {
       leftTreeOffsetY = 0,
       viewsConnected,
       linkGeometryMode = 'radial-elbow',
-      labelsVisible,
     } = state;
 
     const clampIndex = (idx) => {
@@ -173,20 +170,7 @@ export class ComparisonModeRenderer {
 
     this.controller._updateLayersEfficiently(combinedData);
 
-    const indicesChanged =
-      this._lastFittedIndices === null ||
-      this._lastFittedIndices.left !== clampedLeftIndex ||
-      this._lastFittedIndices.right !== clampedRightIndex;
-
-    if (indicesChanged) {
-      this.controller.viewportManager.focusOnTree(combinedData.nodes, combinedData.labels, {
-        ...getAutoFitLabelOptions(labelsVisible === false ? 0 : combinedData.labels.length),
-        obstructionScope: VIEWPORT_FIT_OBSTRUCTION_SCOPES.CANVAS,
-        maxFitAreaCenterDriftRatio: VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO,
-        links: [...combinedData.links, ...combinedData.extensions, ...combinedData.connectors],
-      });
-      this._lastFittedIndices = { left: clampedLeftIndex, right: clampedRightIndex };
-    }
+    this._fitOnIndexChange(combinedData, clampedLeftIndex, clampedRightIndex);
   }
 
   /**
@@ -219,7 +203,6 @@ export class ComparisonModeRenderer {
       leftTreeOffsetY = 0,
       viewsConnected,
       linkGeometryMode = 'radial-elbow',
-      labelsVisible,
     } = useAppStore.getState();
     const rightBase = this._getAnimatedRightBaseLayerData({
       rightTreeData,
@@ -283,22 +266,28 @@ export class ComparisonModeRenderer {
 
     this.controller._updateLayersEfficiently(combinedData);
 
-    // Auto-fit when entering comparison mode or when the right tree index changes.
-    // Don't refit every animation frame — that causes camera "jumping".
-    const indicesChanged =
-      this._lastFittedIndices === null || this._lastFittedIndices.right !== rightIndex;
+    // The left tree interpolates every frame (-1), so only the right index triggers a refit.
+    this._fitOnIndexChange(combinedData, -1, rightIndex, {
+      allowDuringPlayback: true,
+      duration: 0,
+    });
+  }
 
-    if (indicesChanged) {
-      this.controller.viewportManager.focusOnTree(combinedData.nodes, combinedData.labels, {
-        ...getAutoFitLabelOptions(labelsVisible === false ? 0 : combinedData.labels.length),
-        obstructionScope: VIEWPORT_FIT_OBSTRUCTION_SCOPES.CANVAS,
-        maxFitAreaCenterDriftRatio: VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO,
-        allowDuringPlayback: true,
-        duration: 0,
-        links: [...combinedData.links, ...combinedData.extensions, ...combinedData.connectors],
-      });
-      this._lastFittedIndices = { left: -1, right: rightIndex };
-    }
+  // Auto-fit when entering comparison mode or when the compared trees change.
+  // Don't refit every frame — that causes camera "jumping".
+  _fitOnIndexChange(combinedData, left, right, extra) {
+    const last = this._lastFittedIndices;
+    if (last && last.right === right && (left === -1 || last.left === left)) return;
+
+    const { labelsVisible } = useAppStore.getState();
+    this.controller.viewportManager.focusOnTree(combinedData.nodes, combinedData.labels, {
+      ...getAutoFitLabelOptions(labelsVisible === false ? 0 : combinedData.labels.length),
+      obstructionScope: VIEWPORT_FIT_OBSTRUCTION_SCOPES.CANVAS,
+      maxFitAreaCenterDriftRatio: VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO,
+      links: [...combinedData.links, ...combinedData.extensions, ...combinedData.connectors],
+      ...extra,
+    });
+    this._lastFittedIndices = { left, right };
   }
 
   // ==========================================================================
@@ -350,17 +339,10 @@ export class ComparisonModeRenderer {
   }
 
   _getAnimatedRightBaseLayerData({ rightTreeData, rightIndex, linkGeometryMode }) {
-    this._ensureAnimatedRightCaches();
-    const state = useAppStore.getState();
-    const layoutCacheKey = this.controller._createLayoutCacheKey?.(rightIndex, state);
-    const preLayoutCacheKey = layoutCacheKey
-      ? this._createAnimatedRightBaseCacheKey({ rightIndex, layoutCacheKey, linkGeometryMode })
-      : null;
-
-    if (preLayoutCacheKey) {
-      const cached = this._animatedRightBaseCache.get(preLayoutCacheKey);
-      if (cached) return cached;
-    }
+    const layoutCacheKey = this.controller._createLayoutCacheKey(rightIndex);
+    const cacheKey = [rightIndex, layoutCacheKey, linkGeometryMode].join('|');
+    const cached = this._animatedRightBaseCache.get(cacheKey);
+    if (cached) return cached;
 
     const rightLayout = this.controller.calculateLayout(rightTreeData, {
       treeIndex: rightIndex,
@@ -369,18 +351,6 @@ export class ComparisonModeRenderer {
     if (!rightLayout) return null;
 
     const { extensionRadius, labelRadius } = this.controller._getConsistentRadii(rightLayout);
-    const resolvedLayoutCacheKey =
-      layoutCacheKey ?? rightLayout.layoutCacheKey ?? this._getObjectCacheId(rightLayout);
-    const cacheKey =
-      preLayoutCacheKey ??
-      this._createAnimatedRightBaseCacheKey({
-        rightIndex,
-        layoutCacheKey: resolvedLayoutCacheKey,
-        linkGeometryMode,
-      });
-    const cached = this._animatedRightBaseCache.get(cacheKey);
-    if (cached) return cached;
-
     const layerData = this.controller.dataConverter.convertTreeToLayerData(rightLayout, {
       extensionRadius,
       labelRadius,
@@ -406,7 +376,6 @@ export class ComparisonModeRenderer {
     leftTreeOffsetY,
     viewsConnected,
   }) {
-    this._ensureAnimatedRightCaches();
     const preparedCacheKey = [
       base.cacheKey,
       canvasWidth,
@@ -434,33 +403,11 @@ export class ComparisonModeRenderer {
     return entry;
   }
 
-  _createAnimatedRightBaseCacheKey({ rightIndex, layoutCacheKey, linkGeometryMode }) {
-    return [rightIndex, layoutCacheKey, linkGeometryMode].join('|');
-  }
-
-  _getObjectCacheId(value) {
-    this._ensureAnimatedRightCaches();
-    if (!value || typeof value !== 'object') return String(value);
-    let id = this._objectCacheIds.get(value);
-    if (!id) {
-      id = `object-${this._nextObjectCacheId++}`;
-      this._objectCacheIds.set(value, id);
-    }
-    return id;
-  }
-
   _setBoundedCacheEntry(cache, key, value) {
     if (!cache.has(key) && cache.size >= 32) {
       cache.clear();
     }
     cache.set(key, value);
-  }
-
-  _ensureAnimatedRightCaches() {
-    this._animatedRightBaseCache ??= new Map();
-    this._animatedRightPreparedCache ??= new Map();
-    this._objectCacheIds ??= new WeakMap();
-    this._nextObjectCacheId ??= 1;
   }
 }
 

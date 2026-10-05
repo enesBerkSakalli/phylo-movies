@@ -103,6 +103,45 @@ describe('ComparisonModeRenderer', () => {
     expect(renderer._buildConnectors.mock.calls[0][6]).toBe(0);
   });
 
+  it('refits only when the compared trees change', async () => {
+    const layerData = () => ({
+      nodes: [{ id: 'node', position: [0, 0, 0], renderPosition: [0, 0, 0.1] }],
+      links: [],
+      labels: [],
+      extensions: [],
+    });
+    const focusOnTree = vi.fn();
+    useAppStore.setState({
+      treeList: [{}, {}, {}],
+      viewsConnected: false,
+      leftTreeOffsetX: 0,
+      leftTreeOffsetY: 0,
+    });
+    const renderer = new ComparisonModeRenderer({
+      calculateLayout: () => ({ width: 100, height: 100 }),
+      _getConsistentRadii: () => ({ extensionRadius: 10, labelRadius: 20 }),
+      _createLayoutCacheKey: (index) => `layout-${index}`,
+      dataConverter: { convertTreeToLayerData: layerData },
+      deckContext: { getCanvasDimensions: () => ({ width: 800, height: 600 }) },
+      viewportManager: { getRightTreeOffset: () => ({ x: 0, y: 0 }), focusOnTree },
+      _updateLayersEfficiently: vi.fn(),
+    });
+
+    await renderer.renderStatic(0, 1);
+    await renderer.renderStatic(0, 1);
+    expect(focusOnTree).toHaveBeenCalledTimes(1);
+
+    await renderer.renderAnimated(layerData(), {}, 1); // the animated left tree is not compared
+    expect(focusOnTree).toHaveBeenCalledTimes(1);
+
+    await renderer.renderAnimated(layerData(), {}, 2);
+    expect(focusOnTree).toHaveBeenCalledTimes(2);
+    expect(focusOnTree.mock.calls[1][2]).toMatchObject({ allowDuringPlayback: true, duration: 0 });
+
+    await renderer.renderStatic(0, 2); // static after animated refits
+    expect(focusOnTree).toHaveBeenCalledTimes(3);
+  });
+
   it('uses each tree layout radius for static comparison labels and extensions', async () => {
     const leftData = {
       nodes: [{ id: 'left-node', position: [0, 0, 0], renderPosition: [0, 0, 0.1] }],
