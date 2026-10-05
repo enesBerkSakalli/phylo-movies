@@ -1,3 +1,5 @@
+import Color from 'colorjs.io';
+
 const NUMBER_TOKEN_PATTERN = /^[+-]?(?:\d+\.?\d*|\.\d+)$/;
 
 export function rgba(r, g, b, a = 255) {
@@ -154,9 +156,9 @@ function hslToRgb(hslString) {
 }
 
 /**
- * Convert color string (hex, rgb, or hsl) to RGB array
+ * Convert color string (hex, rgb, hsl, or any CSS colour function such as oklch) to RGB array
  * Hex supports 3 or 6-digit forms, with or without '#'
- * HSL delegates to hslToRgb.
+ * HSL delegates to hslToRgb; other colour functions go through colorjs.io.
  * @param {string|number[]} color - Color string, e.g. '#aabbcc', 'abc', or 'hsl(120, 50%, 50%)'
  * @returns {number[]} RGB array [r, g, b]
  */
@@ -180,6 +182,11 @@ export function colorToRgb(color) {
     return hslToRgb(normalized);
   }
 
+  // Any other CSS colour function (oklch(), lab(), color() ...), e.g. a theme token
+  if (/^[a-z-]+\(/i.test(normalized)) {
+    return parseCssColorFunction(normalized);
+  }
+
   // Normalize hex
   let hex = normalized.replace(/^#/, '');
   if (!/^(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex)) {
@@ -199,6 +206,26 @@ export function colorToRgb(color) {
   const b = parseInt(hex.substring(4, 6), 16) || 0;
 
   return [r, g, b];
+}
+
+// Out-of-gamut channels are clipped, as the browser does when it paints the same value.
+function parseCssColorFunction(color) {
+  try {
+    return new Color(color).to('srgb').coords.map((channel) => clampByte(channel * 255));
+  } catch {
+    return [0, 0, 0];
+  }
+}
+
+/**
+ * A theme colour token as the element sees it, for canvases that cannot use CSS.
+ * @param {Element} element - Where the custom property is read (it inherits from :root)
+ * @param {string} name - Custom property, e.g. '--signal'
+ * @returns {number[]} RGB array [r, g, b]
+ */
+export function cssColor(element, name) {
+  const style = element.ownerDocument.defaultView.getComputedStyle(element);
+  return colorToRgb(style.getPropertyValue(name));
 }
 
 /**

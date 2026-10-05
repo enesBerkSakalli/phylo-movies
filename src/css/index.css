@@ -44,6 +44,21 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-signal: var(--signal);
+  --color-signal-foreground: var(--signal-foreground);
+  --color-hover-mark: var(--hover-mark);
+  --color-data-mark: var(--data-mark);
+  --color-data-mark-strong: var(--data-mark-strong);
+  --color-axis: var(--axis);
+  --color-grid: var(--grid);
+  --color-moved: var(--moved);
+  --color-change: var(--change);
+  --color-expand: var(--expand);
+  --color-collapse: var(--collapse);
+  --color-error: var(--error);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
+  --color-info: var(--info);
 
   @keyframes accordion-down {
     from {
@@ -68,61 +83,95 @@
 :root {
   color-scheme: light;
   --radius: 0.625rem;
+  /* Ink & Cyan: the logo's ink (#0f172a) and one signal hue (#0891b2, the branch that moves).
+     Neutrals lean toward the ink's slate; the signal marks only the playhead, Play and focus. */
   --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --foreground: oklch(0.208 0.042 266);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.208 0.042 266);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.208 0.042 266);
+  --primary: oklch(0.208 0.042 266); /* the ink: selection */
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.968 0.007 248);
+  --secondary-foreground: oklch(0.208 0.042 266);
+  --muted: oklch(0.968 0.007 248);
+  --muted-foreground: oklch(0.52 0.045 257);
+  --accent: oklch(0.968 0.007 248);
+  --accent-foreground: oklch(0.208 0.042 266);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --border: oklch(0.929 0.013 255);
+  --input: oklch(0.929 0.013 255);
+  --ring: oklch(0.609 0.111 221.7);
+  --sidebar: oklch(0.985 0.003 248);
+  --sidebar-foreground: oklch(0.208 0.042 266);
+  --sidebar-primary: oklch(0.208 0.042 266);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.968 0.007 248);
+  --sidebar-accent-foreground: oklch(0.208 0.042 266);
+  --sidebar-border: oklch(0.929 0.013 255);
+  --sidebar-ring: oklch(0.609 0.111 221.7);
+
+  --signal: oklch(0.609 0.111 221.7); /* playhead, Play, focus, pointer */
+  --signal-foreground: oklch(0.208 0.042 266);
+  --hover-mark: oklch(0.372 0.044 257.3);
+  --data-mark: oklch(0.554 0.046 257.4); /* RF bars, dashes, ticks */
+  --data-mark-strong: oklch(0.372 0.044 257.3); /* SPR dots, input-tree rings */
+  --axis: oklch(0.64 0.035 257);
+  --grid: oklch(0.87 0.015 257);
+  --moved: oklch(0.696 0.149 162.5);
+  --change: oklch(0.658 0.169 248.8);
+  --expand: oklch(0.723 0.192 149.6);
+  --collapse: oklch(0.769 0.165 70.1);
+  --error: oklch(0.577 0.245 27.3);
+  --warning: oklch(0.555 0.163 49);
+  --success: oklch(0.527 0.154 150);
+  --info: oklch(0.208 0.042 266);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: oklch(0.17 0.012 262);
+  --foreground: oklch(0.968 0.007 248);
+  --card: oklch(0.21 0.016 262);
+  --card-foreground: oklch(0.968 0.007 248);
+  --popover: oklch(0.21 0.016 262);
+  --popover-foreground: oklch(0.968 0.007 248);
+  --primary: oklch(0.93 0.012 255);
+  --primary-foreground: oklch(0.17 0.012 262);
+  --secondary: oklch(0.26 0.018 260);
+  --secondary-foreground: oklch(0.968 0.007 248);
+  --muted: oklch(0.26 0.018 260);
+  --muted-foreground: oklch(0.72 0.035 257);
+  --accent: oklch(0.26 0.018 260);
+  --accent-foreground: oklch(0.968 0.007 248);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --border: oklch(0.32 0.02 260);
+  --input: oklch(0.32 0.02 260);
+  --ring: oklch(0.58 0.1 218);
+  --sidebar: oklch(0.21 0.016 262);
+  --sidebar-foreground: oklch(0.968 0.007 248);
+  --sidebar-primary: oklch(0.93 0.012 255);
+  --sidebar-primary-foreground: oklch(0.17 0.012 262);
+  --sidebar-accent: oklch(0.26 0.018 260);
+  --sidebar-accent-foreground: oklch(0.968 0.007 248);
+  --sidebar-border: oklch(0.32 0.02 260);
+  --sidebar-ring: oklch(0.58 0.1 218);
+
+  --signal: oklch(0.58 0.1 218);
+  --signal-foreground: oklch(0.17 0.012 262);
+  --hover-mark: oklch(0.78 0.03 257);
+  --data-mark: oklch(0.6 0.04 257);
+  --data-mark-strong: oklch(0.78 0.03 257);
+  --axis: oklch(0.5 0.03 257);
+  --grid: oklch(0.32 0.02 260);
+  --moved: oklch(0.765 0.15 163);
+  --change: oklch(0.72 0.14 248);
+  --expand: oklch(0.79 0.19 150);
+  --collapse: oklch(0.83 0.16 75);
+  --error: oklch(0.704 0.191 22.2);
+  --warning: oklch(0.828 0.15 75);
+  --success: oklch(0.8 0.16 152);
+  --info: oklch(0.968 0.007 248);
 }
 
 @layer base {
