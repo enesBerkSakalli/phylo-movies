@@ -32,6 +32,7 @@ export function restoreDockLayout(api, saved) {
     if (api.getPanel(id)) continue;
     if (entry.permanent || (!restored && entry.defaultOpen)) addPanelFromRegistry(api, id);
   }
+  if (!restored) api.getPanel(TREE_PANEL_ID)?.api.setActive();
   for (const panel of api.panels) {
     const entry = getPanelEntry(panel.id);
     if (entry?.alwaysRender) panel.api.setRenderer('always');

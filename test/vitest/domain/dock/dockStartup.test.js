@@ -11,7 +11,11 @@ function fakeApi({ fromJSONThrows = false } = {}) {
     fromJSON: vi.fn((layout) => {
       if (fromJSONThrows) throw new Error('unknown panel');
       for (const id of Object.keys(layout.panels)) {
-        panels.push({ id, title: `old ${id}`, api: { setTitle: vi.fn(), setRenderer: vi.fn() } });
+        panels.push({
+          id,
+          title: `old ${id}`,
+          api: { setTitle: vi.fn(), setRenderer: vi.fn(), setActive: vi.fn() },
+        });
       }
     }),
     clear: vi.fn(() => panels.splice(0)),
@@ -19,7 +23,7 @@ function fakeApi({ fromJSONThrows = false } = {}) {
       panels.push({
         id: options.id,
         title: options.title,
-        api: { setTitle: vi.fn(), setRenderer: vi.fn() },
+        api: { setTitle: vi.fn(), setRenderer: vi.fn(), setActive: vi.fn() },
       });
     }),
   };
@@ -30,6 +34,18 @@ describe('dock startup', () => {
     const api = fakeApi();
     restoreDockLayout(api, undefined);
     expect(api.panels.map((panel) => panel.id)).toEqual(['tree', 'settings']);
+  });
+
+  it('makes the tree the active tab on a first visit', () => {
+    const api = fakeApi();
+    restoreDockLayout(api, undefined);
+    expect(api.getPanel('tree').api.setActive).toHaveBeenCalled();
+  });
+
+  it('leaves the active tab alone when a saved layout restores', () => {
+    const api = fakeApi();
+    restoreDockLayout(api, { grid: {}, panels: { tree: {}, settings: {} } });
+    expect(api.getPanel('tree').api.setActive).not.toHaveBeenCalled();
   });
 
   it('keeps settings closed when the saved layout closed it, but always re-adds the tree', () => {
