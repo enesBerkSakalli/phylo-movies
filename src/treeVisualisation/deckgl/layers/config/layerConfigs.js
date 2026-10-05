@@ -148,8 +148,4 @@ export const CLIPBOARD_LAYER_CONFIGS = {
       billboard: true,
     },
   },
-  connectors: {
-    ...LAYER_CONFIGS.connectors,
-    id: `${CLIPBOARD_LAYER_ID_PREFIX}-connectors`,
-  },
 };

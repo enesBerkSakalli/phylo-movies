@@ -101,7 +101,6 @@ export class LayerStyles {
         highlightColorMode: state.highlightColorMode ?? 'solid',
         subtreeHighlightColor:
           state.subtreeHighlightColor ?? SYSTEM_TREE_COLORS.subtreeHighlightColor,
-        linkConnectionOpacity: state.linkConnectionOpacity ?? 0.6,
         metricScale,
         readableMetricScale,
         taxaCount,

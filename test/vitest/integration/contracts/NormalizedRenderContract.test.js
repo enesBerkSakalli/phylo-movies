@@ -207,6 +207,13 @@ describe('normalized render contract', () => {
     expect(props.getColor(passiveConnector)).toEqual([0, 0, 255, 64]);
   });
 
+  it('scales each connector width by the connector stroke width setting', () => {
+    const connector = { path: new Float32Array([0, 0, 0, 1, 1, 0]), width: 3 };
+    const props = getConnectorsLayerProps([connector], { connectorStrokeWidth: 2 });
+
+    expect(props.getWidth(connector)).toBe(6);
+  });
+
   it('invalidates comparison connector colors when taxa colors change', () => {
     const connectors = [{ path: new Float32Array([0, 0, 0, 1, 1, 0]), color: [255, 0, 0, 255] }];
     const props = getConnectorsLayerProps(connectors, {
