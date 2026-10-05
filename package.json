@@ -120,6 +120,7 @@
     "d3-array": "^3.2.4",
     "d3-hierarchy": "^3.1.2",
     "d3-scale-chromatic": "^3.1.0",
+    "dockview-react": "8.2.0",
     "localforage": "^1.10.0",
     "lucide-react": "^1.27.0",
     "memoize-one": "^6.0.0",
