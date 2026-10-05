@@ -113,7 +113,6 @@ export { selectSetSubtreeDimmingOpacity } from './selectSetSubtreeDimmingOpacity
 export { selectSetSyncMsaEnabled } from './selectSetSyncMsaEnabled.js';
 export { selectSetTaxaColoringOpen } from './selectSetTaxaColoringOpen.js';
 export { selectSetTaxaGrouping } from './selectSetTaxaGrouping.js';
-export { selectSetTooltipHovered } from './selectSetTooltipHovered.js';
 export { selectSetUpcomingChangesEnabled } from './selectSetUpcomingChangesEnabled.js';
 export { selectSetViewsConnected } from './selectSetViewsConnected.js';
 export { selectStartAnimationPlayback } from './selectStartAnimationPlayback.js';

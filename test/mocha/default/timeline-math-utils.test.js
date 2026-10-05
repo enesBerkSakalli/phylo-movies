@@ -52,9 +52,7 @@ describe('TimelineMathUtils', () => {
     timelineData = TimelineDataProcessor.createTimelineData(segments);
   });
 
-  it('returns zero progress and zero time when total duration is zero', () => {
-    expect(TimelineMathUtils.timeToProgress(0, 0)).to.equal(0);
-    expect(TimelineMathUtils.timeToProgress(250, 0)).to.equal(0);
+  it('returns zero time when total duration is zero', () => {
     expect(TimelineMathUtils.progressToTime(0.5, 0)).to.equal(0);
   });
 

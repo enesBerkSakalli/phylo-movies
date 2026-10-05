@@ -384,45 +384,13 @@ export class DeckTimelineRenderer {
     this._scheduleUpdate();
   }
 
-  /**
-   * Pans the view so the given time is at the left edge, preserving zoom level.
-   * @param {number} ms - Target time in milliseconds for left edge
-   */
-  moveTo(ms) {
-    const span = this._rangeEnd - this._rangeStart;
-    const newStart = Math.max(0, Math.min(ms, this._totalDuration - span));
-    this._rangeStart = newStart;
-    this._rangeEnd = newStart + span;
-    this._scheduleUpdate();
-  }
-
-  // ==========================================================================
-  // PUBLIC API: Getters
-  // ==========================================================================
-
-  /**
-   * Returns the total duration of the timeline in milliseconds.
-   * @returns {number} Total duration
-   */
-  getTotalDuration() {
-    return this._totalDuration;
-  }
-
-  /**
-   * Returns the currently visible time range.
-   * @returns {{min: number, max: number}} Visible range in milliseconds
-   */
-  getVisibleTimeRange() {
-    return { min: this._rangeStart, max: this._rangeEnd };
-  }
-
   // ==========================================================================
   // PUBLIC API: Events
   // ==========================================================================
 
   /**
    * Registers an event handler for timeline events.
-   * @param {string} event - Event name ('timechange', 'timechanged', 'select', 'itemover', 'itemout', 'mouseMove')
+   * @param {string} event - Event name ('scrubstart', 'timechange', 'timechanged', 'select', 'inspect')
    * @param {Function} handler - Callback function receiving event payload
    */
   on(event, handler) {
@@ -484,14 +452,10 @@ export class DeckTimelineRenderer {
     const id = segIndex >= 0 ? toTimelineItemId(segIndex) : null;
 
     if (id !== this._lastHoverId) {
-      if (this._lastHoverId != null) {
-        this._emit('itemout', {});
-        this._scheduleHoveredSegmentClear();
-      }
+      if (this._lastHoverId != null) this._scheduleHoveredSegmentClear();
 
       if (id != null) {
         this._clearHoverTimeout();
-        this._emit('itemover', { item: id, event });
         this._publishHoveredSegment(segIndex, rect);
       }
 
@@ -500,8 +464,6 @@ export class DeckTimelineRenderer {
     } else if (id != null) {
       this._publishHoveredSegment(segIndex, rect);
     }
-
-    this._emit('mouseMove', { event });
   }
 
   _publishHoveredSegment(segIndex, rect) {
@@ -643,7 +605,6 @@ export class DeckTimelineRenderer {
   _handleMouseLeave() {
     if (this._lastHoverId == null) return;
 
-    this._emit('itemout', {});
     this._scheduleHoveredSegmentClear();
     this._lastHoverId = null;
     this._scheduleUpdate();

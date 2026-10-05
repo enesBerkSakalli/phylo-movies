@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  resolveComparisonActiveTreeIndex,
   resolveCursorTreeIndex,
   resolveHighlightTreeIndex,
   resolveMsaSourceFrameIndex,
@@ -19,11 +18,6 @@ describe('tree index semantics during transitions', () => {
     expect(resolveHighlightTreeIndex(4, 5, 1e-7)).toBe(4);
     expect(resolveHighlightTreeIndex(4, 5, 1e-5)).toBe(5);
     expect(resolveHighlightTreeIndex(4, 5, 1)).toBe(5);
-  });
-
-  it('uses midpoint ownership for comparison active-tree context', () => {
-    expect(resolveComparisonActiveTreeIndex(4, 5, 0.49)).toBe(4);
-    expect(resolveComparisonActiveTreeIndex(4, 5, 0.5)).toBe(5);
   });
 
   it('maps generated timeline frames to the previous MSA source frame', () => {

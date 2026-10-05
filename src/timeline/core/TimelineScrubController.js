@@ -96,15 +96,10 @@ export class TimelineScrubController {
     const finalProgress = this._timeToProgress(finalTimeMs);
     this.pendingScrubTimeMs = null;
     this._clearPendingFrame();
-    const lastState = scrubberAPI ? await scrubberAPI.endScrubbing(finalProgress) : null;
+    if (scrubberAPI) await scrubberAPI.endScrubbing(finalProgress);
 
     this.isScrubbing = false;
     this.getTimelineRenderer()?.syncScrubState();
-
-    if (lastState?.transitionFrame) {
-      this.store.getState().setTimelineProgress(finalProgress);
-      return;
-    }
 
     this.store.getState().setTimelineProgress(finalProgress);
   }

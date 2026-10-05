@@ -115,8 +115,6 @@ describe('TimelineDataset', () => {
     const dataset = TimelineDataset.fromMovieData(smallExampleMovieData);
 
     expect(dataset.getInputFrameIndices()).toEqual([0, 22, 23, 45, 46, 47, 48, 70, 92, 114]);
-    expect(dataset.isInputFrame(22)).toBe(true);
-    expect(dataset.isInputFrame(7)).toBe(false);
   });
 
   it('builds segments from a binary-backed payload without interpolated_trees', () => {

@@ -46,7 +46,6 @@ export class TimelineDataset {
     this.occurrencesByFrameIndex = occurrencesByFrameIndex;
     this.treeList = Array.isArray(treeList) ? treeList : [];
     this._inputFrameIndices = null;
-    this._inputFrameIndexSet = null;
   }
 
   hasTimeline() {
@@ -72,7 +71,6 @@ export class TimelineDataset {
       this._inputFrameIndices = this.frameViews
         .filter((frame) => frame.isObservedInput === true)
         .map((frame) => frame.frameIndex);
-      this._inputFrameIndexSet = new Set(this._inputFrameIndices);
     }
     return this._inputFrameIndices;
   }
@@ -93,14 +91,6 @@ export class TimelineDataset {
 
   getTimelineProgressAtMovieTime(movieTimeMs) {
     return progressForTime(movieTimeMs, this.timelineData.totalDuration);
-  }
-
-  isInputFrame(frameIndex) {
-    if (!Number.isInteger(frameIndex)) return false;
-    if (!this._inputFrameIndexSet) {
-      this._inputFrameIndexSet = new Set(this.getInputFrameIndices());
-    }
-    return this._inputFrameIndexSet.has(frameIndex);
   }
 
   getCursorAtTimelineProgress(timelineProgress, options = {}) {

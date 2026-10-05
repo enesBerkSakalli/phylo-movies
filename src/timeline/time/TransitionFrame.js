@@ -1,5 +1,4 @@
 import {
-  resolveComparisonActiveTreeIndex,
   resolveCursorTreeIndex,
   resolveHighlightTreeIndex,
 } from '../../domain/indexing/treeIndexSemantics.js';
@@ -70,14 +69,6 @@ export class TransitionFrame {
 
   get highlightTreeIndex() {
     return resolveHighlightTreeIndex(
-      this.sourceTreeIndex,
-      this.targetTreeIndex,
-      this.transitionProgress
-    );
-  }
-
-  get comparisonActiveTreeIndex() {
-    return resolveComparisonActiveTreeIndex(
       this.sourceTreeIndex,
       this.targetTreeIndex,
       this.transitionProgress

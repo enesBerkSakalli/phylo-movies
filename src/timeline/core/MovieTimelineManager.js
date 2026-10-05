@@ -5,7 +5,6 @@ import { buildPairSpans } from '../data/pairStripGeometry.js';
 import { ScrubberAPI } from './ScrubberAPI.js';
 import { TimelineNavigationController } from './TimelineNavigationController.js';
 import { TimelineScrubController } from './TimelineScrubController.js';
-import { TimelineStateSynchronizer } from './TimelineStateSynchronizer.js';
 import { buildTimelineStatusSnapshot } from '../view/timelineStatusModel.js';
 import { TransitionFrame } from '../time/TransitionFrame.js';
 
@@ -53,10 +52,6 @@ export class MovieTimelineManager {
       treeList,
     });
     this.pairStrip = this._buildPairStrip(movieData);
-    this.stateSynchronizer = new TimelineStateSynchronizer({
-      timelineDataset: this.timelineDataset,
-      store: this.store,
-    });
     this.navigationController = new TimelineNavigationController({
       timelineDataset: this.timelineDataset,
       segments: this.segments,
@@ -157,7 +152,7 @@ export class MovieTimelineManager {
       this.timeline && this.timeline.container && container.contains(this.timeline.container);
 
     if (isSameContainer && isTimelineAttached) {
-      this.stateSynchronizer.restoreMountedState(this.timeline);
+      this._syncRendererFromStore();
       return Promise.resolve(this.timeline);
     }
 
@@ -173,7 +168,6 @@ export class MovieTimelineManager {
     this.timeline = null;
     this.container = null;
 
-    this.store?.getState().setTooltipHovered(false);
     this.store?.getState().setHoveredSegment(null, null);
   }
 
@@ -236,7 +230,7 @@ export class MovieTimelineManager {
       },
     });
     this._setupEvents();
-    this.stateSynchronizer.restoreMountedState(this.timeline);
+    this._syncRendererFromStore();
     this._syncSelectedSegmentFromStore();
     return this.timeline;
   }
@@ -305,10 +299,16 @@ export class MovieTimelineManager {
   updateCurrentPosition() {
     // Keep store subscriptions active across temporary UI unmounts, but do no
     // timeline work until a renderer is mounted again.
-    if (this.isDestroyed || !this.scrubController || !this.stateSynchronizer) return;
+    if (this.isDestroyed || !this.scrubController) return;
     if (this.scrubController.isScrubbing || !this.timelineData || !this.timeline) return;
 
-    this.stateSynchronizer.syncRendererFromStore(this.timeline);
+    this._syncRendererFromStore();
+  }
+
+  _syncRendererFromStore() {
+    const movieTimeMs = this.store.getState().timelineCursor?.movieTimeMs ?? 0;
+    const cursor = this.timelineDataset.getCursorAtMovieTime(movieTimeMs, { bias: 'nearest' });
+    if (cursor) this.timeline.setCustomTime(cursor.movieTimeMs);
   }
 
   // ==========================================================================
@@ -318,10 +318,6 @@ export class MovieTimelineManager {
   _stopPlayback() {
     const store = this.store.getState();
     if (store.playing) store.stop();
-  }
-
-  getSegmentCount() {
-    return this.segments?.length ?? 0;
   }
 
   getSegment(index) {
@@ -345,27 +341,6 @@ export class MovieTimelineManager {
 
   fit() {
     this.timeline?.fit?.();
-  }
-
-  scrollToStart() {
-    this.timeline?.moveTo?.(0);
-  }
-
-  scrollToEnd() {
-    const total = this.timeline?.getTotalDuration?.();
-    const range = this.timeline?.getVisibleTimeRange?.();
-
-    if (
-      !Number.isFinite(total) ||
-      !range ||
-      !Number.isFinite(range.min) ||
-      !Number.isFinite(range.max)
-    ) {
-      return;
-    }
-
-    const visibleDuration = Math.max(0, range.max - range.min);
-    this.timeline?.moveTo?.(Math.max(0, total - visibleDuration));
   }
 
   resolveFrameAtTimelineProgress(progress) {
@@ -467,7 +442,6 @@ export class MovieTimelineManager {
     this.navigationController = null;
     this.scrubberAPI = null;
     this.scrubController = null;
-    this.stateSynchronizer = null;
     this.store = null;
   }
 }

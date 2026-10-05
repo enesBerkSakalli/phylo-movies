@@ -111,7 +111,7 @@ export class InterpolationRenderer {
           rightTree,
           rightTreeIndex,
           {
-            activeTreeIndex: transitionFrame.comparisonActiveTreeIndex,
+            activeTreeIndex: transitionFrame.cursorTreeIndex,
             isCancelled: options.isCancelled,
           }
         );

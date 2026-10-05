@@ -645,7 +645,7 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     if (isRenderCancelled(isCancelled)) return;
 
     await this.comparisonRenderer.renderAnimated(interpolatedData, rightTree, rightTreeIndex, {
-      activeTreeIndex: transitionFrame.comparisonActiveTreeIndex,
+      activeTreeIndex: transitionFrame.cursorTreeIndex,
       isCancelled,
     });
   }

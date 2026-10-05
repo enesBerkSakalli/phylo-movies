@@ -24,13 +24,6 @@ export class TimelineMathUtils {
     return this.clampProgress(progress) * totalDuration;
   }
 
-  static timeToProgress(time, totalDuration) {
-    if (!Number.isFinite(totalDuration) || totalDuration <= 0) {
-      return TIMELINE_CONSTANTS.DEFAULT_PROGRESS;
-    }
-    return this.clampProgress(time / totalDuration);
-  }
-
   static clampProgress(progress) {
     if (!Number.isFinite(progress)) {
       return TIMELINE_CONSTANTS.DEFAULT_PROGRESS;

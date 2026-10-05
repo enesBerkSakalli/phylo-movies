@@ -2,11 +2,10 @@ import { clamp01 } from '../../domain/math/mathUtils.js';
 const HIGHLIGHT_TARGET_EPSILON = 1e-6;
 
 export function resolveCursorTreeIndex(fromIndex, toIndex, timeFactor) {
-  return resolveMidpointTreeIndex(fromIndex, toIndex, timeFactor);
-}
-
-export function resolveComparisonActiveTreeIndex(fromIndex, toIndex, timeFactor) {
-  return resolveMidpointTreeIndex(fromIndex, toIndex, timeFactor);
+  const { from, to, t } = normalizeTransitionIndexInputs(fromIndex, toIndex, timeFactor);
+  if (t <= 0) return from;
+  if (t >= 1) return to;
+  return t < 0.5 ? from : to;
 }
 
 export function resolveHighlightTreeIndex(fromIndex, toIndex, timeFactor) {
@@ -40,13 +39,6 @@ export function findNextInputTreeSequenceIndex(inputTreeIndices, position) {
     }
   }
   return null;
-}
-
-function resolveMidpointTreeIndex(fromIndex, toIndex, timeFactor) {
-  const { from, to, t } = normalizeTransitionIndexInputs(fromIndex, toIndex, timeFactor);
-  if (t <= 0) return from;
-  if (t >= 1) return to;
-  return t < 0.5 ? from : to;
 }
 
 function normalizeTransitionIndexInputs(fromIndex, toIndex, timeFactor) {

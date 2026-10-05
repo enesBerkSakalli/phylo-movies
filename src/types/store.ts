@@ -43,7 +43,6 @@ export interface MovieTimelineManagerRuntime {
     options?: TimelineCursorFrameOptions
   ) => TimelineCursorState | null;
   getSegment?: (segmentIndex: number) => unknown;
-  getSegmentCount?: () => number;
   getCursorAtMovieTime?: (movieTimeMs: number) => TimelineCursorState | null;
   resolveFrameAtTimelineProgress?: (timelineProgress: number) => unknown;
   hasTransitionSegments?: () => boolean;
@@ -177,7 +176,6 @@ export interface AppStoreState {
   hoveredSegmentData: unknown;
   hoveredSegmentPosition: unknown;
   selectedTimelineSegmentIndex: number | null;
-  isTooltipHovered: boolean;
 
   // From treeAppearance.slice
   fontSize: string;
@@ -298,13 +296,10 @@ export interface AppStoreState {
     segmentData?: unknown,
     position?: unknown
   ) => void;
-  setTooltipHovered: (isHovered: boolean) => void;
   setSelectedTimelineSegment: (segmentIndex: number | null) => void;
   zoomInTimeline: () => void;
   zoomOutTimeline: () => void;
   fitTimeline: () => void;
-  scrollToStartTimeline: () => void;
-  scrollToEndTimeline: () => void;
 
   setFontSize: (size: string | number) => void;
   setStrokeWidth: (width: number) => void;

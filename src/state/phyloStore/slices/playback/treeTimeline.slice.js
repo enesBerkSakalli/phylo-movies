@@ -9,22 +9,17 @@ export const createTimelineSlice = (set, get) => ({
   hoveredSegmentData: null,
   hoveredSegmentPosition: null,
   selectedTimelineSegmentIndex: null,
-  isTooltipHovered: false,
 
   // ==========================================================================
   // ACTIONS: Timeline Tooltip
   // ==========================================================================
   setHoveredSegment: (segmentIndex, segmentData = null, position = null) => {
-    const { isTooltipHovered } = get();
-    if (segmentIndex === null && isTooltipHovered) return;
     set({
       hoveredSegmentIndex: segmentIndex,
       hoveredSegmentData: segmentData,
       hoveredSegmentPosition: position,
     });
   },
-
-  setTooltipHovered: (isHovered) => set({ isTooltipHovered: isHovered }),
 
   setSelectedTimelineSegment: (segmentIndex) => {
     set({
@@ -45,14 +40,6 @@ export const createTimelineSlice = (set, get) => ({
 
   fitTimeline: () => {
     callTimelineManager(get, 'fitTimeline', 'fit');
-  },
-
-  scrollToStartTimeline: () => {
-    callTimelineManager(get, 'scrollToStartTimeline', 'scrollToStart');
-  },
-
-  scrollToEndTimeline: () => {
-    callTimelineManager(get, 'scrollToEndTimeline', 'scrollToEnd');
   },
 });
 

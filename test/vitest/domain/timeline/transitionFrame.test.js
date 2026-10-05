@@ -30,7 +30,6 @@ describe('TransitionFrame', () => {
     expect(frame.holdKind).toBe('mover');
     expect(frame.cursorTreeIndex).toBe(4);
     expect(frame.highlightTreeIndex).toBe(5);
-    expect(frame.comparisonActiveTreeIndex).toBe(4);
   });
 
   it('keeps raw transition progress separate from eased render progress', () => {
