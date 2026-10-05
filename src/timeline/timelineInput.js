@@ -88,7 +88,11 @@ export function attachTimelineInput(view, { onScrub, onSelect, onHover, onInspec
 
     drag = { id: event.pointerId, pan: !onHandle, x };
     // Held by the strip, the drag goes on when the pointer leaves it
-    target.setPointerCapture?.(event.pointerId);
+    try {
+      target.setPointerCapture?.(event.pointerId);
+    } catch {
+      // The pointer is already gone (NotFoundError); the drag works without capture
+    }
     if (onHandle) onScrub(view.scrubberMs, 'start');
   };
 

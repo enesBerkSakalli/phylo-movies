@@ -519,6 +519,20 @@ describe('TimelineView', () => {
       ]);
     });
 
+    it('scrubs even when the browser has already lost the pointer', () => {
+      const { timeline } = makeTimelineFixture();
+      const { view, events } = mountView(timeline);
+      view.canvas.setPointerCapture = () => {
+        throw new DOMException('No active pointer with the given id is found', 'NotFoundError');
+      };
+
+      pointerDownTimeline(view, 0);
+      dispatchPointer(view.canvas, 'pointermove', 400);
+      dispatchPointer(view.canvas, 'pointerup', 400);
+
+      expect(events.scrubs.map(({ phase }) => phase)).to.deep.equal(['start', 'move', 'end']);
+    });
+
     it('ends the scrub when the browser cancels the touch', () => {
       const { timeline } = makeTimelineFixture();
       const { view, events } = mountView(timeline);
