@@ -1,4 +1,4 @@
-// Golden pin for the timeline: segment spans, ms -> cursor, frame -> cursor.
+// Golden pin for the timeline: segment spans, ms -> cursor, frame -> cursor, ms -> animated frames.
 // The expected files were generated from the pre-distill code (`vitest -u` rewrites them);
 // every refactor of src/timeline must leave them byte-identical.
 import { describe, expect, it } from 'vitest';
@@ -7,9 +7,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { TimelineDataProcessor } from '../../../../src/timeline/data/TimelineDataProcessor.js';
 import { TimelineDataset } from '../../../../src/timeline/data/TimelineDataset.js';
+import { applyRenderProgressEasing } from '../../../../src/treeVisualisation/deckgl/interpolation/stages/stageEasing.js';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 const STEP_MS = 100;
+const round4 = (x) => Math.round(x * 1e4) / 1e4;
 
 const FIXTURES = {
   small_example: 'test/data/small_example/small_example.response.json',
@@ -40,6 +42,8 @@ function goldenRows(movieData) {
     for (const ms of [end - 1, end, end + 1]) times.add(Math.max(0, Math.min(ms, total)));
   }
 
+  const sortedTimes = [...times].sort((a, b) => a - b);
+
   const frames = [];
   for (let f = 0; f < movieData.frames.length; f += 1) {
     for (const occurrence of ['semantic', 'last']) {
@@ -56,13 +60,25 @@ function goldenRows(movieData) {
       i === 0 ? 0 : ends[i - 1],
       ends[i],
     ]),
-    cursors: [...times]
-      .sort((a, b) => a - b)
-      .map((ms) => {
-        const cursor = dataset.getCursorAtMovieTime(ms);
-        return [ms, cursor?.frameIndex ?? null, cursor?.segmentIndex ?? null];
-      }),
+    cursors: sortedTimes.map((ms) => {
+      const cursor = dataset.getCursorAtMovieTime(ms);
+      return [ms, cursor?.frameIndex ?? null, cursor?.segmentIndex ?? null];
+    }),
     frames,
+    // What the tree renderer gets per ms: the manager's resolveFrameAtTimelineProgress
+    // (ms / total, as AnimationRunner passes it) minus tree hydration, plus the eased render t.
+    resolved: sortedTimes.map((ms) => {
+      const f = dataset.getTransitionFrameAtTimelineProgress(ms / total);
+      return [
+        ms,
+        f.sourceTreeIndex,
+        f.targetTreeIndex,
+        round4(f.transitionProgress),
+        round4(applyRenderProgressEasing(f.transitionProgress)),
+        f.cursorTreeIndex,
+        f.holdKind,
+      ];
+    }),
   };
 }
 
