@@ -8,9 +8,9 @@ This guide describes the UI surfaces that exist in the current React app.
 
 - Start on the setup screen. Use **Example Library** for bundled data or **New Project** for your own tree/MSA files.
 - Confirm the top status says **Engine Connected** before loading examples or processing uploads.
-- After processing, the visualization workspace opens with the tree canvas in the center, analysis/style tools in the left sidebar, and the movie timeline at the bottom.
+- After processing, the visualization workspace opens with the tree canvas in the center, the **Settings** panel (analysis/style tools) docked on the left, and the movie timeline in a fixed strip at the bottom.
 - Use the bottom transport buttons to move between input trees and generated frames. Select or hover timeline segments to inspect topology changes.
-- Use the left sidebar for dataset, layout, style, analysis, and view controls. MSA and taxa-color tools open as floating windows when those data are available.
+- Use the **Settings** panel for dataset, layout, style, analysis, and view controls. Alignment, Moved Subtrees, Taxa colouring, and the Transition Inspector open as tabs you can dock, split, or close.
 - Use the top-right canvas buttons, mouse wheel, or two-finger trackpad gesture to fit, zoom, reset, export a PNG, or record a WebM movie.
 - Use the **Pinned tree** control in the bottom bar, next to the comparison button, to pin one input tree as an overlay reference. Use the comparison button for the true side-by-side two-tree view.
 
@@ -56,9 +56,28 @@ Actions:
 
 ## Visualization Workspace
 
-### Sidebar
+### Workspace Layout
 
-The left sidebar has five groups, verified from `src/components/sidebar/ToolsSidebar.jsx`:
+The workspace is a docking layout. Every view is a tab in the dock:
+
+| Tab                  | Default placement                                     |
+| -------------------- | ----------------------------------------------------- |
+| Tree                 | Center. Permanent: it cannot be closed.               |
+| Settings             | Left column on the first visit.                       |
+| Transition Inspector | Right column, opened by selecting a timeline segment. |
+| Moved Subtrees       | Right column, as a tab beside the Inspector.          |
+| Alignment            | Below the tree, about 40% of the height.              |
+| Taxa colouring       | Floating window; drag its tab to dock it.             |
+
+Tabs can be closed, reopened, dragged into splits or tab groups, and resized. The Tree tab can be moved and split like any other tab, but not closed. The arrangement is saved in the browser (`localStorage`) and restored on the next visit. Floating panels are not remembered. If the saved layout cannot be restored, the default layout is used.
+
+The movie player bar and timeline are not tabs. They stay a fixed strip below the dock.
+
+Below 920 px width, all docked panels gather into one tab group. The wide arrangement returns when there is room again.
+
+### Settings Panel
+
+The **Settings** tab holds the dataset, layout, style, analysis, and view controls. Toggle it with the **☰** button in the player bar or **Ctrl/⌘+B**. It has five groups, verified from `src/components/sidebar/ToolsSidebar.jsx`:
 
 | Group    | Purpose                                                        |
 | -------- | -------------------------------------------------------------- |
@@ -91,7 +110,7 @@ The **Pinned tree** control sits in the bottom bar, right after the comparison b
 
 The bottom bar contains:
 
-- Sidebar toggle
+- Settings panel toggle (**☰**)
 - Timeline status strip
 - Transport controls
 - Playback speed control
@@ -114,7 +133,7 @@ Transport buttons:
 
 ### Transition Inspector
 
-Selecting a timeline segment opens the **Transition Inspector**. It reports:
+Selecting a timeline segment opens the **Transition Inspector** as a tab in the right column. Closing its tab clears the selection. It reports:
 
 - Segment name and direction
 - Global frame range and local steps
@@ -130,7 +149,7 @@ Selecting a timeline segment opens the **Transition Inspector**. It reports:
 ### SPR Analytics
 
 Open **Analysis -> Moved Subtrees** to inspect the movement tables behind the
-animation. The analytics window has three tabs:
+animation. It opens as a **Moved Subtrees** tab beside the Transition Inspector and has three internal tabs:
 
 | Tab                | What it shows                                                                                                                                                                                          | How to use it                                                                                                                                                                                                                                 |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -156,13 +175,13 @@ such as whether a candidate rogue taxon jumps broadly across the tree or
 repeatedly switches between a small number of source and target attachment
 contexts.
 
-### Floating Windows
+### Other Panels
 
-| Window             | How it opens                              | What it does                                                                                                                                                                |
-| ------------------ | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Sequence Alignment | MSA controls/sidebar when MSA data exists | Shows sequences, columns, and synchronized MSA window context. With **Follow Current Window** enabled, stepping between input trees updates the displayed alignment window. |
-| Taxa Colors        | Style controls                            | Assigns colors to taxa, name patterns, or CSV groups.                                                                                                                       |
-| SPR Analytics      | Analysis sidebar                          | Shows movement analytics and event tables.                                                                                                                                  |
+| Panel          | How it opens                               | What it does                                                                                                                                                                |
+| -------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Alignment      | MSA controls/Settings when MSA data exists | Shows sequences, columns, and synchronized MSA window context. With **Follow Current Window** enabled, stepping between input trees updates the displayed alignment window. |
+| Taxa colouring | Style controls                             | Assigns colors to taxa, name patterns, or CSV groups. Opens as a floating window.                                                                                           |
+| Moved Subtrees | Analysis group in Settings                 | Shows movement analytics and event tables (see SPR Analytics above).                                                                                                        |
 
 ## What You See / What It Means
 

@@ -4,14 +4,33 @@ title: Workspace Controls
 
 # Workspace Controls
 
-The visualization workspace is organized into the left sidebar, central tree canvas, top-right canvas controls, bottom movie timeline, and optional floating windows.
+The visualization workspace is a docking layout. The central tree canvas, the Settings panel, top-right canvas controls, and optional panels (Transition Inspector, Moved Subtrees, Alignment, Taxa colouring) are dock tabs, and the movie timeline is a fixed strip at the bottom.
 
 <figure className="manual-screenshot">
-  <img src="/phylo-movies/manual/img/screenshots/workspace-overview.png" alt="Phylo-Movies visualization workspace with sidebar, tree canvas, and movie timeline" />
-  <figcaption>The loaded workspace shows the sidebar, tree canvas, and timeline with playback, comparison, and pinned-tree controls.</figcaption>
+  <img src="/phylo-movies/manual/img/screenshots/workspace-overview.png" alt="Phylo-Movies visualization workspace with settings panel, tree canvas, and movie timeline" />
+  <figcaption>The loaded workspace shows the Settings panel, tree canvas, and timeline with playback, comparison, and pinned-tree controls.</figcaption>
 </figure>
 
-## Sidebar Groups
+## Workspace Layout
+
+Every view is a tab in the dock:
+
+| Tab                      | Default placement                                                                             |
+| ------------------------ | --------------------------------------------------------------------------------------------- |
+| **Tree**                 | Center. Permanent: it cannot be closed, but it can be moved and split.                        |
+| **Settings**             | Left column on the first visit.                                                               |
+| **Transition Inspector** | Right column. Opens when you select a timeline segment; closing the tab clears the selection. |
+| **Moved Subtrees**       | Right column, as a tab beside the Inspector.                                                  |
+| **Alignment**            | Below the tree, about 40% of the height.                                                      |
+| **Taxa colouring**       | Floating window. Drag its tab to dock it.                                                     |
+
+Tabs can be closed, reopened, dragged into splits or tab groups, and resized. The arrangement is saved in the browser (`localStorage`) and restored on the next visit. Floating panels are not remembered. If the saved layout cannot be restored, the default layout is used.
+
+Toggle **Settings** with the **☰** button in the player bar or **Ctrl/⌘+B**. The movie player bar and timeline are a fixed strip below the dock and are never tabs. Below 920 px width, all docked panels gather into one tab group; the wide arrangement returns when there is room.
+
+## Settings Groups
+
+The **Settings** tab contains these groups:
 
 | Group        | Controls                                                            |
 | ------------ | ------------------------------------------------------------------- |
@@ -23,11 +42,11 @@ The visualization workspace is organized into the left sidebar, central tree can
 
 ## Dataset
 
-| Control                | Meaning                                                                                            |
-| ---------------------- | -------------------------------------------------------------------------------------------------- |
-| **Change Dataset**     | Returns to the setup screen.                                                                       |
-| **Provenance**         | Shows dataset source, tree source, alignment source, and processing settings when available.       |
-| **Sequence Alignment** | Opens the MSA viewer and toggles **Follow Current Window** when the dataset includes an alignment. |
+| Control                | Meaning                                                                                                   |
+| ---------------------- | --------------------------------------------------------------------------------------------------------- |
+| **Change Dataset**     | Returns to the setup screen.                                                                              |
+| **Provenance**         | Shows dataset source, tree source, alignment source, and processing settings when available.              |
+| **Sequence Alignment** | Opens the **Alignment** tab and toggles **Follow Current Window** when the dataset includes an alignment. |
 
 ## Branch Lengths
 
@@ -75,7 +94,7 @@ The tree canvas can also be magnified with the top-right zoom controls, mouse wh
 
 | Control                        | Meaning                                                             |
 | ------------------------------ | ------------------------------------------------------------------- |
-| **Edit Taxa Colors**           | Opens the Taxa Coloring floating window.                            |
+| **Edit Taxa Colors**           | Opens the **Taxa colouring** floating window.                       |
 | **Monophyletic Branch Colors** | Applies group/taxa color assignments to monophyletic branch groups. |
 | **Change Edges**               | Shows changed/pivot edges and lets you choose their color.          |
 | **Subtree Highlighting**       | Highlights moved or manually selected subtrees.                     |
