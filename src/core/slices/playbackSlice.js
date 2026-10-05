@@ -1,6 +1,6 @@
 import { clamp } from '../../domain/math/mathUtils.js';
 import { selectInputFrameIndices } from '../../state/phyloStore/selectors/treeSelectors.js';
-import { TransitionFrame } from '../../timeline/time/TransitionFrame.js';
+import { TransitionFrame } from '../../treeVisualisation/TransitionFrame.js';
 
 /**
  * Playback state is anchored to semantic movie time. Frame and timeline cursor

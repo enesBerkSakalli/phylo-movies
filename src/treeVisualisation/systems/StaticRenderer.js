@@ -4,6 +4,7 @@ import {
   selectInputFrameIndices,
   useAppStore,
 } from '../../state/phyloStore/store.js';
+import { rightComparisonIndex } from '../../domain/indexing/treeIndexSemantics.js';
 import { VIEWPORT_FIT_OBSTRUCTION_SCOPES } from '../spatial/layout.js';
 import { tagTreeSide } from '../utils/layerDataUtils.js';
 import {
@@ -71,10 +72,7 @@ export class StaticRenderer {
    */
   _renderComparisonModeStatic(leftIndex, rightIndex, frameIndex, state) {
     const inputFrameIndices = selectInputFrameIndices(state);
-    const computedRight =
-      inputFrameIndices.find((i) => i > frameIndex) ??
-      inputFrameIndices[inputFrameIndices.length - 1] ??
-      frameIndex;
+    const computedRight = rightComparisonIndex(inputFrameIndices, frameIndex) ?? frameIndex;
     const leftIdx = Number.isInteger(leftIndex) ? leftIndex : frameIndex;
     const rightIdx = Number.isInteger(rightIndex) ? rightIndex : computedRight;
 

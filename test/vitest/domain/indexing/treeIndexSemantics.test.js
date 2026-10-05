@@ -3,6 +3,7 @@ import {
   resolveCursorTreeIndex,
   resolveHighlightTreeIndex,
   resolveMsaSourceFrameIndex,
+  rightComparisonIndex,
 } from '../../../../src/domain/indexing/treeIndexSemantics.js';
 
 describe('tree index semantics during transitions', () => {
@@ -28,5 +29,12 @@ describe('tree index semantics during transitions', () => {
     expect(resolveMsaSourceFrameIndex(sourceTreeSequenceIndices, 3)).toBe(1);
     expect(resolveMsaSourceFrameIndex(sourceTreeSequenceIndices, 4)).toBe(1);
     expect(resolveMsaSourceFrameIndex(sourceTreeSequenceIndices, 5)).toBe(2);
+  });
+
+  it('compares with the next input tree, or the last one past it', () => {
+    expect(rightComparisonIndex([0, 3, 5], 0)).toBe(3);
+    expect(rightComparisonIndex([0, 3, 5], 3)).toBe(5);
+    expect(rightComparisonIndex([0, 3, 5], 5)).toBe(5);
+    expect(rightComparisonIndex([], 2)).toBeUndefined();
   });
 });

@@ -96,3 +96,32 @@ Then: docs pass for UI strings removed in 27a51801 and renamed modules.
   and `npx vitest run test/vitest/domain/timeline test/vitest/domain/playback test/vitest/integration/timeline test/vitest/integration/state`.
 - Full: `npm run validate:frontend` (`frameInstrumentation.test.js` can time out under load; rerun it
   alone).
+
+## Result
+
+All 8 steps done. `src/timeline` went from 4,358 lines in 32 files to 2,042 lines in 12 files.
+
+| file                         |     lines |
+| ---------------------------- | --------: |
+| `TimelineView.js`            |       506 |
+| `stripGeometry.js`           |       362 |
+| `timeline.js`                |       295 |
+| `timelineController.js`      |       271 |
+| `deckLayers.js`              |       234 |
+| `timelineInput.js`           |       148 |
+| `data/TimelineEventIndex.js` |        53 |
+| `describeCursor.js`          |        48 |
+| `data/pairChangeProfile.js`  |        47 |
+| `utils/segmentTiming.js`     |        43 |
+| `math/coordinateUtils.js`    |        24 |
+| `constants.js`               |        11 |
+| **total**                    | **2,042** |
+
+Short of the plan's 8 files / about 1,700 lines: `TimelineEventIndex`, `segmentTiming`, `coordinateUtils` and
+`constants` were not folded into `timeline.js`, and the pair changes stayed in `pairChangeProfile.js`.
+
+Step 8: `describeCursor(timeline, cursor)` words the position for the status strip and the slider's
+aria-valuetext. It follows the cursor's segment, not the nearest frame (the two used to disagree during the
+first and last motion of a transition). `rightComparisonIndex(inputIndices, frame)` in
+`domain/indexing/treeIndexSemantics.js` replaces the five copies of the next-input-tree lookup, and
+`TransitionFrame` moved to `src/treeVisualisation`.

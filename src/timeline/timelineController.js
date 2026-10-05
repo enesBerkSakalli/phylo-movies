@@ -2,6 +2,7 @@ import { TIMELINE_CONSTANTS } from './constants.js';
 import { buildPairSpans } from './stripGeometry.js';
 import { cursorForFrame } from './timeline.js';
 import { getSegmentBounds } from './utils/segmentTiming.js';
+import { rightComparisonIndex } from '../domain/indexing/treeIndexSemantics.js';
 import { selectInputFrameIndices } from '../state/phyloStore/selectors/treeSelectors.js';
 
 const EDGE_MS = 1;
@@ -257,9 +258,7 @@ export class TimelineController {
     if (state.comparisonMode) {
       const inputTreeIndices = selectInputFrameIndices(state);
       options.comparisonMode = true;
-      options.rightTreeIndex =
-        inputTreeIndices.find((i) => i > frame.sourceTreeIndex) ??
-        inputTreeIndices[inputTreeIndices.length - 1];
+      options.rightTreeIndex = rightComparisonIndex(inputTreeIndices, frame.sourceTreeIndex);
     }
 
     await state.treeController.renderComparisonAwareScrubFrame(

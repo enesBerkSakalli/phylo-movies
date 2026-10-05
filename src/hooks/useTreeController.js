@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useAppStore } from '../state/phyloStore/store.js';
 import { selectInputFrameIndices } from '../state/phyloStore/selectors/treeSelectors.js';
 import { DeckGLTreeAnimationController } from '../treeVisualisation/DeckGLTreeAnimationController.js';
+import { rightComparisonIndex } from '../domain/indexing/treeIndexSemantics.js';
 import { calculateWindow } from '../domain/msa/msaWindowCalculator.js';
 import { getMsaColumnCount } from '../domain/msa/msaSequenceSummary.js';
 
@@ -241,9 +242,7 @@ export function useTreeController() {
 async function renderComparisonMode(controller, state, frameIndex, timelineCursor) {
   const inputTreeIndices = selectInputFrameIndices(state);
   const sourceInputTreeIndex = timelineCursor?.sourceFrameIndex ?? frameIndex;
-  const rightIndex =
-    inputTreeIndices.find((i) => i > sourceInputTreeIndex) ??
-    inputTreeIndices[inputTreeIndices.length - 1];
+  const rightIndex = rightComparisonIndex(inputTreeIndices, sourceInputTreeIndex);
 
   await controller.renderAllElements({
     leftIndex: frameIndex,

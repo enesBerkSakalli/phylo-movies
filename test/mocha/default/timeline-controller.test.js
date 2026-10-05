@@ -19,7 +19,7 @@ clearTimelineModuleCache();
 const { TimelineController } = require('../../../src/timeline/timelineController.js');
 const { buildTimeline } = require('../../../src/timeline/timeline.js');
 const { AnimationRunner } = require('../../../src/treeVisualisation/systems/AnimationRunner.js');
-const { TransitionFrame } = require('../../../src/timeline/time/TransitionFrame.js');
+const { TransitionFrame } = require('../../../src/treeVisualisation/TransitionFrame.js');
 const { selectInputFrameIndices, useAppStore } = require('../../../src/state/phyloStore/store.js');
 
 function loadMovieData() {

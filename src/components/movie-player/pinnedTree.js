@@ -1,3 +1,5 @@
+import { rightComparisonIndex } from '../../domain/indexing/treeIndexSemantics.js';
+
 export function getPinnedTreeLabel(clipboardTreeIndex, inputTreeIndices) {
   if (clipboardTreeIndex === null) return 'None';
   const inputTreePosition = inputTreeIndices.indexOf(clipboardTreeIndex);
@@ -15,14 +17,8 @@ export function getNextPinnedTreeIndex(
   { clipboardTreeIndex, inputTreeIndices, frameIndex }
 ) {
   if (inputTreeIndices.length === 0) return null;
-  const first = inputTreeIndices[0];
-  const last = inputTreeIndices[inputTreeIndices.length - 1];
   const anchor = clipboardTreeIndex ?? frameIndex;
 
-  if (direction > 0) {
-    const next = inputTreeIndices.find((index) => index > anchor);
-    return next ?? last;
-  }
-  const previous = inputTreeIndices.findLast((index) => index < anchor);
-  return previous ?? first;
+  if (direction > 0) return rightComparisonIndex(inputTreeIndices, anchor);
+  return inputTreeIndices.findLast((index) => index < anchor) ?? inputTreeIndices[0];
 }

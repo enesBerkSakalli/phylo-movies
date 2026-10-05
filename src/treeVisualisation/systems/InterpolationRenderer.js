@@ -1,7 +1,7 @@
 import { selectActiveTreeList, useAppStore } from '../../state/phyloStore/store.js';
 import { detectAnimationStage } from '../deckgl/interpolation/stages/animationStageDetector.js';
 import { applyRenderProgressEasing } from '../deckgl/interpolation/stages/stageEasing.js';
-import { TransitionFrame } from '../../timeline/time/TransitionFrame.js';
+import { TransitionFrame } from '../TransitionFrame.js';
 
 /**
  * Handles the rendering of transition frames for animation and scrubbing.

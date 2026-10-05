@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TransitionFrame } from '../../../../src/timeline/time/TransitionFrame.js';
+import { TransitionFrame } from '../../../../src/treeVisualisation/TransitionFrame.js';
 
 describe('TransitionFrame', () => {
   it('names transition payload semantics and derives tree-index roles from one frame', () => {

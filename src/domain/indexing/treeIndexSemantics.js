@@ -41,6 +41,11 @@ export function findNextInputTreeSequenceIndex(inputTreeIndices, position) {
   return null;
 }
 
+/** The input tree to compare with at `position`: the next one, or the last once past it. */
+export function rightComparisonIndex(inputTreeIndices, position) {
+  return findNextInputTreeSequenceIndex(inputTreeIndices, position) ?? inputTreeIndices?.at(-1);
+}
+
 function normalizeTransitionIndexInputs(fromIndex, toIndex, timeFactor) {
   const from = Number.isInteger(fromIndex) ? fromIndex : 0;
   const to = Number.isInteger(toIndex) ? toIndex : from;

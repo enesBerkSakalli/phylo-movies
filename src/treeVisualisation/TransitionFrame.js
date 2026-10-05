@@ -1,8 +1,8 @@
 import {
   resolveCursorTreeIndex,
   resolveHighlightTreeIndex,
-} from '../../domain/indexing/treeIndexSemantics.js';
-import { clamp01 } from '../../domain/math/mathUtils.js';
+} from '../domain/indexing/treeIndexSemantics.js';
+import { clamp01 } from '../domain/math/mathUtils.js';
 
 export class TransitionFrame {
   static from(frame = {}, options = {}) {

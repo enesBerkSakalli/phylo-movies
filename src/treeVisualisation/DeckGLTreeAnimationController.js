@@ -28,7 +28,7 @@ import { VIEWPORT_FIT_MODES } from './viewport/viewportFit.js';
 import { getClipboardLayers } from './utils/ClipboardUtils.js';
 import { createLayoutCacheKey } from './utils/layoutCacheKey.js';
 import { getSplitKey } from '../domain/tree/splits.js';
-import { TransitionFrame } from '../timeline/time/TransitionFrame.js';
+import { TransitionFrame } from './TransitionFrame.js';
 
 export class DeckGLTreeAnimationController extends TreeLayoutController {
   // ==========================================================================

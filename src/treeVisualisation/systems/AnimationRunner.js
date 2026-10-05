@@ -3,6 +3,7 @@ import {
   detectCurrentAnimationStage,
 } from '../deckgl/interpolation/stages/animationStageDetector.js';
 import { applyRenderProgressEasing } from '../deckgl/interpolation/stages/stageEasing.js';
+import { rightComparisonIndex } from '../../domain/indexing/treeIndexSemantics.js';
 import {
   selectActiveTreeList,
   selectInputFrameIndices,
@@ -360,10 +361,7 @@ function getComparisonTarget(state, fromIndex, toIndex) {
   const treeList = selectActiveTreeList(state);
   const inputFrameIndices = selectInputFrameIndices(state);
 
-  const rightIdx =
-    inputFrameIndices.find((i) => i > fromIndex) ??
-    inputFrameIndices[inputFrameIndices.length - 1] ??
-    toIndex;
+  const rightIdx = rightComparisonIndex(inputFrameIndices, fromIndex) ?? toIndex;
   const rightTree = state.ensureTreeHydrated?.(rightIdx) ?? treeList[rightIdx];
 
   return rightTree ? { rightTree, rightTreeIndex: rightIdx } : null;
