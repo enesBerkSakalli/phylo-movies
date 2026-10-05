@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  getAffectedSubtreesForPivotEdge,
   getMovingSubtreeAtIndex,
   toSubtreeSets,
 } from '../../../../src/state/phyloStore/internal/changeTracking.helpers.js';
@@ -102,5 +103,33 @@ describe('moving subtree highlighting', () => {
     };
 
     expect(Array.from(getLinkColor(link, cached, helpers))).toEqual([171, 205, 239, 255]);
+  });
+
+  it('finds the affected subtrees of the active pivot edge', () => {
+    const state = {
+      timelineFrames: [{ pair_id: 'p', frame_type: 'interpolated' }],
+      temporalEvents: [
+        { event_type: 'split_change', pair_id: 'p', frame_range: [0, 0], split: [11, 10] },
+      ],
+      pairs: [
+        {
+          pair_id: 'p',
+          solution: {
+            affected_subtrees_by_split: { '[10, 11]': [[[10], [12, 13]]], '[1]': [[1]] },
+          },
+        },
+      ],
+    };
+
+    // The split is canonicalised before the lookup, and nested groups are flattened.
+    expect(getAffectedSubtreesForPivotEdge(state, 0)).toEqual([[10], [12, 13]]);
+    expect(getAffectedSubtreesForPivotEdge({ ...state, temporalEvents: [] }, 0)).toEqual([]);
+    expect(getAffectedSubtreesForPivotEdge({ ...state, timelineFrames: [] }, 0)).toEqual([]);
+    expect(
+      getAffectedSubtreesForPivotEdge(
+        { ...state, temporalEvents: [{ ...state.temporalEvents[0], split: [99] }] },
+        0
+      )
+    ).toEqual([]);
   });
 });

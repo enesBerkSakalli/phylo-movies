@@ -1,4 +1,4 @@
-import { selectActiveTreeList, useAppStore } from '../../state/phyloStore/store.js';
+import { useAppStore } from '../../state/phyloStore/store.js';
 import { detectAnimationStage } from '../deckgl/interpolation/stages/animationStageDetector.js';
 import { applyRenderProgressEasing } from '../deckgl/interpolation/stages/stageEasing.js';
 import { TransitionFrame } from '../TransitionFrame.js';
@@ -91,10 +91,7 @@ export class InterpolationRenderer {
 
     if (comparisonMode && typeof rightTreeIndex === 'number') {
       const state = useAppStore.getState();
-      const rightTree =
-        state.ensureTreeHydrated?.(rightTreeIndex) ??
-        useAppStore.getState().treeList?.[rightTreeIndex] ??
-        selectActiveTreeList(state)[rightTreeIndex];
+      const rightTree = state.ensureTreeHydrated(rightTreeIndex);
 
       if (rightTree) {
         // Build raw interpolation inputs for comparison renderer

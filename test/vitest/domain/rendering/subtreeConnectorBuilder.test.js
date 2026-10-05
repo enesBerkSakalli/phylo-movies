@@ -49,15 +49,10 @@ const buildOptions = (overrides = {}) => {
   return {
     leftPositions,
     rightPositions,
-    affectedSubtreesBySplit: {
-      '[99]': [
-        [
-          [10, 11],
-          [12, 13],
-        ],
-      ],
-    },
-    pivotEdge: [99],
+    affectedSubtrees: [
+      [10, 11],
+      [12, 13],
+    ],
     colorManager: makeColorManager(),
     subtreeHighlightTracking: [[[10, 11]]],
     frameIndex: 0,
@@ -80,7 +75,7 @@ describe('SubtreeConnectorBuilder', function () {
     const connectors = buildSubtreeConnectors(
       buildOptions({
         rightPositions,
-        affectedSubtreesBySplit: { '[99]': [[[10, 11, 12]]] },
+        affectedSubtrees: [[10, 11, 12]],
       })
     );
 
@@ -96,7 +91,7 @@ describe('SubtreeConnectorBuilder', function () {
     const connectors = buildSubtreeConnectors(
       buildOptions({
         rightPositions,
-        affectedSubtreesBySplit: { '[99]': [[10]] },
+        affectedSubtrees: [[10]],
         subtreeHighlightTracking: [[[10]]],
       })
     );
@@ -122,7 +117,7 @@ describe('SubtreeConnectorBuilder', function () {
     const connectors = buildSubtreeConnectors(
       buildOptions({
         leftPositions,
-        affectedSubtreesBySplit: { '[99]': [[10, 11, 12]] },
+        affectedSubtrees: [[10, 11, 12]],
         subtreeHighlightTracking: [[[10, 11]]],
         colorManager: makeColorManager({ getNodeColor, getNodeBaseColor }),
         highlightColorMode: 'taxa',
@@ -143,7 +138,7 @@ describe('SubtreeConnectorBuilder', function () {
     const isMoving = (colorManager) =>
       buildSubtreeConnectors(
         buildOptions({
-          affectedSubtreesBySplit: { '[99]': [[10]] },
+          affectedSubtrees: [[10]],
           subtreeHighlightTracking: [[]],
           colorManager,
         })
@@ -307,7 +302,7 @@ describe('SubtreeConnectorBuilder', function () {
   it('builds connectors when positions are Maps', function () {
     const connectors = buildSubtreeConnectors(
       buildOptions({
-        affectedSubtreesBySplit: { '[99]': [[10]] },
+        affectedSubtrees: [[10]],
         subtreeHighlightTracking: [[[10]]],
       })
     );
@@ -322,52 +317,13 @@ describe('SubtreeConnectorBuilder', function () {
     expect(firstConn.color).toHaveLength(4);
   });
 
-  it('returns no connectors when the active pivot edge is absent', function () {
-    const connectors = buildSubtreeConnectors(
-      buildOptions({
-        pivotEdge: [],
-      })
-    );
-
-    expect(connectors).toEqual([]);
-  });
-
-  it('returns no connectors when the active pivot edge has no affected-subtree entry', function () {
-    const connectors = buildSubtreeConnectors(
-      buildOptions({
-        affectedSubtreesBySplit: { '[88]': [[10, 11]] },
-        pivotEdge: [99],
-      })
-    );
-
-    expect(connectors).toEqual([]);
-  });
-
-  it('canonicalizes pivot splits before affected-subtree lookup', function () {
-    const connectors = buildSubtreeConnectors(
-      buildOptions({
-        affectedSubtreesBySplit: { '[10, 11]': [[10]] },
-        pivotEdge: [11, 10],
-        subtreeHighlightTracking: [[[10]]],
-      })
-    );
-
-    expect(connectors).toHaveLength(1);
-    expect(connectors[0].sourceInfo.name).toBe('A');
-    expect(connectors[0].isCurrentlyMoving).toBe(true);
+  it('returns no connectors when no subtree is affected', function () {
+    expect(buildSubtreeConnectors(buildOptions({ affectedSubtrees: [] }))).toEqual([]);
   });
 
   it('builds all affected-subtree connectors while only the current moved subtree is active', function () {
     const connectors = buildSubtreeConnectors(
       buildOptions({
-        affectedSubtreesBySplit: {
-          '[99]': [
-            [
-              [10, 11],
-              [12, 13],
-            ],
-          ],
-        },
         subtreeHighlightTracking: [[[10, 11]]],
       })
     );
@@ -392,7 +348,7 @@ describe('SubtreeConnectorBuilder', function () {
   it('uses link opacity for passive affected-subtree connectors', function () {
     const connectors = buildSubtreeConnectors(
       buildOptions({
-        affectedSubtreesBySplit: { '[99]': [[10]] },
+        affectedSubtrees: [[10]],
         subtreeHighlightTracking: [[]],
         linkConnectionOpacity: 0.25,
       })
@@ -407,7 +363,7 @@ describe('SubtreeConnectorBuilder', function () {
   it('uses the configured highlight color for moving connectors', function () {
     const connectors = buildSubtreeConnectors(
       buildOptions({
-        affectedSubtreesBySplit: { '[99]': [[10]] },
+        affectedSubtrees: [[10]],
         subtreeHighlightTracking: [[[10]]],
         highlightColorMode: 'solid',
         subtreeHighlightColor: '#010203',
@@ -423,7 +379,7 @@ describe('SubtreeConnectorBuilder', function () {
 
     const connectors = buildSubtreeConnectors(
       buildOptions({
-        affectedSubtreesBySplit: { '[99]': [[10]] },
+        affectedSubtrees: [[10]],
         subtreeHighlightTracking: [[[10]]],
         colorManager: makeColorManager({ getNodeColor }),
         subtreeHighlightsEnabled: false,

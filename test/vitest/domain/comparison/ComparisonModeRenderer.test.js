@@ -100,7 +100,7 @@ describe('ComparisonModeRenderer', () => {
     );
     expect(focusOnTree.mock.calls[0][2].links).toContain(connector);
     expect(focusOnTree.mock.calls[0][2].links).toContain(leftExtension);
-    expect(renderer._buildConnectors.mock.calls[0][6]).toBe(0);
+    expect(renderer._buildConnectors.mock.calls[0][3]).toBe(0);
   });
 
   it('refits only when the compared trees change', async () => {
@@ -341,7 +341,7 @@ describe('ComparisonModeRenderer', () => {
       activeTreeIndex: 7,
     });
 
-    expect(renderer._buildConnectors.mock.calls[0][6]).toBe(7);
+    expect(renderer._buildConnectors.mock.calls[0][3]).toBe(7);
   });
 
   it('reuses static right-hand animated comparison data across frames', async () => {

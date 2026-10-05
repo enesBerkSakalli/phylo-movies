@@ -5,10 +5,7 @@ import {
 import { applyRenderProgressEasing } from '../deckgl/interpolation/stages/stageEasing.js';
 import { movieTimeAt } from '../../core/slices/playbackSlice.js';
 import { rightComparisonIndex } from '../../domain/indexing/treeIndexSemantics.js';
-import {
-  selectActiveTreeList,
-  selectInputFrameIndices,
-} from '../../state/phyloStore/selectors/treeSelectors.js';
+import { selectInputFrameIndices } from '../../state/phyloStore/selectors/treeSelectors.js';
 
 /**
  * AnimationRunner
@@ -340,11 +337,10 @@ function resolveRenderStage({
  * Encapsulates logic for finding the comparison tree
  */
 function getComparisonTarget(state, fromIndex, toIndex) {
-  const treeList = selectActiveTreeList(state);
   const inputFrameIndices = selectInputFrameIndices(state);
 
   const rightIdx = rightComparisonIndex(inputFrameIndices, fromIndex) ?? toIndex;
-  const rightTree = state.ensureTreeHydrated?.(rightIdx) ?? treeList[rightIdx];
+  const rightTree = state.ensureTreeHydrated(rightIdx);
 
   return rightTree ? { rightTree, rightTreeIndex: rightIdx } : null;
 }

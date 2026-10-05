@@ -1,10 +1,6 @@
 import { buildSubtreeConnectors } from '../deckgl/data/transforms/SubtreeConnectorBuilder.js';
 import { useAppStore } from '../../state/phyloStore/store.js';
-import {
-  selectPairById,
-  selectPivotEdgeForFrame,
-  selectTimelineFrameAtIndex,
-} from '../../state/phyloStore/selectors/treeSelectors.js';
+import { getAffectedSubtreesForPivotEdge } from '../../state/phyloStore/internal/changeTracking.helpers.js';
 import { tagTreeSide } from '../utils/layerDataUtils.js';
 import { VIEWPORT_FIT_OBSTRUCTION_SCOPES } from '../spatial/layout.js';
 import {
@@ -65,15 +61,10 @@ export class ComparisonModeRenderer {
     const clampedLeftIndex = clampIndex(leftIndex);
     const clampedRightIndex = clampIndex(rightIndex);
 
-    const [hydratedLeftTree, hydratedRightTree] = state.ensureTreesHydrated?.([
+    const [leftTreeData, rightTreeData] = state.ensureTreesHydrated([
       clampedLeftIndex,
       clampedRightIndex,
-    ]) ?? [null, null];
-    const latestTreeList = useAppStore.getState().treeList;
-    const leftTreeData =
-      hydratedLeftTree ?? latestTreeList?.[clampedLeftIndex] ?? treeList?.[clampedLeftIndex];
-    const rightTreeData =
-      hydratedRightTree ?? latestTreeList?.[clampedRightIndex] ?? treeList?.[clampedRightIndex];
+    ]);
 
     // Guard against null/undefined tree data
     if (!leftTreeData || !rightTreeData) {
@@ -154,10 +145,7 @@ export class ComparisonModeRenderer {
       ? this._buildConnectors(
           buildPositionMap(leftLayerData.nodes, leftLayerData.labels),
           buildPositionMap(rightLayerData.nodes, rightLayerData.labels),
-          comparisonGeometry.leftCenter,
-          comparisonGeometry.rightCenter,
-          comparisonGeometry.leftSafeRadius,
-          comparisonGeometry.rightSafeRadius,
+          comparisonGeometry,
           clampedLeftIndex
         )
       : [];
@@ -250,10 +238,7 @@ export class ComparisonModeRenderer {
       ? this._buildConnectors(
           buildPositionMap(interpolatedData.nodes, interpolatedData.labels),
           rightFrame.positionMap,
-          comparisonGeometry.leftCenter,
-          comparisonGeometry.rightCenter,
-          comparisonGeometry.leftSafeRadius,
-          comparisonGeometry.rightSafeRadius,
+          comparisonGeometry,
           options.activeTreeIndex
         )
       : [];
@@ -298,32 +283,14 @@ export class ComparisonModeRenderer {
    * Build connectors for comparison mode.
    * Delegated to buildSubtreeConnectors transform.
    */
-  _buildConnectors(
-    leftPositions,
-    rightPositions,
-    leftCenter = [0, 0],
-    rightCenter = [0, 0],
-    leftRadius,
-    rightRadius,
-    activeTreeIndex = null
-  ) {
+  _buildConnectors(leftPositions, rightPositions, comparisonGeometry, activeTreeIndex) {
     const state = useAppStore.getState();
     const frameIndex = Number.isInteger(activeTreeIndex) ? activeTreeIndex : state.frameIndex;
-    const pivotEdge = selectPivotEdgeForFrame(state, frameIndex);
-    const pairId = selectTimelineFrameAtIndex(state, frameIndex)?.pair_id ?? null;
-    const affectedSubtreesBySplit = pairId
-      ? selectPairById(state)[pairId].solution.affected_subtrees_by_split
-      : {};
-
-    if (!Array.isArray(pivotEdge) || pivotEdge.length === 0) {
-      return [];
-    }
 
     return buildSubtreeConnectors({
       leftPositions,
       rightPositions,
-      affectedSubtreesBySplit,
-      pivotEdge,
+      affectedSubtrees: getAffectedSubtreesForPivotEdge(state, frameIndex),
       colorManager: state.colorManager,
       subtreeHighlightTracking: state.subtreeHighlightTracking,
       frameIndex,
@@ -331,10 +298,10 @@ export class ComparisonModeRenderer {
       linkConnectionOpacity: state.linkConnectionOpacity,
       highlightColorMode: state.highlightColorMode,
       subtreeHighlightColor: state.subtreeHighlightColor,
-      leftCenter,
-      rightCenter,
-      leftRadius,
-      rightRadius,
+      leftCenter: comparisonGeometry.leftCenter,
+      rightCenter: comparisonGeometry.rightCenter,
+      leftRadius: comparisonGeometry.leftSafeRadius,
+      rightRadius: comparisonGeometry.rightSafeRadius,
     });
   }
 

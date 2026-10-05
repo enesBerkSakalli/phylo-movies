@@ -46,13 +46,8 @@ describe('Real Data Integration (test/data/ostrich_bug_response.json)', () => {
     throw new Error(`No usable affected subtree entry found for ${PAIR_ID}`);
   }
 
-  const [edgeKey, solutionSets] = firstAffectedSubtreeEntry;
-  const pivotEdge = edgeKey
-    .replace(/\[|\]|\s/g, '')
-    .split(',')
-    .filter(Boolean)
-    .map((value) => Number(value));
-  const movingSubtree = flattenSplitSets(solutionSets)[0];
+  const affectedSubtrees = flattenSplitSets(firstAffectedSubtreeEntry[1]);
+  const movingSubtree = affectedSubtrees[0];
 
   it('successfully lays out the real Ostrich dataset (Tree 0)', () => {
     const { nodes, max_radius } = createTidyTreeLayout(sourceTree, 'none', {
@@ -125,8 +120,7 @@ describe('Real Data Integration (test/data/ostrich_bug_response.json)', () => {
     const connectors = buildSubtreeConnectors({
       leftPositions,
       rightPositions,
-      affectedSubtreesBySplit,
-      pivotEdge: pivotEdge,
+      affectedSubtrees,
       colorManager: mockColorManager,
       subtreeHighlightTracking: subtreeHighlightTracking,
       frameIndex: 0,

@@ -1,6 +1,4 @@
 import {
-  flattenSplitSets,
-  getBackendSplitMapValue,
   getSplitIndices,
   getSplitKey,
   isSubset,
@@ -9,8 +7,6 @@ import {
 } from '../../../../domain/tree/splits.js';
 import { computeConnectionColor } from './ComparisonColorUtils.js';
 import { buildConnectorPathConnections } from './ConnectorPathBuilder.js';
-
-const DEFAULT_CENTER = [0, 0];
 
 const hasLeafPosition = (info) => Boolean(info.isLeaf && info.position?.length >= 2);
 const leafTip = (info) => [info.position[0], info.position[1], 0];
@@ -23,8 +19,7 @@ export function buildSubtreeConnectors(options) {
   const {
     leftPositions,
     rightPositions,
-    affectedSubtreesBySplit,
-    pivotEdge,
+    affectedSubtrees,
     colorManager,
     subtreeHighlightTracking,
     frameIndex,
@@ -32,14 +27,13 @@ export function buildSubtreeConnectors(options) {
     linkConnectionOpacity = 0.6,
     highlightColorMode = 'solid',
     subtreeHighlightColor,
-    leftCenter = DEFAULT_CENTER,
-    rightCenter = DEFAULT_CENTER,
+    leftCenter,
+    rightCenter,
     leftRadius,
     rightRadius,
   } = options;
 
-  const subtreesForPivot = getBackendSplitMapValue(affectedSubtreesBySplit, pivotEdge);
-  const jumpingSets = flattenSplitSets(subtreesForPivot || []).map((subtree) => new Set(subtree));
+  const jumpingSets = affectedSubtrees.map((subtree) => new Set(subtree));
   if (jumpingSets.length === 0) {
     return [];
   }

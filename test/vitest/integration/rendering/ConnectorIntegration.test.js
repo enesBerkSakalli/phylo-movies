@@ -39,8 +39,7 @@ describe('Connector Integration', function () {
     const connectors = buildSubtreeConnectors({
       leftPositions,
       rightPositions,
-      affectedSubtreesBySplit: { '[0, 0]': [[0]] },
-      pivotEdge: [0, 0],
+      affectedSubtrees: [[0]],
       colorManager: mockColorManager,
       subtreeHighlightTracking: [[[0]]],
       frameIndex: 0,
