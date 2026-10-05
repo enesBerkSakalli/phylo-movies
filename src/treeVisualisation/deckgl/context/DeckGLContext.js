@@ -11,6 +11,7 @@ import {
   getActiveViewId,
   getDefaultViewStateFor,
   clampViewZoom,
+  zoomState,
 } from './cameraState.js';
 import {
   createDeckCanvas,
@@ -368,7 +369,7 @@ export class DeckGLContext {
       this.viewStates[toId].target = [...(fromViewState.target || [0, 0, 0])];
     }
     if (preserveZoom) {
-      this.viewStates[toId].zoom = this._clampZoom(toId, fromViewState.zoom);
+      Object.assign(this.viewStates[toId], zoomState(this._clampZoom(toId, fromViewState.zoom)));
     }
 
     this.setProps({
@@ -509,7 +510,8 @@ export class DeckGLContext {
   }
 
   _applyViewState(id, patch, transitionProps) {
-    const next = { ...this.viewStates[id], ...patch, ...transitionProps };
+    const zoom = patch.zoom === undefined ? undefined : zoomState(patch.zoom);
+    const next = { ...this.viewStates[id], ...patch, ...zoom, ...transitionProps };
     this.viewStates[id] = next;
     this.setProps({ viewState: next });
   }

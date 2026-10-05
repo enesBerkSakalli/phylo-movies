@@ -55,6 +55,16 @@ describe('DeckGLContext view state handling', () => {
     expect(context.viewStates[VIEW_IDS.ORTHO].target).toEqual([10, 20, 0]);
   });
 
+  it('applies a new zoom after deck.gl has emitted zoomX/zoomY', () => {
+    // The orthographic controller reads zoomX/zoomY and ignores `zoom` once they exist.
+    const context = createContext();
+    context._handleViewStateChange({ zoom: 1, zoomX: 1, zoomY: 1 }, VIEW_IDS.ORTHO);
+
+    context.transitionTo({ zoom: 3, duration: 0 });
+
+    expect(context.viewStates[VIEW_IDS.ORTHO]).toMatchObject({ zoom: 3, zoomX: 3, zoomY: 3 });
+  });
+
   it('uses the active camera state when deck.gl omits viewId', () => {
     const context = createContext();
     context.cameraMode = 'orbit';

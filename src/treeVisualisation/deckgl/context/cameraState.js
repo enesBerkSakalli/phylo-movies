@@ -23,7 +23,7 @@ export function createInitialViewStates(options = {}) {
 
 export function createDeckInterpolators() {
   return {
-    orthographic: new LinearInterpolator({ transitionProps: ['target', 'zoom'] }),
+    orthographic: new LinearInterpolator({ transitionProps: ['target', 'zoomX', 'zoomY'] }),
     orbit: new LinearInterpolator({
       transitionProps: ['target', 'zoom', 'rotationOrbit', 'rotationX'],
     }),
@@ -43,4 +43,10 @@ export function clampViewZoom(viewState, zoom) {
   const maxZoom = viewState.maxZoom ?? Infinity;
   const value = Number.isFinite(zoom) ? zoom : viewState.zoom;
   return Math.max(minZoom, Math.min(maxZoom, value));
+}
+
+// The orthographic controller takes zoomX/zoomY over `zoom` (and every state it emits carries them),
+// so a zoom set from code has to set all three.
+export function zoomState(zoom) {
+  return { zoom, zoomX: zoom, zoomY: zoom };
 }
