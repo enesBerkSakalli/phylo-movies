@@ -4,8 +4,8 @@ import { rgba } from '../services/ui/colorUtils.js';
 /**
  * The strip as plain geometry, no deck.gl: input trees as circles or ticks, and one mark per
  * input-tree pair (not per playback segment): a bar for its RF, dashes for a branch-length-only
- * change, and one pip per SPR move. Spans are built once, in movie time; projectPairStrip turns
- * them into canvas geometry for the visible range.
+ * change, and one pip per SPR move (one per pair when its moves would overlap). Spans are built
+ * once, in movie time; projectPairStrip turns them into canvas geometry for the visible range.
  */
 
 export const TIMELINE_THEME = {
@@ -31,6 +31,9 @@ export const TIMELINE_THEME = {
   stripPipRadiusBase: 1.5,
   stripPipRadiusPerSqrtTaxon: 0.9,
   stripPipRadiusMax: 4,
+  // One dot for a whole pair: sized by its move count, never wider than the pair less this gap
+  stripMergedPipRadiusBase: 0.5,
+  stripMergedPipGapPx: 2,
   inputTreeStrokeWidth: 3,
   inputTreeFillRGB: [240, 240, 245],
   inputTreeStrokeRGB: [60, 60, 80],
@@ -137,16 +140,7 @@ export function projectPairStrip({
       const [x0, x1] = insetBar(left, right);
       marks.push({ pairId: span.pairId, polygon: rect(x0, x1, baseline, baseline + barHeight) });
     }
-    for (const { ms, taxaCount } of span.pips) {
-      pips.push({
-        pairId: span.pairId,
-        position: [toX(ms), pipY],
-        radius: Math.min(
-          theme.stripPipRadiusMax,
-          theme.stripPipRadiusBase + theme.stripPipRadiusPerSqrtTaxon * Math.sqrt(taxaCount)
-        ),
-      });
-    }
+    pips.push(...spanPips(span, left, right, toX, pipY));
   }
 
   return {
@@ -168,6 +162,32 @@ export function projectPairStrip({
         ]
       : [],
   };
+}
+
+// A dot per move while they fit. A pair too narrow for them (under two max dots wide), or whose
+// dots would overlap, gets one dot at its centre instead, sized by its move count.
+function spanPips({ pairId, pips }, left, right, toX, pipY) {
+  const moves = pips.map(({ ms, taxaCount }) => ({
+    pairId,
+    position: [toX(ms), pipY],
+    radius: Math.min(
+      theme.stripPipRadiusMax,
+      theme.stripPipRadiusBase + theme.stripPipRadiusPerSqrtTaxon * Math.sqrt(taxaCount)
+    ),
+  }));
+  const narrow = right - left < 4 * theme.stripPipRadiusMax;
+  const overlapping = moves.some(
+    (move, i) =>
+      i > 0 && move.position[0] - moves[i - 1].position[0] < move.radius + moves[i - 1].radius
+  );
+  if (!moves.length || !(narrow || overlapping)) return moves;
+
+  const radius = Math.min(
+    theme.stripPipRadiusMax,
+    theme.stripMergedPipRadiusBase + theme.stripPipRadiusPerSqrtTaxon * Math.sqrt(moves.length),
+    (right - left - theme.stripMergedPipGapPx) / 2
+  );
+  return [{ pairId, position: [(left + right) / 2, pipY], radius: Math.max(1, radius) }];
 }
 
 function insetBar(left, right) {

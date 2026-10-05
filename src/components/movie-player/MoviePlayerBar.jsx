@@ -330,7 +330,7 @@ function TimelineLegend({ hasTransitionSegments, maxRf }) {
             <LegendItem
               swatchClassName="size-2 rounded-full bg-slate-700"
               label="SPR move"
-              title="size = taxa moved"
+              title="one dot per move (size = taxa moved); merged per transition (size = moves) when zoomed out"
             />
             <LegendItem
               swatchClassName="w-5 border-t-2 border-dashed border-slate-500"

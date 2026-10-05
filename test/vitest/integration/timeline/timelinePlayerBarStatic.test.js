@@ -179,7 +179,7 @@ describe('movie timeline player bar semantics', () => {
     expect(playerBarSource).toContain('<PopoverTrigger asChild>');
     expect(playerBarSource).toContain('aria-label="Timeline legend"');
     expect(playerBarSource).toContain('(max {maxRf.toFixed(2)})');
-    expect(playerBarSource).toContain('title="size = taxa moved"');
+    expect(playerBarSource).toContain('merged per transition (size = moves) when zoomed out');
     // rgb(100,116,139), rgb(51,65,85) and rgb(5,150,105): slate-500, slate-700, emerald-600.
     for (const swatch of ['bg-slate-500', 'bg-slate-700', 'border-slate-500', 'bg-emerald-600']) {
       expect(playerBarSource).toContain(swatch);

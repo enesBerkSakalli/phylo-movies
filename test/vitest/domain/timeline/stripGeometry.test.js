@@ -172,6 +172,66 @@ describe('projectPairStrip', () => {
     expect(pips[3].radius).toBe(4);
   });
 
+  describe('SPR dots when a transition is too narrow for its moves', () => {
+    const moves = (count, from = 1100, gap = 20) =>
+      Array.from({ length: count }, (_, i) => ({ ms: from + i * gap, taxaCount: 1 }));
+    const pipsOf = (spans, extra = {}) =>
+      projectPairStrip({ ...view, maxRf: 0.4, spans, ...extra }).pips;
+
+    it('draws one dot at the centre of a narrow transition, whatever its move count', () => {
+      // 10px wide: three moves would fuse into one blob
+      const pips = pipsOf([topology('a', 1000, 1100, 0.2, moves(3, 1020, 30))]);
+      expect(pips).toHaveLength(1);
+      expect(pips[0]).toMatchObject({ pairId: 'a', position: [x(1050), y(39)] });
+      expect(pipsOf([topology('b', 1000, 1100, 0.2, moves(1, 1050))])).toHaveLength(1);
+    });
+
+    it('draws one dot per move when the transition is wide and the moves do not overlap', () => {
+      expect(pipsOf([topology('a', 1000, 5000, 0.2, moves(5, 1500, 600))])).toHaveLength(5);
+    });
+
+    it('also merges a wide transition whose moves would overlap', () => {
+      // 400px wide, but three moves 1px apart
+      const pips = pipsOf([topology('a', 1000, 5000, 0.2, moves(3, 2000, 10))]);
+      expect(pips).toHaveLength(1);
+      expect(pips[0].position[0]).toBeCloseTo(x(3000));
+    });
+
+    it('goes back to per-move dots when zoomed in', () => {
+      const spans = [topology('a', 1000, 1100, 0.2, moves(3, 1020, 30))];
+      expect(pipsOf(spans)).toHaveLength(1);
+      // 10x: the same transition is 100px wide, its moves 30px apart
+      const zoomed = { rangeStart: 1000, rangeEnd: 2000, visStart: 900, visEnd: 2100 };
+      expect(pipsOf(spans, zoomed)).toHaveLength(3);
+    });
+
+    it('grows the merged dot with the move count, but never past its own transition', () => {
+      const radiusFor = (count, endMs = 1100) =>
+        pipsOf([topology('a', 1000, endMs, 0.2, moves(count, 1020, 5))])[0].radius;
+      // 10px wide: room for r = 4
+      const radii = [1, 2, 3, 4, 5, 6].map((count) => radiusFor(count));
+      for (let i = 1; i < radii.length; i++) expect(radii[i]).toBeGreaterThan(radii[i - 1]);
+      expect(Math.max(...radii)).toBeLessThanOrEqual(TIMELINE_THEME.stripPipRadiusMax);
+      // 6.7px wide, like 199 transitions on a 1330px strip: neighbours keep a gap
+      for (const count of [1, 6, 50]) expect(2 * radiusFor(count, 1067)).toBeLessThan(6.7);
+    });
+
+    it('marks the selected transition by its merged dot', () => {
+      const spans = [
+        topology('a', 1000, 1100, 0.2, moves(3, 1020, 30)),
+        topology('b', 1100, 1200, 0.2, moves(2, 1120, 30)),
+      ];
+      const { pips, selectionPips } = projectPairStrip({
+        ...view,
+        maxRf: 0.4,
+        spans,
+        selectedPairId: 'b',
+      });
+      expect(pips.map((pip) => pip.pairId)).toEqual(['a', 'b']);
+      expect(selectionPips).toEqual([pips[1]]);
+    });
+  });
+
   it('separates the hovered and selected pair, and the exact selected segment span', () => {
     const spans = [
       topology('a', 1000, 3000, 0.2, [{ ms: 2000, taxaCount: 1 }]),
