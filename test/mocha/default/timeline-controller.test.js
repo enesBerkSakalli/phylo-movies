@@ -246,7 +246,7 @@ describe('TimelineController', () => {
     controller.unmount();
   });
 
-  it('drops a renderer that finishes loading after the strip was unmounted', async () => {
+  it('drops a view that finishes loading after the strip was unmounted', async () => {
     const controller = createController();
     const host = makeContainer();
 
@@ -307,11 +307,7 @@ describe('TimelineController', () => {
   it('stores clicked timeline selection by segment index only', () => {
     const controller = createController();
 
-    controller.select({
-      segmentIndex: 1,
-      ms: 0,
-      segment: { stale: 'renderer payload should not be stored' },
-    });
+    controller.select(1, 0);
 
     const state = useAppStore.getState();
     expect(state.selectedTimelineSegmentIndex).to.equal(1);
@@ -345,7 +341,7 @@ describe('TimelineController', () => {
     await controller.mount(makeContainer());
     controller.syncPosition();
 
-    expect(controller.view._selectedSegmentIndex).to.equal(0);
+    expect(controller.view.selected).to.equal(0);
     expect(useAppStore.getState().selectedTimelineSegmentIndex).to.equal(0);
 
     controller.unmount();
@@ -363,30 +359,30 @@ describe('TimelineController', () => {
 
     await controller.mount(makeContainer(640, 60));
 
-    const firstScrubberMs = controller.view._scrubberMs;
+    const firstScrubberMs = controller.view.scrubberMs;
     expect(firstScrubberMs).to.equal(cursor.movieTimeMs);
-    expect(controller.view._selectedSegmentIndex).to.equal(2);
+    expect(controller.view.selected).to.equal(2);
 
     controller.unmount();
     await controller.mount(makeContainer(640, 60));
 
-    expect(controller.view._scrubberMs).to.equal(firstScrubberMs);
-    expect(controller.view._selectedSegmentIndex).to.equal(2);
+    expect(controller.view.scrubberMs).to.equal(firstScrubberMs);
+    expect(controller.view.selected).to.equal(2);
 
     controller.unmount();
   });
 
-  it('syncs renderer inspected selection when the store selection is cleared', async () => {
+  it('syncs the strip selection when the store selection is cleared', async () => {
     const controller = createController();
 
     useAppStore.setState({ selectedTimelineSegmentIndex: 1 });
     await controller.mount(makeContainer());
 
-    expect(controller.view._selectedSegmentIndex).to.equal(1);
+    expect(controller.view.selected).to.equal(1);
 
     useAppStore.setState({ selectedTimelineSegmentIndex: null });
 
-    expect(controller.view._selectedSegmentIndex).to.equal(null);
+    expect(controller.view.selected).to.equal(null);
 
     controller.unmount();
   });
@@ -425,17 +421,51 @@ describe('TimelineController', () => {
     }
   });
 
-  it('binds renderer scrub state to the store', async () => {
+  it('draws the store scrub state on the strip', async () => {
     const controller = createController();
 
     await controller.mount(makeContainer());
-    expect(controller.view.isScrubbing()).to.equal(false);
+    expect(controller.view.scrubbing).to.equal(false);
 
     controller.startScrub(0);
-    expect(controller.view.isScrubbing()).to.equal(true);
+    expect(controller.view.scrubbing).to.equal(true);
 
     controller.unmount();
     expect(useAppStore.getState().isScrubbing).to.equal(false);
+  });
+
+  it('writes the hovered segment and its tooltip anchor to the store and draws it back', async () => {
+    const controller = createController();
+    await controller.mount(makeContainer());
+    const { view } = controller;
+
+    view.deck.canvas.dispatchEvent(
+      new global.window.MouseEvent('mousemove', { bubbles: true, clientX: 5, clientY: 10 })
+    );
+
+    const state = useAppStore.getState();
+    expect(state.hoveredSegmentIndex).to.equal(0);
+    expect(state.hoveredSegmentData).to.equal(timeline.segments[0]);
+    expect(state.hoveredSegmentPosition).to.deep.equal(view.anchorOf(0));
+    expect(view.hovered).to.equal(0);
+
+    controller.unmount();
+  });
+
+  it('starts and ends a scrub from handle gestures', async () => {
+    const controller = createController();
+    await controller.mount(makeContainer());
+
+    controller.view.deck.canvas.dispatchEvent(
+      new global.window.MouseEvent('mousedown', { bubbles: true, clientX: 5, clientY: 10 })
+    );
+    expect(useAppStore.getState().isScrubbing).to.equal(true);
+
+    global.window.dispatchEvent(new global.window.MouseEvent('mouseup'));
+    await flushMicrotasks();
+    expect(useAppStore.getState().isScrubbing).to.equal(false);
+
+    controller.unmount();
   });
 
   describe('clicking the strip', () => {
@@ -484,7 +514,7 @@ describe('TimelineController', () => {
       const setCustomTimeCalls = [];
       controller.view = { setCustomTime: (ms) => setCustomTimeCalls.push(ms) };
 
-      controller.select({ segmentIndex: 0 });
+      controller.select(0);
 
       const state = store.getState();
       expect(state.selected).to.deep.equal([0]);
@@ -501,7 +531,7 @@ describe('TimelineController', () => {
     it('navigates to transition segments without updating the clipboard', () => {
       const store = makeStore({ segments: [transition(2, 2)], frameIndex: 5 });
 
-      new TimelineController(store).select({ segmentIndex: 0 });
+      new TimelineController(store).select(0);
 
       expect(store.getState().setClipboardTreeIndexCalls).to.deep.equal([]);
       expect(store.getState().goToPositionCalls).to.deep.equal([
@@ -512,7 +542,7 @@ describe('TimelineController', () => {
     it('clears the selection and goes nowhere for a click outside any segment', () => {
       const store = makeStore({ segments: [transition(2, 2)] });
 
-      new TimelineController(store).select({ segmentIndex: null });
+      new TimelineController(store).select(null);
 
       expect(store.getState().selected).to.deep.equal([null]);
       expect(store.getState().goToPositionCalls).to.deep.equal([]);
@@ -528,7 +558,7 @@ describe('TimelineController', () => {
         }),
       });
 
-      new TimelineController(store).select({ segmentIndex: 0, ms: 2600 });
+      new TimelineController(store).select(0, 2600);
 
       expect(store.getState().goToPositionCalls).to.deep.equal([
         { position: 4, direction: 'forward', options: { movieTimeMs: 2600 } },
@@ -545,7 +575,7 @@ describe('TimelineController', () => {
         },
       });
 
-      new TimelineController(store).select({ segmentIndex: 0, ms: 9999 });
+      new TimelineController(store).select(0, 9999);
 
       expect(asked).to.deep.equal([2999]);
     });
@@ -557,7 +587,7 @@ describe('TimelineController', () => {
         cursorAt: () => ({ frameIndex: 3, segmentIndex: 0, movieTimeMs: 1500 }),
       });
 
-      new TimelineController(store).select({ segmentIndex: 0, ms: 1500 });
+      new TimelineController(store).select(0, 1500);
 
       expect(store.getState().goToPositionCalls).to.deep.equal([
         { position: 3, direction: 'jump', options: { movieTimeMs: 1500 } },
@@ -570,9 +600,7 @@ describe('TimelineController', () => {
         cursorAt: () => ({ frameIndex: 3, segmentIndex: 1, movieTimeMs: 1000 }),
       });
 
-      expect(() => new TimelineController(store).select({ segmentIndex: 0, ms: 500 })).to.throw(
-        /outside its segment/
-      );
+      expect(() => new TimelineController(store).select(0, 500)).to.throw(/outside its segment/);
       expect(store.getState().goToPositionCalls).to.deep.equal([]);
     });
   });

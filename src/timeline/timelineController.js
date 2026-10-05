@@ -9,10 +9,10 @@ const EDGE_MS = 1;
 const cancelFrame = (id) => id !== null && cancelAnimationFrame(id);
 
 /**
- * Drives the timeline strip: mounts the renderer into a host, keeps it in step with the store, and
- * turns its gestures into store writes (scrub, click-to-seek, inspect).
+ * Drives the timeline strip: mounts the view into a host, draws the store's selection, hover and
+ * scrub state on it, and turns its gestures into store writes (scrub, click-to-seek, inspect).
  *
- * The store's `timeline` is the data; while mounted, `timelineView` is the renderer and
+ * The store owns the state: `timeline` is the data; while mounted, `timelineView` is the view and
  * `isScrubbing` says a handle drag is in progress.
  */
 export class TimelineController {
@@ -67,52 +67,55 @@ export class TimelineController {
     const { timeline, pairChanges } = this.store.getState();
     if (!(timeline?.totalDuration > 0)) return null;
 
-    let DeckTimelineRenderer;
+    let TimelineView;
     try {
-      ({ DeckTimelineRenderer } = await import('./renderers/DeckTimelineRenderer.js'));
+      ({ TimelineView } = await import('./TimelineView.js'));
     } catch (error) {
-      console.error('[TimelineController] Failed to load timeline renderer:', error);
+      console.error('[TimelineController] Failed to load timeline view:', error);
       return null;
     }
-    // Unmounted, or mounted again, while the renderer loaded.
+    // Unmounted, or mounted again, while the view loaded.
     if (token !== this.token) return null;
 
-    const view = new DeckTimelineRenderer(timeline, timeline.segments, {
-      spans: buildPairSpans({
-        segments: timeline.segments,
-        timelineData: timeline,
-        profile: pairChanges,
-        frameToMs: (frameIndex) => cursorForFrame(timeline.steps, frameIndex)?.ms ?? null,
-      }),
-      maxRf: pairChanges.maxRf,
-      getFrameIndexAtMs: (ms) => timeline.cursorAt(ms)?.frameIndex ?? null,
-    }).init(container);
+    const view = new TimelineView(
+      timeline,
+      {
+        spans: buildPairSpans({
+          segments: timeline.segments,
+          timelineData: timeline,
+          profile: pairChanges,
+          frameToMs: (frameIndex) => cursorForFrame(timeline.steps, frameIndex)?.ms ?? null,
+        }),
+        maxRf: pairChanges.maxRf,
+      },
+      {
+        onScrub: (ms, phase) => (phase === 'end' ? this.endScrub(ms) : this.scrub(ms)),
+        onSelect: (segmentIndex, ms) => this.select(segmentIndex, ms),
+        onHover: (segmentIndex) => this.hover(segmentIndex),
+        // Loaded on demand like the view: the dock pulls in the whole panel registry.
+        onInspect: () =>
+          import('../components/dock/dockRuntime.js').then(({ openPanel }) =>
+            openPanel('inspector')
+          ),
+      }
+    ).init(container);
 
     this.view = view;
-    view.bindScrubState({ getIsScrubbing: () => this.isScrubbing });
-    view.bindHoverState({
-      setHoveredSegment: (...args) => this.store.getState().setHoveredSegment(...args),
-    });
-    view.on('scrubstart', ({ time }) => this.startScrub(time));
-    view.on('timechange', ({ time }) => this.scrub(time));
-    view.on('timechanged', ({ time }) => this.endScrub(time));
-    view.on('select', (click) => this.select(click));
-    // Loaded on demand like the renderer: the dock pulls in the whole panel registry.
-    view.on('inspect', () =>
-      import('../components/dock/dockRuntime.js').then(({ openPanel }) => openPanel('inspector'))
-    );
-
     this.unsubscribe = this.store.subscribe((state, prevState) => {
       if (state.timelineCursor !== prevState.timelineCursor && !state.isScrubbing) {
         this.schedulePosition();
       }
       if (state.selectedTimelineSegmentIndex !== prevState.selectedTimelineSegmentIndex) {
-        view.setSelectedSegment(state.selectedTimelineSegmentIndex);
+        view.setSelection(state.selectedTimelineSegmentIndex);
       }
+      if (state.hoveredSegmentIndex !== prevState.hoveredSegmentIndex) {
+        view.setHover(state.hoveredSegmentIndex);
+      }
+      if (state.isScrubbing !== prevState.isScrubbing) view.setScrubbing(state.isScrubbing);
     });
 
     this.syncPosition();
-    view.setSelectedSegment(this.store.getState().selectedTimelineSegmentIndex);
+    view.setSelection(this.store.getState().selectedTimelineSegmentIndex);
     this.store.setState({ timelineView: view });
     return view;
   }
@@ -130,17 +133,26 @@ export class TimelineController {
     });
   }
 
-  select({ segmentIndex, ms }) {
+  hover(segmentIndex) {
     const state = this.store.getState();
-    const index = Number.isInteger(segmentIndex) ? segmentIndex : null;
-    state.setSelectedTimelineSegment(index);
+    if (segmentIndex === null) return state.setHoveredSegment(null, null);
+    state.setHoveredSegment(
+      segmentIndex,
+      state.timeline.segments[segmentIndex],
+      this.view.anchorOf(segmentIndex)
+    );
+  }
 
-    const segment = state.timeline.segments[index];
+  select(segmentIndex, ms) {
+    const state = this.store.getState();
+    state.setSelectedTimelineSegment(segmentIndex);
+
+    const segment = state.timeline.segments[segmentIndex];
     if (!segment) return;
     if (segment.isInputTreeSegment) state.setClipboardTreeIndex(segment.firstFrame);
 
     // A timed click lands strictly inside the segment, so a boundary click stays on it.
-    const cursor = Number.isFinite(ms) ? this._cursorInSegment(index, ms) : null;
+    const cursor = Number.isFinite(ms) ? this._cursorInSegment(segmentIndex, ms) : null;
     const target = cursor ? cursor.frameIndex : segment.firstFrame;
     const direction =
       target === state.frameIndex ? 'jump' : target > state.frameIndex ? 'forward' : 'backward';
@@ -171,7 +183,6 @@ export class TimelineController {
     this.pendingScrubMs = this.pendingRenderMs = null;
     cancelFrame(this.scrubFrame);
     this.scrubFrame = null;
-    this.view?.syncScrubState();
   }
 
   // Tree renders are throttled: a drag faster than that keeps only its latest position.
@@ -199,7 +210,6 @@ export class TimelineController {
 
     // Clear the flag first: the tree hook skips cursor writes while it is set.
     this.store.setState({ isScrubbing: false });
-    this.view?.syncScrubState();
     this.store.getState().seek(ms);
   }
 

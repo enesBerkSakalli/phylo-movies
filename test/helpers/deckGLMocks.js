@@ -96,7 +96,7 @@ function restoreDeckGLMocks() {
 function clearTimelineModuleCache() {
   [
     'src/timeline/timelineController.js',
-    'src/timeline/renderers/DeckTimelineRenderer.js',
+    'src/timeline/TimelineView.js',
     'src/timeline/deckLayers.js',
   ].forEach((modulePath) => {
     const resolved = require.resolve(path.join(__dirname, '..', '..', modulePath));

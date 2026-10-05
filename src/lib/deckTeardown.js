@@ -1,7 +1,7 @@
 /**
  * Shared teardown for the three deck.gl renderers.
  *
- * DeckGLContext, MSADeckGLViewer and DeckTimelineRenderer construct deck.gl very
+ * DeckGLContext, MSADeckGLViewer and TimelineView construct deck.gl very
  * differently - a canvas element against a parent div, one view against four
  * composite views, a controller against none - so their setup is genuinely not
  * shared. Their teardown is: each cancels a pending frame, disconnects a

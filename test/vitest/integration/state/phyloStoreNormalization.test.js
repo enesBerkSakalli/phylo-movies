@@ -685,9 +685,9 @@ describe('phylo store dataset normalization', () => {
       'src/timeline/timeline.js',
       'src/timeline/stripGeometry.js',
       'src/timeline/timelineController.js',
-      'src/timeline/renderers/DeckTimelineRenderer.js',
+      'src/timeline/TimelineView.js',
       'src/timeline/deckLayers.js',
-      'src/timeline/utils/segmentUtils.js',
+      'src/timeline/timelineInput.js',
       'src/components/timeline/TimelineSegmentTooltip.jsx',
       'src/components/TransitionInspectorPanel.jsx',
     ];
