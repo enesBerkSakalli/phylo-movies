@@ -44,7 +44,7 @@ The strip draws one gray bar per transition, between each pair of consecutive in
 | **Input tree**          | Short tick for each original input tree (a circle at high zoom).                                                                                                    |
 | **Selected**            | The selected transition turns green, with a dark bracket under the exact selected part, so it reads without the colour.                                             |
 
-The blue line is the playhead. Numbering is 1-based and per transition throughout: the status strip reads "Tree a → b · step i of N" (or "Input tree n"), and the tooltip and Inspector use "Transition k of P".
+The blue line is the playhead: drag its knob at the top of the strip, or the line itself, to scrub. A click anywhere else selects the transition under it, even right beside the playhead. Numbering is 1-based and per transition throughout: the status strip reads "Tree a → b · step i of N" (or "Input tree n"), and the tooltip and Inspector use "Transition k of P".
 
 ## Playback and Timeline View
 

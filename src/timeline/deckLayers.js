@@ -148,14 +148,43 @@ export function calculateSeparatorWidth(segmentCount) {
 // SCRUBBER LAYER
 // ==========================================================================
 
-export function createScrubberLayer(ms, rangeStart, rangeEnd, width, height, isScrubbing) {
-  const snap = createSnapFunction(getDevicePixelRatio());
-  const scrubX = snap(msToX(ms, rangeStart, rangeEnd, width));
-  const scrubPoly = [
-    [scrubX - width / 2, -height / 2],
-    [scrubX - width / 2, height / 2],
-  ];
-  const coreColor = [...TIMELINE_THEME.scrubberCoreRGB, 255];
+const SCRUBBER_EDGE_PX = 1.5; // half the line while scrubbing: at either end it stays whole
 
-  return createPathLayer('scrubber-layer', [{ path: scrubPoly }], coreColor, isScrubbing ? 10 : 7);
+// Centred on the canvas like every other mark, snapped to a device pixel
+function scrubberX(ms, rangeStart, rangeEnd, width) {
+  const snap = createSnapFunction(getDevicePixelRatio());
+  const x = snap(msToX(ms, rangeStart, rangeEnd, width)) - width / 2;
+  return Math.max(SCRUBBER_EDGE_PX - width / 2, Math.min(width / 2 - SCRUBBER_EDGE_PX, x));
+}
+
+/** The playhead line: thin, so the selection it passes over stays readable. */
+export function createScrubberLayer(ms, rangeStart, rangeEnd, width, height, isScrubbing) {
+  const x = scrubberX(ms, rangeStart, rangeEnd, width);
+  const path = [
+    [x, -height / 2],
+    [x, height / 2],
+  ];
+
+  return createPathLayer(
+    'scrubber-layer',
+    [{ path }],
+    [...TIMELINE_THEME.scrubberCoreRGB, 255],
+    isScrubbing ? 3 : 2
+  );
+}
+
+/** The playhead's grab handle: a pointer in the headroom above the tallest bar. */
+export function createScrubberKnobLayer(ms, rangeStart, rangeEnd, width, height) {
+  const { scrubberKnobWidth, scrubberKnobDepth, scrubberCoreRGB } = TIMELINE_THEME;
+  const x = scrubberX(ms, rangeStart, rangeEnd, width);
+  const top = height / 2;
+  const polygon = [
+    [x - scrubberKnobWidth / 2, top],
+    [x + scrubberKnobWidth / 2, top],
+    [x, top - scrubberKnobDepth],
+  ];
+
+  return createPolygonLayer('scrubber-knob-layer', [{ polygon }], {
+    getFillColor: [...scrubberCoreRGB, 255],
+  });
 }

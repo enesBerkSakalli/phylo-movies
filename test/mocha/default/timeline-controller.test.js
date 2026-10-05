@@ -454,7 +454,7 @@ describe('TimelineController', () => {
         new global.window.PointerEvent(type, {
           bubbles: true,
           clientX: 5,
-          clientY: 10,
+          clientY: 3, // on the playhead's knob
           pointerId: 1,
         })
       );

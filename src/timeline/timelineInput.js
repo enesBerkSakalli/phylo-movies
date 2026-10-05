@@ -1,9 +1,15 @@
 import { stepAt } from './timeline.js';
+import { TIMELINE_THEME } from './stripGeometry.js';
 
 const HOVER_CLEAR_DELAY_MS = 150;
-const SCRUB_GRAB_PX = 24;
+// The playhead is grabbed by its knob (finger-sized for touch) or a few px of its line; a press
+// anywhere else is a click, so it can select the transitions around the playhead.
+const SCRUB_LINE_GRAB_PX = 4;
+const SCRUB_KNOB_GRAB_PX = 8;
+const SCRUB_KNOB_TOUCH_GRAB_PX = 12;
 const PAN_SLOP_PX = 4; // a press that moves less is a click
 const WHEEL_LINE_PX = 16;
+const KNOB_CENTRE_Y = TIMELINE_THEME.scrubberKnobDepth / 2; // from the top of the strip
 
 /**
  * Turns pointer and keyboard events on the strip into callbacks. It holds no selection: it asks
@@ -31,6 +37,7 @@ export function attachTimelineInput(view, { onScrub, onSelect, onHover, onInspec
   let hoverTimer = null;
 
   const localX = (event) => event.clientX - view.container.getBoundingClientRect().left;
+  const localY = (event) => event.clientY - view.container.getBoundingClientRect().top;
   const msAt = (event) => view.xToMs(localX(event));
 
   // A click on an input tree may mean the transition beside it: the nearest centre wins.
@@ -81,9 +88,14 @@ export function attachTimelineInput(view, { onScrub, onSelect, onHover, onInspec
   const onPointerDown = (event) => {
     if (drag) return;
     const x = localX(event);
-    const onHandle = Math.abs(x - view.msToX(view.scrubberMs)) < SCRUB_GRAB_PX;
+    const fromLine = Math.abs(x - view.msToX(view.scrubberMs));
+    const knobReach = event.pointerType === 'touch' ? SCRUB_KNOB_TOUCH_GRAB_PX : SCRUB_KNOB_GRAB_PX;
+    const onHandle =
+      fromLine < SCRUB_LINE_GRAB_PX ||
+      Math.hypot(fromLine, localY(event) - KNOB_CENTRE_Y) < knobReach;
     dragged = onHandle;
-    // Empty strip pans a zoomed view; with everything in view only a click means anything there
+    // Empty strip pans a zoomed view; with everything in view only a click means anything there,
+    // so a drag there scrubs nothing and pans nothing (its release still clicks)
     if (!onHandle && !view.zoomed) return;
 
     drag = { id: event.pointerId, pan: !onHandle, x };

@@ -166,6 +166,20 @@ describe('TimelineView', () => {
     expect(path[1][0]).to.be.closeTo(0, 1e-6);
   });
 
+  it('keeps the whole playhead line in view at the ends of the strip', () => {
+    const { timeline } = makeTimelineFixture();
+    const { view } = mountView(timeline, { container: makeContainer(800, 120) });
+    const lineX = () => findLayer(view, 'scrubber-layer').props.data[0].path[0][0];
+
+    view.setCustomTime(0);
+    view._updateLayers();
+    expect(lineX()).to.be.at.least(-400 + 1.5);
+
+    view.setCustomTime(3000);
+    view._updateLayers();
+    expect(lineX()).to.be.at.most(400 - 1.5);
+  });
+
   it('draws input-window ticks on a baseline for dense tree-only timelines', () => {
     const timeline = timelineOf(Array.from({ length: 100 }, () => ({ isInputTreeSegment: true })));
     const { view } = mountView(timeline, { container: makeContainer(800, 44) });
@@ -202,8 +216,44 @@ describe('TimelineView', () => {
 
     expect(findLayer(view, 'pair-mark-layer').props.data).to.have.length(1);
     expect(findLayer(view, 'pair-pip-layer').props.data).to.have.length(1);
-    expect(ids[ids.length - 1]).to.equal('scrubber-layer');
+    expect(ids.indexOf('pair-mark-layer')).to.be.lessThan(ids.indexOf('scrubber-layer'));
     expect(ids.indexOf('pair-pip-layer')).to.be.greaterThan(ids.indexOf('pair-mark-layer'));
+  });
+
+  it('draws the selection over the playhead line, and the grab knob over everything', () => {
+    const { timeline } = makeTimelineFixture();
+    const { view } = mountView(timeline, { strip: pairStrip, container: makeContainer(800, 44) });
+    view.setSelection(1);
+    const ids = view.deck.props.layers.map((l) => l.id);
+    const line = ids.indexOf('scrubber-layer');
+
+    expect(line).to.be.greaterThan(-1);
+    [
+      'pair-selection-layer',
+      'pair-selection-span-layer',
+      'input-tree-selection-layer',
+      'pair-selection-pip-layer',
+    ].forEach((id) => expect(ids.indexOf(id), id).to.be.greaterThan(line));
+    expect(ids[ids.length - 1]).to.equal('scrubber-knob-layer');
+  });
+
+  it('draws the knob in the headroom above the tallest bar, in the playhead blue', () => {
+    const { timeline } = makeTimelineFixture();
+    const { view } = mountView(timeline, { container: makeContainer(800, 44) });
+    view.setCustomTime(1500);
+    view._updateLayers();
+    const knob = findLayer(view, 'scrubber-knob-layer');
+    const xs = knob.props.data[0].polygon.map(([x]) => x);
+    const ys = knob.props.data[0].polygon.map(([, y]) => y);
+
+    expect(Math.min(...xs)).to.be.closeTo(-TIMELINE_THEME.scrubberKnobWidth / 2, 1e-6);
+    expect(Math.max(...xs)).to.be.closeTo(TIMELINE_THEME.scrubberKnobWidth / 2, 1e-6);
+    expect(Math.max(...ys)).to.equal(22); // the top of the 44 px strip
+    expect(22 - Math.min(...ys)).to.equal(TIMELINE_THEME.scrubberKnobDepth);
+    expect(TIMELINE_THEME.scrubberKnobDepth).to.be.at.most(
+      TIMELINE_THEME.stripBaselineY - TIMELINE_THEME.stripBarMaxHeight
+    );
+    expect(knob.props.getFillColor).to.deep.equal([...TIMELINE_THEME.scrubberCoreRGB, 255]);
   });
 
   it('turns the hovered transition pair darker and the selected pair emerald', () => {
@@ -244,17 +294,17 @@ describe('TimelineView', () => {
     expect(TIMELINE_THEME.connectionSelectionRGB).to.not.deep.equal(TIMELINE_THEME.scrubberCoreRGB);
   });
 
-  it('draws a wider scrubber handle while scrubbing', () => {
+  it('draws the playhead as a thin line, a little wider while scrubbing', () => {
     const { timeline } = makeTimelineFixture();
     const { view } = mountView(timeline);
 
-    expect(findLayer(view, 'scrubber-layer').props.widthMinPixels).to.equal(7);
+    expect(findLayer(view, 'scrubber-layer').props.widthMinPixels).to.equal(2);
 
     view.setScrubbing(true);
-    expect(findLayer(view, 'scrubber-layer').props.widthMinPixels).to.equal(10);
+    expect(findLayer(view, 'scrubber-layer').props.widthMinPixels).to.equal(3);
 
     view.setScrubbing(false);
-    expect(findLayer(view, 'scrubber-layer').props.widthMinPixels).to.equal(7);
+    expect(findLayer(view, 'scrubber-layer').props.widthMinPixels).to.equal(2);
   });
 
   it('zooms about a time and fits back', () => {
@@ -460,11 +510,54 @@ describe('TimelineView', () => {
       expect(events.selects.map(({ index }) => index)).to.deep.equal([1]);
     });
 
-    it('starts scrubbing from a forgiving handle hit target', () => {
+    it('grabs the playhead by its knob or a few px of its line', () => {
+      const { timeline } = makeTimelineFixture();
+      const { view, events } = mountView(timeline);
+      const press = (x, y) => {
+        dispatchPointer(view.canvas, 'pointerdown', x, y);
+        dispatchPointer(view.canvas, 'pointerup', x, y);
+      };
+
+      press(3, 40); // the line, far from the knob
+      press(6, 3); // the knob, off the line
+
+      expect(events.scrubs.map(({ phase }) => phase)).to.deep.equal([
+        'start',
+        'end',
+        'start',
+        'end',
+      ]);
+    });
+
+    it('selects, not scrubs, from a press 10 px off the playhead at fit zoom', () => {
+      const { timeline } = makeTimelineFixture();
+      const { view, events } = mountView(timeline);
+      view.setCustomTime(1500);
+      const x = view.msToX(1500) + 10;
+
+      dispatchPointer(view.canvas, 'pointerdown', x);
+      dispatchPointer(view.canvas, 'pointerup', x);
+      dispatchMouse(view.canvas, 'click', x);
+
+      expect(events.scrubs).to.deep.equal([]);
+      expect(events.selects.map(({ index }) => index)).to.deep.equal([1]);
+    });
+
+    it('does not grab the playhead 10 px from its knob with a mouse, or 10 px down its line with a finger', () => {
       const { timeline } = makeTimelineFixture();
       const { view, events } = mountView(timeline);
 
-      pointerDownTimeline(view, 12);
+      pointerDownTimeline(view, 10, { pointerType: 'mouse' });
+      dispatchPointer(view.canvas, 'pointerdown', 10, 40, { pointerType: 'touch', pointerId: 2 });
+
+      expect(events.scrubs).to.deep.equal([]);
+    });
+
+    it('lets a finger miss the knob by 10 px', () => {
+      const { timeline } = makeTimelineFixture();
+      const { view, events } = mountView(timeline);
+
+      dispatchPointer(view.canvas, 'pointerdown', 10, 3, { pointerType: 'touch', pointerId: 2 });
 
       expect(events.scrubs).to.deep.equal([{ ms: 0, phase: 'start' }]);
     });

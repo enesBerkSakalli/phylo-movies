@@ -14,6 +14,7 @@ import {
   createInputTreeSelectionLayer,
   createSeparatorLayer,
   createScrubberLayer,
+  createScrubberKnobLayer,
   calculateSeparatorWidth,
 } from './deckLayers.js';
 import {
@@ -387,6 +388,15 @@ export class TimelineView {
       createInputTreeTickLayer(activeInputTreeTicks, true),
       createPairMarkLayer('pair-mark-layer', pairStrip.marks, theme.stripMarkRGB),
       createPairMarkLayer('pair-hover-layer', pairStrip.hoverMarks, theme.stripMarkHoverRGB),
+      // The selection draws over the playhead line so it stays visible; the knob tops everything
+      createScrubberLayer(
+        this.scrubberMs,
+        this._rangeStart,
+        this._rangeEnd,
+        width,
+        height,
+        this.scrubbing
+      ),
       createPairMarkLayer(
         'pair-selection-layer',
         pairStrip.selectionMarks,
@@ -408,14 +418,7 @@ export class TimelineView {
         theme.connectionSelectionRGB,
         theme.stripPipAlpha
       ),
-      createScrubberLayer(
-        this.scrubberMs,
-        this._rangeStart,
-        this._rangeEnd,
-        width,
-        height,
-        this.scrubbing
-      ),
+      createScrubberKnobLayer(this.scrubberMs, this._rangeStart, this._rangeEnd, width, height),
     ];
   }
 

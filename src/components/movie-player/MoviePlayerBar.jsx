@@ -455,6 +455,8 @@ function LegendItems({ hasTransitionSegments, maxRf }) {
         label="Selected"
         title="green, with a dark bracket under it"
       />
+      {/* rgb(64,128,255), the strip's playhead; drag its knob (the top) to scrub */}
+      <LegendItem swatchClassName="h-3 w-0.5 bg-[#4080ff]" label="Playhead" />
     </>
   );
 }

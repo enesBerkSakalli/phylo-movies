@@ -48,6 +48,9 @@ export const TIMELINE_THEME = {
   separatorWidthMin: 1,
   separatorAlpha: 56,
   scrubberCoreRGB: [64, 128, 255],
+  // The grab knob fits the headroom above the tallest bar (stripBaselineY - stripBarMaxHeight)
+  scrubberKnobWidth: 10,
+  scrubberKnobDepth: 6,
 };
 
 const theme = TIMELINE_THEME;
