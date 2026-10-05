@@ -19,7 +19,7 @@ export const WORKSPACE_TOUR_STEPS = [
     target: TOUR_TARGETS.canvas,
     attachOn: 'bottom',
     title: 'Tree canvas',
-    text: 'The main canvas renders the active tree movie. Drag to pan, zoom with the mouse wheel or trackpad, and use comparison mode when you need two trees side by side.',
+    text: 'The main canvas renders the active tree movie. Drag to pan, zoom with the mouse wheel or trackpad, and turn on comparison view (Settings, View Mode) when you need two trees side by side.',
   },
   {
     id: 'canvas-controls',
@@ -34,7 +34,7 @@ export const WORKSPACE_TOUR_STEPS = [
     target: TOUR_TARGETS.transportControls,
     attachOn: 'top',
     title: 'Transport controls',
-    text: 'Step between input trees and generated frames, play or pause the movie, and enable comparison view from this control group.',
+    text: 'Step between input trees and generated frames, and play or pause the movie, from this control group.',
   },
   {
     id: 'timeline',

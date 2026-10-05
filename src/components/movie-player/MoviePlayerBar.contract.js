@@ -4,7 +4,6 @@ export const MOVIE_PLAYER_ARIA_LABELS = {
   timelineNavigation: 'Timeline navigation controls',
   playbackSettings: 'Playback settings',
   timelineTrack: 'Timeline track',
-  timelineFooter: 'Timeline legend, view, and metrics',
   timelineLegend: 'Timeline legend',
   loadingTimeline: 'Loading movie timeline...',
 };

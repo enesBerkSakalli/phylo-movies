@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Columns, Film, GitBranch } from 'lucide-react';
+import { Columns, GitBranch } from 'lucide-react';
 import { AppTooltip } from '../ui/app-tooltip';
 import {
   selectActiveTreeListLength,
@@ -85,25 +85,21 @@ export function TimelineStatusStrip() {
 
 function CursorStatus({ status }) {
   return (
-    <StatusItem icon={Film} label="Cursor">
-      <AppTooltip
-        content={
-          <div className="flex flex-col gap-1">
-            <div>Current position in the tree sequence.</div>
-            <div>{status.segment.tooltip}</div>
-            <div>Normalized sequence coordinate:</div>
-            <div className="font-bold text-primary tabular-nums">
-              {status.position.fullPrecision}
-            </div>
-          </div>
-        }
-        contentClassName="border-border/60 bg-popover text-2xs font-mono text-popover-foreground"
-      >
-        <span className="inline-flex w-auto max-w-[30vw] shrink-0 items-center cursor-help sm:w-[14rem]">
-          <CursorPositionValue position={status.position} />
-        </span>
-      </AppTooltip>
-    </StatusItem>
+    <AppTooltip
+      content={
+        <div className="flex flex-col gap-1">
+          <div>Current position in the tree sequence.</div>
+          <div>{status.segment.tooltip}</div>
+          <div>Normalized sequence coordinate:</div>
+          <div className="font-bold text-primary tabular-nums">{status.position.fullPrecision}</div>
+        </div>
+      }
+      contentClassName="border-border/60 bg-popover text-2xs font-mono text-popover-foreground"
+    >
+      <span className="inline-flex w-auto max-w-[30vw] shrink-0 items-center cursor-help sm:w-[14rem]">
+        <CursorPositionValue position={status.position} />
+      </span>
+    </AppTooltip>
   );
 }
 

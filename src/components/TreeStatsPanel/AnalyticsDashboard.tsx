@@ -269,13 +269,6 @@ export const MovedSubtreesPanel = () => {
                 sprMovementCount={sprSummary.sprMoveEventCount}
                 activePairCount={sprSummary.activePairCount}
               />
-
-              <Alert className="border-border/70 bg-muted/20">
-                <AlertTitle>{SPR_ANALYTICS_COPY.distanceChartTitle}</AlertTitle>
-                <AlertDescription className="text-xs leading-relaxed">
-                  {SPR_ANALYTICS_COPY.distanceChartDescription}
-                </AlertDescription>
-              </Alert>
             </div>
           </ScrollArea>
         </TabsContent>

@@ -1,10 +1,16 @@
 import React from 'react';
 import {
+  selectActiveTreeListLength,
   selectCameraMode,
+  selectComparisonMode,
+  selectSetViewsConnected,
   selectToggleCameraMode,
+  selectToggleComparisonMode,
   selectTreeController,
+  selectViewsConnected,
   useAppStore,
 } from '../../state/phyloStore/store.js';
+import { PinnedTreeControl } from '../movie-player/PinnedTreeControl.jsx';
 import { Button } from '../ui/button';
 import {
   SidebarMenuItem,
@@ -19,6 +25,11 @@ export function ViewModeSection() {
   const treeController = useAppStore(selectTreeController);
   const cameraMode = useAppStore(selectCameraMode);
   const toggleCameraMode = useAppStore(selectToggleCameraMode);
+  const comparisonMode = useAppStore(selectComparisonMode);
+  const toggleComparisonMode = useAppStore(selectToggleComparisonMode);
+  const viewsConnected = useAppStore(selectViewsConnected);
+  const setViewsConnected = useAppStore(selectSetViewsConnected);
+  const hasAnimationSequence = useAppStore(selectActiveTreeListLength) > 1;
 
   const handleCameraModeToggle = () => {
     try {
@@ -57,6 +68,32 @@ export function ViewModeSection() {
                     3D camera reveals depth for hyperbolic 3D (Walrus) layouts; radial layouts
                     remain flat while topology, rooting, and branch lengths stay unchanged.
                   </span>
+                </div>
+                <Button
+                  id="compare-button"
+                  className="h-9 w-full text-xs"
+                  variant="outline"
+                  disabled={!hasAnimationSequence && !comparisonMode}
+                  onClick={toggleComparisonMode}
+                  data-state={comparisonMode ? 'active' : 'inactive'}
+                >
+                  {comparisonMode ? 'Hide comparison view' : 'Show comparison view'}
+                </Button>
+                {comparisonMode && (
+                  <Button
+                    id="link-views-button"
+                    className="h-9 w-full text-xs"
+                    variant="outline"
+                    disabled={!hasAnimationSequence}
+                    onClick={() => setViewsConnected(!viewsConnected)}
+                    data-state={viewsConnected ? 'active' : 'inactive'}
+                  >
+                    {viewsConnected ? 'Unlink tree views' : 'Link tree views'}
+                  </Button>
+                )}
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <span className="font-medium">Pinned tree</span>
+                  <PinnedTreeControl />
                 </div>
               </div>
             </SidebarMenuSubItem>

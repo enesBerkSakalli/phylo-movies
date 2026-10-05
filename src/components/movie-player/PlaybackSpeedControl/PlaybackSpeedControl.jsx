@@ -13,7 +13,7 @@ export function PlaybackSpeedControl({ value, setValue }) {
   );
 
   return (
-    <div className="speed-control" role="group" aria-labelledby="speed-control-label">
+    <div className="flex items-center gap-2" role="group" aria-labelledby="speed-control-label">
       <span id="speed-control-label" className="sr-only">
         Playback speed
       </span>

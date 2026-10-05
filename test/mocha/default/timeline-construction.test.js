@@ -393,38 +393,26 @@ describe('Timeline construction from normalized backend result', () => {
     expect(Number(defaultHeightMatch[1])).to.be.at.least(44);
   });
 
-  it('allows timeline legend items to wrap on narrow viewports', () => {
+  it('shows the timeline legend in a popover so it never takes a row', () => {
     const source = fs.readFileSync(
       path.join(repoRoot, 'src', 'components', 'movie-player', 'MoviePlayerBar.jsx'),
       'utf8'
     );
-    const legendClassMatch = source.match(/function TimelineLegend[\s\S]*?className="([^"]*)"/);
+    const legendSource = source.slice(source.indexOf('function TimelineLegend'));
 
-    expect(legendClassMatch).to.not.equal(null);
-    expect(legendClassMatch[1]).to.include('flex-wrap');
+    expect(legendSource).to.include('<Popover>');
+    expect(legendSource).to.include('<PopoverContent');
+    expect(legendSource).to.include('TIMELINE_LEGEND_ITEMS.rfChange');
     expect(MOVIE_PLAYER_ARIA_LABELS.timelineLegend).to.equal('Timeline legend');
   });
 
   it('keeps player-bar controls separated into clear workflow lanes', () => {
-    const chartSource = fs.readFileSync(
-      path.join(
-        repoRoot,
-        'src',
-        'components',
-        'movie-player',
-        'MovieChartSection',
-        'MovieChartSection.jsx'
-      ),
-      'utf8'
-    );
-
     expect(MOVIE_PLAYER_ARIA_LABELS.primaryControls).to.equal('Primary playback controls');
     expect(MOVIE_PLAYER_ARIA_LABELS.timelineNavigation).to.equal('Timeline navigation controls');
     expect(MOVIE_PLAYER_ARIA_LABELS.playbackSettings).to.equal('Playback settings');
     expect(MOVIE_PLAYER_ARIA_LABELS.timelineTrack).to.equal('Timeline track');
     expect(TRANSPORT_CONTROL_GROUP_LABELS.playback).to.equal('Movie playback controls');
-    expect(TRANSPORT_CONTROL_GROUP_LABELS.comparison).to.equal('Comparison view controls');
-    expect(chartSource).to.include('aria-label="Chart controls"');
+    expect(TRANSPORT_CONTROL_GROUP_LABELS.pinnedTree).to.equal('Pinned reference tree controls');
   });
 
   it('creates segments and timeline data from frames, pairs, and temporal events', () => {

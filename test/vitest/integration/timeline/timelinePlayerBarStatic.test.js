@@ -29,16 +29,32 @@ describe('movie timeline player bar semantics', () => {
     expect(MOVIE_PLAYER_ARIA_LABELS.loadingTimeline).toBe('Loading movie timeline...');
   });
 
-  it('separates movie transport actions from comparison view actions', () => {
+  it('labels the playback transport and the pinned reference tree control', () => {
     expect(TRANSPORT_CONTROL_GROUP_LABELS).toEqual({
-      root: 'Playback and comparison controls',
       playback: 'Movie playback controls',
-      comparison: 'Comparison view controls',
       pinnedTree: 'Pinned reference tree controls',
     });
   });
 
-  it('keeps the timeline viewport toolbar component present', () => {
+  it('keeps comparison and the pinned tree out of the transport, in Settings > View', () => {
+    const transportSource = readRepoFile(
+      'src',
+      'components',
+      'movie-player',
+      'TransportControls.jsx'
+    );
+    const viewModeSource = readRepoFile('src', 'components', 'appearance', 'ViewModeSection.jsx');
+
+    for (const moved of ['PinnedTreeControl', 'ComparisonMode', 'ViewsConnected', 'GitCompare']) {
+      expect(transportSource).not.toContain(moved);
+    }
+    expect(viewModeSource).toContain('<PinnedTreeControl />');
+    expect(viewModeSource).toContain('selectToggleComparisonMode');
+    expect(viewModeSource).toContain("'Hide comparison view' : 'Show comparison view'");
+    expect(viewModeSource).toContain("'Unlink tree views' : 'Link tree views'");
+  });
+
+  it('puts zoom, fit, and the legend beside the timeline track, with no scroll-to-end buttons', () => {
     const playerBarSource = readRepoFile('src', 'components', 'movie-player', 'MoviePlayerBar.jsx');
     const toolbarSource = readRepoFile(
       'src',
@@ -47,27 +63,42 @@ describe('movie timeline player bar semantics', () => {
       'TimelineScrollControls',
       'TimelineScrollControls.jsx'
     );
-    const toolbarPath = join(
-      repoRoot,
-      'src',
-      'components',
-      'movie-player',
-      'TimelineScrollControls',
-      'TimelineScrollControls.jsx'
-    );
 
-    expect(existsSync(toolbarPath)).toBe(true);
-    expect(playerBarSource).toContain('TimelineScrollControls');
     expect(playerBarSource).toContain('MOVIE_PLAYER_ARIA_LABELS.timelineTrack');
-    // View controls sit in the footer row under the track, in one quiet style.
-    expect(playerBarSource.indexOf('<TimelineScrollControls />')).toBeGreaterThan(
-      playerBarSource.indexOf('className="interpolation-timeline-container"')
-    );
+    const trackPosition = playerBarSource.indexOf('MOVIE_PLAYER_ARIA_LABELS.timelineTrack');
+    expect(playerBarSource.indexOf('<TimelineScrollControls />')).toBeGreaterThan(trackPosition);
+    expect(playerBarSource.indexOf('<TimelineLegend')).toBeGreaterThan(trackPosition);
+    for (const id of ['zoomOutBtn', 'fitToWindowBtn', 'zoomInBtn']) {
+      expect(toolbarSource).toContain(id);
+    }
+    // Home and End on the strip already jump to the ends.
+    for (const gone of ['scrollToStart', 'scrollToEnd', 'ChevronsLeft', 'ChevronsRight']) {
+      expect(toolbarSource).not.toContain(gone);
+    }
     expect(toolbarSource).toContain('TIMELINE_VIEW_BUTTON_CLASS');
-    expect(toolbarSource).not.toContain('TIMELINE_ZOOM_BUTTON_CLASS');
     expect(toolbarSource).not.toContain('opacity-45');
-    expect(toolbarSource).not.toContain('hover:opacity-100');
-    expect(toolbarSource).not.toContain('focus-within:opacity-100');
+  });
+
+  it('is two rows: transport and status above, the timeline strip below', () => {
+    const playerBarSource = readRepoFile('src', 'components', 'movie-player', 'MoviePlayerBar.jsx');
+
+    expect(MOVIE_PLAYER_ARIA_LABELS).not.toHaveProperty('timelineFooter');
+    for (const gone of [
+      'toolbarExpanded',
+      'ChevronUp',
+      'ChevronDown',
+      'MovieChartSection',
+      'timelineFooter',
+    ]) {
+      expect(playerBarSource).not.toContain(gone);
+    }
+    expect(playerBarSource.indexOf('MOVIE_PLAYER_ARIA_LABELS.primaryControls')).toBeLessThan(
+      playerBarSource.indexOf('MOVIE_PLAYER_ARIA_LABELS.timelineTrack')
+    );
+    // Row 1 stays on one line from lg up and wraps below it; nothing is a grid any more.
+    expect(playerBarSource).toContain('flex flex-wrap items-center gap-x-2 gap-y-1');
+    expect(playerBarSource).toContain('lg:flex-nowrap');
+    expect(playerBarSource).not.toContain('lg:grid');
   });
 
   it('renders timeline status in the movie player instead of the floating HUD', () => {
@@ -88,14 +119,7 @@ describe('movie timeline player bar semantics', () => {
     expect(playerBarSource).toContain('TimelineStatusStrip');
     expect(playerBarSource).toContain('selectOpenMsaViewer');
     expect(playerBarSource).toContain('Open alignment viewer');
-    // One row from lg up (status strip takes the remaining width, transport centred
-    // from xl); below lg the status strip takes its own row and the controls wrap.
-    expect(playerBarSource).toContain('flex flex-wrap items-center gap-x-2 gap-y-1');
-    expect(playerBarSource).toContain(
-      'lg:grid lg:grid-cols-[minmax(0,1fr)_auto_auto] xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]'
-    );
-    expect(playerBarSource).toContain('basis-full items-center gap-1 lg:basis-auto');
-    expect(playerBarSource).toContain('ml-auto flex min-w-0 flex-wrap');
+    expect(playerBarSource).toContain('ml-auto');
     expect(managerSource).toContain('getTimelineStatusSnapshot');
     expect(managerSource).toContain('buildTimelineStatusSnapshot');
     expect(statusStripSource).toContain('selectMovieTimelineManager');
@@ -113,7 +137,9 @@ describe('movie timeline player bar semantics', () => {
     expect(statusStripSource).toContain('buildTimelineStatusSnapshot');
     expect(statusStripSource).toContain('Movie timeline status');
     expect(statusStripSource).toContain('flex-nowrap overflow-hidden');
-    expect(statusStripSource).toContain('<StatusItem icon={Film} label="Cursor">');
+    // The position text stands alone: no "Cursor" label chip in front of it.
+    expect(statusStripSource).not.toContain('Film');
+    expect(statusStripSource).not.toContain('label="Cursor"');
     expect(statusStripSource).toContain(
       'inline-flex w-auto max-w-[30vw] shrink-0 items-center cursor-help sm:w-[14rem]'
     );
@@ -128,21 +154,29 @@ describe('movie timeline player bar semantics', () => {
     expect(statusStripSource).not.toContain('border-primary/20 bg-primary/10');
     expect(statusStripSource).not.toContain('Tree Type');
     expect(statusStripSource).not.toContain('Badge');
-    const timelineStatusPosition = playerBarSource.indexOf('<TimelineStatusStrip />');
-    const msaActionPosition = playerBarSource.indexOf('<MsaPlayerBarAction');
-    const motionStagePosition = playerBarSource.indexOf('<MotionStageLabel />');
-    const playbackSettingsPosition = playerBarSource.indexOf(
-      'aria-label={MOVIE_PLAYER_ARIA_LABELS.playbackSettings}'
-    );
+    // Row 1 reads: settings, transport, position + stage, inspect, alignment, speed.
+    const order = [
+      'id="nav-toggle-button"',
+      '<TransportControls',
+      '<TimelineStatusStrip />',
+      '<MotionStageLabel />',
+      '<InspectTransitionAction',
+      '<MsaPlayerBarAction',
+      'aria-label={MOVIE_PLAYER_ARIA_LABELS.playbackSettings}',
+      '<PlaybackSpeedControl',
+    ].map((marker) => playerBarSource.indexOf(marker));
 
-    expect(timelineStatusPosition).toBeLessThan(msaActionPosition);
-    expect(msaActionPosition).toBeLessThan(motionStagePosition);
-    expect(motionStagePosition).toBeLessThan(playbackSettingsPosition);
+    expect(order.every((position) => position >= 0)).toBe(true);
+    expect(order).toEqual([...order].sort((a, b) => a - b));
   });
 
   it('draws the legend swatches the strip uses, with the dataset RF maximum', () => {
     const playerBarSource = readRepoFile('src', 'components', 'movie-player', 'MoviePlayerBar.jsx');
     expect(playerBarSource).toContain('buildPairChangeProfile');
+    // The legend opens from a (?) button beside the zoom controls instead of taking a row.
+    expect(playerBarSource).toContain("from '../ui/popover'");
+    expect(playerBarSource).toContain('<PopoverTrigger asChild>');
+    expect(playerBarSource).toContain('aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineLegend}');
     expect(playerBarSource).toContain('(max {maxRf.toFixed(2)})');
     expect(playerBarSource).toContain('title="size = taxa moved"');
     // rgb(100,116,139), rgb(51,65,85) and rgb(5,150,105): slate-500, slate-700, emerald-600.
@@ -168,47 +202,25 @@ describe('movie timeline player bar semantics', () => {
     expect(tooltipSource).not.toContain('Button');
   });
 
-  it('puts legend, timeline view controls, and metrics in one footer row', () => {
+  it('keeps high-frequency tooltip state out of the player shell and drops the metrics chart', () => {
     const playerBarSource = readRepoFile('src', 'components', 'movie-player', 'MoviePlayerBar.jsx');
-    expect(playerBarSource).toContain('aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineFooter}');
-    expect(playerBarSource).not.toContain('TimelineLayerControls');
-    const footerPosition = playerBarSource.indexOf('MOVIE_PLAYER_ARIA_LABELS.timelineFooter');
-    expect(playerBarSource.indexOf('<MovieChartSection />')).toBeGreaterThan(footerPosition);
-    expect(playerBarSource.indexOf('<TimelineScrollControls />')).toBeGreaterThan(footerPosition);
-  });
-
-  it('isolates high-frequency timeline and chart state from the player shell', () => {
-    const playerBarSource = readRepoFile('src', 'components', 'movie-player', 'MoviePlayerBar.jsx');
-    const chartSectionSource = readRepoFile(
+    const timelineSlice = readRepoFile(
       'src',
-      'components',
-      'movie-player',
-      'MovieChartSection',
-      'MovieChartSection.jsx'
-    );
-    const distanceChartSource = readRepoFile(
-      'src',
-      'components',
-      'DistanceChart',
-      'DistanceChart.jsx'
+      'state',
+      'phyloStore',
+      'slices',
+      'playback',
+      'treeTimeline.slice.js'
     );
 
     expect(playerBarSource).toContain('<TimelineSegmentTooltipOverlay');
-    expect(playerBarSource).toContain('<MovieChartSection />');
-    expect(playerBarSource).not.toContain(
-      '<MovieChartSection barOptionValue={barOptionValue} onBarOptionChange={setBarOption} />'
-    );
-    expect(chartSectionSource).toContain(
-      'export const MovieChartSection = React.memo(MovieChartSectionComponent)'
-    );
-    expect(chartSectionSource).toContain('aria-describedby="chart-select-help"');
-    expect(chartSectionSource).toContain('const DistanceChart = React.lazy(loadDistanceChart)');
-    expect(chartSectionSource).toContain('aria-expanded={chartExpanded}');
-    expect(chartSectionSource).toContain('chartExpanded ? (');
-    expect(distanceChartSource).toContain('sourceFrameIndex: cursor?.sourceFrameIndex ?? null');
-    expect(distanceChartSource).toContain(
-      'sourceInputTreeIndex: cursor?.sourceInputTreeIndex ?? null'
-    );
-    expect(distanceChartSource).not.toContain('timelineCursor: selectTimelineCursor(state)');
+    for (const removed of [
+      ['src', 'components', 'DistanceChart'],
+      ['src', 'components', 'movie-player', 'MovieChartSection'],
+    ]) {
+      expect(existsSync(join(repoRoot, ...removed))).toBe(false);
+    }
+    expect(timelineSlice).not.toContain('barOptionValue');
+    expect(timelineSlice).not.toContain('setBarOption');
   });
 });

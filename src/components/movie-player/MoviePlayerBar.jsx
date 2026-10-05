@@ -1,8 +1,10 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import { MovieChartSection } from './MovieChartSection/MovieChartSection.jsx';
 import { TransportControls } from './TransportControls.jsx';
-import { TimelineScrollControls } from './TimelineScrollControls/TimelineScrollControls.jsx';
+import {
+  TimelineScrollControls,
+  TIMELINE_VIEW_BUTTON_CLASS,
+} from './TimelineScrollControls/TimelineScrollControls.jsx';
 import { PlaybackSpeedControl } from './PlaybackSpeedControl/PlaybackSpeedControl.jsx';
 import { TimelineStatusStrip } from './TimelineStatusStrip.jsx';
 import { usePlaybackShortcuts } from './playbackShortcuts.js';
@@ -31,7 +33,8 @@ import {
 import { openPanel, togglePanel, useIsPanelOpen } from '../dock/dockRuntime.js';
 import { SETTINGS_PANEL_ID } from '../dock/panelRegistry.js';
 import { Button } from '../ui/button';
-import { Activity, Menu, ChevronUp, ChevronDown, Dna, PanelRightOpen } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Activity, CircleHelp, Dna, Menu, PanelRightOpen } from 'lucide-react';
 import { AppTooltip } from '../ui/app-tooltip';
 import { cn } from '../../lib/utils';
 import { buildPairChangeProfile } from '../../timeline/data/pairChangeProfile.js';
@@ -54,7 +57,6 @@ export function MoviePlayerBar() {
   const pairMetrics = useAppStore(selectPairMetrics);
   const temporalEvents = useAppStore(selectTemporalEvents);
   const selectedSegmentIndex = useAppStore(selectSelectedTimelineSegmentIndex);
-  const [toolbarExpanded, setToolbarExpanded] = useState(true);
 
   const movieTimelineManager = useAppStore(selectMovieTimelineManager);
   const timelineHostRef = useRef(null);
@@ -129,112 +131,76 @@ export function MoviePlayerBar() {
       >
         <div className="flex flex-col">
           <div
-            className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-border/70 bg-muted/20 px-2 py-1 lg:grid lg:grid-cols-[minmax(0,1fr)_auto_auto] xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]"
+            className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-border/70 bg-muted/20 px-2 py-1 lg:flex-nowrap"
             role="group"
             aria-label={MOVIE_PLAYER_ARIA_LABELS.primaryControls}
           >
-            <div
-              className="flex min-w-0 basis-full items-center gap-1 lg:basis-auto"
-              role="group"
-              aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineNavigation}
-            >
-              <AppTooltip content="Toggle settings (Ctrl/⌘+B)">
-                <Button
-                  id="nav-toggle-button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Toggle settings"
-                  aria-expanded={settingsOpen ? 'true' : 'false'}
-                  onClick={handleNavigationToggle}
-                >
-                  <Menu className="size-4" />
-                </Button>
-              </AppTooltip>
+            <AppTooltip content="Toggle settings (Ctrl/⌘+B)">
+              <Button
+                id="nav-toggle-button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Toggle settings"
+                aria-expanded={settingsOpen ? 'true' : 'false'}
+                onClick={handleNavigationToggle}
+              >
+                <Menu className="size-4" />
+              </Button>
+            </AppTooltip>
 
-              {hasTimeline && (
-                <div className="flex min-w-0 items-center gap-2 overflow-hidden">
-                  <TimelineStatusStrip />
-                  <InspectTransitionAction canInspect={canInspect} />
-                  <MsaPlayerBarAction hasMsa={hasMsa} onOpen={handleOpenMsaViewer} />
-                  <MotionStageLabel />
-                </div>
-              )}
-            </div>
-
-            <div className="rounded-md border border-border/70 bg-background/80 px-1 py-0.5 shadow-sm xl:justify-self-center">
+            <div className="rounded-md border border-border/70 bg-background/80 px-1 py-0.5 shadow-sm">
               <TransportControls onBackward={backward} onForward={forward} />
             </div>
 
+            {hasTimeline && (
+              <div
+                className="flex min-w-0 items-center gap-2"
+                role="group"
+                aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineNavigation}
+              >
+                <TimelineStatusStrip />
+                <MotionStageLabel />
+                <InspectTransitionAction canInspect={canInspect} />
+                <MsaPlayerBarAction hasMsa={hasMsa} onOpen={handleOpenMsaViewer} />
+              </div>
+            )}
+
             <div
-              className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2"
+              className="ml-auto flex items-center"
               role="group"
               aria-label={MOVIE_PLAYER_ARIA_LABELS.playbackSettings}
             >
-              {toolbarExpanded && (
-                <PlaybackSpeedControl value={animationSpeed} setValue={setAnimationSpeed} />
-              )}
-
-              <AppTooltip
-                content={
-                  toolbarExpanded ? 'Collapse timeline controls' : 'Expand timeline controls'
-                }
-              >
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={
-                    toolbarExpanded ? 'Collapse timeline controls' : 'Expand timeline controls'
-                  }
-                  aria-expanded={toolbarExpanded}
-                  onClick={() => setToolbarExpanded((expanded) => !expanded)}
-                  className="hover:bg-accent"
-                >
-                  {toolbarExpanded ? (
-                    <ChevronUp className="size-4" />
-                  ) : (
-                    <ChevronDown className="size-4" />
-                  )}
-                </Button>
-              </AppTooltip>
+              <PlaybackSpeedControl value={animationSpeed} setValue={setAnimationSpeed} />
             </div>
           </div>
 
-          <div
-            className="w-full border-b border-border/60 bg-background"
-            role="group"
-            aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineTrack}
-          >
-            {hasTimeline ? (
-              <div className="interpolation-timeline-container">
-                <div ref={timelineHostRef} className="timeline-visual-layer" />
-              </div>
-            ) : (
-              <div
-                className="interpolation-timeline-container flex items-center justify-center text-xs text-muted-foreground/60"
-                role="status"
-                aria-live="polite"
-              >
-                {MOVIE_PLAYER_ARIA_LABELS.loadingTimeline}
-              </div>
-            )}
-          </div>
-
-          <div
-            className="flex flex-wrap items-center gap-x-3 gap-y-1 bg-muted/10 px-2 py-1"
-            role="group"
-            aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineFooter}
-          >
-            {/* Chart toggle (first), metric picker and chart panel (last, full width). */}
-            <MovieChartSection />
+          <div className="flex items-center bg-background">
+            <div
+              className="min-w-0 flex-1"
+              role="group"
+              aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineTrack}
+            >
+              {hasTimeline ? (
+                <div className="interpolation-timeline-container">
+                  <div ref={timelineHostRef} className="timeline-visual-layer" />
+                </div>
+              ) : (
+                <div
+                  className="interpolation-timeline-container flex items-center justify-center text-xs text-muted-foreground/60"
+                  role="status"
+                  aria-live="polite"
+                >
+                  {MOVIE_PLAYER_ARIA_LABELS.loadingTimeline}
+                </div>
+              )}
+            </div>
             {hasTimeline && (
-              <TimelineLegend
-                hasTransitionSegments={hasTransitionSegments}
-                maxRf={pairProfile.maxRf}
-              />
-            )}
-            {hasTimeline && toolbarExpanded && (
-              <div className="order-4 shrink-0">
+              <div className="flex shrink-0 items-center gap-0.5 px-1">
                 <TimelineScrollControls />
+                <TimelineLegend
+                  hasTransitionSegments={hasTransitionSegments}
+                  maxRf={pairProfile.maxRf}
+                />
               </div>
             )}
           </div>
@@ -431,39 +397,55 @@ function formatAnimationStage(stage) {
 // Swatches mirror what the timeline strip draws; the label alone carries the meaning.
 function TimelineLegend({ hasTransitionSegments, maxRf }) {
   return (
-    <div
-      className="order-5 flex min-w-0 basis-full flex-wrap items-center gap-x-3 gap-y-1 overflow-hidden text-2xs font-medium text-muted-foreground sm:order-2 sm:flex-1 sm:basis-auto"
-      role="group"
-      aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineLegend}
-    >
-      {hasTransitionSegments && (
-        <>
-          <LegendItem
-            swatchClassName="h-2 w-4 rounded-sm bg-slate-500"
-            label={TIMELINE_LEGEND_ITEMS.rfChange}
+    <Popover>
+      <AppTooltip content="Timeline legend">
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            aria-label="Show timeline legend"
+            className={TIMELINE_VIEW_BUTTON_CLASS}
           >
-            <span className="font-normal tabular-nums">(max {maxRf.toFixed(2)})</span>
-          </LegendItem>
-          <LegendItem
-            swatchClassName="size-2 rounded-full bg-slate-700"
-            label={TIMELINE_LEGEND_ITEMS.sprMove}
-            title="size = taxa moved"
-          />
-          <LegendItem
-            swatchClassName="w-5 border-t-2 border-dashed border-slate-500"
-            label={TIMELINE_LEGEND_ITEMS.branchLengthsOnly}
-          />
-        </>
-      )}
-      <LegendItem
-        swatchClassName="h-1.5 w-px bg-slate-500"
-        label={TIMELINE_LEGEND_ITEMS.inputTree}
-      />
-      <LegendItem
-        swatchClassName="h-1.5 w-5 rounded bg-emerald-600"
-        label={TIMELINE_LEGEND_ITEMS.selected}
-      />
-    </div>
+            <CircleHelp className="size-3.5" aria-hidden />
+          </Button>
+        </PopoverTrigger>
+      </AppTooltip>
+      <PopoverContent
+        side="top"
+        align="end"
+        className="z-[1300] flex w-auto flex-col gap-1.5 p-3 text-xs font-medium text-muted-foreground"
+        aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineLegend}
+      >
+        {hasTransitionSegments && (
+          <>
+            <LegendItem
+              swatchClassName="h-2 w-4 rounded-sm bg-slate-500"
+              label={TIMELINE_LEGEND_ITEMS.rfChange}
+            >
+              <span className="font-normal tabular-nums">(max {maxRf.toFixed(2)})</span>
+            </LegendItem>
+            <LegendItem
+              swatchClassName="size-2 rounded-full bg-slate-700"
+              label={TIMELINE_LEGEND_ITEMS.sprMove}
+              title="size = taxa moved"
+            />
+            <LegendItem
+              swatchClassName="w-5 border-t-2 border-dashed border-slate-500"
+              label={TIMELINE_LEGEND_ITEMS.branchLengthsOnly}
+            />
+          </>
+        )}
+        <LegendItem
+          swatchClassName="h-1.5 w-px bg-slate-500"
+          label={TIMELINE_LEGEND_ITEMS.inputTree}
+        />
+        <LegendItem
+          swatchClassName="h-1.5 w-5 rounded bg-emerald-600"
+          label={TIMELINE_LEGEND_ITEMS.selected}
+        />
+      </PopoverContent>
+    </Popover>
   );
 }
 

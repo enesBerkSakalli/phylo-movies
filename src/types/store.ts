@@ -173,7 +173,6 @@ export interface AppStoreState {
   movieTimelineManager: MovieTimelineManagerRuntime | null;
 
   // From treeTimeline.slice
-  barOptionValue: string;
   hoveredSegmentIndex: number | null;
   hoveredSegmentData: unknown;
   hoveredSegmentPosition: unknown;
@@ -301,7 +300,6 @@ export interface AppStoreState {
   ) => void;
   setTooltipHovered: (isHovered: boolean) => void;
   setSelectedTimelineSegment: (segmentIndex: number | null) => void;
-  setBarOption: (option: string) => void;
   zoomInTimeline: () => void;
   zoomOutTimeline: () => void;
   fitTimeline: () => void;

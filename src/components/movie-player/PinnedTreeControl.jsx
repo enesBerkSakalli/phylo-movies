@@ -15,7 +15,8 @@ import { getNextPinnedTreeIndex, getPinnedTreeLabel } from './pinnedTree.js';
 
 /**
  * Pins one input tree as a translucent overlay reference behind the active
- * tree. Lives next to the comparison toggle: both compare against another tree.
+ * tree. Lives in Settings > View Mode next to the comparison toggle: both
+ * compare against another tree.
  */
 export function PinnedTreeControl() {
   const inputTreeIndices = useAppStore(selectInputFrameIndices);

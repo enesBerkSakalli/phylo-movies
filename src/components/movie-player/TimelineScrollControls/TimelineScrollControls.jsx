@@ -1,23 +1,19 @@
 import React from 'react';
 import { Button } from '../../ui/button';
 import { AppTooltip } from '../../ui/app-tooltip';
-import { ChevronsLeft, ChevronsRight, ZoomOut, ZoomIn, Scan } from 'lucide-react';
+import { ZoomOut, ZoomIn, Scan } from 'lucide-react';
 import {
   selectFitTimeline,
   selectMovieTimelineManager,
-  selectScrollToEndTimeline,
-  selectScrollToStartTimeline,
   selectZoomInTimeline,
   selectZoomOutTimeline,
   useAppStore,
 } from '../../../state/phyloStore/store.js';
 
-const TIMELINE_VIEW_BUTTON_CLASS =
+export const TIMELINE_VIEW_BUTTON_CLASS =
   'size-7 text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:text-foreground';
 
 export function TimelineScrollControls() {
-  const scrollToStartTimeline = useAppStore(selectScrollToStartTimeline);
-  const scrollToEndTimeline = useAppStore(selectScrollToEndTimeline);
   const zoomOutTimeline = useAppStore(selectZoomOutTimeline);
   const zoomInTimeline = useAppStore(selectZoomInTimeline);
   const fitTimeline = useAppStore(selectFitTimeline);
@@ -25,13 +21,6 @@ export function TimelineScrollControls() {
   const disabled = !movieTimelineManager;
 
   const controls = [
-    {
-      id: 'scrollToStartBtn',
-      label: 'Scroll timeline to start',
-      tooltip: 'Scroll timeline to start',
-      Icon: ChevronsLeft,
-      onClick: scrollToStartTimeline,
-    },
     {
       id: 'zoomOutBtn',
       label: 'Zoom out timeline',
@@ -52,13 +41,6 @@ export function TimelineScrollControls() {
       tooltip: 'Zoom in timeline',
       Icon: ZoomIn,
       onClick: zoomInTimeline,
-    },
-    {
-      id: 'scrollToEndBtn',
-      label: 'Scroll timeline to end',
-      tooltip: 'Scroll timeline to end',
-      Icon: ChevronsRight,
-      onClick: scrollToEndTimeline,
     },
   ];
 

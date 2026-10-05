@@ -1,11 +1,10 @@
 /**
- * Timeline slice: timeline/chart state and tooltip controls.
+ * Timeline slice: timeline state and tooltip controls.
  */
 export const createTimelineSlice = (set, get) => ({
   // ==========================================================================
-  // STATE: Timeline/Chart
+  // STATE: Timeline
   // ==========================================================================
-  barOptionValue: 'rfd',
   hoveredSegmentIndex: null,
   hoveredSegmentData: null,
   hoveredSegmentPosition: null,
@@ -32,11 +31,6 @@ export const createTimelineSlice = (set, get) => ({
       selectedTimelineSegmentIndex: segmentIndex,
     });
   },
-
-  // ==========================================================================
-  // ACTIONS: Chart
-  // ==========================================================================
-  setBarOption: (option) => set({ barOptionValue: option }),
 
   // ==========================================================================
   // ACTIONS: Timeline Controls
