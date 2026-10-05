@@ -501,20 +501,20 @@ describe('Timeline construction from normalized backend result', () => {
     }
 
     const dataset = TimelineDataset.fromMovieData(data, { segments, timelineData: timeline });
-    const missingOccurrences = data.pairs.flatMap((pair) => {
+    const unshownFrames = data.pairs.flatMap((pair) => {
       const missing = [];
       for (
         let frameIndex = pair.source_frame_index;
         frameIndex <= pair.target_frame_index;
         frameIndex += 1
       ) {
-        if (dataset.getOccurrencesForFrame(frameIndex).length === 0) {
+        if (dataset.getCursorForFrame(frameIndex).segmentIndex === null) {
           missing.push(`${pair.pair_id}:${frameIndex}`);
         }
       }
       return missing;
     });
-    expect(missingOccurrences).to.deep.equal([]);
+    expect(unshownFrames).to.deep.equal([]);
 
     console.log(`[timeline-construction.test] Used: ${source}`);
   });

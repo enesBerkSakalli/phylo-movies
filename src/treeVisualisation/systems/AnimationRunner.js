@@ -327,9 +327,7 @@ function getPlaybackState(state, timestamp) {
   const rawProgress = elapsedMs / totalDurationMs;
   const timelineProgress = movieTimeMs / totalDurationMs;
   const transitionFrame = movieTimelineManager.resolveFrameAtTimelineProgress(timelineProgress);
-  const timelineCursor = movieTimelineManager.getCursorAtMovieTime(movieTimeMs, {
-    bias: 'nearest',
-  });
+  const timelineCursor = movieTimelineManager.getCursorAtMovieTime(movieTimeMs);
 
   if (!transitionFrame || !timelineCursor) {
     return null;

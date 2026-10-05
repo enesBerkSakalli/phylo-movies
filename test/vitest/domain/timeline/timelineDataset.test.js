@@ -12,7 +12,7 @@ function readJson(relativePath) {
 }
 
 describe('TimelineDataset', () => {
-  it('composes segments, frame rows, occurrence rows, and cursor lookup', () => {
+  it('composes segments, frame rows, steps, and cursor lookup', () => {
     const dataset = TimelineDataset.fromMovieData(smallExampleMovieData);
 
     expect(dataset.frameViews[7]).toMatchObject({
@@ -23,7 +23,9 @@ describe('TimelineDataset', () => {
       sourceInputTreeIndex: 0,
       targetInputTreeIndex: 1,
     });
-    expect(dataset.getOccurrencesForFrame(22).length).toBeGreaterThan(1);
+    expect(
+      dataset.steps.filter((step) => step.from === 22 || step.to === 22).length
+    ).toBeGreaterThan(1);
 
     const startCursor = dataset.getCursorAtMovieTime(0);
     expect(startCursor).toMatchObject({
@@ -36,10 +38,8 @@ describe('TimelineDataset', () => {
       segmentIndex: 0,
     });
 
-    const inputHold = dataset
-      .getOccurrencesForFrame(22)
-      .find((occurrence) => occurrence.holdKind === 'input_tree');
-    const inputCursor = dataset.getCursorAtMovieTime(inputHold.movieTimeStartMs);
+    const inputHold = dataset.steps.find((step) => step.hold === 'input_tree' && step.from === 22);
+    const inputCursor = dataset.getCursorAtMovieTime(inputHold.start);
     expect(inputCursor).toMatchObject({
       frameIndex: 22,
       inputTreeIndex: 1,
@@ -48,45 +48,32 @@ describe('TimelineDataset', () => {
     });
   });
 
-  it('resolves frame cursors by semantic default or explicit temporal occurrence', () => {
+  it('resolves frame cursors by semantic default or last appearance', () => {
     const dataset = TimelineDataset.fromMovieData(smallExampleMovieData);
 
-    const first = dataset.getCursorForFrame(22, { occurrence: 'first' });
     const semantic = dataset.getCursorForFrame(22);
     const last = dataset.getCursorForFrame(22, { occurrence: 'last' });
-    const inputHold = dataset
-      .getOccurrencesForFrame(22)
-      .find((occurrence) => occurrence.holdKind === 'input_tree');
+    const inputHold = dataset.steps.find((step) => step.hold === 'input_tree' && step.from === 22);
 
-    expect(first.frameIndex).toBe(22);
     expect(semantic.frameIndex).toBe(22);
     expect(last.frameIndex).toBe(22);
-    expect(semantic.movieTimeMs).toBe(inputHold.movieTimeStartMs);
+    expect(semantic.movieTimeMs).toBe(inputHold.start);
     expect(semantic.occurrenceRole).toBe('hold');
     expect(semantic.holdKind).toBe('input_tree');
-    expect(last.movieTimeMs).toBeGreaterThanOrEqual(first.movieTimeMs);
+    expect(last.movieTimeMs).toBeGreaterThanOrEqual(semantic.movieTimeMs);
   });
 
   it('seeks motion-target frame cursors to the completed motion time', () => {
     const dataset = TimelineDataset.fromMovieData(smallExampleMovieData);
-    const motionTarget = dataset.occurrences.find(
-      (occurrence) => occurrence.role === 'motion_target'
-    );
+    const motion = dataset.steps.find((step) => step.from !== step.to);
 
-    const cursor = dataset.getCursorForFrame(motionTarget.frameIndex, {
-      occurrence: motionTarget.occurrenceInFrameIndex,
-    });
-    const startCursor = dataset.getCursorForFrame(motionTarget.frameIndex, {
-      occurrence: motionTarget.occurrenceInFrameIndex,
-      timeAnchor: 'start',
-    });
+    const cursor = dataset.getCursorForFrame(motion.to);
 
-    expect(cursor.movieTimeMs).toBe(motionTarget.movieTimeEndMs);
-    expect(cursor.timelineProgress).toBe(motionTarget.timelineProgressEnd);
-    expect(startCursor.movieTimeMs).toBe(motionTarget.movieTimeStartMs);
-    expect(startCursor.timelineProgress).toBe(motionTarget.timelineProgressStart);
-    expect(cursor.motionSourceFrameIndex).toBe(motionTarget.sourceMotionFrameIndex);
-    expect(cursor.motionTargetFrameIndex).toBe(motionTarget.frameIndex);
+    expect(cursor.movieTimeMs).toBe(motion.end);
+    expect(cursor.timelineProgress).toBe(motion.end / dataset.timelineData.totalDuration);
+    expect(cursor.occurrenceRole).toBe('motion_target');
+    expect(cursor.motionSourceFrameIndex).toBe(motion.from);
+    expect(cursor.motionTargetFrameIndex).toBe(motion.to);
   });
 
   it('anchors the paper example final input cursor on the input-tree hold', () => {
@@ -94,14 +81,8 @@ describe('TimelineDataset', () => {
     const dataset = TimelineDataset.fromMovieData(paperExampleMovieData);
     const finalFrameIndex = paperExampleMovieData.interpolated_trees.length - 1;
 
-    const first = dataset.getCursorForFrame(finalFrameIndex, { occurrence: 'first' });
     const semantic = dataset.getCursorForFrame(finalFrameIndex);
 
-    expect(first).toMatchObject({
-      frameIndex: finalFrameIndex,
-      occurrenceRole: 'motion_target',
-      segmentIndex: 2,
-    });
     expect(semantic).toMatchObject({
       frameIndex: finalFrameIndex,
       occurrenceRole: 'hold',

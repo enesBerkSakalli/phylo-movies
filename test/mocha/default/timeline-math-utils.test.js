@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const { TimelineDataProcessor } = require('../../../src/timeline/data/TimelineDataProcessor.js');
+const { TimelineDataset } = require('../../../src/timeline/data/TimelineDataset.js');
 const { TimelineMathUtils } = require('../../../src/timeline/math/TimelineMathUtils.js');
 
 function loadMovieData() {
@@ -14,6 +15,15 @@ function loadMovieData() {
     'small_example.response.json'
   );
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+}
+
+function resolveFrame(progress, segments, timelineData, treeList) {
+  return new TimelineDataset({
+    segments,
+    timelineData,
+    frameViews: [],
+    treeList,
+  }).getTransitionFrameAtTimelineProgress(progress);
 }
 
 function makeSemanticTimingFixture() {
@@ -43,11 +53,12 @@ function makeSemanticTimingFixture() {
 }
 
 describe('TimelineMathUtils', () => {
+  let movieData;
   let segments;
   let timelineData;
 
   before(() => {
-    const movieData = loadMovieData();
+    movieData = loadMovieData();
     segments = TimelineDataProcessor.createSegments(movieData);
     timelineData = TimelineDataProcessor.createTimelineData(segments);
   });
@@ -81,13 +92,13 @@ describe('TimelineMathUtils', () => {
   it('resolves mover and pivot holds as static completed frames', () => {
     const { treeList, segments, timelineData } = makeSemanticTimingFixture();
 
-    const moverHold = TimelineMathUtils.getTransitionFrameForTimelineProgress(
+    const moverHold = resolveFrame(
       1100 / timelineData.totalDuration,
       segments,
       timelineData,
       treeList
     );
-    const pivotHold = TimelineMathUtils.getTransitionFrameForTimelineProgress(
+    const pivotHold = resolveFrame(
       3500 / timelineData.totalDuration,
       segments,
       timelineData,
@@ -131,12 +142,7 @@ describe('TimelineMathUtils', () => {
     ];
     const timelineData = TimelineDataProcessor.createTimelineData(segments);
 
-    const resolved = TimelineMathUtils.getTransitionFrameForTimelineProgress(
-      0.5,
-      segments,
-      timelineData,
-      treeList
-    );
+    const resolved = resolveFrame(0.5, segments, timelineData, treeList);
 
     expect(resolved).to.include({
       sourceTree: treeList[0],
@@ -146,22 +152,6 @@ describe('TimelineMathUtils', () => {
       targetTreeIndex: 0,
       holdKind: 'input_tree',
     });
-  });
-
-  it('rejects timeline progress resolution when segment timing is missing', () => {
-    const treeList = [{ id: 'tree-0' }];
-    expect(() =>
-      TimelineMathUtils.getTransitionFrameForTimelineProgress(
-        0.5,
-        [{ interpolationData: [{ originalIndex: 0 }], isInputTreeSegment: true }],
-        {
-          totalDuration: 1000,
-          segmentDurations: [1000],
-          cumulativeDurations: [1000],
-        },
-        treeList
-      )
-    ).to.throw(/timeline segment timing is required/);
   });
 
   it('rejects segments without explicit timing intervals', () => {
@@ -187,19 +177,14 @@ describe('TimelineMathUtils', () => {
   });
 
   it('resolves exact timeline boundaries consistently', () => {
+    const dataset = TimelineDataset.fromMovieData(movieData, { segments, timelineData });
     const firstInterpolationIndex = segments.findIndex(
       (segment, index) =>
         index > 0 && segment.hasInterpolation && segment.interpolationData.length > 1
     );
     const boundaryTime = timelineData.cumulativeDurations[firstInterpolationIndex - 1];
     const firstInterpolationSegment = segments[firstInterpolationIndex];
-    const atBoundary = TimelineMathUtils.getTargetFrameForTime(
-      segments,
-      boundaryTime,
-      timelineData.segmentDurations,
-      'nearest',
-      timelineData.cumulativeDurations
-    );
+    const atBoundary = dataset.getCursorAtMovieTime(boundaryTime);
 
     expect(atBoundary.segmentIndex).to.equal(firstInterpolationIndex);
     expect(atBoundary.frameIndex).to.equal(
@@ -209,13 +194,7 @@ describe('TimelineMathUtils', () => {
     const lastSegmentIndex = segments.length - 1;
     const lastSegment = segments[lastSegmentIndex];
     const lastEntry = lastSegment.interpolationData[lastSegment.interpolationData.length - 1];
-    const atTimelineEnd = TimelineMathUtils.getTargetFrameForTime(
-      segments,
-      timelineData.totalDuration,
-      timelineData.segmentDurations,
-      'nearest',
-      timelineData.cumulativeDurations
-    );
+    const atTimelineEnd = dataset.getCursorAtMovieTime(timelineData.totalDuration);
 
     expect(atTimelineEnd.segmentIndex).to.equal(lastSegmentIndex);
     expect(atTimelineEnd.frameIndex).to.equal(lastEntry.originalIndex);

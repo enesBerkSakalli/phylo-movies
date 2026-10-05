@@ -1,10 +1,10 @@
 import { TimelineDataProcessor } from './TimelineDataProcessor.js';
 import { buildTimelineFrameViews } from './TimelineFrameView.js';
-import { buildTimelineOccurrences } from './TimelineOccurrences.js';
 import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
+import { TransitionFrame } from '../time/TransitionFrame.js';
+import { buildSteps, cursorForFrame, stepAt } from '../timeline.js';
+import { resolveCursorTreeIndex } from '../../domain/indexing/treeIndexSemantics.js';
 import { clamp01 } from '../../domain/math/mathUtils.js';
-
-const EMPTY_OCCURRENCES = Object.freeze([]);
 
 export class TimelineDataset {
   static fromMovieData(movieData, options = {}) {
@@ -14,36 +14,20 @@ export class TimelineDataset {
     const timelineData = options.timelineData
       ? options.timelineData
       : TimelineDataProcessor.createTimelineData(segments);
-    const frameViews = buildTimelineFrameViews(movieData);
-    const { occurrences, occurrencesByFrameIndex } = buildTimelineOccurrences({
-      segments,
-      timelineData,
-      frameViews,
-    });
 
     return new TimelineDataset({
       segments,
       timelineData,
-      frameViews,
-      occurrences,
-      occurrencesByFrameIndex,
+      frameViews: buildTimelineFrameViews(movieData),
       treeList: options.treeList ?? movieData.interpolated_trees,
     });
   }
 
-  constructor({
-    segments,
-    timelineData,
-    frameViews,
-    occurrences,
-    occurrencesByFrameIndex,
-    treeList,
-  }) {
+  constructor({ segments, timelineData, frameViews, treeList }) {
     this.segments = segments;
     this.timelineData = timelineData;
     this.frameViews = frameViews;
-    this.occurrences = occurrences;
-    this.occurrencesByFrameIndex = occurrencesByFrameIndex;
+    this.steps = buildSteps(segments);
     this.treeList = Array.isArray(treeList) ? treeList : [];
     this._inputFrameIndices = null;
   }
@@ -61,11 +45,6 @@ export class TimelineDataset {
     return Number.isInteger(frameIndex) ? (this.frameViews[frameIndex] ?? null) : null;
   }
 
-  getOccurrencesForFrame(frameIndex) {
-    const occurrences = this.occurrencesByFrameIndex.get(frameIndex);
-    return occurrences ? occurrences : EMPTY_OCCURRENCES;
-  }
-
   getInputFrameIndices() {
     if (!this._inputFrameIndices) {
       this._inputFrameIndices = this.frameViews
@@ -80,59 +59,49 @@ export class TimelineDataset {
   }
 
   getTransitionFrameAtTimelineProgress(progress) {
-    if (!this.hasTimeline()) return null;
-    return TimelineMathUtils.getTransitionFrameForTimelineProgress(
-      progress,
-      this.segments,
-      this.timelineData,
-      this.treeList
-    );
+    if (!this.hasTimeline() || this.treeList.length === 0) return null;
+    const ms = TimelineMathUtils.progressToTime(progress, this.timelineData.totalDuration);
+    const { start, end, from, to, hold } = stepAt(this.steps, ms);
+    return TransitionFrame.from({
+      sourceTree: this.treeList[from],
+      targetTree: this.treeList[to],
+      sourceTreeIndex: from,
+      targetTreeIndex: to,
+      transitionProgress: from === to ? 0 : (ms - start) / (end - start),
+      holdKind: hold,
+    });
   }
 
   getTimelineProgressAtMovieTime(movieTimeMs) {
     return progressForTime(movieTimeMs, this.timelineData.totalDuration);
   }
 
-  getCursorAtTimelineProgress(timelineProgress, options = {}) {
+  getCursorAtTimelineProgress(timelineProgress) {
     const progress = clamp01(timelineProgress);
-    return this.getCursorAtMovieTime(progress * this.timelineData.totalDuration, options);
+    return this.getCursorAtMovieTime(progress * this.timelineData.totalDuration);
   }
 
-  getCursorAtMovieTime(movieTimeMs, options = {}) {
-    const clampedTime = clampTime(movieTimeMs, this.timelineData.totalDuration);
-    const target = TimelineMathUtils.getTargetFrameForTime(
-      this.segments,
-      clampedTime,
-      this.timelineData.segmentDurations,
-      options.bias ?? 'nearest',
-      this.timelineData.cumulativeDurations
+  getCursorAtMovieTime(movieTimeMs) {
+    const ms = clampTime(movieTimeMs, this.timelineData.totalDuration);
+    const step = stepAt(this.steps, ms);
+    if (!step) return null;
+
+    const frameIndex = resolveCursorTreeIndex(
+      step.from,
+      step.to,
+      (ms - step.start) / (step.end - step.start)
     );
-
-    if (!Number.isInteger(target.frameIndex)) return null;
-
-    const occurrence = this.findOccurrenceAtMovieTime({
-      frameIndex: target.frameIndex,
-      movieTimeMs: clampedTime,
-      segmentIndex: target.segmentIndex,
-    });
-
-    return this.buildCursor({
-      frameIndex: target.frameIndex,
-      movieTimeMs: clampedTime,
-      segmentIndex: target.segmentIndex,
-      segmentProgress: target.segmentProgress,
-      occurrence,
-    });
+    return this.buildCursor({ frameIndex, movieTimeMs: ms, step });
   }
 
-  getCursorInSegmentAtMovieTime(segmentIndex, movieTimeMs, options = {}) {
+  getCursorInSegmentAtMovieTime(segmentIndex, movieTimeMs) {
     const bounds = this.getSegmentBounds(segmentIndex);
     if (!bounds || bounds.end < bounds.start) {
       throw new Error('[TimelineDataset] segment timing bounds are required');
     }
 
     const boundedTime = boundTimeToSegment(movieTimeMs, bounds.start, bounds.end);
-    const cursor = this.getCursorAtMovieTime(boundedTime, options);
+    const cursor = this.getCursorAtMovieTime(boundedTime);
 
     if (cursor?.segmentIndex !== segmentIndex || !Number.isInteger(cursor?.frameIndex)) {
       throw new Error('[TimelineDataset] movie time resolved outside its segment');
@@ -151,137 +120,33 @@ export class TimelineDataset {
   }
 
   getCursorForFrame(frameIndex, options = {}) {
-    const occurrences = this.getOccurrencesForFrame(frameIndex);
-    if (occurrences.length === 0) {
-      return this.buildCursor({ frameIndex, movieTimeMs: 0 });
-    }
-
-    const occurrence = selectOccurrence(
-      occurrences,
-      options.occurrence,
-      this.getFrameView(frameIndex)
-    );
-    return this.buildCursor({
-      frameIndex,
-      movieTimeMs: getCursorMovieTimeForOccurrence(occurrence, options.timeAnchor),
-      segmentIndex: occurrence.segmentIndex,
-      occurrence,
-    });
+    const found = cursorForFrame(this.steps, frameIndex, options.occurrence === 'last');
+    return this.buildCursor({ frameIndex, movieTimeMs: found?.ms ?? 0, step: found?.step });
   }
 
-  findOccurrenceAtMovieTime({ frameIndex, movieTimeMs, segmentIndex }) {
-    const occurrences = this.getOccurrencesForFrame(frameIndex);
-    return (
-      occurrences.find(
-        (occurrence) =>
-          occurrence.segmentIndex === segmentIndex &&
-          movieTimeMs >= occurrence.movieTimeStartMs &&
-          movieTimeMs <= occurrence.movieTimeEndMs
-      ) ??
-      occurrences.find(
-        (occurrence) =>
-          movieTimeMs >= occurrence.movieTimeStartMs && movieTimeMs <= occurrence.movieTimeEndMs
-      ) ??
-      null
-    );
-  }
-
-  buildCursor({
-    frameIndex,
-    movieTimeMs,
-    segmentIndex = null,
-    segmentProgress = null,
-    occurrence = null,
-  }) {
+  buildCursor({ frameIndex, movieTimeMs, step = null }) {
     const frameRow = this.getFrameView(frameIndex);
     if (!frameRow) return null;
 
-    const timelineProgress = progressForTime(movieTimeMs, this.timelineData.totalDuration);
+    const moving = step !== null && step.from !== step.to;
+    const role = !step
+      ? null
+      : !moving
+        ? 'hold'
+        : frameIndex === step.from
+          ? 'motion_source'
+          : 'motion_target';
     return {
       ...frameRow,
       movieTimeMs,
-      timelineProgress,
-      segmentIndex,
-      segmentProgress,
-      occurrenceIndex: occurrence?.occurrenceIndex ?? null,
-      occurrenceInFrameIndex: occurrence?.occurrenceInFrameIndex ?? null,
-      occurrenceRole: occurrence?.role ?? null,
-      holdKind: occurrence?.holdKind ?? null,
-      motionSourceFrameIndex: getMotionSourceFrameIndex(occurrence, frameIndex),
-      motionTargetFrameIndex: getMotionTargetFrameIndex(occurrence, frameIndex),
+      timelineProgress: progressForTime(movieTimeMs, this.timelineData.totalDuration),
+      segmentIndex: step?.segment ?? null,
+      occurrenceRole: role,
+      holdKind: step?.hold ?? null,
+      motionSourceFrameIndex: moving ? step.from : null,
+      motionTargetFrameIndex: moving ? step.to : null,
     };
   }
-}
-
-function selectOccurrence(occurrences, occurrenceSelector = 'semantic', frameView = null) {
-  const selector = occurrenceSelector ?? 'semantic';
-
-  if (selector === 'last') {
-    return occurrences[occurrences.length - 1];
-  }
-  if (selector === 'first') {
-    return occurrences[0];
-  }
-  if (selector === 'input_tree_hold') {
-    return findInputTreeHold(occurrences) ?? occurrences[0];
-  }
-  if (selector === 'semantic' && frameView?.isInputFrame) {
-    return findInputTreeHold(occurrences) ?? occurrences[0];
-  }
-  if (Number.isInteger(selector)) {
-    return occurrences[Math.max(0, Math.min(selector, occurrences.length - 1))];
-  }
-  return occurrences[0];
-}
-
-function getCursorMovieTimeForOccurrence(occurrence, timeAnchor = 'semantic') {
-  if (timeAnchor === 'start') {
-    return occurrence?.movieTimeStartMs ?? 0;
-  }
-
-  if (timeAnchor === 'end' && Number.isFinite(occurrence?.movieTimeEndMs)) {
-    return occurrence.movieTimeEndMs;
-  }
-
-  if (occurrence?.role === 'motion_target' && Number.isFinite(occurrence.movieTimeEndMs)) {
-    return occurrence.movieTimeEndMs;
-  }
-
-  return occurrence?.movieTimeStartMs ?? 0;
-}
-
-function getMotionSourceFrameIndex(occurrence, frameIndex) {
-  if (occurrence?.role === 'motion_source') {
-    return frameIndex;
-  }
-
-  if (occurrence?.role === 'motion_target') {
-    return toIntegerOrNull(occurrence.sourceMotionFrameIndex ?? occurrence.peerFrameIndex);
-  }
-
-  return null;
-}
-
-function getMotionTargetFrameIndex(occurrence, frameIndex) {
-  if (occurrence?.role === 'motion_target') {
-    return frameIndex;
-  }
-
-  if (occurrence?.role === 'motion_source') {
-    return toIntegerOrNull(occurrence.targetFrameIndex ?? occurrence.peerFrameIndex);
-  }
-
-  return null;
-}
-
-function toIntegerOrNull(value) {
-  return Number.isInteger(value) ? value : null;
-}
-
-function findInputTreeHold(occurrences) {
-  return occurrences.find(
-    (occurrence) => occurrence.role === 'hold' && occurrence.holdKind === 'input_tree'
-  );
 }
 
 function clampTime(value, totalDuration) {

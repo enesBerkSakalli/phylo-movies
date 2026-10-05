@@ -197,10 +197,8 @@ describe('MovieTimelineManager lifecycle', () => {
     });
 
     const manager = new MovieTimelineManager(movieData, treeList, useAppStore);
-    const occurrence = manager.timelineDataset
-      .getOccurrencesForFrame(1)
-      .find((item) => item.role === 'motion_target');
-    const movieTimeMs = (occurrence.movieTimeStartMs + occurrence.movieTimeEndMs) / 2;
+    const step = manager.timelineDataset.steps.find((item) => item.to === 1 && item.from !== 1);
+    const movieTimeMs = (step.start + step.end) / 2;
     const frame = manager.resolveFrameAtTimelineProgress(
       movieTimeMs / manager.timelineData.totalDuration
     );
@@ -228,10 +226,8 @@ describe('MovieTimelineManager lifecycle', () => {
     });
 
     const manager = new MovieTimelineManager(movieData, treeList, useAppStore);
-    const occurrence = manager.timelineDataset
-      .getOccurrencesForFrame(1)
-      .find((item) => item.role === 'motion_target');
-    const movieTimeMs = (occurrence.movieTimeStartMs + occurrence.movieTimeEndMs) / 2;
+    const step = manager.timelineDataset.steps.find((item) => item.to === 1 && item.from !== 1);
+    const movieTimeMs = (step.start + step.end) / 2;
     const frame = manager.resolveFrameAtTimelineProgress(
       movieTimeMs / manager.timelineData.totalDuration
     );

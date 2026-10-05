@@ -62,9 +62,7 @@ export class TimelineNavigationController {
       throw new Error('[TimelineNavigationController] timeline timing data is required');
     }
 
-    const target = this.timelineDataset.getCursorInSegmentAtMovieTime(segmentIndex, clickTimeMs, {
-      bias: 'nearest',
-    });
+    const target = this.timelineDataset.getCursorInSegmentAtMovieTime(segmentIndex, clickTimeMs);
 
     return target?.frameIndex;
   }
@@ -89,9 +87,7 @@ export class TimelineNavigationController {
     const bounds = this.timelineDataset.getSegmentBounds(segmentIndex);
     if (!bounds || bounds.end < bounds.start) return undefined;
 
-    const cursor = this.timelineDataset.getCursorInSegmentAtMovieTime(segmentIndex, clickTimeMs, {
-      bias: 'nearest',
-    });
+    const cursor = this.timelineDataset.getCursorInSegmentAtMovieTime(segmentIndex, clickTimeMs);
     return {
       timelineProgress: cursor.timelineProgress,
     };

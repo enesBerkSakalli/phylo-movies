@@ -1,6 +1,7 @@
 import { TimelineDataProcessor } from '../data/TimelineDataProcessor.js';
 import { TimelineDataset } from '../data/TimelineDataset.js';
 import { buildPairSpans } from '../data/pairStripGeometry.js';
+import { cursorForFrame } from '../timeline.js';
 import { ScrubberAPI } from './ScrubberAPI.js';
 import { TimelineNavigationController } from './TimelineNavigationController.js';
 import { TimelineScrubController } from './TimelineScrubController.js';
@@ -83,10 +84,7 @@ export class MovieTimelineManager {
         segments: this.segments,
         timelineData: this.timelineData,
         profile,
-        frameToMs: (frameIndex) =>
-          dataset.getOccurrencesForFrame(frameIndex).length > 0
-            ? dataset.getCursorForFrame(frameIndex).movieTimeMs
-            : null,
+        frameToMs: (frameIndex) => cursorForFrame(dataset.steps, frameIndex)?.ms ?? null,
       }),
       maxRf: profile.maxRf,
       getFrameIndexAtMs: (ms) => dataset.getCursorAtMovieTime(ms)?.frameIndex ?? null,
@@ -303,7 +301,7 @@ export class MovieTimelineManager {
 
   _syncRendererFromStore() {
     const movieTimeMs = this.store.getState().timelineCursor?.movieTimeMs ?? 0;
-    const cursor = this.timelineDataset.getCursorAtMovieTime(movieTimeMs, { bias: 'nearest' });
+    const cursor = this.timelineDataset.getCursorAtMovieTime(movieTimeMs);
     if (cursor) this.timeline.setCustomTime(cursor.movieTimeMs);
   }
 
@@ -375,12 +373,12 @@ export class MovieTimelineManager {
     );
   }
 
-  getCursorAtMovieTime(movieTimeMs, options = {}) {
-    return this.timelineDataset?.getCursorAtMovieTime(movieTimeMs, options) ?? null;
+  getCursorAtMovieTime(movieTimeMs) {
+    return this.timelineDataset?.getCursorAtMovieTime(movieTimeMs) ?? null;
   }
 
-  getCursorAtTimelineProgress(timelineProgress, options = {}) {
-    return this.timelineDataset?.getCursorAtTimelineProgress(timelineProgress, options) ?? null;
+  getCursorAtTimelineProgress(timelineProgress) {
+    return this.timelineDataset?.getCursorAtTimelineProgress(timelineProgress) ?? null;
   }
 
   getCursorForFrame(frameIndex, options = {}) {

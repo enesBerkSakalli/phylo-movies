@@ -12,12 +12,8 @@ export type NavigationDirection = 'forward' | 'backward' | 'jump';
 export type CameraMode = 'orthographic' | 'orbit';
 export type AnimationStage = 'COLLAPSE' | 'EXPAND' | 'REORDER' | null;
 export type LayoutProjectionMode = 'radial' | 'hyperbolic' | 'walrus-3d';
-export type TimelineOccurrenceSelector =
-  'first' | 'last' | 'semantic' | 'input_tree_hold' | number | null;
-export type TimelineCursorTimeAnchor = 'start' | 'end' | 'semantic';
 export interface TimelineCursorFrameOptions {
-  occurrence?: TimelineOccurrenceSelector;
-  timeAnchor?: TimelineCursorTimeAnchor;
+  occurrence?: 'semantic' | 'last';
 }
 
 export interface MsaRegionRange {
@@ -97,9 +93,6 @@ export interface TimelineCursorState {
   movieTimeMs: number;
   timelineProgress: number;
   segmentIndex: number | null;
-  segmentProgress: number | null;
-  occurrenceIndex: number | null;
-  occurrenceInFrameIndex: number | null;
   occurrenceRole: string | null;
   holdKind: string | null;
   motionSourceFrameIndex?: number | null;

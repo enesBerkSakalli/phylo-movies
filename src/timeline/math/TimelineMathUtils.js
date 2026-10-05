@@ -1,21 +1,10 @@
 import { TIMELINE_CONSTANTS } from '../constants.js';
-import { TimelineTimingResolver } from './TimelineTimingResolver.js';
-import { getSegmentBounds, timeToSegmentIndex } from '../utils/segmentTiming.js';
-import { TransitionFrame } from '../time/TransitionFrame.js';
 
 /**
- * Timeline math utilities for progress/time conversion, segment lookup, and duration calculations.
+ * Timeline math utilities for progress/time conversion and duration calculations.
  */
 export class TimelineMathUtils {
-  // ==========================================================================
-  // CONSTANTS
-  // ==========================================================================
-
   static EPSILON_MS = 1;
-
-  // ==========================================================================
-  // PROGRESS / TIME CONVERSION
-  // ==========================================================================
 
   static progressToTime(progress, totalDuration) {
     if (!Number.isFinite(totalDuration) || totalDuration <= 0) {
@@ -34,159 +23,17 @@ export class TimelineMathUtils {
     );
   }
 
-  // ==========================================================================
-  // FRAME INDEX RESOLUTION
-  // ==========================================================================
-
-  static getTargetFrameForTime(
-    segments,
-    currentTime,
-    segmentDurations,
-    bias = 'nearest',
-    cumulativeDurations = null
-  ) {
-    if (
-      !Array.isArray(segments) ||
-      segments.length === 0 ||
-      !Array.isArray(segmentDurations) ||
-      segmentDurations.length === 0
-    ) {
-      return {
-        frameIndex: null,
-        segmentIndex: TIMELINE_CONSTANTS.DEFAULT_SEGMENT_INDEX,
-        segmentProgress: TIMELINE_CONSTANTS.DEFAULT_PROGRESS,
-      };
-    }
-
-    const timelineData = {
-      segmentDurations,
-      cumulativeDurations: cumulativeDurations || this._buildCumulative(segmentDurations),
-    };
-    const segmentIndex = timeToSegmentIndex(currentTime, timelineData, {
-      preferLastAtSameTime: false,
-      includeEnd: true,
-    });
-    const bounds = getSegmentBounds(segmentIndex, timelineData);
-    const segmentStartTime = bounds?.start ?? 0;
-    const segmentDuration = segmentDurations[segmentIndex];
-    const segment = segments[segmentIndex];
-
-    if (!segment || !Number.isFinite(segmentDuration) || segmentDuration <= 0) {
-      return {
-        frameIndex: null,
-        segmentIndex: TIMELINE_CONSTANTS.DEFAULT_SEGMENT_INDEX,
-        segmentProgress: TIMELINE_CONSTANTS.DEFAULT_PROGRESS,
-      };
-    }
-
-    const clampedTime = Math.max(
-      segmentStartTime + this.EPSILON_MS,
-      Math.min(currentTime, segmentStartTime + segmentDuration - this.EPSILON_MS)
-    );
-    const segmentProgress = (clampedTime - segmentStartTime) / segmentDuration;
-
-    if (TimelineTimingResolver.hasSemanticTiming(segment)) {
-      return TimelineTimingResolver.getTargetFrame(
-        segment,
-        clampedTime - segmentStartTime,
-        segmentIndex,
-        segmentProgress,
-        bias,
-        this.clampProgress.bind(this)
-      );
-    }
-
-    throw new Error('[TimelineMathUtils] timeline segment timing is required');
-  }
-
-  // ==========================================================================
-  // DURATION CALCULATIONS
-  // ==========================================================================
-
   static calculateSegmentDurations(segments) {
     return segments.map((segment) => this.calculateSegmentDuration(segment));
   }
 
   static calculateSegmentDuration(segment) {
-    const semanticDuration = TimelineTimingResolver.calculateTimingDuration(segment);
-    if (semanticDuration === null) {
+    if (!Array.isArray(segment?.timing) || segment.timing.length === 0) {
       throw new Error('[TimelineMathUtils] timeline segment timing is required');
     }
-    return semanticDuration;
-  }
-
-  // ==========================================================================
-  // TRANSITION FRAMES
-  // ==========================================================================
-
-  static getTransitionFrameForTimelineProgress(progress, segments, timelineData, treeList) {
-    if (
-      !Array.isArray(segments) ||
-      segments.length === 0 ||
-      !Array.isArray(treeList) ||
-      treeList.length === 0 ||
-      !timelineData ||
-      !Number.isFinite(timelineData.totalDuration) ||
-      timelineData.totalDuration <= 0
-    ) {
-      return null;
-    }
-
-    const currentTime = this.progressToTime(progress, timelineData.totalDuration);
-    const segmentIndex = timeToSegmentIndex(currentTime, timelineData, {
-      preferLastAtSameTime: false,
-      includeEnd: true,
-    });
-    const segment = segments[segmentIndex];
-
-    if (!segment) {
-      throw new Error('[TimelineMathUtils] timeline segment is required');
-    }
-
-    const bounds = getSegmentBounds(segmentIndex, timelineData);
-    const segmentStart = bounds?.start ?? 0;
-    const segmentDuration = timelineData.segmentDurations[segmentIndex];
-    const localTime = Math.max(
-      0,
-      Math.min(currentTime - segmentStart, Number.isFinite(segmentDuration) ? segmentDuration : 0)
+    return segment.timing.reduce(
+      (total, { durationMs }) => total + (durationMs > 0 ? durationMs : 0),
+      0
     );
-
-    if (!TimelineTimingResolver.hasSemanticTiming(segment)) {
-      throw new Error('[TimelineMathUtils] timeline segment timing is required');
-    }
-
-    return TimelineTimingResolver.getTransitionFrame(
-      segment,
-      localTime,
-      treeList,
-      this._createStaticTransitionFrame.bind(this),
-      this.clampProgress.bind(this)
-    );
-  }
-
-  // ==========================================================================
-  // BINARY SEARCH HELPERS
-  // ==========================================================================
-
-  static _buildCumulative(segmentDurations) {
-    const arr = new Array(segmentDurations.length);
-    let acc = 0;
-    for (let i = 0; i < segmentDurations.length; i++) {
-      acc += segmentDurations[i];
-      arr[i] = acc;
-    }
-    return arr;
-  }
-
-  static _createStaticTransitionFrame(idx, treeList, extra = {}) {
-    const tree = treeList?.[idx];
-    return TransitionFrame.from({
-      sourceTree: tree,
-      targetTree: tree,
-      transitionProgress: 0,
-      sourceTreeIndex: idx,
-      targetTreeIndex: idx,
-      ...extra,
-    });
   }
 }
