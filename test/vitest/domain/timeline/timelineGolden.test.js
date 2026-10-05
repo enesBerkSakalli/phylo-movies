@@ -1,7 +1,9 @@
 // Golden pin for the timeline: segment spans, ms -> cursor, frame -> cursor, ms -> animated frames.
 // The expected files were generated from the pre-distill code (`vitest -u` rewrites them);
-// every refactor of src/timeline must leave them byte-identical. The one exception: 15 `resolved`
-// rows were regenerated when the progress clock went, where ms / total * total fell 1 ULP short.
+// every refactor of src/timeline must leave them byte-identical. The exceptions: 15 `resolved`
+// rows were regenerated when the progress clock went, where ms / total * total fell 1 ULP short;
+// and the `last` frame rows of input trees that start a transition (frame 0 and the like) moved
+// from that transition's first step to the input tree's hold, so going back to one shows the tree.
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';

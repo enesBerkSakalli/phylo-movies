@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useAppStore } from '../../../../src/state/phyloStore/store.js';
+import { buildTimeline } from '../../../../src/timeline/timeline.js';
+import { describeCursor } from '../../../../src/timeline/describeCursor.js';
+import { smallExampleMovieData } from '../../../fixtures/timeline/generatedMovieData.js';
 
 const trees = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
 
@@ -13,6 +16,7 @@ const resetPlaybackState = () => {
     renderInProgress: false,
     treeList: [],
     timeline: null,
+    timelineFrames: [],
   });
 };
 
@@ -156,5 +160,61 @@ describe('playback navigation', () => {
     expect(state.timelineCursor.movieTimeMs).toBe(16_000);
     expect(state.animationStartTime).toBe(4000);
     expect(getCursorAtMovieTime).toHaveBeenCalledWith(16_000);
+  });
+
+  describe('jumping to an input tree', () => {
+    const movie = smallExampleMovieData;
+    const timeline = buildTimeline(movie);
+    const inputFrames = movie.frames
+      .filter((frame) => frame.frame_type === 'input_tree')
+      .map((frame) => frame.frame_index);
+    const startAt = (frameIndex) => {
+      useAppStore.setState({
+        treeList: movie.frames.map((frame) => ({ id: frame.frame_index })),
+        timelineFrames: movie.frames,
+        timeline,
+        frameIndex,
+        timelineCursor: timeline.cursorForFrame(frameIndex),
+      });
+      return useAppStore.getState();
+    };
+    const shownNow = () => {
+      const { frameIndex, timelineCursor } = useAppStore.getState();
+      return [frameIndex, describeCursor(timeline, timelineCursor).text];
+    };
+
+    it('lands on the input tree hold when going to the previous input tree', () => {
+      for (let tree = 1; tree < inputFrames.length; tree += 1) {
+        startAt(inputFrames[tree]).goToPreviousInputTree();
+
+        expect(shownNow()).toEqual([inputFrames[tree - 1], `Input tree ${tree}`]);
+      }
+    });
+
+    it('lands on the input tree hold when going to the next input tree', () => {
+      for (let tree = 0; tree < inputFrames.length - 1; tree += 1) {
+        startAt(inputFrames[tree]).goToNextInputTree();
+
+        expect(shownNow()).toEqual([inputFrames[tree + 1], `Input tree ${tree + 2}`]);
+      }
+    });
+
+    it('lands on the input tree hold when its segment is clicked or reached with Home and End', () => {
+      const segments = timeline.segments.filter((segment) => segment.isInputTreeSegment);
+      segments.forEach((segment, tree) => {
+        const movieTimeMs = (segment.start + segment.end) / 2;
+        startAt(0).goToPosition(segment.firstFrame, 'jump', { movieTimeMs });
+
+        expect(shownNow()).toEqual([segment.firstFrame, `Input tree ${tree + 1}`]);
+      });
+    });
+
+    it('lands on the input tree hold when a backward step reaches one', () => {
+      for (let tree = 0; tree < inputFrames.length - 1; tree += 1) {
+        startAt(inputFrames[tree] + 1).backward();
+
+        expect(shownNow()).toEqual([inputFrames[tree], `Input tree ${tree + 1}`]);
+      }
+    });
   });
 });

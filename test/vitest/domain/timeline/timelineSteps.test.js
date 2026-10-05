@@ -41,7 +41,11 @@ describe('timeline steps', () => {
   it('anchor a frame on its input-tree hold, or on its last appearance', () => {
     const hold = steps.find((step) => step.hold === 'input_tree' && step.from === 22);
     expect(cursorForFrame(steps, 22)).toEqual({ step: hold, ms: hold.start });
-    expect(cursorForFrame(steps, 0, true).ms).toBe(1500);
+    // Going back to an input tree lands on its hold, though the next transition starts from it too.
+    const firstHold = steps.find((step) => step.hold === 'input_tree' && step.from === 0);
+    expect(cursorForFrame(steps, 0, true)).toEqual({ step: firstHold, ms: 0 });
+    const leaving = steps.find((step) => step.from === 1 && step.to === 2);
+    expect(cursorForFrame(steps, 1, true)).toEqual({ step: leaving, ms: leaving.start });
     expect(cursorForFrame(steps, 23).step.hold).toBe('input_tree');
     expect(steps.some((step) => step.hold === 'no_op_pair' && step.to === 23)).toBe(true);
     expect(cursorForFrame(steps, 9999)).toBeNull();
