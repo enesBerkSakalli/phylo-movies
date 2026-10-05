@@ -93,7 +93,7 @@ export class TimelineView {
 
     this.canvas = document.createElement('div');
     this.canvas.style.cssText =
-      'position:absolute;left:0;right:0;top:0;bottom:0;z-index:2;pointer-events:auto;';
+      'position:absolute;left:0;right:0;top:0;bottom:0;z-index:2;pointer-events:auto;touch-action:none;';
     container.appendChild(this.canvas);
   }
 

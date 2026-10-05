@@ -118,8 +118,23 @@ describe('TimelineView', () => {
     target.dispatchEvent(new global.window.MouseEvent(type, { bubbles: true, clientX, clientY }));
   }
 
+  // A pointer is a mouse unless told otherwise; touch has no hover.
+  function dispatchPointer(target, type, clientX, clientY = 10, init = {}) {
+    target.dispatchEvent(
+      new global.window.PointerEvent(type, {
+        bubbles: true,
+        clientX,
+        clientY,
+        pointerId: 1,
+        pointerType: 'mouse',
+        ...init,
+      })
+    );
+  }
+
   const clickTimeline = (view, ms) => dispatchMouse(view.canvas, 'click', view.msToX(ms));
-  const mouseDownTimeline = (view, x) => dispatchMouse(view.canvas, 'mousedown', x);
+  const pointerDownTimeline = (view, x, init) =>
+    dispatchPointer(view.canvas, 'pointerdown', x, 10, init);
   const keyDown = (view, key, init = {}) =>
     view.canvas.dispatchEvent(
       new global.window.KeyboardEvent('keydown', { bubbles: true, key, ...init })
@@ -321,8 +336,8 @@ describe('TimelineView', () => {
     try {
       const { timeline } = makeTimelineFixture();
       const { view, events } = mountView(timeline);
-      dispatchMouse(view.canvas, 'mousemove', 100);
-      dispatchMouse(view.canvas, 'mouseleave', 100);
+      dispatchPointer(view.canvas, 'pointermove', 100);
+      dispatchPointer(view.canvas, 'pointerleave', 100);
 
       let canceledFrameId = null;
       global.cancelAnimationFrame = (id) => {
@@ -345,19 +360,17 @@ describe('TimelineView', () => {
     const { timeline } = makeTimelineFixture();
     const { view } = mountView(timeline);
 
-    // Finalizing while mouse handlers are still bound would let a late event
+    // Finalizing while pointer handlers are still bound would let a late event
     // reach a torn-down deck, so the order is a contract rather than incidental.
     const order = [];
-    const originalRemoveEventListener = global.window.removeEventListener.bind(global.window);
-    global.window.removeEventListener = (event, handler, options) => {
-      if (event === 'mouseup') order.push('unbind');
+    const originalRemoveEventListener = view.canvas.removeEventListener.bind(view.canvas);
+    view.canvas.removeEventListener = (event, handler, options) => {
+      if (event === 'pointerup') order.push('unbind');
       return originalRemoveEventListener(event, handler, options);
     };
     view.deck.finalize = () => order.push('finalize');
 
     view.destroy();
-
-    global.window.removeEventListener = originalRemoveEventListener;
 
     expect(order).to.deep.equal(['unbind', 'finalize']);
   });
@@ -368,7 +381,7 @@ describe('TimelineView', () => {
       const { view, events } = mountView(timeline);
       const deckCanvas = view.canvas.querySelector('canvas');
 
-      dispatchMouse(deckCanvas, 'mousemove', 100);
+      dispatchPointer(deckCanvas, 'pointermove', 100);
       dispatchMouse(deckCanvas, 'click', view.msToX(1500));
 
       expect(events.hovers).to.deep.equal([0]);
@@ -379,7 +392,7 @@ describe('TimelineView', () => {
       const { timeline } = makeTimelineFixture();
       const { view, events } = mountView(timeline);
 
-      mouseDownTimeline(view, 12);
+      pointerDownTimeline(view, 12);
 
       expect(events.scrubs).to.deep.equal([{ ms: 0, phase: 'start' }]);
     });
@@ -388,9 +401,9 @@ describe('TimelineView', () => {
       const { timeline } = makeTimelineFixture();
       const { view, events } = mountView(timeline);
 
-      mouseDownTimeline(view, 0);
-      dispatchMouse(view.canvas, 'mousemove', 400);
-      dispatchMouse(global.window, 'mouseup', 400);
+      pointerDownTimeline(view, 0);
+      dispatchPointer(view.canvas, 'pointermove', 400);
+      dispatchPointer(view.canvas, 'pointerup', 400);
       clickTimeline(view, 1500);
 
       expect(events.scrubs).to.deep.equal([
@@ -407,12 +420,63 @@ describe('TimelineView', () => {
       const { timeline } = makeTimelineFixture();
       const { view, events } = mountView(timeline);
 
-      mouseDownTimeline(view, 120);
+      pointerDownTimeline(view, 120);
       clickTimeline(view, 1500);
 
       expect(events.scrubs).to.deep.equal([]);
       expect(events.selects).to.have.length(1);
       expect(events.selects[0].index).to.equal(1);
+    });
+
+    it('scrubs from a touch drag, holding the pointer so the finger may leave the strip', () => {
+      const { timeline } = makeTimelineFixture();
+      const { view, events } = mountView(timeline);
+      const captured = [];
+      view.canvas.setPointerCapture = (id) => captured.push(id);
+      const touch = { pointerType: 'touch', pointerId: 7 };
+
+      pointerDownTimeline(view, 0, touch);
+      dispatchPointer(view.canvas, 'pointermove', 400, 10, touch);
+      dispatchPointer(view.canvas, 'pointerup', 400, 10, touch);
+
+      expect(captured).to.deep.equal([7]);
+      expect(events.scrubs).to.deep.equal([
+        { ms: 0, phase: 'start' },
+        { ms: 1500, phase: 'move' },
+        { ms: 1500, phase: 'end' },
+      ]);
+    });
+
+    it('ends the scrub when the browser cancels the touch', () => {
+      const { timeline } = makeTimelineFixture();
+      const { view, events } = mountView(timeline);
+      const touch = { pointerType: 'touch', pointerId: 7 };
+
+      pointerDownTimeline(view, 0, touch);
+      dispatchPointer(view.canvas, 'pointercancel', 0, 10, touch);
+
+      expect(events.scrubs.map(({ phase }) => phase)).to.deep.equal(['start', 'end']);
+    });
+
+    it('follows only the pointer that grabbed the handle', () => {
+      const { timeline } = makeTimelineFixture();
+      const { view, events } = mountView(timeline);
+
+      pointerDownTimeline(view, 0, { pointerType: 'touch', pointerId: 7 });
+      pointerDownTimeline(view, 0, { pointerType: 'touch', pointerId: 8 });
+      dispatchPointer(view.canvas, 'pointermove', 400, 10, { pointerType: 'touch', pointerId: 8 });
+      dispatchPointer(view.canvas, 'pointerup', 400, 10, { pointerType: 'touch', pointerId: 8 });
+
+      expect(events.scrubs).to.deep.equal([{ ms: 0, phase: 'start' }]);
+    });
+
+    it('hovers for the mouse only: a touch drag over the strip hovers nothing', () => {
+      const { timeline } = makeTimelineFixture();
+      const { view, events } = mountView(timeline);
+
+      dispatchPointer(view.canvas, 'pointermove', 100, 10, { pointerType: 'touch' });
+
+      expect(events.hovers).to.deep.equal([]);
     });
 
     it('opens the inspector request for a double-clicked transition, not an input tree', () => {
@@ -479,7 +543,7 @@ describe('TimelineView', () => {
       };
       const { view, events } = mountView(timeline, { container });
 
-      dispatchMouse(view.canvas, 'mousemove', 100);
+      dispatchPointer(view.canvas, 'pointermove', 100);
 
       expect(events.hovers).to.deep.equal([0]);
       expect(view.anchorX(0)).to.be.closeTo(400 / 3, 1e-6);
@@ -487,7 +551,7 @@ describe('TimelineView', () => {
       // The tooltip anchor follows the strip when the page moves under a still pointer
       left = 40;
       top = 12;
-      dispatchMouse(view.canvas, 'mousemove', 140, 22);
+      dispatchPointer(view.canvas, 'pointermove', 140, 22);
 
       expect(events.hovers).to.deep.equal([0, 0]);
       expect(view.anchorX(0)).to.be.closeTo(40 + 400 / 3, 1e-6);
@@ -499,17 +563,17 @@ describe('TimelineView', () => {
         const { timeline } = makeTimelineFixture();
         const { view, events } = mountView(timeline);
 
-        dispatchMouse(view.canvas, 'mousemove', 100);
-        dispatchMouse(view.canvas, 'mouseleave', 100);
+        dispatchPointer(view.canvas, 'pointermove', 100);
+        dispatchPointer(view.canvas, 'pointerleave', 100);
         clock.tick(149);
         expect(events.hovers).to.deep.equal([0]);
         clock.tick(1);
         expect(events.hovers).to.deep.equal([0, null]);
 
-        dispatchMouse(view.canvas, 'mousemove', 100);
-        dispatchMouse(view.canvas, 'mouseleave', 100);
+        dispatchPointer(view.canvas, 'pointermove', 100);
+        dispatchPointer(view.canvas, 'pointerleave', 100);
         clock.tick(100);
-        dispatchMouse(view.canvas, 'mousemove', 100);
+        dispatchPointer(view.canvas, 'pointermove', 100);
         clock.tick(1000);
         expect(events.hovers).to.deep.equal([0, null, 0, 0]);
       } finally {

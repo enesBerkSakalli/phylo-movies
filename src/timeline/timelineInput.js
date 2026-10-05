@@ -5,7 +5,8 @@ const SCRUB_GRAB_PX = 24;
 
 /**
  * Turns pointer and keyboard events on the strip into callbacks. It holds no selection: it asks
- * the view where things are and reports what the user meant.
+ * the view where things are and reports what the user meant. Pointer events, so a finger drags
+ * the handle as a mouse does; only the mouse hovers.
  *
  * @param {TimelineView} view
  * @param {Object} callbacks
@@ -22,7 +23,7 @@ export function attachTimelineInput(view, { onScrub, onSelect, onHover, onInspec
   // The focusable wrapper: it hears the keys, and the pointer events that bubble up from deck's canvas
   const target = view.canvas;
 
-  let dragging = false; // the handle is held
+  let dragging = null; // the pointer id holding the handle
   let grabbed = false; // the click that ends a handle drag selects nothing
   let hovered = null;
   let hoverTimer = null;
@@ -55,21 +56,31 @@ export function attachTimelineInput(view, { onScrub, onSelect, onHover, onInspec
     onScrub(view.scrubberMs, phase);
   };
 
-  const onMouseMove = (event) => {
-    if (dragging) return scrubTo(event, 'move');
+  const onPointerMove = (event) => {
+    if (dragging !== null) {
+      if (event.pointerId === dragging) scrubTo(event, 'move');
+      return;
+    }
+    if (event.pointerType !== 'mouse') return;
 
     // Hover reports the segment under the pointer, not the nearest centre
     hover(stepAt(steps, msAt(event)).segment);
   };
 
-  const onMouseDown = (event) => {
-    dragging = grabbed = Math.abs(localX(event) - view.msToX(view.scrubberMs)) < SCRUB_GRAB_PX;
-    if (dragging) onScrub(view.scrubberMs, 'start');
+  const onPointerDown = (event) => {
+    if (dragging !== null) return;
+    grabbed = Math.abs(localX(event) - view.msToX(view.scrubberMs)) < SCRUB_GRAB_PX;
+    if (!grabbed) return;
+
+    dragging = event.pointerId;
+    // Held by the strip, the drag goes on when the pointer leaves it
+    target.setPointerCapture?.(event.pointerId);
+    onScrub(view.scrubberMs, 'start');
   };
 
-  const onMouseUp = () => {
-    if (!dragging) return;
-    dragging = false;
+  const onPointerEnd = (event) => {
+    if (event.pointerId !== dragging) return;
+    dragging = null;
     onScrub(view.scrubberMs, 'end');
   };
 
@@ -113,19 +124,20 @@ export function attachTimelineInput(view, { onScrub, onSelect, onHover, onInspec
     event.preventDefault();
   };
 
-  const onMouseLeave = () => {
+  const onPointerLeave = () => {
     if (hovered !== null) hover(null);
   };
 
   const listeners = [
-    [target, 'mousemove', onMouseMove],
-    [target, 'mousedown', onMouseDown],
-    [window, 'mouseup', onMouseUp],
+    [target, 'pointermove', onPointerMove],
+    [target, 'pointerdown', onPointerDown],
+    [target, 'pointerup', onPointerEnd],
+    [target, 'pointercancel', onPointerEnd],
     [target, 'click', onClick],
     [target, 'dblclick', onDoubleClick],
     [target, 'keydown', onKeyDown],
     [target, 'wheel', onWheel, { passive: false }],
-    [target, 'mouseleave', onMouseLeave],
+    [target, 'pointerleave', onPointerLeave],
   ];
   listeners.forEach(([element, type, handler, options]) =>
     element.addEventListener(type, handler, options)

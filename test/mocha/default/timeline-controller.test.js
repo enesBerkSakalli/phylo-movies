@@ -403,7 +403,12 @@ describe('TimelineController', () => {
     const { view } = controller;
 
     view.canvas.dispatchEvent(
-      new global.window.MouseEvent('mousemove', { bubbles: true, clientX: 5, clientY: 10 })
+      new global.window.PointerEvent('pointermove', {
+        bubbles: true,
+        clientX: 5,
+        clientY: 10,
+        pointerType: 'mouse',
+      })
     );
 
     expect(useAppStore.getState().hoveredSegment).to.deep.equal({ index: 0, x: view.anchorX(0) });
@@ -417,7 +422,13 @@ describe('TimelineController', () => {
     await controller.mount(makeContainer());
     const { canvas } = controller.view;
     const moveTo = (clientX) =>
-      canvas.dispatchEvent(new global.window.MouseEvent('mousemove', { bubbles: true, clientX }));
+      canvas.dispatchEvent(
+        new global.window.PointerEvent('pointermove', {
+          bubbles: true,
+          clientX,
+          pointerType: 'mouse',
+        })
+      );
     let writes = 0;
     const unsubscribe = useAppStore.subscribe(() => (writes += 1));
 
@@ -438,12 +449,19 @@ describe('TimelineController', () => {
     const controller = createController();
     await controller.mount(makeContainer());
 
-    controller.view.canvas.dispatchEvent(
-      new global.window.MouseEvent('mousedown', { bubbles: true, clientX: 5, clientY: 10 })
-    );
+    const pointer = (type) =>
+      controller.view.canvas.dispatchEvent(
+        new global.window.PointerEvent(type, {
+          bubbles: true,
+          clientX: 5,
+          clientY: 10,
+          pointerId: 1,
+        })
+      );
+    pointer('pointerdown');
     expect(useAppStore.getState().isScrubbing).to.equal(true);
 
-    global.window.dispatchEvent(new global.window.MouseEvent('mouseup'));
+    pointer('pointerup');
     await flushMicrotasks();
     expect(useAppStore.getState().isScrubbing).to.equal(false);
 
