@@ -1,5 +1,4 @@
 import { calculateWindow } from '../../domain/msa/msaWindowCalculator.js';
-import { clamp01 } from '../../domain/math/mathUtils.js';
 
 export function buildTimelineStatusSnapshot({
   frameIndex,
@@ -12,12 +11,10 @@ export function buildTimelineStatusSnapshot({
   msaColumnCount = null,
 }) {
   const sequenceIndex = timelineCursor?.frameIndex ?? frameIndex;
-  const position = buildInterpolationText(
-    sequenceIndex,
-    treeListLength,
-    inputFrameIndices,
-    timelineCursor
-  );
+  const position = {
+    ...buildReadablePosition(sequenceIndex, treeListLength, inputFrameIndices, timelineCursor),
+    movieTimeMs: timelineCursor?.movieTimeMs ?? 0,
+  };
   const segmentText = buildSegmentText(timelineCursor);
 
   return {
@@ -36,28 +33,6 @@ export function buildTimelineStatusSnapshot({
     msaWindowSize,
     msaStepSize,
   };
-}
-
-function buildInterpolationText(
-  sequenceIndex,
-  totalSequenceLength,
-  inputTreeIndices,
-  timelineCursor
-) {
-  const coordinateValue = getCoordinateValue(sequenceIndex, totalSequenceLength, timelineCursor);
-  return {
-    ...buildReadablePosition(sequenceIndex, totalSequenceLength, inputTreeIndices, timelineCursor),
-    fullPrecision: coordinateValue.toString(),
-  };
-}
-
-function getCoordinateValue(sequenceIndex, totalSequenceLength, timelineCursor) {
-  const explicitValue =
-    typeof timelineCursor?.timelineProgress === 'number' ? timelineCursor.timelineProgress : null;
-  if (explicitValue != null) return clamp01(explicitValue);
-
-  const derivedValue = totalSequenceLength > 1 ? sequenceIndex / (totalSequenceLength - 1) : 0;
-  return clamp01(derivedValue);
 }
 
 function buildReadablePosition(

@@ -197,7 +197,7 @@ export class AnimationRunner {
     const toLayoutCacheKey = dataTo.layoutCacheKey ?? null;
     const hasFrameSensitiveLifecycleStage = isFrameSensitiveLifecycleStage(transitionChangeModel);
 
-    if (transitionFrame.isStatic || playback.isInPause) {
+    if (transitionFrame.isStatic || transitionFrame.holdKind) {
       stage = null;
     } else if (
       !hasFrameSensitiveLifecycleStage &&
@@ -311,9 +311,7 @@ function getPlaybackState(state, timestamp) {
   const totalDurationMs = movieTimelineManager?.timelineData?.totalDuration;
 
   if (
-    !movieTimelineManager ||
-    typeof movieTimelineManager.resolveFrameAtTimelineProgress !== 'function' ||
-    typeof movieTimelineManager.getCursorAtMovieTime !== 'function' ||
+    typeof movieTimelineManager?.frameAt !== 'function' ||
     !Number.isFinite(animationStartTime) ||
     !Number.isFinite(totalDurationMs) ||
     totalDurationMs <= 0
@@ -324,26 +322,15 @@ function getPlaybackState(state, timestamp) {
   const safeSpeed = Number.isFinite(animationSpeed) && animationSpeed > 0 ? animationSpeed : 1;
   const elapsedMs = Math.max(0, timestamp - animationStartTime) * safeSpeed;
   const movieTimeMs = Math.min(elapsedMs, totalDurationMs);
-  const rawProgress = elapsedMs / totalDurationMs;
-  const timelineProgress = movieTimeMs / totalDurationMs;
-  const transitionFrame = movieTimelineManager.resolveFrameAtTimelineProgress(timelineProgress);
-  const timelineCursor = movieTimelineManager.getCursorAtMovieTime(movieTimeMs);
+  const transitionFrame = movieTimelineManager.frameAt(movieTimeMs);
 
-  if (!transitionFrame || !timelineCursor) {
+  if (!transitionFrame) {
     return null;
   }
 
   return {
     movieTimeMs,
-    timelineProgress,
-    timelineCursor,
-    isFinished: rawProgress >= 1,
-    fromIndex: transitionFrame.sourceTreeIndex,
-    toIndex: transitionFrame.targetTreeIndex,
-    localT: transitionFrame.transitionProgress,
-    isInPause: Boolean(transitionFrame.holdKind),
-    holdKind: transitionFrame.holdKind,
-    frameIndex: timelineCursor.frameIndex,
+    isFinished: elapsedMs >= totalDurationMs,
     transitionFrame,
   };
 }

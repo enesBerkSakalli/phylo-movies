@@ -90,8 +90,10 @@ function CursorStatus({ status }) {
         <div className="flex flex-col gap-1">
           <div>Current position in the tree sequence.</div>
           <div>{status.segment.tooltip}</div>
-          <div>Normalized sequence coordinate:</div>
-          <div className="font-bold text-primary tabular-nums">{status.position.fullPrecision}</div>
+          <div>Movie time:</div>
+          <div className="font-bold text-primary tabular-nums">
+            {Math.round(status.position.movieTimeMs)} ms
+          </div>
         </div>
       }
       contentClassName="border-border/60 bg-popover text-2xs font-mono text-popover-foreground"

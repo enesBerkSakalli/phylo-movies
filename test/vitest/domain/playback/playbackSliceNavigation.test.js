@@ -21,7 +21,6 @@ function createManager(overrides = {}) {
     timelineData: { totalDuration: 17_000 },
     getCursorForFrame: vi.fn(),
     getCursorAtMovieTime: vi.fn(),
-    getCursorAtTimelineProgress: vi.fn(),
     ...overrides,
   };
 }
@@ -39,7 +38,6 @@ describe('playback navigation', () => {
       sourceFrameIndex: 2,
       msaWindowIndex: 2,
       movieTimeMs: 3000,
-      timelineProgress: 0.75,
     };
     const getCursorForFrame = vi.fn(() => cursor);
 
@@ -69,19 +67,18 @@ describe('playback navigation', () => {
       sourceFrameIndex: 1,
       msaWindowIndex: 1,
       movieTimeMs: 2600,
-      timelineProgress: 0.65,
     };
-    const getCursorAtTimelineProgress = vi.fn(() => cursor);
+    const getCursorAtMovieTime = vi.fn(() => cursor);
 
     useAppStore.setState({
       playing: true,
       animationStartTime: 1000,
       treeList: trees,
       frameIndex: 1,
-      movieTimelineManager: createManager({ getCursorAtTimelineProgress }),
+      movieTimelineManager: createManager({ getCursorAtMovieTime }),
     });
 
-    useAppStore.getState().goToPosition(1, 'forward', { timelineProgress: 0.65 });
+    useAppStore.getState().goToPosition(1, 'forward', { movieTimeMs: 2600 });
 
     const state = useAppStore.getState();
     expect(state.playing).toBe(false);
@@ -89,7 +86,7 @@ describe('playback navigation', () => {
     expect(state.frameIndex).toBe(1);
     expect(state.timelineCursor).toBe(cursor);
     expect(state.timelineCursor.movieTimeMs).toBe(2600);
-    expect(getCursorAtTimelineProgress).toHaveBeenCalledWith(0.65);
+    expect(getCursorAtMovieTime).toHaveBeenCalledWith(2600);
   });
 
   it('seeks the whole semantic position to a movie time', () => {
@@ -116,7 +113,6 @@ describe('playback navigation', () => {
       sourceFrameIndex: 7,
       msaWindowIndex: 7,
       movieTimeMs: 9000,
-      timelineProgress: 9000 / 17_000,
     };
     const getCursorAtMovieTime = vi.fn(() => cursor);
 
@@ -147,7 +143,6 @@ describe('playback navigation', () => {
       sourceFrameIndex: 12,
       msaWindowIndex: 12,
       movieTimeMs: 16_000,
-      timelineProgress: 16_000 / 17_000,
     };
     const getCursorAtMovieTime = vi.fn(() => cursor);
 

@@ -16,7 +16,7 @@ class MockDeckGLTreeAnimationController {
   constructor() {
     this.ready = true;
     this.readyPromise = Promise.resolve();
-    this.renderTimelineProgress = vi.fn(() => Promise.resolve());
+    this.renderAtMovieTime = vi.fn(() => Promise.resolve());
     this.renderAllElements = vi.fn(() => Promise.resolve());
     this.resetInterpolationCaches = vi.fn();
     this.resetComparisonAutoFit = vi.fn();
@@ -111,8 +111,7 @@ describe('useTreeController static render scheduling', () => {
         inputTreeIndex: 0,
         sourceFrameIndex: 0,
         msaWindowIndex: 0,
-        movieTimeMs: 0,
-        timelineProgress: 0.1,
+        movieTimeMs: 1000,
       },
       setRenderInProgress: vi.fn(),
       syncMSAEnabled: false,
@@ -142,21 +141,20 @@ describe('useTreeController static render scheduling', () => {
     const firstRender = deferred();
     const { root } = await renderHookHarness();
 
-    controllerInstance.renderTimelineProgress.mockImplementationOnce(() => firstRender.promise);
+    controllerInstance.renderAtMovieTime.mockImplementationOnce(() => firstRender.promise);
 
     await flushNextRaf();
-    expect(controllerInstance.renderTimelineProgress).toHaveBeenCalledWith(0.1);
+    expect(controllerInstance.renderAtMovieTime).toHaveBeenCalledWith(1000);
 
     updateStore({
       timelineCursor: {
         ...storeState.timelineCursor,
         movieTimeMs: 9000,
-        timelineProgress: 0.9,
       },
     });
     await flushNextRaf();
 
-    expect(controllerInstance.renderTimelineProgress).toHaveBeenCalledTimes(1);
+    expect(controllerInstance.renderAtMovieTime).toHaveBeenCalledTimes(1);
 
     await act(async () => {
       firstRender.resolve();
@@ -166,8 +164,8 @@ describe('useTreeController static render scheduling', () => {
 
     await flushNextRaf();
 
-    expect(controllerInstance.renderTimelineProgress).toHaveBeenCalledTimes(2);
-    expect(controllerInstance.renderTimelineProgress).toHaveBeenLastCalledWith(0.9);
+    expect(controllerInstance.renderAtMovieTime).toHaveBeenCalledTimes(2);
+    expect(controllerInstance.renderAtMovieTime).toHaveBeenLastCalledWith(9000);
 
     await act(async () => {
       root.unmount();
@@ -183,7 +181,7 @@ describe('useTreeController static render scheduling', () => {
     await flushNextRaf();
 
     expect(storeState.setRenderInProgress).toHaveBeenCalledWith(true);
-    expect(controllerInstance.renderTimelineProgress).not.toHaveBeenCalled();
+    expect(controllerInstance.renderAtMovieTime).not.toHaveBeenCalled();
 
     await act(async () => {
       controllerReady.resolve();
@@ -191,7 +189,7 @@ describe('useTreeController static render scheduling', () => {
       await Promise.resolve();
     });
 
-    expect(controllerInstance.renderTimelineProgress).toHaveBeenCalledWith(0.1);
+    expect(controllerInstance.renderAtMovieTime).toHaveBeenCalledWith(1000);
     expect(storeState.setRenderInProgress).toHaveBeenLastCalledWith(false);
 
     await act(async () => {
@@ -232,7 +230,7 @@ describe('useTreeController static render scheduling', () => {
     await flushNextRaf();
 
     expect(storeState.prefetchTreeHydrationWindow).toHaveBeenCalledWith(0, 1);
-    expect(controllerInstance.renderTimelineProgress).toHaveBeenCalledWith(0.1);
+    expect(controllerInstance.renderAtMovieTime).toHaveBeenCalledWith(1000);
 
     await act(async () => {
       root.unmount();
@@ -311,7 +309,7 @@ describe('useTreeController static render scheduling', () => {
     const { root } = await renderHookHarness();
 
     await flushNextRaf();
-    expect(controllerInstance.renderTimelineProgress).toHaveBeenCalledTimes(1);
+    expect(controllerInstance.renderAtMovieTime).toHaveBeenCalledTimes(1);
 
     updateStore({
       frameIndex: 1,
@@ -319,13 +317,12 @@ describe('useTreeController static render scheduling', () => {
         ...storeState.timelineCursor,
         frameIndex: 1,
         movieTimeMs: 5000,
-        timelineProgress: 0.5,
       },
     });
     await flushNextRaf();
 
-    expect(controllerInstance.renderTimelineProgress).toHaveBeenCalledTimes(2);
-    expect(controllerInstance.renderTimelineProgress).toHaveBeenLastCalledWith(0.5);
+    expect(controllerInstance.renderAtMovieTime).toHaveBeenCalledTimes(2);
+    expect(controllerInstance.renderAtMovieTime).toHaveBeenLastCalledWith(5000);
 
     await act(async () => {
       root.unmount();
@@ -343,7 +340,6 @@ describe('useTreeController static render scheduling', () => {
       timelineCursor: {
         ...storeState.timelineCursor,
         movieTimeMs: 2500,
-        timelineProgress: 0.25,
       },
     });
 
@@ -353,7 +349,7 @@ describe('useTreeController static render scheduling', () => {
     expect(rafQueue).toHaveLength(1);
 
     await flushNextRaf();
-    expect(controllerInstance.renderTimelineProgress).toHaveBeenLastCalledWith(0.25);
+    expect(controllerInstance.renderAtMovieTime).toHaveBeenLastCalledWith(2500);
 
     await act(async () => {
       root.unmount();

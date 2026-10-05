@@ -89,6 +89,10 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
       styleConfig: { labelOffsets: { DEFAULT: 20, EXTENSION: 5 } },
       timelineCursor: null,
       frameIndex: 0,
+      movieTimelineManager: {
+        getCursorAtMovieTime: () => ({ frameIndex: 0, movieTimeMs: 0 }),
+        getCursorForFrame: () => null,
+      },
       // Ensure functions exist if called
       setAnimationStage: sandbox.stub(),
       stop: sandbox.stub(),
@@ -216,13 +220,7 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
 
     const runner = controller.animationRunner;
 
-    runner.updateProgress({
-      timelineCursor: {
-        frameIndex: 0,
-        movieTimeMs: 0,
-        timelineProgress: 0,
-      },
-    });
+    runner.updateProgress({ movieTimeMs: 0 });
 
     expect(mockWorkerInstance.postMessage.calledTwice).to.be.true;
 

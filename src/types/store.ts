@@ -98,7 +98,7 @@ export interface TimelineCursorState {
 }
 
 export interface PlaybackSeekOptions {
-  timelineProgress?: number | null;
+  movieTimeMs?: number | null;
 }
 
 export interface TaxaGrouping {

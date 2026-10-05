@@ -1,5 +1,4 @@
 import { selectInputFrameIndices } from '../../state/phyloStore/selectors/treeSelectors.js';
-import { clamp01 } from '../../domain/math/mathUtils.js';
 
 // ============================================================================
 // SCRUBBER API
@@ -10,9 +9,9 @@ export class ScrubberAPI {
     this.treeController = treeController;
     this.timelineManager = timelineManager;
     this.store = store;
-    this.currentProgress = 0;
+    this.currentMs = 0;
     this.lastTransitionState = null;
-    this.pendingProgress = null;
+    this.pendingMs = null;
     this.processingPromise = null;
   }
 
@@ -20,25 +19,23 @@ export class ScrubberAPI {
   // PUBLIC API
   // ==========================================================================
 
-  async startScrubbing(progress) {
-    this.currentProgress = clampProgress(progress ?? 0);
+  async startScrubbing(movieTimeMs) {
+    this.currentMs = movieTimeMs ?? 0;
     this.lastTransitionState = null;
-    this.pendingProgress = null;
+    this.pendingMs = null;
   }
 
-  async updatePosition(progress) {
-    const clampedProgress = clampProgress(progress);
-    this.currentProgress = clampedProgress;
-    this.pendingProgress = clampedProgress;
+  async updatePosition(movieTimeMs) {
+    this.currentMs = movieTimeMs;
+    this.pendingMs = movieTimeMs;
     await this._flushPendingUpdates();
   }
 
-  async endScrubbing(finalProgress = null) {
-    if (finalProgress !== null) {
-      const clamped = clampProgress(finalProgress);
-      if (Math.abs(clamped - this.currentProgress) > 1e-6 || this.pendingProgress !== null) {
-        this.currentProgress = clamped;
-        this.pendingProgress = clamped;
+  async endScrubbing(finalMs = null) {
+    if (finalMs !== null) {
+      if (finalMs !== this.currentMs || this.pendingMs !== null) {
+        this.currentMs = finalMs;
+        this.pendingMs = finalMs;
         await this._flushPendingUpdates();
       }
     } else if (this.processingPromise) {
@@ -47,13 +44,13 @@ export class ScrubberAPI {
 
     const snapshot = this.lastTransitionState;
     this.lastTransitionState = null;
-    this.pendingProgress = null;
+    this.pendingMs = null;
     return snapshot;
   }
 
   destroy() {
     this.lastTransitionState = null;
-    this.pendingProgress = null;
+    this.pendingMs = null;
     this.processingPromise = null;
     this.treeController = null;
     this.store = null;
@@ -63,20 +60,19 @@ export class ScrubberAPI {
   // SCRUB UPDATE
   // ==========================================================================
 
-  async _performScrubUpdate(progress) {
-    this.currentProgress = progress;
+  async _performScrubUpdate(movieTimeMs) {
+    this.currentMs = movieTimeMs;
     try {
-      const transitionFrame = await this._getTransitionFrame(progress);
+      const transitionFrame = this.timelineManager?.frameAt?.(movieTimeMs);
       if (!transitionFrame) return;
 
-      const state = this.store.getState();
-      state.setTimelineProgress(progress);
+      this.store.getState().seek(movieTimeMs);
       await this._renderScrubFrame(transitionFrame);
 
-      this.lastTransitionState = { progress, transitionFrame };
+      this.lastTransitionState = { movieTimeMs, transitionFrame };
     } catch (error) {
       console.error('[ScrubberAPI] Scrub update failed:', {
-        progress,
+        movieTimeMs,
         error,
       });
     }
@@ -88,10 +84,10 @@ export class ScrubberAPI {
     }
 
     this.processingPromise = (async () => {
-      while (this.pendingProgress !== null && this.treeController) {
-        const nextProgress = this.pendingProgress;
-        this.pendingProgress = null;
-        await this._performScrubUpdate(nextProgress);
+      while (this.pendingMs !== null && this.treeController) {
+        const nextMs = this.pendingMs;
+        this.pendingMs = null;
+        await this._performScrubUpdate(nextMs);
       }
     })();
 
@@ -131,20 +127,4 @@ export class ScrubberAPI {
       options
     );
   }
-  // ==========================================================================
-  // TRANSITION FRAME
-  // ==========================================================================
-
-  async _getTransitionFrame(progress) {
-    if (!this.timelineManager) {
-      return null;
-    }
-
-    return this.timelineManager.resolveFrameAtTimelineProgress?.(progress) ?? null;
-  }
-}
-
-function clampProgress(value) {
-  if (!Number.isFinite(value)) return 0;
-  return clamp01(value);
 }

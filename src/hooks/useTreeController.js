@@ -86,8 +86,8 @@ export function useTreeController() {
           try {
             if (state.comparisonMode) {
               await renderComparisonMode(controller, state, state.frameIndex, state.timelineCursor);
-            } else if (Number.isFinite(state.timelineCursor?.timelineProgress)) {
-              await controller.renderTimelineProgress(state.timelineCursor.timelineProgress);
+            } else if (Number.isFinite(state.timelineCursor?.movieTimeMs)) {
+              await controller.renderAtMovieTime(state.timelineCursor.movieTimeMs);
             } else {
               await controller.renderAllElements({ treeIndex: state.frameIndex });
             }

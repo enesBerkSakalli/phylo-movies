@@ -2,32 +2,19 @@ import { describe, expect, it, vi } from 'vitest';
 import { createPlaybackProgressSynchronizer } from '../../../../src/treeVisualisation/systems/PlaybackProgressSynchronizer.js';
 
 describe('PlaybackProgressSynchronizer', () => {
-  it('syncs semantic movie time and its cursor as one playback position', () => {
-    const setTimelineCursor = vi.fn();
+  it('seeks the store to the playback movie time and prefetches ahead of the cursor', () => {
+    const seek = vi.fn();
     const prefetchFrame = vi.fn();
-    const cursor = {
-      frameIndex: 2,
-      movieTimeMs: 4200,
-      timelineProgress: 0.4,
-    };
     const syncProgress = createPlaybackProgressSynchronizer({
-      getState: () => ({ setTimelineCursor }),
+      getState: () => ({ seek, frameIndex: 2 }),
       isPrefetchEnabled: () => true,
       prefetchFrame,
     });
 
-    syncProgress({ timelineCursor: cursor });
+    syncProgress({ movieTimeMs: 4200 });
 
-    expect(setTimelineCursor).toHaveBeenCalledWith(cursor);
+    expect(seek).toHaveBeenCalledWith(4200);
     expect(prefetchFrame).toHaveBeenNthCalledWith(1, 3);
     expect(prefetchFrame).toHaveBeenNthCalledWith(2, 4);
-  });
-
-  it('rejects progress updates without a semantic cursor', () => {
-    const syncProgress = createPlaybackProgressSynchronizer({
-      getState: () => ({ setTimelineCursor: vi.fn() }),
-    });
-
-    expect(() => syncProgress()).toThrow('timeline cursor is required');
   });
 });

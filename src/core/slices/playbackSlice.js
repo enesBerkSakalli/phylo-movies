@@ -76,8 +76,8 @@ export const createPlaybackSlice = (set, get) => ({
       throw new Error('[playbackSlice] navigation position must be finite');
     }
     const requestedFrameIndex = clamp(Math.floor(position), 0, state.treeList.length - 1);
-    const cursor = Number.isFinite(options.timelineProgress)
-      ? manager.getCursorAtTimelineProgress(clamp(options.timelineProgress, 0, 1))
+    const cursor = Number.isFinite(options.movieTimeMs)
+      ? manager.getCursorAtMovieTime(options.movieTimeMs)
       : manager.getCursorForFrame(requestedFrameIndex, {
           occurrence: direction === 'backward' ? 'last' : 'semantic',
         });
@@ -173,7 +173,6 @@ function requireTimelineManager(state) {
   if (
     !manager ||
     typeof manager.getCursorAtMovieTime !== 'function' ||
-    typeof manager.getCursorAtTimelineProgress !== 'function' ||
     typeof manager.getCursorForFrame !== 'function'
   ) {
     throw new Error('[playbackSlice] semantic timeline manager is required');

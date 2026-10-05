@@ -9,18 +9,7 @@ import { TIMELINE_CONSTANTS } from '../constants.js';
  * - keep scrub-specific transient state out of the manager
  */
 export class TimelineScrubController {
-  constructor({
-    timelineDataset,
-    timelineData,
-    segments,
-    store,
-    getTimelineRenderer,
-    getScrubberAPI,
-    stopPlayback,
-  }) {
-    this.timelineDataset = timelineDataset;
-    this.timelineData = timelineData;
-    this.segments = segments;
+  constructor({ store, getTimelineRenderer, getScrubberAPI, stopPlayback }) {
     this.store = store;
     this.getTimelineRenderer = getTimelineRenderer;
     this.getScrubberAPI = getScrubberAPI;
@@ -54,9 +43,7 @@ export class TimelineScrubController {
     this.getTimelineRenderer()?.syncScrubState();
 
     const scrubberAPI = this.getScrubberAPI();
-    if (scrubberAPI) {
-      await scrubberAPI.startScrubbing(this._timeToProgress(timeMs));
-    }
+    if (scrubberAPI) await scrubberAPI.startScrubbing(timeMs);
   }
 
   updateScrubbing(timeMs) {
@@ -93,15 +80,14 @@ export class TimelineScrubController {
     if (!this.isScrubbing) return;
 
     const scrubberAPI = this.getScrubberAPI();
-    const finalProgress = this._timeToProgress(finalTimeMs);
     this.pendingScrubTimeMs = null;
     this._clearPendingFrame();
-    if (scrubberAPI) await scrubberAPI.endScrubbing(finalProgress);
+    if (scrubberAPI) await scrubberAPI.endScrubbing(finalTimeMs);
 
     this.isScrubbing = false;
     this.getTimelineRenderer()?.syncScrubState();
 
-    this.store.getState().setTimelineProgress(finalProgress);
+    this.store.getState().seek(finalTimeMs);
   }
 
   resetOnUnmount() {
@@ -122,12 +108,8 @@ export class TimelineScrubController {
     }
   }
 
-  _timeToProgress(time) {
-    return this.timelineDataset.getTimelineProgressAtMovieTime(time);
-  }
-
   _requestScrubRender(scrubberAPI, timeMs) {
-    scrubberAPI.updatePosition(this._timeToProgress(timeMs)).catch((error) => {
+    scrubberAPI.updatePosition(timeMs).catch((error) => {
       console.error('[TimelineScrubController] Scrub render request failed:', {
         timeMs,
         error,

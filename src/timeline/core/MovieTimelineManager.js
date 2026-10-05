@@ -61,9 +61,6 @@ export class MovieTimelineManager {
       onTimelinePositionUpdated: () => this.updateCurrentPosition(),
     });
     this.scrubController = new TimelineScrubController({
-      timelineDataset: this.timelineDataset,
-      timelineData: this.timelineData,
-      segments: this.segments,
       store: this.store,
       getTimelineRenderer: () => this.timeline,
       getScrubberAPI: () => this.scrubberAPI,

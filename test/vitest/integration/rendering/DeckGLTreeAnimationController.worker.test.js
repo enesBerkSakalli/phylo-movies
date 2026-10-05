@@ -383,13 +383,16 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     controller = new ControllerClass(null);
 
     const timelineCursor = {
-      timelineProgress: 0.4,
       movieTimeMs: 4200,
       frameIndex: 2,
     };
-    controller.animationRunner.updateProgress({
-      timelineCursor,
+    useAppStore.setState({
+      movieTimelineManager: {
+        getCursorAtMovieTime: () => timelineCursor,
+        getCursorForFrame: () => timelineCursor,
+      },
     });
+    controller.animationRunner.updateProgress({ movieTimeMs: 4200 });
 
     const state = useAppStore.getState();
     expect(state.timelineCursor).toBe(timelineCursor);

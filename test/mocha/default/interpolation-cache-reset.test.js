@@ -116,7 +116,7 @@ describe('Controller cache reset hook', () => {
   });
 });
 
-describe('InterpolationRenderer timeline progress', () => {
+describe('InterpolationRenderer movie time', () => {
   afterEach(() => {
     useAppStore.getState().reset();
   });
@@ -125,7 +125,7 @@ describe('InterpolationRenderer timeline progress', () => {
     useAppStore.setState({
       movieTimelineManager: {
         destroy: () => {},
-        resolveFrameAtTimelineProgress: () => null,
+        frameAt: () => null,
       },
     });
 
@@ -136,7 +136,7 @@ describe('InterpolationRenderer timeline progress', () => {
     };
     const renderer = new InterpolationRenderer(controller);
 
-    await renderer.renderTimelineProgress(0.5);
+    await renderer.renderAtMovieTime(1500);
 
     expect(controller.renderAllElements.called).to.equal(false);
   });
@@ -148,7 +148,7 @@ describe('InterpolationRenderer timeline progress', () => {
     useAppStore.setState({
       movieTimelineManager: {
         destroy: () => {},
-        resolveFrameAtTimelineProgress: () =>
+        frameAt: () =>
           TransitionFrame.from({
             sourceTree,
             targetTree,
@@ -171,7 +171,7 @@ describe('InterpolationRenderer timeline progress', () => {
     };
     const renderer = new InterpolationRenderer(controller);
 
-    await renderer.renderTimelineProgress(0.5);
+    await renderer.renderAtMovieTime(1500);
 
     expect(controller.renderAllElements.calledOnce).to.equal(true);
     expect(controller.renderAllElements.firstCall.args[0]).to.deep.include({
@@ -311,7 +311,7 @@ describe('InterpolationRenderer timeline progress', () => {
       ensureTreesHydrated,
       movieTimelineManager: {
         destroy: () => {},
-        resolveFrameAtTimelineProgress: () => {
+        frameAt: () => {
           const [hydratedSource, hydratedTarget] = ensureTreesHydrated([0, 1]);
           return TransitionFrame.from({
             sourceTree: hydratedSource,
@@ -344,7 +344,7 @@ describe('InterpolationRenderer timeline progress', () => {
     };
     const renderer = new InterpolationRenderer(controller);
 
-    await renderer.renderTimelineProgress(0.5);
+    await renderer.renderAtMovieTime(1500);
 
     expect(ensureTreesHydrated.calledWithMatch([0, 1])).to.equal(true);
     expect(controller._getOrCacheInterpolationData.called).to.equal(true);

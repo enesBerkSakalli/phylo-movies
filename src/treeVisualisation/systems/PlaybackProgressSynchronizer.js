@@ -3,18 +3,13 @@ export function createPlaybackProgressSynchronizer({
   isPrefetchEnabled = () => false,
   prefetchFrame = () => {},
 }) {
-  return (playbackState = {}) => {
-    const state = getState();
-    const cursor = playbackState.timelineCursor;
-    if (!cursor) {
-      throw new Error('[PlaybackProgressSynchronizer] timeline cursor is required');
-    }
-
-    state.setTimelineCursor(cursor);
+  return ({ movieTimeMs }) => {
+    getState().seek(movieTimeMs);
 
     if (isPrefetchEnabled()) {
-      prefetchFrame(cursor.frameIndex + 1);
-      prefetchFrame(cursor.frameIndex + 2);
+      const { frameIndex } = getState();
+      prefetchFrame(frameIndex + 1);
+      prefetchFrame(frameIndex + 2);
     }
   };
 }

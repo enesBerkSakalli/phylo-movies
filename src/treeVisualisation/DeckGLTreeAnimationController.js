@@ -593,9 +593,9 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     );
   }
 
-  async renderTimelineProgress(progress) {
+  async renderAtMovieTime(movieTimeMs) {
     if (this._destroyed) return;
-    return this.interpolationRenderer.renderTimelineProgress(progress);
+    return this.interpolationRenderer.renderAtMovieTime(movieTimeMs);
   }
 
   // ==========================================================================

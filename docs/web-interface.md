@@ -119,7 +119,7 @@ The bottom bar contains:
 - Timeline visualization (see [Reading the timeline](#reading-the-timeline))
 - Chart section
 
-The status strip shows the current position as "Tree a → b · step i of N" (or "Input tree n" on an input tree), the cursor position, and the normalized sequence coordinate. The **Inspect transition** button next to it opens the Transition Inspector for the selected transition and is disabled until a transition is selected. When MSA data are available, the same strip also reports the active alignment window and the configured window/step size.
+The status strip shows the current position as "Tree a → b · step i of N" (or "Input tree n" on an input tree), the cursor position, and (in its tooltip) the movie time in milliseconds. The **Inspect transition** button next to it opens the Transition Inspector for the selected transition and is disabled until a transition is selected. When MSA data are available, the same strip also reports the active alignment window and the configured window/step size.
 
 Transport buttons:
 

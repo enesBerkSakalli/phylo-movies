@@ -6,19 +6,10 @@ const {
 
 function createController({ scrubberAPI, renderer = null, store = null } = {}) {
   const state = {
-    setTimelineProgress: () => {},
-  };
-  const timelineDataset = {
-    getTimelineProgressAtMovieTime: (timeMs) => timeMs / 1000,
-    getCursorAtTimelineProgress: (progress) => ({
-      frameIndex: Math.round(progress * 10),
-    }),
+    seek: () => {},
   };
 
   return new TimelineScrubController({
-    timelineDataset,
-    timelineData: { totalDuration: 1000 },
-    segments: [],
     store: store ?? { getState: () => state },
     getTimelineRenderer: () => renderer,
     getScrubberAPI: () => scrubberAPI,
@@ -50,8 +41,8 @@ describe('TimelineScrubController', () => {
     const updateCalls = [];
     const scrubberAPI = {
       startScrubbing: async () => {},
-      updatePosition: (progress) => {
-        updateCalls.push(progress);
+      updatePosition: (movieTimeMs) => {
+        updateCalls.push(movieTimeMs);
         return new Promise(() => {});
       },
       endScrubbing: async () => null,
@@ -70,7 +61,7 @@ describe('TimelineScrubController', () => {
     await flushMicrotasks();
 
     expect(settled).to.equal(true);
-    expect(updateCalls).to.deep.equal([0.25]);
+    expect(updateCalls).to.deep.equal([250]);
   });
 
   it('cancels a scheduled stale scrub update before flushing the final position', async () => {
@@ -88,11 +79,11 @@ describe('TimelineScrubController', () => {
     const finalCalls = [];
     const scrubberAPI = {
       startScrubbing: async () => {},
-      updatePosition: async (progress) => {
-        updateCalls.push(progress);
+      updatePosition: async (movieTimeMs) => {
+        updateCalls.push(movieTimeMs);
       },
-      endScrubbing: async (progress) => {
-        finalCalls.push(progress);
+      endScrubbing: async (movieTimeMs) => {
+        finalCalls.push(movieTimeMs);
         return {
           transitionFrame: {
             cursorTreeIndex: 9,
@@ -100,14 +91,10 @@ describe('TimelineScrubController', () => {
         };
       },
     };
-    const setTimelineProgressCalls = [];
+    const seekCalls = [];
     const controller = createController({
       scrubberAPI,
-      store: {
-        getState: () => ({
-          setTimelineProgress: (...args) => setTimelineProgressCalls.push(args),
-        }),
-      },
+      store: { getState: () => ({ seek: (...args) => seekCalls.push(args) }) },
     });
 
     await controller.startScrubbing(0);
@@ -121,7 +108,22 @@ describe('TimelineScrubController', () => {
 
     expect(cancelledFrameId).to.equal(7);
     expect(updateCalls).to.deep.equal([]);
-    expect(finalCalls).to.deep.equal([0.9]);
-    expect(setTimelineProgressCalls).to.deep.equal([[0.9]]);
+    expect(finalCalls).to.deep.equal([900]);
+    expect(seekCalls).to.deep.equal([[900]]);
+  });
+
+  it('ends the scrub before the final cursor write so the tree controller renders it', async () => {
+    const scrubbingAtSeek = [];
+    const controller = createController({
+      scrubberAPI: { startScrubbing: async () => {}, endScrubbing: async () => null },
+      store: {
+        getState: () => ({ seek: () => scrubbingAtSeek.push(controller.isScrubbing) }),
+      },
+    });
+
+    await controller.startScrubbing(0);
+    await controller.endScrubbing(900);
+
+    expect(scrubbingAtSeek).to.deep.equal([false]);
   });
 });

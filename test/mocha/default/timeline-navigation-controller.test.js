@@ -128,7 +128,7 @@ describe('TimelineNavigationController', () => {
       timelineDataset: makeTimelineDataset((movieTimeMs) => ({
         frameIndex: movieTimeMs < 2250 ? 3 : 4,
         segmentIndex: 0,
-        timelineProgress: movieTimeMs / 3000,
+        movieTimeMs,
       })),
       store,
       onTimelinePositionUpdated: () => {},
@@ -141,10 +141,7 @@ describe('TimelineNavigationController', () => {
       position: 4,
       direction: 'forward',
     });
-    expect(store.getState().goToPositionCalls[0].options.timelineProgress).to.be.closeTo(
-      2600 / 3000,
-      0.000001
-    );
+    expect(store.getState().goToPositionCalls[0].options).to.deep.equal({ movieTimeMs: 2600 });
   });
 
   it('uses jump direction and preserves exact timeline position when clicking the already active tree', () => {
@@ -169,7 +166,7 @@ describe('TimelineNavigationController', () => {
       timelineDataset: makeTimelineDataset(() => ({
         frameIndex: 3,
         segmentIndex: 0,
-        timelineProgress: 0.5,
+        movieTimeMs: 1500,
       })),
       store,
       onTimelinePositionUpdated: () => {},
@@ -182,10 +179,7 @@ describe('TimelineNavigationController', () => {
       position: 3,
       direction: 'jump',
     });
-    expect(store.getState().goToPositionCalls[0].options.timelineProgress).to.be.closeTo(
-      0.5,
-      0.000001
-    );
+    expect(store.getState().goToPositionCalls[0].options).to.deep.equal({ movieTimeMs: 1500 });
   });
 
   it('throws when a timed click targets a segment without timing intervals', () => {

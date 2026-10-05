@@ -87,10 +87,7 @@ function createTimelineManager(movieData) {
   });
   return {
     destroy: () => {},
-    resolveFrameAtTimelineProgress: (progress) =>
-      timelineDataset.getTransitionFrameAtTimelineProgress(progress),
-    getCursorAtTimelineProgress: (progress) =>
-      timelineDataset.getCursorAtTimelineProgress(progress),
+    frameAt: (movieTimeMs) => timelineDataset.frameAt(movieTimeMs),
     getCursorAtMovieTime: (movieTimeMs) => timelineDataset.getCursorAtMovieTime(movieTimeMs),
     getCursorForFrame: (frameIndex, options) =>
       timelineDataset.getCursorForFrame(frameIndex, options),
@@ -132,7 +129,7 @@ describe('ScrubberAPI', () => {
     useAppStore.getState().reset();
   });
 
-  it('serializes scrub renders and collapses pending updates to the latest progress', async () => {
+  it('serializes scrub renders and collapses pending updates to the latest movie time', async () => {
     const movieData = createMovieData();
     const timelineManager = createTimelineManager(movieData);
     const resolvers = [];
@@ -158,9 +155,9 @@ describe('ScrubberAPI', () => {
     const api = new ScrubberAPI(treeController, timelineManager, useAppStore);
     await api.startScrubbing(0);
 
-    const firstUpdate = api.updatePosition(0.2);
-    const secondUpdate = api.updatePosition(0.4);
-    const thirdUpdate = api.updatePosition(0.8);
+    const firstUpdate = api.updatePosition(600);
+    const secondUpdate = api.updatePosition(1200);
+    const thirdUpdate = api.updatePosition(2400);
 
     await flushMicrotasks();
 
@@ -179,9 +176,9 @@ describe('ScrubberAPI', () => {
     resolvers.shift()();
     await Promise.all([firstUpdate, secondUpdate, thirdUpdate]);
 
-    expect(api.lastTransitionState.progress).to.equal(0.8);
+    expect(api.lastTransitionState.movieTimeMs).to.equal(2400);
     expect(api.lastTransitionState.transitionFrame.cursorTreeIndex).to.equal(2);
-    expect(useAppStore.getState().timelineCursor.timelineProgress).to.equal(0.8);
+    expect(useAppStore.getState().timelineCursor.movieTimeMs).to.equal(2400);
     expect(useAppStore.getState().frameIndex).to.equal(2);
   });
 
@@ -204,7 +201,7 @@ describe('ScrubberAPI', () => {
 
       const api = new ScrubberAPI(treeController, timelineManager, useAppStore);
       await api.startScrubbing(0);
-      await api.updatePosition(0.1);
+      await api.updatePosition(300);
 
       expect(highlightIndices).to.deep.equal([1]);
     } finally {
@@ -240,7 +237,7 @@ describe('ScrubberAPI', () => {
       transitionProgress: 0.5,
     });
     const timelineManager = {
-      resolveFrameAtTimelineProgress: () => {
+      frameAt: () => {
         const [sourceTree, targetTree] = useAppStore
           .getState()
           .ensureTreesHydrated([transitionFrame.sourceTreeIndex, transitionFrame.targetTreeIndex]);
@@ -261,7 +258,7 @@ describe('ScrubberAPI', () => {
 
     const api = new ScrubberAPI(treeController, timelineManager, useAppStore);
     await api.startScrubbing(0);
-    await api.updatePosition(0.5);
+    await api.updatePosition(1500);
 
     expect(hydratedIndices).to.deep.equal([[0, 1]]);
     expect(renderCalls).to.have.length(1);
@@ -269,7 +266,7 @@ describe('ScrubberAPI', () => {
     expect(renderCalls[0][1]).to.equal(hydratedTarget);
   });
 
-  it('flushes the latest requested progress before ending a scrub', async () => {
+  it('flushes the latest requested movie time before ending a scrub', async () => {
     const movieData = createMovieData();
     const timelineManager = createTimelineManager(movieData);
     const resolvers = [];
@@ -285,8 +282,8 @@ describe('ScrubberAPI', () => {
     const api = new ScrubberAPI(treeController, timelineManager, useAppStore);
     await api.startScrubbing(0);
 
-    const updatePromise = api.updatePosition(0.2);
-    const endPromise = api.endScrubbing(0.9);
+    const updatePromise = api.updatePosition(600);
+    const endPromise = api.endScrubbing(2700);
 
     await flushMicrotasks();
 
@@ -299,7 +296,7 @@ describe('ScrubberAPI', () => {
     await updatePromise;
 
     const snapshot = await endPromise;
-    expect(snapshot.progress).to.equal(0.9);
+    expect(snapshot.movieTimeMs).to.equal(2700);
     expect(snapshot.transitionFrame.sourceTreeIndex).to.equal(1);
     expect(snapshot.transitionFrame.targetTreeIndex).to.equal(2);
   });
@@ -325,14 +322,14 @@ describe('ScrubberAPI', () => {
       const api = new ScrubberAPI(treeController, timelineManager, useAppStore);
       await api.startScrubbing(0);
 
-      await api.updatePosition(0.5);
+      await api.updatePosition(1500);
       const snapshot = await api.endScrubbing();
 
       expect(snapshot).to.equal(null);
       expect(errorCalls).to.have.length(1);
       expect(errorCalls[0][0]).to.equal('[ScrubberAPI] Scrub update failed:');
-      expect(errorCalls[0][1]).to.deep.include({ progress: 0.5, error: renderError });
-      expect(useAppStore.getState().timelineCursor.timelineProgress).to.equal(0.5);
+      expect(errorCalls[0][1]).to.deep.include({ movieTimeMs: 1500, error: renderError });
+      expect(useAppStore.getState().timelineCursor.movieTimeMs).to.equal(1500);
     } finally {
       console.error = originalError;
     }
@@ -356,7 +353,7 @@ describe('ScrubberAPI', () => {
     const api = new ScrubberAPI(treeController, timelineManager, useAppStore);
 
     await api.startScrubbing(0);
-    await api.updatePosition(0.2);
+    await api.updatePosition(600);
 
     expect(renderCalls).to.have.length(1);
     expect(renderCalls[0][3]).to.include({
@@ -380,7 +377,7 @@ describe('ScrubberAPI', () => {
 
       const api = new ScrubberAPI(treeController, null, useAppStore);
       await api.startScrubbing(0);
-      await api.updatePosition(0.5);
+      await api.updatePosition(1500);
 
       expect(renderCalls).to.deep.equal([]);
       expect(api.lastTransitionState).to.equal(null);

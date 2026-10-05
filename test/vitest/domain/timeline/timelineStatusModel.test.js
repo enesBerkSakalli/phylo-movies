@@ -12,7 +12,7 @@ describe('timeline status model', () => {
       inputFrameIndices: [0, 3, 6],
       timelineCursor: {
         frameIndex: 3,
-        timelineProgress: 0.5,
+        movieTimeMs: 1500,
         isObservedInput: true,
         inputTreeIndex: 1,
       },
@@ -22,7 +22,7 @@ describe('timeline status model', () => {
     expect(status.position.kind).toBe('input');
     expect(status.position.inputTreeIndex).toBe(1);
     expect(status.position.inputTreeCount).toBe(3);
-    expect(status.position.fullPrecision).toBe('0.5');
+    expect(status.position.movieTimeMs).toBe(1500);
     expect(status.segment.text).toBe('Input tree');
     expect(status.segment.tooltip).toBe(
       'An observed tree from one alignment window or uploaded tree set.'
@@ -36,7 +36,6 @@ describe('timeline status model', () => {
       inputFrameIndices: [0, 3],
       timelineCursor: {
         frameIndex: 2,
-        timelineProgress: 2 / 3,
         sourceInputTreeIndex: 0,
         targetInputTreeIndex: 1,
       },

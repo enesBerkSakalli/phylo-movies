@@ -88,8 +88,6 @@ export class TimelineNavigationController {
     if (!bounds || bounds.end < bounds.start) return undefined;
 
     const cursor = this.timelineDataset.getCursorInSegmentAtMovieTime(segmentIndex, clickTimeMs);
-    return {
-      timelineProgress: cursor.timelineProgress,
-    };
+    return { movieTimeMs: cursor.movieTimeMs };
   }
 }

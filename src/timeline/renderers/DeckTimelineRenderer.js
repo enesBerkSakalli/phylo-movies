@@ -4,7 +4,7 @@ if (typeof document !== 'undefined') {
 }
 import { Deck, OrthographicView } from '@deck.gl/core';
 import { teardownDeckRenderer } from '../../lib/deckTeardown.js';
-import { TIMELINE_CONSTANTS, TIMELINE_THEME } from '../constants.js';
+import { TIMELINE_THEME } from '../constants.js';
 import {
   createPathLayer,
   createBaselineLayer,
@@ -142,7 +142,7 @@ export class DeckTimelineRenderer {
     this._createDeck();
     this._setupAccessibility();
 
-    this.setCustomTime(TIMELINE_CONSTANTS.DEFAULT_PROGRESS);
+    this.setCustomTime(0);
     this._updateLayers();
 
     this._bindResizeObservers();

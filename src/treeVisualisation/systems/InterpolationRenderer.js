@@ -129,10 +129,9 @@ export class InterpolationRenderer {
   }
 
   /*
-   * Render a weighted timeline progress value from the timeline subsystem.
-   * This keeps scrubbed timeline positions distinct from the linear playback clock.
+   * Render the frame at a movie time from the timeline subsystem.
    */
-  async renderTimelineProgress(progress) {
+  async renderAtMovieTime(movieTimeMs) {
     if (isControllerDestroyed(this.controller)) return;
     if (!this.controller.ready) {
       await this.controller.readyPromise;
@@ -140,7 +139,7 @@ export class InterpolationRenderer {
     if (isControllerDestroyed(this.controller)) return;
 
     const state = useAppStore.getState();
-    const transitionFrame = state.movieTimelineManager?.resolveFrameAtTimelineProgress?.(progress);
+    const transitionFrame = state.movieTimelineManager?.frameAt?.(movieTimeMs);
 
     if (!transitionFrame?.sourceTree || !transitionFrame?.targetTree) {
       return;

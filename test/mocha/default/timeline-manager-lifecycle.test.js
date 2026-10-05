@@ -50,21 +50,19 @@ function createSemanticRunnerManager(trees, stepDurationMs = 2000) {
   const totalDuration = Math.max(1, trees.length - 1) * stepDurationMs;
   const getCursorAtMovieTime = (movieTimeMs) => {
     const boundedTime = Math.max(0, Math.min(totalDuration, movieTimeMs));
-    const timelineProgress = boundedTime / totalDuration;
     return {
       frameIndex: Math.min(
-        Math.ceil(timelineProgress * Math.max(1, trees.length - 1)),
+        Math.ceil((boundedTime / totalDuration) * Math.max(1, trees.length - 1)),
         trees.length - 1
       ),
       movieTimeMs: boundedTime,
-      timelineProgress,
     };
   };
 
   return {
     timelineData: { totalDuration },
-    resolveFrameAtTimelineProgress: (progress) => {
-      const boundedProgress = Math.max(0, Math.min(1, progress));
+    frameAt: (movieTimeMs) => {
+      const boundedProgress = Math.max(0, Math.min(1, movieTimeMs / totalDuration));
       const scaledProgress = boundedProgress * Math.max(1, trees.length - 1);
       const sourceTreeIndex = Math.min(Math.floor(scaledProgress), trees.length - 2);
       const targetTreeIndex = sourceTreeIndex + 1;
@@ -79,7 +77,6 @@ function createSemanticRunnerManager(trees, stepDurationMs = 2000) {
       });
     },
     getCursorAtMovieTime,
-    getCursorAtTimelineProgress: (progress) => getCursorAtMovieTime(progress * totalDuration),
     getCursorForFrame: (frameIndex) => getCursorAtMovieTime(frameIndex * stepDurationMs),
   };
 }
@@ -162,7 +159,6 @@ describe('MovieTimelineManager lifecycle', () => {
     const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees, useAppStore);
 
     const startCursor = manager.getCursorAtMovieTime(0);
-    const progressCursor = manager.getCursorAtTimelineProgress(startCursor.timelineProgress);
     const frameCursor = manager.getCursorForFrame(22, { occurrence: 'last' });
 
     expect(startCursor).to.include({
@@ -172,7 +168,6 @@ describe('MovieTimelineManager lifecycle', () => {
       msaWindowIndex: 0,
       movieTimeMs: 0,
     });
-    expect(progressCursor.frameIndex).to.equal(startCursor.frameIndex);
     expect(frameCursor).to.include({
       frameIndex: 22,
       inputTreeIndex: 1,
@@ -393,7 +388,7 @@ describe('MovieTimelineManager lifecycle', () => {
   it('keeps clicked inspector selection visually pinned while cursor sync changes current position', async () => {
     const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees, useAppStore);
     const host = makeContainer();
-    const cursor = manager.getCursorAtTimelineProgress(0.9);
+    const cursor = manager.getCursorAtMovieTime(0.9 * manager.timelineData.totalDuration);
 
     useAppStore.setState({
       treeList: movieData.interpolated_trees,
@@ -415,7 +410,7 @@ describe('MovieTimelineManager lifecycle', () => {
     const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees, useAppStore);
     const firstHost = makeContainer(640, 60);
     const secondHost = makeContainer(640, 60);
-    const cursor = manager.getCursorAtTimelineProgress(0.6);
+    const cursor = manager.getCursorAtMovieTime(0.6 * manager.timelineData.totalDuration);
 
     useAppStore.setState({
       playing: false,
@@ -491,14 +486,14 @@ describe('MovieTimelineManager lifecycle', () => {
 
   it('uses semantic movie timeline duration when advancing animation frames', async () => {
     const trees = [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }];
-    let timelineProgressSeen = null;
+    let movieTimeSeen = null;
     let cacheIndices = null;
     let renderOptions = null;
     let syncedMeta = null;
     const manager = {
       timelineData: { totalDuration: 4100 },
-      resolveFrameAtTimelineProgress: (progress) => {
-        timelineProgressSeen = progress;
+      frameAt: (movieTimeMs) => {
+        movieTimeSeen = movieTimeMs;
         return TransitionFrame.from({
           sourceTree: trees[1],
           targetTree: trees[1],
@@ -508,11 +503,6 @@ describe('MovieTimelineManager lifecycle', () => {
           holdKind: 'mover',
         });
       },
-      getCursorAtMovieTime: (movieTimeMs) => ({
-        frameIndex: 1,
-        movieTimeMs,
-        timelineProgress: movieTimeMs / 4100,
-      }),
     };
 
     const runner = new AnimationRunner({
@@ -546,16 +536,13 @@ describe('MovieTimelineManager lifecycle', () => {
     const shouldStop = await runner._processFrame(2_100);
 
     expect(shouldStop).to.equal(false);
-    expect(timelineProgressSeen).to.be.closeTo(1100 / 4100, 1e-9);
+    expect(movieTimeSeen).to.equal(1100);
     expect(cacheIndices).to.deep.equal({ fromIndex: 1, toIndex: 1 });
     expect(renderOptions.fromTreeIndex).to.equal(1);
     expect(renderOptions.toTreeIndex).to.equal(1);
     expect(renderOptions.rawTimeFactor).to.equal(0);
-    expect(syncedMeta).to.include({
-      timelineProgress: 1100 / 4100,
-      frameIndex: 1,
-      holdKind: 'mover',
-    });
+    expect(syncedMeta.movieTimeMs).to.equal(1100);
+    expect(syncedMeta.transitionFrame.holdKind).to.equal('mover');
   });
 
   it('syncs playback progress before building interpolation layout data', async () => {
@@ -769,21 +756,16 @@ describe('MovieTimelineManager lifecycle', () => {
     };
     state.movieTimelineManager = {
       timelineData: { totalDuration: 2000 },
-      resolveFrameAtTimelineProgress: (progress) => {
+      frameAt: (movieTimeMs) => {
         const [hydratedSource, hydratedTarget] = state.ensureTreesHydrated([0, 1]);
         return TransitionFrame.from({
           sourceTree: hydratedSource,
           targetTree: hydratedTarget,
           sourceTreeIndex: 0,
           targetTreeIndex: 1,
-          transitionProgress: progress,
+          transitionProgress: movieTimeMs / 2000,
         });
       },
-      getCursorAtMovieTime: (movieTimeMs) => ({
-        frameIndex: 1,
-        movieTimeMs,
-        timelineProgress: movieTimeMs / 2000,
-      }),
     };
     const renderedFrames = [];
 
