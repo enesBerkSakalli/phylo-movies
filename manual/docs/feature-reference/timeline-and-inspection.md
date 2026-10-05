@@ -16,7 +16,7 @@ The movie player bar controls navigation through input trees and generated trans
 | **Next generated frame**     | Moves one generated frame forward.         |
 | **Next input tree**          | Jumps to the next original input tree.     |
 
-Keyboard: **Space** plays or pauses, **← / →** step one generated frame, and **Shift + ← / →** jump between input trees. The keys are ignored while a text field, slider, or menu has focus.
+Keyboard: **Space** plays or pauses, **← / →** step one generated frame, and **Shift + ← / →** jump between input trees. The keys are ignored while a text field, a slider such as Playback Speed, or a menu has focus. They also work on the focused timeline strip, where they act from the playhead (see [Playback and Timeline View](#playback-and-timeline-view)). With the tree canvas focused, Space still plays and pauses, but the arrow keys pan the tree.
 
 Input tree jumps skip generated interpolation frames. Generated-frame stepping is for detailed review of the transition between neighboring input trees.
 
@@ -54,7 +54,20 @@ The blue line is the playhead: drag its knob at the top of the strip, or the lin
 | **Playback Speed**                   | Adjusts animation speed from slow review to faster playback.                                      |
 | **Zoom out / Fit / Zoom in** (− ⛶ +) | Zoom the timeline strip, or fit the whole sequence to the available width.                        |
 
-Zoomed in, **Shift + wheel**, a sideways swipe, or a drag on empty strip pans the strip; the wheel zooms about the pointer and the buttons about the playhead. During playback the view pages to keep the playhead in sight. Click the focused strip and press **Home** or **End** to jump to the first or last segment. **← / →** move the selection one segment at a time.
+Zoomed in, **Shift + wheel**, a sideways swipe, or a drag on empty strip pans the strip; the wheel zooms about the pointer and the buttons about the playhead. During playback the view pages to keep the playhead in sight. Click the strip, or Tab to it, to use the keyboard on it. The focus ring (a dark outline inside the strip) shows for keyboard focus, not after a click.
+
+| Key                   | Result                                                                                                                                                                    |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Space**             | Plays or pauses.                                                                                                                                                          |
+| **← / →**             | Previous or next generated frame, from the playhead.                                                                                                                      |
+| **Shift + ← / →**     | Previous or next input tree, from the playhead.                                                                                                                           |
+| **PageUp / PageDown** | Selects and jumps to the previous or next segment (an input tree or a transition), from the segment under the playhead.                                                   |
+| **Home / End**        | Selects and jumps to the first or last segment.                                                                                                                           |
+| **Enter**             | Opens the Transition Inspector for the selected transition. With nothing selected, it selects the segment under the playhead first; on an input tree that is all it does. |
+| **+ / −**             | Zooms the strip in or out about the playhead.                                                                                                                             |
+| **0**                 | Fits the whole sequence.                                                                                                                                                  |
+
+The playhead and the selection are separate: the arrow keys move the playhead and leave the selection on the transition you chose. Clicking, PageUp / PageDown, Home / End, and Enter change the selection.
 
 ## Finding Candidate Regions
 
@@ -62,13 +75,14 @@ RF distance and weighted RF distance per transition appear in the strip (bar hei
 
 ## Hover and Selection
 
-| Action                        | Result                                                                                                                                                                                                         |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Hover a transition            | Shows a compact tooltip above the player bar, so it never covers the controls. Header "Transition k of P · Tree a → b", then "RF x · weighted RF y" and "n SPR moves · m taxa moved" or "Branch lengths only". |
-| Select a transition           | Turns it green and updates the status strip. It does not open the Inspector.                                                                                                                                   |
-| **Inspect transition** button | Opens the Transition Inspector. Sits next to the status strip and is enabled when a transition is selected.                                                                                                    |
-| Double-click a transition     | Selects it and opens the Transition Inspector.                                                                                                                                                                 |
-| Close the Inspector tab       | Keeps the selected transition.                                                                                                                                                                                 |
+| Action                         | Result                                                                                                                                                                                                         |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hover a transition             | Shows a compact tooltip above the player bar, so it never covers the controls. Header "Transition k of P · Tree a → b", then "RF x · weighted RF y" and "n SPR moves · m taxa moved" or "Branch lengths only". |
+| Select a transition            | Turns it green and updates the status strip. It does not open the Inspector.                                                                                                                                   |
+| **Inspect transition** button  | Opens the Transition Inspector. Sits next to the status strip; until a transition is selected it is dimmed but still reachable by keyboard, and its tooltip says why.                                          |
+| Double-click a transition      | Selects it and opens the Transition Inspector.                                                                                                                                                                 |
+| **Enter** on the focused strip | Opens the Transition Inspector for the selected transition, selecting the one under the playhead first if none is.                                                                                             |
+| Close the Inspector tab        | Keeps the selected transition.                                                                                                                                                                                 |
 
 ## Transition Inspector
 
