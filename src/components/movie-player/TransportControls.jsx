@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Button } from '../ui/button';
 import { AppTooltip } from '../ui/app-tooltip';
 import { ChevronsLeft, ChevronLeft, Play, Pause, ChevronRight, ChevronsRight } from 'lucide-react';
@@ -6,23 +6,15 @@ import {
   selectActiveTreeListLength,
   selectFrameIndex,
   selectInputFrameIndices,
-  selectGoToNextInputTree,
-  selectGoToPreviousInputTree,
   selectPlaying,
-  selectStartAnimationPlayback,
-  selectStopAnimationPlayback,
   useAppStore,
 } from '../../state/phyloStore/store.js';
-import { TRANSPORT_CONTROL_GROUP_LABELS } from './TransportControls.contract.js';
+import { playbackCommands } from './playbackShortcuts.js';
 
-export function TransportControls({ onBackward, onForward }) {
+export function TransportControls() {
   const playing = useAppStore(selectPlaying);
   const frameIndex = useAppStore(selectFrameIndex);
   const treeListLen = useAppStore(selectActiveTreeListLength);
-  const startAnimationPlayback = useAppStore(selectStartAnimationPlayback);
-  const stopAnimationPlayback = useAppStore(selectStopAnimationPlayback);
-  const goToNextInputTree = useAppStore(selectGoToNextInputTree);
-  const goToPreviousInputTree = useAppStore(selectGoToPreviousInputTree);
   const inputTreeIndices = useAppStore(selectInputFrameIndices);
   const hasSequence = treeListLen > 0;
   const hasAnimationSequence = treeListLen > 1;
@@ -39,30 +31,13 @@ export function TransportControls({ onBackward, onForward }) {
     return inputTreeIndices.some((idx) => idx > frameIndex);
   }, [inputTreeIndices, frameIndex]);
 
-  const onPlayClick = useCallback(async () => {
-    try {
-      if (playing) stopAnimationPlayback();
-      else await startAnimationPlayback();
-    } catch {}
-  }, [playing, startAnimationPlayback, stopAnimationPlayback]);
-
-  const onPreviousInputTree = useCallback(() => {
-    stopAnimationPlayback();
-    goToPreviousInputTree();
-  }, [goToPreviousInputTree, stopAnimationPlayback]);
-
-  const onNextInputTree = useCallback(() => {
-    stopAnimationPlayback();
-    goToNextInputTree();
-  }, [goToNextInputTree, stopAnimationPlayback]);
-
   const playbackLabel = playing ? 'Pause sequence' : 'Play sequence';
 
   return (
     <div
       className="flex shrink-0 items-center gap-0.5"
       role="group"
-      aria-label={TRANSPORT_CONTROL_GROUP_LABELS.playback}
+      aria-label="Movie playback controls"
       data-tour-id="workspace-transport-controls"
     >
       <AppTooltip content="Previous input tree (Shift+←)">
@@ -73,7 +48,7 @@ export function TransportControls({ onBackward, onForward }) {
           size="icon"
           aria-label="Previous input tree"
           disabled={!hasSequence || !canGoToPreviousInputTree}
-          onClick={onPreviousInputTree}
+          onClick={playbackCommands.previousInputTree}
         >
           <ChevronsLeft className="size-4" />
         </Button>
@@ -87,7 +62,7 @@ export function TransportControls({ onBackward, onForward }) {
           size="icon"
           aria-label="Previous generated frame"
           disabled={!canStepBackward}
-          onClick={onBackward}
+          onClick={playbackCommands.previousFrame}
         >
           <ChevronLeft className="size-4" />
         </Button>
@@ -101,7 +76,7 @@ export function TransportControls({ onBackward, onForward }) {
           size="icon"
           aria-label={playbackLabel}
           disabled={!canTogglePlayback}
-          onClick={onPlayClick}
+          onClick={playbackCommands.toggle}
           data-state={playing ? 'playing' : 'paused'}
         >
           {playing ? <Pause className="size-4" /> : <Play className="size-4" />}
@@ -116,7 +91,7 @@ export function TransportControls({ onBackward, onForward }) {
           size="icon"
           aria-label="Next generated frame"
           disabled={!canStepForward}
-          onClick={onForward}
+          onClick={playbackCommands.nextFrame}
         >
           <ChevronRight className="size-4" />
         </Button>
@@ -130,7 +105,7 @@ export function TransportControls({ onBackward, onForward }) {
           size="icon"
           aria-label="Next input tree"
           disabled={!hasSequence || !canGoToNextInputTree}
-          onClick={onNextInputTree}
+          onClick={playbackCommands.nextInputTree}
         >
           <ChevronsRight className="size-4" />
         </Button>

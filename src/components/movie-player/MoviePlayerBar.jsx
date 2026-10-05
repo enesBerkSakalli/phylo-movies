@@ -12,9 +12,7 @@ import { TimelineSegmentTooltip } from '../timeline/TimelineSegmentTooltip.jsx';
 import { TimelineController } from '../../timeline/timelineController.js';
 import {
   selectAnimationSpeed,
-  selectBackward,
   selectCurrentAnimationStage,
-  selectForward,
   selectHoveredSegment,
   selectHasMsa,
   selectLeafNamesByIndex,
@@ -35,11 +33,8 @@ import { Activity, CircleHelp, Dna, Menu, PanelRightOpen } from 'lucide-react';
 import { AppTooltip } from '../ui/app-tooltip';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { cn } from '../../lib/utils';
-import { MOVIE_PLAYER_ARIA_LABELS, TIMELINE_LEGEND_ITEMS } from './MoviePlayerBar.contract.js';
 
 export function MoviePlayerBar() {
-  const forward = useAppStore(selectForward);
-  const backward = useAppStore(selectBackward);
   const setAnimationSpeed = useAppStore(selectSetAnimationSpeed);
   const animationSpeed = useAppStore(selectAnimationSpeed);
   const hasMsa = useAppStore(selectHasMsa);
@@ -106,14 +101,14 @@ export function MoviePlayerBar() {
         ref={playerBarRef}
         className="movie-player-bar relative z-[1000] w-full shrink-0 bg-card border-t shadow-[0_2px_4px_rgba(0,0,0,0.08)]"
         role="region"
-        aria-label={MOVIE_PLAYER_ARIA_LABELS.root}
+        aria-label="Movie timeline and playback controls"
         data-tour-id="workspace-timeline"
       >
         <div className="flex flex-col">
           <div
             className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-border/70 bg-muted/20 px-2 py-1 lg:flex-nowrap"
             role="group"
-            aria-label={MOVIE_PLAYER_ARIA_LABELS.primaryControls}
+            aria-label="Primary playback controls"
           >
             <AppTooltip content="Toggle settings (Ctrl/⌘+B)">
               <Button
@@ -129,14 +124,14 @@ export function MoviePlayerBar() {
             </AppTooltip>
 
             <div className="rounded-md border border-border/70 bg-background/80 px-1 py-0.5 shadow-sm">
-              <TransportControls onBackward={backward} onForward={forward} />
+              <TransportControls />
             </div>
 
             {hasTimeline && (
               <div
                 className="flex min-w-0 items-center gap-2"
                 role="group"
-                aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineNavigation}
+                aria-label="Timeline navigation controls"
               >
                 <TimelineStatusStrip />
                 <MotionStageLabel />
@@ -145,21 +140,13 @@ export function MoviePlayerBar() {
               </div>
             )}
 
-            <div
-              className="ml-auto flex items-center"
-              role="group"
-              aria-label={MOVIE_PLAYER_ARIA_LABELS.playbackSettings}
-            >
+            <div className="ml-auto flex items-center" role="group" aria-label="Playback settings">
               <PlaybackSpeedControl value={animationSpeed} setValue={setAnimationSpeed} />
             </div>
           </div>
 
           <div className="flex items-center bg-background">
-            <div
-              className="min-w-0 flex-1"
-              role="group"
-              aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineTrack}
-            >
+            <div className="min-w-0 flex-1" role="group" aria-label="Timeline track">
               {hasTimeline ? (
                 <div className="interpolation-timeline-container">
                   <div ref={timelineHostRef} className="timeline-visual-layer" />
@@ -170,7 +157,7 @@ export function MoviePlayerBar() {
                   role="status"
                   aria-live="polite"
                 >
-                  {MOVIE_PLAYER_ARIA_LABELS.loadingTimeline}
+                  Loading movie timeline...
                 </div>
               )}
             </div>
@@ -285,13 +272,15 @@ function InspectTransitionAction({ canInspect }) {
   );
 }
 
+const ANIMATION_STAGE_LABELS = { COLLAPSE: 'Collapse', EXPAND: 'Expand', REORDER: 'Reorder' };
+
 // Topology-change phase of the current transition. Its own component so stage
 // updates during playback do not re-render the status strip; the slot keeps its
 // width while idle (where there is room) so nothing shifts when a transition starts.
 function MotionStageLabel() {
   const stage = useAppStore(selectCurrentAnimationStage);
   const active = Boolean(stage);
-  const label = formatAnimationStage(stage);
+  const label = ANIMATION_STAGE_LABELS[stage] ?? 'Idle';
 
   return (
     <span
@@ -308,23 +297,6 @@ function MotionStageLabel() {
       </span>
     </span>
   );
-}
-
-function formatAnimationStage(stage) {
-  switch (stage) {
-    case 'COLLAPSE':
-      return 'Collapse';
-    case 'EXPAND':
-      return 'Expand';
-    case 'REORDER':
-      return 'Reorder';
-    case null:
-    case undefined:
-    case '':
-      return 'Idle';
-    default:
-      return String(stage);
-  }
 }
 
 // Swatches mirror what the timeline strip draws; the label alone carries the meaning.
@@ -348,35 +320,26 @@ function TimelineLegend({ hasTransitionSegments, maxRf }) {
         side="top"
         align="end"
         className="z-[1300] flex w-auto flex-col gap-1.5 p-3 text-xs font-medium text-muted-foreground"
-        aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineLegend}
+        aria-label="Timeline legend"
       >
         {hasTransitionSegments && (
           <>
-            <LegendItem
-              swatchClassName="h-2 w-4 rounded-sm bg-slate-500"
-              label={TIMELINE_LEGEND_ITEMS.rfChange}
-            >
+            <LegendItem swatchClassName="h-2 w-4 rounded-sm bg-slate-500" label="RF change">
               <span className="font-normal tabular-nums">(max {maxRf.toFixed(2)})</span>
             </LegendItem>
             <LegendItem
               swatchClassName="size-2 rounded-full bg-slate-700"
-              label={TIMELINE_LEGEND_ITEMS.sprMove}
+              label="SPR move"
               title="size = taxa moved"
             />
             <LegendItem
               swatchClassName="w-5 border-t-2 border-dashed border-slate-500"
-              label={TIMELINE_LEGEND_ITEMS.branchLengthsOnly}
+              label="Branch lengths only"
             />
           </>
         )}
-        <LegendItem
-          swatchClassName="h-1.5 w-px bg-slate-500"
-          label={TIMELINE_LEGEND_ITEMS.inputTree}
-        />
-        <LegendItem
-          swatchClassName="h-1.5 w-5 rounded bg-emerald-600"
-          label={TIMELINE_LEGEND_ITEMS.selected}
-        />
+        <LegendItem swatchClassName="h-1.5 w-px bg-slate-500" label="Input tree" />
+        <LegendItem swatchClassName="h-1.5 w-5 rounded bg-emerald-600" label="Selected" />
       </PopoverContent>
     </Popover>
   );

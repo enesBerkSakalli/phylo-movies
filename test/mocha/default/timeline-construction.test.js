@@ -11,12 +11,6 @@ global.cancelAnimationFrame = dom.window.cancelAnimationFrame || ((id) => clearT
 
 const { buildTimeline, createSegments } = require('../../../src/timeline/timeline.js');
 const { useAppStore } = require('../../../src/state/phyloStore/store.js');
-const {
-  MOVIE_PLAYER_ARIA_LABELS,
-} = require('../../../src/components/movie-player/MoviePlayerBar.contract.js');
-const {
-  TRANSPORT_CONTROL_GROUP_LABELS,
-} = require('../../../src/components/movie-player/TransportControls.contract.js');
 
 const repoRoot = process.cwd();
 
@@ -377,17 +371,28 @@ describe('Timeline construction from normalized backend result', () => {
 
     expect(legendSource).to.include('<Popover>');
     expect(legendSource).to.include('<PopoverContent');
-    expect(legendSource).to.include('TIMELINE_LEGEND_ITEMS.rfChange');
-    expect(MOVIE_PLAYER_ARIA_LABELS.timelineLegend).to.equal('Timeline legend');
+    expect(legendSource).to.include('label="RF change"');
+    expect(legendSource).to.include('aria-label="Timeline legend"');
   });
 
   it('keeps player-bar controls separated into clear workflow lanes', () => {
-    expect(MOVIE_PLAYER_ARIA_LABELS.primaryControls).to.equal('Primary playback controls');
-    expect(MOVIE_PLAYER_ARIA_LABELS.timelineNavigation).to.equal('Timeline navigation controls');
-    expect(MOVIE_PLAYER_ARIA_LABELS.playbackSettings).to.equal('Playback settings');
-    expect(MOVIE_PLAYER_ARIA_LABELS.timelineTrack).to.equal('Timeline track');
-    expect(TRANSPORT_CONTROL_GROUP_LABELS.playback).to.equal('Movie playback controls');
-    expect(TRANSPORT_CONTROL_GROUP_LABELS.pinnedTree).to.equal('Pinned reference tree controls');
+    const readComponent = (...segments) =>
+      fs.readFileSync(
+        path.join(repoRoot, 'src', 'components', 'movie-player', ...segments),
+        'utf8'
+      );
+    const playerBarSource = readComponent('MoviePlayerBar.jsx');
+
+    expect(playerBarSource).to.include('aria-label="Primary playback controls"');
+    expect(playerBarSource).to.include('aria-label="Timeline navigation controls"');
+    expect(playerBarSource).to.include('aria-label="Playback settings"');
+    expect(playerBarSource).to.include('aria-label="Timeline track"');
+    expect(readComponent('TransportControls.jsx')).to.include(
+      'aria-label="Movie playback controls"'
+    );
+    expect(readComponent('PinnedTreeControl.jsx')).to.include(
+      'aria-label="Pinned reference tree controls"'
+    );
   });
 
   it('creates segments and timeline data from frames, pairs, and temporal events', () => {

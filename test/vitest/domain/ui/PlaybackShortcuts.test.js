@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from 'vitest';
 import {
-  PLAYBACK_SHORTCUTS,
+  playbackCommands,
   resolvePlaybackShortcut,
 } from '../../../../src/components/movie-player/playbackShortcuts.js';
 
@@ -12,16 +12,29 @@ function keyEvent(key, { target = document.body, ...modifiers } = {}) {
 
 describe('movie playback keyboard shortcuts', () => {
   it('maps Space and the arrow keys to playback actions', () => {
-    expect(resolvePlaybackShortcut(keyEvent(' '))).toBe(PLAYBACK_SHORTCUTS.TOGGLE);
-    expect(resolvePlaybackShortcut(keyEvent('ArrowRight'))).toBe(PLAYBACK_SHORTCUTS.NEXT_FRAME);
-    expect(resolvePlaybackShortcut(keyEvent('ArrowLeft'))).toBe(PLAYBACK_SHORTCUTS.PREVIOUS_FRAME);
+    expect(resolvePlaybackShortcut(keyEvent(' '))).toBe('toggle');
+    expect(resolvePlaybackShortcut(keyEvent('ArrowRight'))).toBe('nextFrame');
+    expect(resolvePlaybackShortcut(keyEvent('ArrowLeft'))).toBe('previousFrame');
     expect(resolvePlaybackShortcut(keyEvent('ArrowRight', { shiftKey: true }))).toBe(
-      PLAYBACK_SHORTCUTS.NEXT_INPUT_TREE
+      'nextInputTree'
     );
     expect(resolvePlaybackShortcut(keyEvent('ArrowLeft', { shiftKey: true }))).toBe(
-      PLAYBACK_SHORTCUTS.PREVIOUS_INPUT_TREE
+      'previousInputTree'
     );
     expect(resolvePlaybackShortcut(keyEvent('a'))).toBeNull();
+  });
+
+  it('names a command for every shortcut', () => {
+    const commands = [
+      keyEvent(' '),
+      keyEvent('ArrowRight'),
+      keyEvent('ArrowLeft'),
+      keyEvent('ArrowRight', { shiftKey: true }),
+      keyEvent('ArrowLeft', { shiftKey: true }),
+    ].map(resolvePlaybackShortcut);
+
+    expect(commands.every((command) => typeof playbackCommands[command] === 'function')).toBe(true);
+    expect(new Set(commands).size).toBe(Object.keys(playbackCommands).length);
   });
 
   it('leaves keys to focused controls that own them', () => {
@@ -38,9 +51,7 @@ describe('movie playback keyboard shortcuts', () => {
   it('lets buttons keep Space but still steps frames with arrows', () => {
     const button = document.createElement('button');
     expect(resolvePlaybackShortcut(keyEvent(' ', { target: button }))).toBeNull();
-    expect(resolvePlaybackShortcut(keyEvent('ArrowRight', { target: button }))).toBe(
-      PLAYBACK_SHORTCUTS.NEXT_FRAME
-    );
+    expect(resolvePlaybackShortcut(keyEvent('ArrowRight', { target: button }))).toBe('nextFrame');
   });
 
   it('ignores modified and already-handled keys', () => {

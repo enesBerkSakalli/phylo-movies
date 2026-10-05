@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import {
-  MOVIE_PLAYER_ARIA_LABELS,
-  TIMELINE_LEGEND_ITEMS,
-} from '../../../../src/components/movie-player/MoviePlayerBar.contract.js';
-import { TRANSPORT_CONTROL_GROUP_LABELS } from '../../../../src/components/movie-player/TransportControls.contract.js';
 
 const repoRoot = process.cwd();
 
@@ -15,25 +10,35 @@ function readRepoFile(...segments) {
 
 describe('movie timeline player bar semantics', () => {
   it('keeps the legend aligned with visible timeline states', () => {
-    expect(Object.values(TIMELINE_LEGEND_ITEMS)).toEqual([
+    const playerBarSource = readRepoFile('src', 'components', 'movie-player', 'MoviePlayerBar.jsx');
+    const legendSource = playerBarSource.slice(playerBarSource.indexOf('function TimelineLegend'));
+
+    expect([...legendSource.matchAll(/\slabel="([^"]+)"/g)].map((match) => match[1])).toEqual([
       'RF change',
       'SPR move',
       'Branch lengths only',
       'Input tree',
       'Selected',
     ]);
-    expect(TIMELINE_LEGEND_ITEMS).not.toHaveProperty('currentPosition');
   });
 
   it('renders an explicit timeline loading state before the manager mounts', () => {
-    expect(MOVIE_PLAYER_ARIA_LABELS.loadingTimeline).toBe('Loading movie timeline...');
+    const playerBarSource = readRepoFile('src', 'components', 'movie-player', 'MoviePlayerBar.jsx');
+
+    expect(playerBarSource).toContain('Loading movie timeline...');
   });
 
   it('labels the playback transport and the pinned reference tree control', () => {
-    expect(TRANSPORT_CONTROL_GROUP_LABELS).toEqual({
-      playback: 'Movie playback controls',
-      pinnedTree: 'Pinned reference tree controls',
-    });
+    const transportSource = readRepoFile(
+      'src',
+      'components',
+      'movie-player',
+      'TransportControls.jsx'
+    );
+    const pinnedSource = readRepoFile('src', 'components', 'movie-player', 'PinnedTreeControl.jsx');
+
+    expect(transportSource).toContain('aria-label="Movie playback controls"');
+    expect(pinnedSource).toContain('aria-label="Pinned reference tree controls"');
   });
 
   it('keeps comparison and the pinned tree out of the transport, in Settings > View', () => {
@@ -64,8 +69,8 @@ describe('movie timeline player bar semantics', () => {
       'TimelineScrollControls.jsx'
     );
 
-    expect(playerBarSource).toContain('MOVIE_PLAYER_ARIA_LABELS.timelineTrack');
-    const trackPosition = playerBarSource.indexOf('MOVIE_PLAYER_ARIA_LABELS.timelineTrack');
+    expect(playerBarSource).toContain('aria-label="Timeline track"');
+    const trackPosition = playerBarSource.indexOf('aria-label="Timeline track"');
     expect(playerBarSource.indexOf('<TimelineScrollControls />')).toBeGreaterThan(trackPosition);
     expect(playerBarSource.indexOf('<TimelineLegend')).toBeGreaterThan(trackPosition);
     for (const id of ['zoomOutBtn', 'fitToWindowBtn', 'zoomInBtn']) {
@@ -82,7 +87,6 @@ describe('movie timeline player bar semantics', () => {
   it('is two rows: transport and status above, the timeline strip below', () => {
     const playerBarSource = readRepoFile('src', 'components', 'movie-player', 'MoviePlayerBar.jsx');
 
-    expect(MOVIE_PLAYER_ARIA_LABELS).not.toHaveProperty('timelineFooter');
     for (const gone of [
       'toolbarExpanded',
       'ChevronUp',
@@ -92,8 +96,8 @@ describe('movie timeline player bar semantics', () => {
     ]) {
       expect(playerBarSource).not.toContain(gone);
     }
-    expect(playerBarSource.indexOf('MOVIE_PLAYER_ARIA_LABELS.primaryControls')).toBeLessThan(
-      playerBarSource.indexOf('MOVIE_PLAYER_ARIA_LABELS.timelineTrack')
+    expect(playerBarSource.indexOf('aria-label="Primary playback controls"')).toBeLessThan(
+      playerBarSource.indexOf('aria-label="Timeline track"')
     );
     // Row 1 stays on one line from lg up and wraps below it; nothing is a grid any more.
     expect(playerBarSource).toContain('flex flex-wrap items-center gap-x-2 gap-y-1');
@@ -157,7 +161,7 @@ describe('movie timeline player bar semantics', () => {
       '<MotionStageLabel />',
       '<InspectTransitionAction',
       '<MsaPlayerBarAction',
-      'aria-label={MOVIE_PLAYER_ARIA_LABELS.playbackSettings}',
+      'aria-label="Playback settings"',
       '<PlaybackSpeedControl',
     ].map((marker) => playerBarSource.indexOf(marker));
 
@@ -173,7 +177,7 @@ describe('movie timeline player bar semantics', () => {
     // The legend opens from a (?) button beside the zoom controls instead of taking a row.
     expect(playerBarSource).toContain("from '../ui/popover'");
     expect(playerBarSource).toContain('<PopoverTrigger asChild>');
-    expect(playerBarSource).toContain('aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineLegend}');
+    expect(playerBarSource).toContain('aria-label="Timeline legend"');
     expect(playerBarSource).toContain('(max {maxRf.toFixed(2)})');
     expect(playerBarSource).toContain('title="size = taxa moved"');
     // rgb(100,116,139), rgb(51,65,85) and rgb(5,150,105): slate-500, slate-700, emerald-600.

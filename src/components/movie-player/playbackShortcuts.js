@@ -10,13 +10,26 @@ import {
   useAppStore,
 } from '../../state/phyloStore/store.js';
 
-export const PLAYBACK_SHORTCUTS = Object.freeze({
-  TOGGLE: 'toggle',
-  NEXT_FRAME: 'next-frame',
-  PREVIOUS_FRAME: 'previous-frame',
-  NEXT_INPUT_TREE: 'next-input-tree',
-  PREVIOUS_INPUT_TREE: 'previous-input-tree',
-});
+/** The playback commands, shared by the transport buttons and the keyboard shortcuts. */
+export const playbackCommands = {
+  toggle() {
+    const state = useAppStore.getState();
+    if (selectPlaying(state)) selectStopAnimationPlayback(state)();
+    else selectStartAnimationPlayback(state)().catch(() => {});
+  },
+  nextFrame: () => selectForward(useAppStore.getState())(),
+  previousFrame: () => selectBackward(useAppStore.getState())(),
+  nextInputTree() {
+    const state = useAppStore.getState();
+    selectStopAnimationPlayback(state)();
+    selectGoToNextInputTree(state)();
+  },
+  previousInputTree() {
+    const state = useAppStore.getState();
+    selectStopAnimationPlayback(state)();
+    selectGoToPreviousInputTree(state)();
+  },
+};
 
 // Controls that own both Space and the arrow keys (typing, sliders, menus, and
 // the deck.gl canvases, whose controllers pan with the arrow keys).
@@ -45,50 +58,24 @@ function closest(target, selector) {
 }
 
 /**
- * Space plays or pauses, arrows step one frame, Shift+arrows jump between input
- * trees. Ignored while a focused control owns the key or a modifier is held.
+ * The playbackCommands key for a key press: Space plays or pauses, arrows step one
+ * frame, Shift+arrows jump between input trees. Null while a focused control owns the
+ * key or a modifier is held.
  */
 export function resolvePlaybackShortcut(event) {
   if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return null;
   if (closest(event.target, KEY_OWNING_SELECTOR)) return null;
 
   if (event.key === ' ' && !event.shiftKey) {
-    return closest(event.target, SPACE_OWNING_SELECTOR) ? null : PLAYBACK_SHORTCUTS.TOGGLE;
+    return closest(event.target, SPACE_OWNING_SELECTOR) ? null : 'toggle';
   }
   if (event.key === 'ArrowRight') {
-    return event.shiftKey ? PLAYBACK_SHORTCUTS.NEXT_INPUT_TREE : PLAYBACK_SHORTCUTS.NEXT_FRAME;
+    return event.shiftKey ? 'nextInputTree' : 'nextFrame';
   }
   if (event.key === 'ArrowLeft') {
-    return event.shiftKey
-      ? PLAYBACK_SHORTCUTS.PREVIOUS_INPUT_TREE
-      : PLAYBACK_SHORTCUTS.PREVIOUS_FRAME;
+    return event.shiftKey ? 'previousInputTree' : 'previousFrame';
   }
   return null;
-}
-
-function runPlaybackShortcut(shortcut) {
-  const state = useAppStore.getState();
-  switch (shortcut) {
-    case PLAYBACK_SHORTCUTS.TOGGLE:
-      if (selectPlaying(state)) selectStopAnimationPlayback(state)();
-      else Promise.resolve(selectStartAnimationPlayback(state)()).catch(() => {});
-      break;
-    case PLAYBACK_SHORTCUTS.NEXT_FRAME:
-      selectForward(state)();
-      break;
-    case PLAYBACK_SHORTCUTS.PREVIOUS_FRAME:
-      selectBackward(state)();
-      break;
-    case PLAYBACK_SHORTCUTS.NEXT_INPUT_TREE:
-      selectStopAnimationPlayback(state)();
-      selectGoToNextInputTree(state)();
-      break;
-    case PLAYBACK_SHORTCUTS.PREVIOUS_INPUT_TREE:
-      selectStopAnimationPlayback(state)();
-      selectGoToPreviousInputTree(state)();
-      break;
-    default:
-  }
 }
 
 export function usePlaybackShortcuts(enabled) {
@@ -96,10 +83,10 @@ export function usePlaybackShortcuts(enabled) {
     if (!enabled) return undefined;
 
     const handleKeyDown = (event) => {
-      const shortcut = resolvePlaybackShortcut(event);
-      if (!shortcut) return;
+      const command = resolvePlaybackShortcut(event);
+      if (!command) return;
       event.preventDefault();
-      runPlaybackShortcut(shortcut);
+      playbackCommands[command]();
     };
 
     window.addEventListener('keydown', handleKeyDown);

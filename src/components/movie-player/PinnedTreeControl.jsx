@@ -10,7 +10,6 @@ import {
   selectSetClipboardTreeIndex,
   useAppStore,
 } from '../../state/phyloStore/store.js';
-import { TRANSPORT_CONTROL_GROUP_LABELS } from './TransportControls.contract.js';
 import { getNextPinnedTreeIndex, getPinnedTreeLabel } from './pinnedTree.js';
 
 /**
@@ -42,7 +41,7 @@ export function PinnedTreeControl() {
     <div
       className="flex items-center gap-0.5"
       role="group"
-      aria-label={TRANSPORT_CONTROL_GROUP_LABELS.pinnedTree}
+      aria-label="Pinned reference tree controls"
     >
       <AppTooltip content="Pinned reference tree: drawn as an overlay behind the active tree">
         <Pin
