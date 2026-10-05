@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { ArrowRightLeft, ChevronDown, ChevronUp, GitBranch } from 'lucide-react';
+import React from 'react';
+import { ArrowRightLeft, GitBranch } from 'lucide-react';
 import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
 import {
   extractAffectedSubtreeGroups,
+  formatPairFacts,
   formatPivotEdgePreview,
+  formatTransitionHeading,
 } from './timelineSegmentTooltipUtils.js';
 
 // =============================================================================
@@ -17,37 +18,28 @@ import {
  *
  * @param {Object} props
  * @param {Object} props.segment - The segment data object
- * @param {number} props.segmentIndex - Current segment index (0-based)
- * @param {number} props.totalSegments - Total number of segments
+ * @param {Object} [props.pairChange] - The segment's pair in buildPairChangeProfile().byPairId
+ * @param {number} props.pairCount - Number of transitions (pairs) in the movie
  * @param {Function} props.getLeafNames - Function to convert leaf indices to names
  */
-export function TimelineSegmentTooltip({ segment, segmentIndex, totalSegments, getLeafNames }) {
-  const [isExpanded, setIsExpanded] = useState(false);
-
+export function TimelineSegmentTooltip({ segment, pairChange, pairCount, getLeafNames }) {
   if (!segment) return null;
 
   const isInputTree = segment.isInputTreeSegment;
 
   return (
     <div className="space-y-2 w-full">
-      <TooltipHeader
-        isInputTree={isInputTree}
-        segmentIndex={segmentIndex}
-        totalSegments={totalSegments}
-      />
+      <TooltipHeader segment={segment} pairCount={pairCount} />
 
-      <div className="space-y-1 text-xs">
-        {isInputTree ? (
-          <InputTreeContent segment={segment} />
-        ) : (
+      {!isInputTree && (
+        <div className="space-y-1 text-xs">
           <TransitionContent
             segment={segment}
+            pairChange={pairChange}
             getLeafNames={getLeafNames}
-            isExpanded={isExpanded}
-            onToggleExpanded={() => setIsExpanded(!isExpanded)}
           />
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -57,75 +49,44 @@ export function TimelineSegmentTooltip({ segment, segmentIndex, totalSegments, g
 // =============================================================================
 
 /**
- * Header section with icon, title, and segment counter.
+ * Header section with icon and the transition (or input tree) the pointer is over.
  */
-function TooltipHeader({ isInputTree, segmentIndex, totalSegments }) {
+function TooltipHeader({ segment, pairCount }) {
+  const isInputTree = segment.isInputTreeSegment;
   const Icon = isInputTree ? GitBranch : ArrowRightLeft;
-  const title = isInputTree ? 'Input tree' : 'Generated frames';
+  const title = isInputTree
+    ? `Input tree ${segment.originalTreeIndex + 1}`
+    : formatTransitionHeading(segment, pairCount);
 
   return (
     <div className="flex items-center gap-2 pb-2 border-b border-border">
       <Icon className="size-3.5 text-primary shrink-0" />
       <span className="font-semibold text-xs truncate">{title}</span>
-      <span className="text-xs text-muted-foreground ml-auto">
-        {segmentIndex + 1}/{totalSegments}
-      </span>
-    </div>
-  );
-}
-
-/**
- * Content for input-tree segments.
- * Displays tree name and original index.
- */
-function InputTreeContent({ segment }) {
-  return (
-    <div className="text-muted-foreground">
-      {segment.treeName}
-      {typeof segment.originalTreeIndex === 'number' && (
-        <span className="ml-2 text-xs opacity-70">(#{segment.originalTreeIndex + 1})</span>
-      )}
     </div>
   );
 }
 
 /**
  * Content for transition segments.
- * Displays affected subtrees, pivot edge, step count, and taxa count.
+ * Displays the pair's change, pivot edge and affected subtrees.
  */
-function TransitionContent({ segment, getLeafNames, isExpanded, onToggleExpanded }) {
-  const generatedFrames = Number.isInteger(segment.generatedFrameCount)
-    ? segment.generatedFrameCount
-    : Array.isArray(segment.interpolationData)
-      ? segment.interpolationData.length
-      : 1;
-  const animationSteps = Number.isInteger(segment.animationStepCount)
-    ? segment.animationStepCount
-    : Array.isArray(segment.interpolationData)
-      ? Math.max(0, segment.interpolationData.length - 1)
-      : 0;
-
-  const taxaCount = typeof segment.subtreeMoveCount === 'number' ? segment.subtreeMoveCount : 0;
-
+function TransitionContent({ segment, pairChange, getLeafNames }) {
+  const pairFacts = formatPairFacts(pairChange);
   const subtreeGroups = extractAffectedSubtreeGroups(segment.affectedSubtrees, getLeafNames);
   const pivotEdgePreview = formatPivotEdgePreview(segment.pivotEdge);
 
   return (
     <>
+      {pairFacts && (
+        <div className="flex flex-col gap-0.5 text-muted-foreground">
+          {pairFacts.metrics && <span className="tabular-nums">{pairFacts.metrics}</span>}
+          <span>{pairFacts.change}</span>
+        </div>
+      )}
+
       <PivotEdgeSection pivotEdgePreview={pivotEdgePreview} />
 
-      <MovingSubtreesSection
-        subtreeGroups={subtreeGroups}
-        isExpanded={isExpanded}
-        onToggleExpanded={onToggleExpanded}
-      />
-
-      <div className="flex items-center justify-between pt-1 text-muted-foreground border-t border-border/50 mt-1">
-        <span>{generatedFrames} generated frames</span>
-        <span>
-          {animationSteps} steps, {taxaCount} taxa
-        </span>
-      </div>
+      <MovingSubtreesSection subtreeGroups={subtreeGroups} />
     </>
   );
 }
@@ -149,46 +110,27 @@ function PivotEdgeSection({ pivotEdgePreview }) {
 }
 
 /**
- * Section displaying affected subtrees with expandable list.
+ * Section displaying the first few affected subtrees. The tooltip never takes the
+ * pointer, so the rest is "+N more" here and in full in the Transition Inspector.
  */
-function MovingSubtreesSection({ subtreeGroups, isExpanded, onToggleExpanded }) {
+function MovingSubtreesSection({ subtreeGroups }) {
   const MAX_VISIBLE = 3;
-  const hasManyGroups = subtreeGroups.length > MAX_VISIBLE;
-  const visibleGroups = isExpanded ? subtreeGroups : subtreeGroups.slice(0, MAX_VISIBLE);
+  const hiddenCount = subtreeGroups.length - MAX_VISIBLE;
 
   return (
     <div className="flex flex-col gap-1">
-      {/* Section header with expand/collapse button */}
-      <div className="flex items-center justify-between">
-        <span className="text-muted-foreground font-medium text-2xs uppercase tracking-wider">
-          Affected subtrees
-        </span>
-        {hasManyGroups && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-4 p-0 hover:bg-transparent"
-            aria-label={isExpanded ? 'Collapse affected subtrees' : 'Expand affected subtrees'}
-            title={isExpanded ? 'Collapse affected subtrees' : 'Expand affected subtrees'}
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleExpanded();
-            }}
-          >
-            {isExpanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
-          </Button>
-        )}
-      </div>
+      <span className="text-muted-foreground font-medium text-2xs uppercase tracking-wider">
+        Affected subtrees
+      </span>
 
-      {/* Subtree badges */}
       {subtreeGroups.length > 0 ? (
         <div className="flex flex-wrap gap-1 max-w-full">
-          {visibleGroups.map((names, idx) => (
+          {subtreeGroups.slice(0, MAX_VISIBLE).map((names, idx) => (
             <SubtreeBadge key={idx} names={names} />
           ))}
-          {!isExpanded && hasManyGroups && (
+          {hiddenCount > 0 && (
             <span className="text-2xs text-muted-foreground self-center pl-1">
-              +{subtreeGroups.length - MAX_VISIBLE} more
+              +{hiddenCount} more
             </span>
           )}
         </div>

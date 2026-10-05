@@ -79,7 +79,7 @@ function buildReadablePosition(
   if (timelineCursor?.isObservedInput && Number.isInteger(timelineCursor.inputTreeIndex)) {
     return {
       kind: 'input',
-      display: `Tree ${timelineCursor.inputTreeIndex + 1}/${inputFrames.length}`,
+      display: `Input tree ${timelineCursor.inputTreeIndex + 1}`,
       inputTreeIndex: timelineCursor.inputTreeIndex,
       inputTreeCount: inputFrames.length,
     };
@@ -99,7 +99,7 @@ function buildReadablePosition(
     const frameNumber = Math.max(1, Math.min(frameCount, safeSequenceIndex - from));
     return {
       kind: 'transition',
-      display: `Tree ${previousInputTreeOrdinal + 1} -> ${nextInputTreeOrdinal + 1}, frame ${frameNumber}/${frameCount}`,
+      display: `Tree ${previousInputTreeOrdinal + 1} → ${nextInputTreeOrdinal + 1} · step ${frameNumber} of ${frameCount}`,
       sourceInputTreeIndex: previousInputTreeOrdinal,
       targetInputTreeIndex: nextInputTreeOrdinal,
       frameNumber,
@@ -119,7 +119,7 @@ function buildSegmentText(timelineCursor) {
     Number.isInteger(timelineCursor?.sourceInputTreeIndex) &&
     Number.isInteger(timelineCursor?.targetInputTreeIndex)
   ) {
-    return `Tree ${timelineCursor.sourceInputTreeIndex + 1} -> ${timelineCursor.targetInputTreeIndex + 1}`;
+    return `Tree ${timelineCursor.sourceInputTreeIndex + 1} → ${timelineCursor.targetInputTreeIndex + 1}`;
   }
   return 'Generated frame';
 }

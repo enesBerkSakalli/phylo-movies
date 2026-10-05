@@ -10,7 +10,9 @@ export const MOVIE_PLAYER_ARIA_LABELS = {
 };
 
 export const TIMELINE_LEGEND_ITEMS = {
-  inputTrees: 'Input trees',
-  generatedFrames: 'Generated frames',
-  selectedSegment: 'Selected segment',
+  rfChange: 'RF change',
+  sprMove: 'SPR move',
+  branchLengthsOnly: 'Branch lengths only',
+  inputTree: 'Input tree',
+  selected: 'Selected',
 };

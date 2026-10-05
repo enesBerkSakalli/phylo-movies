@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { MovieChartSection } from './MovieChartSection/MovieChartSection.jsx';
 import { TransportControls } from './TransportControls.jsx';
@@ -19,23 +19,29 @@ import {
   selectLeafNamesByIndex,
   selectMovieTimelineManager,
   selectOpenMsaViewer,
+  selectPairMetrics,
+  selectPairs,
+  selectPlaying,
+  selectSelectedTimelineSegmentIndex,
   selectSetAnimationSpeed,
   selectSetHoveredSegment,
-  selectSetTooltipHovered,
+  selectTemporalEvents,
   useAppStore,
 } from '../../state/phyloStore/store.js';
 import { openPanel, togglePanel, useIsPanelOpen } from '../dock/dockRuntime.js';
 import { SETTINGS_PANEL_ID } from '../dock/panelRegistry.js';
 import { Button } from '../ui/button';
-import { Activity, Menu, ChevronUp, ChevronDown, Dna } from 'lucide-react';
+import { Activity, Menu, ChevronUp, ChevronDown, Dna, PanelRightOpen } from 'lucide-react';
 import { AppTooltip } from '../ui/app-tooltip';
 import { cn } from '../../lib/utils';
+import { buildPairChangeProfile } from '../../timeline/data/pairChangeProfile.js';
+import { clampTooltipLeft } from '../timeline/timelineSegmentTooltipUtils.js';
 import { MOVIE_PLAYER_ARIA_LABELS, TIMELINE_LEGEND_ITEMS } from './MoviePlayerBar.contract.js';
 
 // ==========================================================================
 // CONSTANTS
 // ==========================================================================
-const TOOLTIP_Y_OFFSET = 12;
+const TOOLTIP_MARGIN = 8;
 
 export function MoviePlayerBar() {
   const forward = useAppStore(selectForward);
@@ -44,6 +50,10 @@ export function MoviePlayerBar() {
   const animationSpeed = useAppStore(selectAnimationSpeed);
   const hasMsa = useAppStore(selectHasMsa);
   const openMsaViewer = useAppStore(selectOpenMsaViewer);
+  const pairs = useAppStore(selectPairs);
+  const pairMetrics = useAppStore(selectPairMetrics);
+  const temporalEvents = useAppStore(selectTemporalEvents);
+  const selectedSegmentIndex = useAppStore(selectSelectedTimelineSegmentIndex);
   const [toolbarExpanded, setToolbarExpanded] = useState(true);
 
   const movieTimelineManager = useAppStore(selectMovieTimelineManager);
@@ -56,6 +66,13 @@ export function MoviePlayerBar() {
     () => (hasTimeline ? (movieTimelineManager?.hasTransitionSegments?.() ?? false) : false),
     [hasTimeline, movieTimelineManager]
   );
+
+  const pairProfile = useMemo(
+    () => buildPairChangeProfile({ pairs: pairs ?? [], pairMetrics, temporalEvents }),
+    [pairs, pairMetrics, temporalEvents]
+  );
+  const canInspect =
+    movieTimelineManager?.getSegment?.(selectedSegmentIndex)?.isInputTreeSegment === false;
 
   useEffect(() => {
     const container = timelineHostRef.current;
@@ -137,6 +154,7 @@ export function MoviePlayerBar() {
               {hasTimeline && (
                 <div className="flex min-w-0 items-center gap-2 overflow-hidden">
                   <TimelineStatusStrip />
+                  <InspectTransitionAction canInspect={canInspect} />
                   <MsaPlayerBarAction hasMsa={hasMsa} onOpen={handleOpenMsaViewer} />
                   <MotionStageLabel />
                 </div>
@@ -208,7 +226,12 @@ export function MoviePlayerBar() {
           >
             {/* Chart toggle (first), metric picker and chart panel (last, full width). */}
             <MovieChartSection />
-            {hasTimeline && <TimelineLegend hasTransitionSegments={hasTransitionSegments} />}
+            {hasTimeline && (
+              <TimelineLegend
+                hasTransitionSegments={hasTransitionSegments}
+                maxRf={pairProfile.maxRf}
+              />
+            )}
             {hasTimeline && toolbarExpanded && (
               <div className="order-4 shrink-0">
                 <TimelineScrollControls />
@@ -218,58 +241,22 @@ export function MoviePlayerBar() {
         </div>
       </div>
 
-      <TimelineSegmentTooltipOverlay />
+      <TimelineSegmentTooltipOverlay playerBarRef={playerBarRef} pairProfile={pairProfile} />
     </>
   );
 }
 
-function getTimelineTooltipPosition(position) {
-  const x = Number(position?.x);
-  const y = Number(position?.y);
-
-  if (!Number.isFinite(x) || !Number.isFinite(y)) {
-    return null;
-  }
-
-  return { x, y };
-}
-
-function clampTimelineTooltipPosition(anchor, element) {
-  if (!anchor || !element || typeof window === 'undefined') return null;
-
-  const margin = 8;
-  const bounds = element.getBoundingClientRect();
-  const availableHalfWidth = Math.max(0, (window.innerWidth - margin * 2) / 2);
-  const halfWidth = Math.min(bounds.width / 2, availableHalfWidth);
-  const minimumX = margin + halfWidth;
-  const maximumX = Math.max(minimumX, window.innerWidth - margin - halfWidth);
-  const minimumY = Math.min(window.innerHeight - margin, margin + bounds.height);
-  const maximumY = Math.max(minimumY, window.innerHeight - margin);
-
-  return {
-    x: Math.min(Math.max(anchor.x, minimumX), maximumX),
-    y: Math.min(Math.max(anchor.y - TOOLTIP_Y_OFFSET, minimumY), maximumY),
-  };
-}
-
-function positionsEqual(left, right) {
-  return left?.x === right?.x && left?.y === right?.y;
-}
-
-function TimelineSegmentTooltipOverlay() {
+function TimelineSegmentTooltipOverlay({ playerBarRef, pairProfile }) {
   const hoveredSegmentIndex = useAppStore(selectHoveredSegmentIndex);
   const hoveredSegmentData = useAppStore(selectHoveredSegmentData);
   const hoveredSegmentPosition = useAppStore(selectHoveredSegmentPosition);
-  const setTooltipHovered = useAppStore(selectSetTooltipHovered);
+  const selectedSegmentIndex = useAppStore(selectSelectedTimelineSegmentIndex);
+  const playing = useAppStore(selectPlaying);
   const setHoveredSegment = useAppStore(selectSetHoveredSegment);
-  const movieTimelineManager = useAppStore(selectMovieTimelineManager);
   const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
   const tooltipRef = useRef(null);
-  const anchorPosition = getTimelineTooltipPosition(hoveredSegmentPosition);
-  const anchorX = anchorPosition?.x;
-  const anchorY = anchorPosition?.y;
-  const [tooltipPosition, setTooltipPosition] = useState(null);
-  const totalSegments = movieTimelineManager?.getSegmentCount?.() ?? 0;
+  const anchorX = Number(hoveredSegmentPosition?.x);
+  const [placement, setPlacement] = useState(null);
 
   const getLeafNames = useCallback(
     (indices) => {
@@ -286,64 +273,68 @@ function TimelineSegmentTooltipOverlay() {
     [leafNamesByIndex]
   );
 
+  // Picking a segment or starting playback is a decision; the hover preview has done its job.
+  useEffect(() => {
+    setHoveredSegment(null, null);
+  }, [selectedSegmentIndex, playing, setHoveredSegment]);
+
+  // Sits just above the whole player bar so it never covers the controls; only x follows the pointer.
   useLayoutEffect(() => {
     const tooltip = tooltipRef.current;
-    if (!Number.isFinite(anchorX) || !Number.isFinite(anchorY) || !tooltip) {
-      setTooltipPosition(null);
+    const playerBar = playerBarRef.current;
+    if (!Number.isFinite(anchorX) || !tooltip || !playerBar) {
+      setPlacement(null);
       return undefined;
     }
 
-    const updatePosition = () => {
-      const nextPosition = clampTimelineTooltipPosition({ x: anchorX, y: anchorY }, tooltip);
-      setTooltipPosition((currentPosition) =>
-        positionsEqual(currentPosition, nextPosition) ? currentPosition : nextPosition
+    const updatePlacement = () => {
+      const next = {
+        left: clampTooltipLeft(anchorX, tooltip.getBoundingClientRect().width, window.innerWidth),
+        top: playerBarRef.current.getBoundingClientRect().top - TOOLTIP_MARGIN,
+      };
+      setPlacement((current) =>
+        current?.left === next.left && current?.top === next.top ? current : next
       );
     };
 
-    updatePosition();
-    window.addEventListener('resize', updatePosition);
+    updatePlacement();
+    window.addEventListener('resize', updatePlacement);
     const resizeObserver =
-      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updatePosition) : null;
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updatePlacement) : null;
     resizeObserver?.observe(tooltip);
 
     return () => {
-      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('resize', updatePlacement);
       resizeObserver?.disconnect();
     };
-  }, [anchorX, anchorY, hoveredSegmentIndex]);
+  }, [anchorX, hoveredSegmentIndex, playerBarRef]);
 
-  if (hoveredSegmentIndex === null || !hoveredSegmentData || !anchorPosition) {
+  if (hoveredSegmentIndex === null || !hoveredSegmentData || !Number.isFinite(anchorX)) {
     return null;
   }
-
-  const visiblePosition = tooltipPosition ?? anchorPosition;
 
   return (
     <div
       ref={tooltipRef}
       style={{
         position: 'fixed',
-        left: `${visiblePosition.x}px`,
-        top: `${visiblePosition.y}px`,
-        transform: 'translate(-50%, -100%)',
+        left: `${placement?.left ?? 0}px`,
+        top: `${placement?.top ?? 0}px`,
+        transform: 'translateY(-100%)',
         zIndex: 10000,
-        pointerEvents: 'auto',
+        pointerEvents: 'none',
+        width: 'max-content',
         minWidth: '200px',
-        maxWidth: '300px',
-        visibility: tooltipPosition ? 'visible' : 'hidden',
+        maxWidth: `min(300px, calc(100vw - ${TOOLTIP_MARGIN * 2}px))`,
+        visibility: placement ? 'visible' : 'hidden',
       }}
-      className="animate-in fade-in-0 zoom-in-95 duration-200"
-      onMouseEnter={() => setTooltipHovered(true)}
-      onMouseLeave={() => {
-        setTooltipHovered(false);
-        setHoveredSegment(null, null);
-      }}
+      className="animate-in fade-in-0 duration-200"
     >
       <div className="rounded-lg border bg-card p-2 shadow-lg">
         <TimelineSegmentTooltip
           segment={hoveredSegmentData}
-          segmentIndex={hoveredSegmentIndex}
-          totalSegments={totalSegments}
+          pairChange={pairProfile.byPairId.get(hoveredSegmentData.pairId)}
+          pairCount={pairProfile.byPairId.size}
           getLeafNames={getLeafNames}
         />
       </div>
@@ -366,6 +357,31 @@ function MsaPlayerBarAction({ hasMsa, onOpen }) {
       >
         <Dna className="size-4" />
       </Button>
+    </AppTooltip>
+  );
+}
+
+// The inspector opens on demand: selecting a segment only enables this button.
+function InspectTransitionAction({ canInspect }) {
+  return (
+    <AppTooltip
+      content={
+        canInspect ? 'Inspect transition' : 'Select a transition on the timeline to inspect it'
+      }
+    >
+      <span className="inline-flex shrink-0">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Inspect transition"
+          disabled={!canInspect}
+          onClick={() => openPanel('inspector')}
+          className="hover:bg-accent"
+        >
+          <PanelRightOpen className="size-4" />
+        </Button>
+      </span>
     </AppTooltip>
   );
 }
@@ -412,36 +428,51 @@ function formatAnimationStage(stage) {
   }
 }
 
-function TimelineLegend({ hasTransitionSegments }) {
+// Swatches mirror what the timeline strip draws; the label alone carries the meaning.
+function TimelineLegend({ hasTransitionSegments, maxRf }) {
   return (
     <div
       className="order-5 flex min-w-0 basis-full flex-wrap items-center gap-x-3 gap-y-1 overflow-hidden text-2xs font-medium text-muted-foreground sm:order-2 sm:flex-1 sm:basis-auto"
       role="group"
       aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineLegend}
     >
-      <LegendItem
-        markerClassName="h-2.5 w-2.5 rounded-full border-2 border-foreground/70 bg-background"
-        label={TIMELINE_LEGEND_ITEMS.inputTrees}
-      />
       {hasTransitionSegments && (
-        <LegendItem
-          markerClassName="h-1 w-5 rounded bg-amber-600/85"
-          label={TIMELINE_LEGEND_ITEMS.generatedFrames}
-        />
+        <>
+          <LegendItem
+            swatchClassName="h-2 w-4 rounded-sm bg-slate-500"
+            label={TIMELINE_LEGEND_ITEMS.rfChange}
+          >
+            <span className="font-normal tabular-nums">(max {maxRf.toFixed(2)})</span>
+          </LegendItem>
+          <LegendItem
+            swatchClassName="size-2 rounded-full bg-slate-700"
+            label={TIMELINE_LEGEND_ITEMS.sprMove}
+            title="size = taxa moved"
+          />
+          <LegendItem
+            swatchClassName="w-5 border-t-2 border-dashed border-slate-500"
+            label={TIMELINE_LEGEND_ITEMS.branchLengthsOnly}
+          />
+        </>
       )}
       <LegendItem
-        markerClassName="h-1.5 w-5 rounded bg-emerald-600"
-        label={TIMELINE_LEGEND_ITEMS.selectedSegment}
+        swatchClassName="h-1.5 w-px bg-slate-500"
+        label={TIMELINE_LEGEND_ITEMS.inputTree}
+      />
+      <LegendItem
+        swatchClassName="h-1.5 w-5 rounded bg-emerald-600"
+        label={TIMELINE_LEGEND_ITEMS.selected}
       />
     </div>
   );
 }
 
-function LegendItem({ markerClassName, label }) {
+function LegendItem({ swatchClassName, label, title, children }) {
   return (
-    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-      <span className={markerClassName} aria-hidden />
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap" title={title}>
+      <span className={swatchClassName} aria-hidden />
       <span>{label}</span>
+      {children}
     </span>
   );
 }

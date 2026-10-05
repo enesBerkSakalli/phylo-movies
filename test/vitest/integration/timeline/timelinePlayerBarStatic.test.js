@@ -16,9 +16,11 @@ function readRepoFile(...segments) {
 describe('movie timeline player bar semantics', () => {
   it('keeps the legend aligned with visible timeline states', () => {
     expect(Object.values(TIMELINE_LEGEND_ITEMS)).toEqual([
-      'Input trees',
-      'Generated frames',
-      'Selected segment',
+      'RF change',
+      'SPR move',
+      'Branch lengths only',
+      'Input tree',
+      'Selected',
     ]);
     expect(TIMELINE_LEGEND_ITEMS).not.toHaveProperty('currentPosition');
   });
@@ -113,7 +115,7 @@ describe('movie timeline player bar semantics', () => {
     expect(statusStripSource).toContain('flex-nowrap overflow-hidden');
     expect(statusStripSource).toContain('<StatusItem icon={Film} label="Cursor">');
     expect(statusStripSource).toContain(
-      'inline-flex w-auto max-w-[30vw] shrink-0 items-center cursor-help sm:w-[12rem]'
+      'inline-flex w-auto max-w-[30vw] shrink-0 items-center cursor-help sm:w-[14rem]'
     );
     expect(statusStripSource).toContain('inline-flex w-[6.5rem] shrink-0');
     expect(statusStripSource).toContain('hidden w-[7rem] shrink-0');
@@ -136,6 +138,34 @@ describe('movie timeline player bar semantics', () => {
     expect(timelineStatusPosition).toBeLessThan(msaActionPosition);
     expect(msaActionPosition).toBeLessThan(motionStagePosition);
     expect(motionStagePosition).toBeLessThan(playbackSettingsPosition);
+  });
+
+  it('draws the legend swatches the strip uses, with the dataset RF maximum', () => {
+    const playerBarSource = readRepoFile('src', 'components', 'movie-player', 'MoviePlayerBar.jsx');
+    expect(playerBarSource).toContain('buildPairChangeProfile');
+    expect(playerBarSource).toContain('(max {maxRf.toFixed(2)})');
+    expect(playerBarSource).toContain('title="size = taxa moved"');
+    // rgb(100,116,139), rgb(51,65,85) and rgb(5,150,105): slate-500, slate-700, emerald-600.
+    for (const swatch of ['bg-slate-500', 'bg-slate-700', 'border-slate-500', 'bg-emerald-600']) {
+      expect(playerBarSource).toContain(swatch);
+    }
+    expect(playerBarSource).not.toContain('bg-amber-600');
+  });
+
+  it('keeps the segment tooltip off the controls and out of the pointer path', () => {
+    const playerBarSource = readRepoFile('src', 'components', 'movie-player', 'MoviePlayerBar.jsx');
+    const tooltipSource = readRepoFile(
+      'src',
+      'components',
+      'timeline',
+      'TimelineSegmentTooltip.jsx'
+    );
+    expect(playerBarSource).toContain("pointerEvents: 'none'");
+    expect(playerBarSource).not.toContain("pointerEvents: 'auto'");
+    expect(playerBarSource).not.toContain('selectSetTooltipHovered');
+    expect(playerBarSource).not.toContain('onMouseLeave');
+    expect(playerBarSource).toContain('playerBarRef.current.getBoundingClientRect().top');
+    expect(tooltipSource).not.toContain('Button');
   });
 
   it('puts legend, timeline view controls, and metrics in one footer row', () => {
@@ -163,7 +193,7 @@ describe('movie timeline player bar semantics', () => {
       'DistanceChart.jsx'
     );
 
-    expect(playerBarSource).toContain('<TimelineSegmentTooltipOverlay />');
+    expect(playerBarSource).toContain('<TimelineSegmentTooltipOverlay');
     expect(playerBarSource).toContain('<MovieChartSection />');
     expect(playerBarSource).not.toContain(
       '<MovieChartSection barOptionValue={barOptionValue} onBarOptionChange={setBarOption} />'

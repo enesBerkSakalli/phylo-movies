@@ -14,11 +14,14 @@ import {
   selectPairMetrics,
   selectScaleList,
   selectSelectedTimelineSegmentIndex,
+  selectTemporalEvents,
 } from '../state/phyloStore/store.js';
 import { Badge } from './ui/badge';
 import {
   extractAffectedSubtreeGroups,
   formatPivotEdgePreview,
+  getSegmentStepRange,
+  getSplitEventPosition,
 } from './timeline/timelineSegmentTooltipUtils.js';
 
 export function TransitionInspectorPanel() {
@@ -27,6 +30,7 @@ export function TransitionInspectorPanel() {
     movieTimelineManager,
     leafNamesByIndex,
     pairMetrics,
+    temporalEvents,
     scaleList,
     hasMsa,
     msaStepSize,
@@ -38,6 +42,7 @@ export function TransitionInspectorPanel() {
       movieTimelineManager: selectMovieTimelineManager(state),
       leafNamesByIndex: selectLeafNamesByIndex(state),
       pairMetrics: selectPairMetrics(state),
+      temporalEvents: selectTemporalEvents(state),
       scaleList: selectScaleList(state),
       hasMsa: selectHasMsa(state),
       msaStepSize: selectMsaStepSize(state),
@@ -55,6 +60,7 @@ export function TransitionInspectorPanel() {
         segment,
         leafNamesByIndex,
         pairMetrics,
+        temporalEvents,
         scaleList,
         hasMsa,
         msaStepSize,
@@ -65,6 +71,7 @@ export function TransitionInspectorPanel() {
       segment,
       leafNamesByIndex,
       pairMetrics,
+      temporalEvents,
       scaleList,
       hasMsa,
       msaStepSize,
@@ -111,7 +118,8 @@ export function TransitionInspectorPanel() {
         <Section title="Selection">
           <KeyValue label="Name" value={details.name} />
           <KeyValue label="Direction" value={details.directionLabel} />
-          <KeyValue label="Global frames" value={details.globalRangeLabel} />
+          {details.stepLabel && <KeyValue label="Steps" value={details.stepLabel} />}
+          {details.eventLabel && <KeyValue label="Event" value={details.eventLabel} />}
           <KeyValue label="Local steps" value={details.localStepLabel} />
         </Section>
 
@@ -205,6 +213,7 @@ function buildInspectorDetails({
   segment,
   leafNamesByIndex,
   pairMetrics,
+  temporalEvents,
   scaleList,
   hasMsa,
   msaStepSize,
@@ -219,6 +228,10 @@ function buildInspectorDetails({
   const metric = pair ? getPairMetric(pairMetrics, pair) : null;
   const sourceGlobalIndex = resolveSourceGlobalIndex(segment);
   const scaleValue = getScaleValue(scaleList, sourceGlobalIndex);
+  const stepRange = segment.isInputTreeSegment ? null : getSegmentStepRange(segment);
+  const splitEvent = segment.isInputTreeSegment
+    ? null
+    : getSplitEventPosition(segment, temporalEvents);
   const msaFrameIndex = resolveMsaFrameIndex(segment, pair);
   const msaWindow =
     hasMsa &&
@@ -229,13 +242,16 @@ function buildInspectorDetails({
       : null;
 
   return {
-    name: formatTreeName(segment),
+    name: formatTreeName(segment, pair),
     directionLabel: pair
       ? `Source tree ${pair.sourceInputTreeIndex + 1} -> Target tree ${
           pair.targetInputTreeIndex + 1
         }`
-      : segment.pairId,
-    globalRangeLabel: formatRange(segment.globalStart, segment.globalEnd),
+      : null,
+    stepLabel: stepRange
+      ? `${formatRange(stepRange.start, stepRange.end, '–')} of ${stepRange.total}`
+      : null,
+    eventLabel: splitEvent ? `${splitEvent.index} of ${splitEvent.count}` : null,
     localStepLabel: formatRange(segment.localStepStart, segment.localStepEnd),
     movingTaxaLabel: formatCount(segment.subtreeMoveCount, 'taxon', 'taxa'),
     generatedFrameLabel: formatCount(resolveGeneratedFrameCount(segment), 'frame', 'frames'),
@@ -304,19 +320,17 @@ function getPairMetric(pairMetrics, pair) {
   return metric.pair_id === pair.pairId ? metric : null;
 }
 
-function formatTreeName(segment) {
-  if (typeof segment.treeName === 'string' && segment.treeName.trim()) {
-    return segment.treeName;
-  }
+function formatTreeName(segment, pair) {
+  if (pair) return `Tree ${pair.sourceInputTreeIndex + 1} → Tree ${pair.targetInputTreeIndex + 1}`;
   if (segment.isInputTreeSegment && Number.isInteger(segment.originalTreeIndex)) {
-    return `Input Tree ${segment.originalTreeIndex + 1}`;
+    return `Input tree ${segment.originalTreeIndex + 1}`;
   }
   return segment.isInputTreeSegment ? null : 'Generated transition frames';
 }
 
-function formatRange(start, end) {
+function formatRange(start, end, separator = '-') {
   if (!Number.isFinite(start) || !Number.isFinite(end)) return null;
-  return start === end ? String(start) : `${start}-${end}`;
+  return start === end ? String(start) : `${start}${separator}${end}`;
 }
 
 function formatCount(value, singular, plural) {

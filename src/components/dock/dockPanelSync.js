@@ -14,22 +14,12 @@ const PANEL_STORE_BINDINGS = Object.freeze([
     isOpen: (state) => state.taxaColoringOpen === true,
     clear: (state) => state.setTaxaColoringOpen(false),
   },
-  {
-    panelId: 'inspector',
-    isOpen: (state) =>
-      state.selectedTimelineSegmentIndex !== null &&
-      state.selectedTimelineSegmentIndex !== undefined,
-    clear: (state) => state.setSelectedTimelineSegment(null),
-    // Picking another segment raises the inspector even while it sits behind another tab.
-    focusKey: (state) => state.selectedTimelineSegmentIndex,
-  },
 ]);
 
 export function syncPanelsFromStore(state, previous, actions) {
   for (const binding of PANEL_STORE_BINDINGS) {
     const now = binding.isOpen(state);
-    const raised = now && binding.focusKey?.(state) !== binding.focusKey?.(previous);
-    if (now === binding.isOpen(previous) && !raised) continue;
+    if (now === binding.isOpen(previous)) continue;
     if (now) actions.openPanel(binding.panelId);
     else actions.closePanel(binding.panelId);
   }

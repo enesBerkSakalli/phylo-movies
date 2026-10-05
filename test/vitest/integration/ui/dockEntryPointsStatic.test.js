@@ -10,8 +10,24 @@ describe('dock entry points surface an already-open panel', () => {
   it.each([
     ['src/components/sidebar/MsaSidebarSection.jsx', "openPanel('alignment')"],
     ['src/components/movie-player/MoviePlayerBar.jsx', "openPanel('alignment')"],
+    ['src/components/movie-player/MoviePlayerBar.jsx', "openPanel('inspector')"],
     ['src/components/appearance/color/ColoringPanel.jsx', "openPanel('taxa-coloring')"],
   ])('%s calls %s', (file, call) => {
     expect(source(file)).toContain(call);
+  });
+});
+
+// The inspector opens on demand from the player bar, never as a side effect of selecting a segment.
+describe('selecting a timeline segment does not open the inspector', () => {
+  it('has no inspector binding to the selected segment', () => {
+    const sync = source('src/components/dock/dockPanelSync.js');
+    expect(sync).not.toContain('selectedTimelineSegmentIndex');
+    expect(sync).not.toContain('inspector');
+  });
+
+  it('opens it from an enabled-on-selection button in the player bar', () => {
+    const bar = source('src/components/movie-player/MoviePlayerBar.jsx');
+    expect(bar).toContain('aria-label="Inspect transition"');
+    expect(bar).toContain('disabled={!canInspect}');
   });
 });

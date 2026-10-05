@@ -18,7 +18,7 @@ describe('timeline status model', () => {
       },
     });
 
-    expect(status.position.display).toBe('Tree 2/3');
+    expect(status.position.display).toBe('Input tree 2');
     expect(status.position.kind).toBe('input');
     expect(status.position.inputTreeIndex).toBe(1);
     expect(status.position.inputTreeCount).toBe(3);
@@ -42,13 +42,13 @@ describe('timeline status model', () => {
       },
     });
 
-    expect(status.position.display).toBe('Tree 1 -> 2, frame 2/2');
+    expect(status.position.display).toBe('Tree 1 → 2 · step 2 of 2');
     expect(status.position.kind).toBe('transition');
     expect(status.position.sourceInputTreeIndex).toBe(0);
     expect(status.position.targetInputTreeIndex).toBe(1);
     expect(status.position.frameNumber).toBe(2);
     expect(status.position.frameCount).toBe(2);
-    expect(status.segment.text).toBe('Tree 1 -> 2');
+    expect(status.segment.text).toBe('Tree 1 → 2');
     expect(status.segment.tooltip).toBe('Generated frames between neighboring input trees.');
   });
 

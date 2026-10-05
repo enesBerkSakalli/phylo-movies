@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { ArrowRight, Columns, Film, GitBranch } from 'lucide-react';
+import { Columns, Film, GitBranch } from 'lucide-react';
 import { AppTooltip } from '../ui/app-tooltip';
 import {
   selectActiveTreeListLength,
@@ -99,7 +99,7 @@ function CursorStatus({ status }) {
         }
         contentClassName="border-border/60 bg-popover text-2xs font-mono text-popover-foreground"
       >
-        <span className="inline-flex w-auto max-w-[30vw] shrink-0 items-center cursor-help sm:w-[12rem]">
+        <span className="inline-flex w-auto max-w-[30vw] shrink-0 items-center cursor-help sm:w-[14rem]">
           <CursorPositionValue position={status.position} />
         </span>
       </AppTooltip>
@@ -112,17 +112,12 @@ function CursorPositionValue({ position }) {
     return (
       <span className="inline-flex min-w-0 items-center gap-1 text-xs leading-tight font-semibold tabular-nums">
         <GitBranch className="size-3 shrink-0 text-primary" aria-hidden />
-        <span className="min-w-[1rem] shrink-0 text-center text-foreground">
-          {position.sourceInputTreeIndex + 1}
-        </span>
-        <ArrowRight className="size-3 shrink-0 text-muted-foreground" aria-hidden />
-        <GitBranch className="size-3 shrink-0 text-muted-foreground" aria-hidden />
-        <span className="min-w-[1rem] shrink-0 text-center text-foreground">
-          {position.targetInputTreeIndex + 1}
-        </span>
-        <span className="shrink-0 text-muted-foreground/60">|</span>
-        <span className="shrink-0 text-foreground">
-          {position.frameNumber}/{position.frameCount}
+        <span className="min-w-0 truncate text-foreground">
+          Tree {position.sourceInputTreeIndex + 1} → {position.targetInputTreeIndex + 1}
+          <span className="font-medium text-muted-foreground">
+            {' '}
+            · step {position.frameNumber} of {position.frameCount}
+          </span>
         </span>
       </span>
     );
@@ -132,9 +127,7 @@ function CursorPositionValue({ position }) {
     return (
       <span className="inline-flex min-w-0 items-center gap-1 text-xs leading-tight font-semibold tabular-nums">
         <GitBranch className="size-3 shrink-0 text-primary" aria-hidden />
-        <span className="min-w-0 truncate text-center text-foreground">
-          {position.inputTreeIndex + 1}/{position.inputTreeCount}
-        </span>
+        <span className="min-w-0 truncate text-foreground">{position.display}</span>
       </span>
     );
   }
