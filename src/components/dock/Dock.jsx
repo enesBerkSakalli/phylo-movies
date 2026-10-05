@@ -3,7 +3,12 @@ import { DockviewDefaultTab, DockviewReact } from 'dockview-react';
 import 'dockview-react/dist/styles/dockview.css';
 import '../../css/dock.css';
 import { AdaptiveDock } from './adaptiveDock.js';
-import { readSavedLayout, saveLayout, withoutFloatingPanels } from './dockLayout.js';
+import {
+  keepSideGroupSizes,
+  readSavedLayout,
+  saveLayout,
+  withoutFloatingPanels,
+} from './dockLayout.js';
 import { attachDockApi, togglePanel } from './dockRuntime.js';
 import { PANEL_COMPONENTS } from './panelComponents.jsx';
 import { SETTINGS_PANEL_ID, getPanelEntry } from './panelRegistry.js';
@@ -55,6 +60,9 @@ export function Dock() {
     restoreDockLayout(api, readSavedLayout(storage()));
 
     const adaptive = new AdaptiveDock(api, withoutFloatingPanels(api.toJSON()));
+    const keptSizes = keepSideGroupSizes(api, {
+      paused: () => adaptive.changing || adaptive.narrow,
+    });
     const detach = attachDockApi(api, { isNarrow: () => adaptive.narrow });
 
     const resize = () => {
@@ -82,6 +90,7 @@ export function Dock() {
     cleanupRef.current = () => {
       observer.disconnect();
       layoutSubscription.dispose();
+      keptSizes.dispose();
       detach();
     };
   };

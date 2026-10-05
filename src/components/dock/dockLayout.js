@@ -47,6 +47,38 @@ export function floatingWithin(wanted, dock) {
   };
 }
 
+/**
+ * Closing a side group makes dockview distribute the freed space evenly over every remaining
+ * column; give the other side groups their old size back so the tree's group absorbs it.
+ */
+export function keepSideGroupSizes(api, { paused = () => false } = {}) {
+  const sizes = new Map();
+  const remember = () => {
+    sizes.clear();
+    for (const group of api.groups) {
+      if (group.api.location.type === 'grid') {
+        sizes.set(group.id, { width: group.api.width, height: group.api.height });
+      }
+    }
+  };
+  remember();
+  const removed = api.onDidRemoveGroup(() => {
+    if (paused()) return;
+    for (const group of api.groups) {
+      const size = sizes.get(group.id);
+      const holdsTree = group.panels.some((panel) => panel.id === TREE_PANEL_ID);
+      if (size && !holdsTree && group.api.location.type === 'grid') group.api.setSize(size);
+    }
+  });
+  const changed = api.onDidLayoutChange(remember);
+  return {
+    dispose() {
+      removed.dispose();
+      changed.dispose();
+    },
+  };
+}
+
 function rightColumnGroup(api) {
   const docked = api.panels.find(
     (panel) =>
