@@ -1,4 +1,11 @@
-import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 
 import { TransportControls } from './TransportControls.jsx';
 import {
@@ -285,22 +292,24 @@ function MsaPlayerBarAction({ hasMsa, onOpen, label }) {
   );
 }
 
-// The inspector opens on demand: selecting a segment only enables this button.
-function InspectTransitionAction({ canInspect, label, onDone }) {
+// The inspector opens on demand: selecting a segment only makes this button available. Unavailable it
+// is aria-disabled, not disabled, so the keyboard still reaches it and hears why.
+export function InspectTransitionAction({ canInspect, label, onDone }) {
+  const reasonId = useId();
+  const reason = 'Select a transition on the timeline to inspect it';
+
   return (
-    <AppTooltip
-      content={
-        canInspect ? 'Inspect transition' : 'Select a transition on the timeline to inspect it'
-      }
-    >
+    <AppTooltip content={canInspect ? 'Inspect transition' : reason}>
       <span className={cn('inline-flex shrink-0', label && 'w-full')}>
         <Button
           type="button"
           variant="ghost"
           size={label ? 'default' : 'icon-sm'}
           aria-label="Inspect transition"
-          disabled={!canInspect}
+          aria-disabled={!canInspect}
+          aria-describedby={canInspect ? undefined : reasonId}
           onClick={() => {
+            if (!canInspect) return;
             openPanel('inspector');
             onDone?.();
           }}
@@ -309,6 +318,11 @@ function InspectTransitionAction({ canInspect, label, onDone }) {
           <PanelRightOpen className="size-4" />
           {label}
         </Button>
+        {!canInspect && (
+          <span id={reasonId} className="sr-only">
+            {reason}
+          </span>
+        )}
       </span>
     </AppTooltip>
   );
@@ -371,6 +385,7 @@ function MoreMenu({
       <PopoverContent
         side="top"
         align="end"
+        aria-label="Playback and timeline options"
         className="z-[1300] flex w-[min(20rem,calc(100vw-1rem))] flex-col gap-1 p-3"
       >
         <PlaybackSpeedControl value={speed} setValue={onSpeedChange} />

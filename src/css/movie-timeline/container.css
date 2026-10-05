@@ -15,10 +15,11 @@
   pointer-events: auto;
 }
 
-.timeline-visual-layer canvas:focus-visible,
+/* Inside the strip, where the overflow:hidden ancestors cannot clip it, and dark enough to read
+   (--ring is 2.6:1 on white). The pointer's own focus never shows it. */
 .timeline-visual-layer [role='slider']:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
+  outline: 2px solid var(--foreground);
+  outline-offset: -2px;
 }
 
 /* Radix wraps floating content in a box of its own: when the content ignores the pointer (the
