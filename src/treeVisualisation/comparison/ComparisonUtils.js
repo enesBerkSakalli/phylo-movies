@@ -39,11 +39,12 @@ export function calculateComparisonFrameGeometry({
   rightTreeOffset = { x: 0, y: 0 },
   leftTreeOffsetX = 0,
   leftTreeOffsetY = 0,
-  includeLabelTextBounds = true,
 }) {
   const leftCenterBase = calculatePositionCenter(leftLayerData.nodes);
   const rightCenterBase = calculatePositionCenter(rightLayerData.nodes);
-  const labelSizePx = includeLabelTextBounds ? STABLE_LABEL_BOUNDS_SIZE_PX : 0;
+  // Always count label text, even when labels are hidden: spacing keyed on label visibility
+  // would let the trees overlap without an auto-fit (fit state is keyed by tree indices).
+  const labelSizePx = STABLE_LABEL_BOUNDS_SIZE_PX;
   const leftRadius = calculateTreeVisualRadius(leftLayerData, leftCenterBase, labelSizePx);
   const rightRadius = calculateTreeVisualRadius(rightLayerData, rightCenterBase, labelSizePx);
   const rightOffset = calculateRightOffset(canvasWidth, rightTreeOffset, leftRadius, rightRadius);
@@ -62,11 +63,6 @@ export function calculateComparisonFrameGeometry({
   );
 
   return {
-    leftCenterBase,
-    rightCenterBase,
-    labelSizePx,
-    leftRadius,
-    rightRadius,
     rightOffset,
     rightOffsetY,
     leftCenter,
@@ -83,51 +79,21 @@ export function calculateComparisonFrameGeometry({
  * @param {number} offsetY - Y offset
  */
 export function applyOffset(layerData, offsetX, offsetY) {
+  const shift = (p) => [p[0] + offsetX, p[1] + offsetY, p[2]];
+
   layerData.nodes.forEach((node) => {
-    node.position = [node.position[0] + offsetX, node.position[1] + offsetY, node.position[2]];
-    node.renderPosition = [
-      node.renderPosition[0] + offsetX,
-      node.renderPosition[1] + offsetY,
-      node.renderPosition[2],
-    ];
+    node.position = shift(node.position);
+    node.renderPosition = shift(node.renderPosition);
   });
 
-  layerData.links.forEach((link) => {
-    link.sourcePosition = [
-      link.sourcePosition[0] + offsetX,
-      link.sourcePosition[1] + offsetY,
-      link.sourcePosition[2],
-    ];
-    link.targetPosition = [
-      link.targetPosition[0] + offsetX,
-      link.targetPosition[1] + offsetY,
-      link.targetPosition[2],
-    ];
-
-    if (link.path) {
-      offsetFlatPath(link.path, offsetX, offsetY);
-    }
-  });
-
-  layerData.extensions.forEach((ext) => {
-    ext.sourcePosition = [
-      ext.sourcePosition[0] + offsetX,
-      ext.sourcePosition[1] + offsetY,
-      ext.sourcePosition[2],
-    ];
-    ext.targetPosition = [
-      ext.targetPosition[0] + offsetX,
-      ext.targetPosition[1] + offsetY,
-      ext.targetPosition[2],
-    ];
-
-    if (ext.path) {
-      offsetFlatPath(ext.path, offsetX, offsetY);
-    }
+  [...layerData.links, ...layerData.extensions].forEach((edge) => {
+    edge.sourcePosition = shift(edge.sourcePosition);
+    edge.targetPosition = shift(edge.targetPosition);
+    offsetFlatPath(edge.path, offsetX, offsetY);
   });
 
   layerData.labels.forEach((label) => {
-    label.position = [label.position[0] + offsetX, label.position[1] + offsetY, label.position[2]];
+    label.position = shift(label.position);
   });
 }
 
@@ -137,11 +103,10 @@ export function cloneLayerData(layerData) {
     links: cloneLayerElements(layerData.links),
     extensions: cloneLayerElements(layerData.extensions),
     labels: cloneLayerElements(layerData.labels),
-    connectors: cloneLayerElements(layerData.connectors),
   };
 }
 
-function cloneLayerElements(elements = []) {
+function cloneLayerElements(elements) {
   return elements.map((element) => cloneLayerElement(element));
 }
 
@@ -153,8 +118,6 @@ function cloneLayerElement(element) {
   copyVectorField(clone, element, 'targetPosition');
   if (ArrayBuffer.isView(element.path)) {
     clone.path = new element.path.constructor(element.path);
-  } else if (Array.isArray(element.path)) {
-    clone.path = element.path.map((point) => (Array.isArray(point) ? [...point] : point));
   }
   return clone;
 }

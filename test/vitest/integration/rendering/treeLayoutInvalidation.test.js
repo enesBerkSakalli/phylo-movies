@@ -63,4 +63,39 @@ describe('tree layout store invalidation', () => {
     expect(controller.resetComparisonAutoFit).toHaveBeenCalledOnce();
     expect(controller.renderAllElements).toHaveBeenCalledOnce();
   });
+
+  it('leaves the render after a link-opacity change to the slider handler', () => {
+    const controller = { scheduleRenderAllElements: vi.fn(), renderAllElements: vi.fn() };
+    useAppStore.setState({ treeController: controller, playing: false });
+    const { colorVersion } = useAppStore.getState();
+
+    useAppStore.getState().setLinkConnectionOpacity(2);
+
+    expect(useAppStore.getState().linkConnectionOpacity).toBe(1);
+    expect(useAppStore.getState().colorVersion).toBe(colorVersion + 1);
+    expect(controller.scheduleRenderAllElements).not.toHaveBeenCalled();
+    expect(controller.renderAllElements).not.toHaveBeenCalled();
+  });
+
+  it('resets every comparison setting', () => {
+    useAppStore.setState({
+      comparisonMode: true,
+      leftTreeOffsetX: 5,
+      rightTreeOffsetY: -7,
+      viewsConnected: true,
+      connectorStrokeWidth: 4,
+      linkConnectionOpacity: 0.1,
+    });
+
+    useAppStore.getState().resetComparison();
+
+    expect(useAppStore.getState()).toMatchObject({
+      comparisonMode: false,
+      leftTreeOffsetX: 0,
+      rightTreeOffsetY: 0,
+      viewsConnected: false,
+      connectorStrokeWidth: 1,
+      linkConnectionOpacity: 0.6,
+    });
+  });
 });

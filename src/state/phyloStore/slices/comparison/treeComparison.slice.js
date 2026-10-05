@@ -1,12 +1,8 @@
 import { clamp, clamp01 } from '../../../../domain/math/mathUtils.js';
 import { renderTreeController } from '../../internal/changeTracking.helpers.js';
 
-export const createComparisonViewSlice = (set, get) => ({
-  // ==========================================================================
-  // STATE
-  // ==========================================================================
+const INITIAL = {
   comparisonMode: false,
-  // Left tree offsets
   leftTreeOffsetX: 0,
   leftTreeOffsetY: 0,
   rightTreeOffsetX: 0,
@@ -14,6 +10,13 @@ export const createComparisonViewSlice = (set, get) => ({
   viewsConnected: false,
   connectorStrokeWidth: 1,
   linkConnectionOpacity: 0.6,
+};
+
+export const createComparisonViewSlice = (set, get) => ({
+  // ==========================================================================
+  // STATE
+  // ==========================================================================
+  ...INITIAL,
 
   // ==========================================================================
   // ACTIONS
@@ -49,21 +52,10 @@ export const createComparisonViewSlice = (set, get) => ({
   setLinkConnectionOpacity: (opacity) => {
     const value = clamp01(Number(opacity));
     set((state) => ({ linkConnectionOpacity: value, colorVersion: state.colorVersion + 1 }));
-    renderTreeController(get());
   },
 
   // ==========================================================================
   // ACTIONS: Reset
   // ==========================================================================
-  resetComparison: () =>
-    set({
-      comparisonMode: false,
-      leftTreeOffsetX: 0,
-      leftTreeOffsetY: 0,
-      rightTreeOffsetX: 0,
-      rightTreeOffsetY: 0,
-      viewsConnected: false,
-      connectorStrokeWidth: 1,
-      linkConnectionOpacity: 0.6,
-    }),
+  resetComparison: () => set(INITIAL),
 });

@@ -129,11 +129,6 @@ export class ComparisonModeRenderer {
       rightTreeOffset,
       leftTreeOffsetX,
       leftTreeOffsetY,
-      // Keep side-by-side spacing stable when terminal labels are toggled off.
-      // The camera fit intentionally ignores hidden label anchors below, but
-      // shrinking the tree-to-tree offset here can make comparison trees overlap
-      // without an auto-fit because fit state is keyed by tree indices.
-      includeLabelTextBounds: true,
     });
 
     // Apply independent offsets to both trees so centers/radii match screen coords
@@ -219,7 +214,6 @@ export class ComparisonModeRenderer {
       rightTreeOffset,
       leftTreeOffsetX,
       leftTreeOffsetY,
-      includeLabelTextBounds: true,
     });
     const rightFrame = this._getPreparedAnimatedRightFrame({
       base: rightBase,
