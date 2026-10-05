@@ -27,6 +27,7 @@ import {
 import { Switch } from '../../ui/switch';
 import { Input } from '../../ui/input';
 import { Crosshair, Highlighter, Palette, RefreshCw, Settings2, X } from 'lucide-react';
+import { openPanel } from '../../dock/dockRuntime.js';
 import { SidebarMenuSub, SidebarMenuSubItem } from '../../ui/sidebar';
 import { Slider } from '../../ui/slider';
 import {
@@ -104,6 +105,7 @@ export function ColoringPanel({ onOpenTaxaColoring, onPreloadTaxaColoring }) {
       return;
     }
     setTaxaColoringOpen(true);
+    openPanel('taxa-coloring'); // the flag may already be set, with the panel behind another tab
   }, [hasTaxa, onOpenTaxaColoring, setTaxaColoringOpen]);
 
   return (

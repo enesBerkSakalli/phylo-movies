@@ -15,6 +15,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubItem,
 } from '../ui/sidebar';
+import { openPanel } from '../dock/dockRuntime.js';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../ui/collapsible';
 
 export function MsaSidebarSection() {
@@ -26,6 +27,7 @@ export function MsaSidebarSection() {
   const handleOpenViewer = async () => {
     if (!hasMsa) return;
     openMsaViewer();
+    openPanel('alignment'); // the flag may already be set, with the panel behind another tab
   };
 
   return (

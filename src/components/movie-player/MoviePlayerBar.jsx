@@ -24,7 +24,7 @@ import {
   selectSetTooltipHovered,
   useAppStore,
 } from '../../state/phyloStore/store.js';
-import { togglePanel, useIsPanelOpen } from '../dock/dockRuntime.js';
+import { openPanel, togglePanel, useIsPanelOpen } from '../dock/dockRuntime.js';
 import { SETTINGS_PANEL_ID } from '../dock/panelRegistry.js';
 import { Button } from '../ui/button';
 import { Activity, Menu, ChevronUp, ChevronDown, Dna } from 'lucide-react';
@@ -98,6 +98,7 @@ export function MoviePlayerBar() {
   const handleOpenMsaViewer = useCallback(() => {
     if (!hasMsa) return;
     openMsaViewer();
+    openPanel('alignment'); // the flag may already be set, with the panel behind another tab
   }, [hasMsa, openMsaViewer]);
 
   return (

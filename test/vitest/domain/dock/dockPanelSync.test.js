@@ -19,7 +19,7 @@ describe('dock and store stay in step', () => {
     expect(actions.closePanel).toHaveBeenCalledWith('inspector');
   });
 
-  it('reopens the inspector when a segment is selected again, not on every segment change', () => {
+  it('brings a hidden inspector forward when a different segment is selected', () => {
     const actions = { openPanel: vi.fn(), closePanel: vi.fn() };
     syncPanelsFromStore({ ...closed, selectedTimelineSegmentIndex: 0 }, closed, actions);
     syncPanelsFromStore(
@@ -27,8 +27,16 @@ describe('dock and store stay in step', () => {
       { ...closed, selectedTimelineSegmentIndex: 0 },
       actions
     );
-    expect(actions.openPanel).toHaveBeenCalledTimes(1);
-    expect(actions.openPanel).toHaveBeenCalledWith('inspector');
+    expect(actions.openPanel).toHaveBeenCalledTimes(2);
+    expect(actions.openPanel).toHaveBeenLastCalledWith('inspector');
+  });
+
+  it('leaves the dock alone when nothing the panel shows has changed', () => {
+    const actions = { openPanel: vi.fn(), closePanel: vi.fn() };
+    const open = { ...closed, selectedTimelineSegmentIndex: 7, isMsaViewerOpen: true };
+    syncPanelsFromStore({ ...open }, { ...open }, actions);
+    expect(actions.openPanel).not.toHaveBeenCalled();
+    expect(actions.closePanel).not.toHaveBeenCalled();
   });
 
   it('clears the matching store flag when the user closes a panel tab', () => {
