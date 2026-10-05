@@ -88,7 +88,6 @@ export function TransitionInspectorPanel() {
     );
   }
 
-  const totalSegments = movieTimelineManager?.getSegmentCount?.() ?? 0;
   const isInputTree = segment.isInputTreeSegment;
   const Icon = isInputTree ? GitBranch : ArrowRightLeft;
 
@@ -104,13 +103,10 @@ export function TransitionInspectorPanel() {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <Badge variant={isInputTree ? 'outline' : 'secondary'} className="text-2xs">
-              {isInputTree ? 'Input tree' : 'Generated frames'}
+              {isInputTree ? 'Input tree' : 'Transition'}
             </Badge>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Segment {segmentIndex + 1}
-            {totalSegments ? ` of ${totalSegments}` : ''}
-          </p>
+          <p className="mt-1 text-xs text-muted-foreground">{details.positionLabel}</p>
         </div>
       </div>
 
@@ -120,12 +116,10 @@ export function TransitionInspectorPanel() {
           <KeyValue label="Direction" value={details.directionLabel} />
           {details.stepLabel && <KeyValue label="Steps" value={details.stepLabel} />}
           {details.eventLabel && <KeyValue label="Event" value={details.eventLabel} />}
-          <KeyValue label="Local steps" value={details.localStepLabel} />
         </Section>
 
         <Section title="SPR Move">
           <KeyValue label="Moved taxa" value={details.movingTaxaLabel} />
-          <KeyValue label="Generated frames" value={details.generatedFrameLabel} />
           <KeyValue label="Animation steps" value={details.animationStepLabel} />
           <KeyValue label="Pivot edge" value={details.pivotEdgeLabel} />
           <SubtreeList groups={details.subtreeGroups} />
@@ -252,9 +246,8 @@ function buildInspectorDetails({
       ? `${formatRange(stepRange.start, stepRange.end, '–')} of ${stepRange.total}`
       : null,
     eventLabel: splitEvent ? `${splitEvent.index} of ${splitEvent.count}` : null,
-    localStepLabel: formatRange(segment.localStepStart, segment.localStepEnd),
+    positionLabel: formatPosition(segment, pairMetrics?.rows?.length),
     movingTaxaLabel: formatCount(segment.subtreeMoveCount, 'taxon', 'taxa'),
-    generatedFrameLabel: formatCount(resolveGeneratedFrameCount(segment), 'frame', 'frames'),
     animationStepLabel: formatCount(resolveAnimationStepCount(segment), 'step', 'steps'),
     pivotEdgeLabel: formatPivotEdgeLabel(segment.pivotEdge),
     rfLabel: formatNumber(metric?.robinson_foulds, 3),
@@ -296,9 +289,14 @@ function resolveSourceGlobalIndex(segment) {
   return null;
 }
 
-function resolveGeneratedFrameCount(segment) {
-  if (Number.isInteger(segment.generatedFrameCount)) return segment.generatedFrameCount;
-  return segment.interpolationData?.length;
+function formatPosition(segment, pairCount) {
+  if (segment.isInputTreeSegment) {
+    return Number.isInteger(segment.originalTreeIndex)
+      ? `Input tree ${segment.originalTreeIndex + 1}`
+      : null;
+  }
+  if (!Number.isInteger(segment.pairOrdinal)) return null;
+  return `Transition ${segment.pairOrdinal + 1}${pairCount ? ` of ${pairCount}` : ''}`;
 }
 
 function resolveAnimationStepCount(segment) {

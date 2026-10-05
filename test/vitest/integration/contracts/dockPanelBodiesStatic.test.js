@@ -42,4 +42,11 @@ describe('dock panel bodies', () => {
     expect(inspector).toContain('Select a timeline segment');
     expect(inspector).toMatch(/if \(!segment\) \{\s+return \(/);
   });
+
+  it('numbers the inspector in transitions, not playback segments or 0-based steps', () => {
+    const inspector = read('src', 'components', 'TransitionInspectorPanel.jsx');
+    expect(inspector).not.toContain('Segment {segmentIndex + 1}');
+    expect(inspector).not.toContain('label="Local steps"');
+    expect(inspector).toContain('`Transition ${segment.pairOrdinal + 1}');
+  });
 });
