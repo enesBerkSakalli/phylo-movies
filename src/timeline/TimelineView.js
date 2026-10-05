@@ -60,6 +60,7 @@ export class TimelineView {
     this._rangeStart = 0;
     this._rangeEnd = this._totalDuration;
     this._width = 0;
+    this._place = null; // segment:frame the slider text was last written for
 
     this._updateScheduled = false;
     this._updateFrameId = null;
@@ -141,12 +142,17 @@ export class TimelineView {
   }
 
   _updateAccessibilityAttributes() {
-    const { timeline, scrubberMs } = this;
-    this.canvas.setAttribute('aria-valuenow', String(Math.round(scrubberMs)));
-    this.canvas.setAttribute(
+    const { timeline, scrubberMs, canvas } = this;
+    canvas.setAttribute('aria-valuenow', String(Math.round(scrubberMs)));
+
+    // The text names the segment and step, which change far less often than the playhead moves.
+    const cursor = timeline.cursorAt(scrubberMs);
+    const place = `${cursor?.segmentIndex}:${cursor?.frameIndex}`;
+    if (place === this._place) return;
+    this._place = place;
+    canvas.setAttribute(
       'aria-valuetext',
-      describeCursor(timeline, timeline.cursorAt(scrubberMs))?.aria ??
-        'No timeline segment selected'
+      describeCursor(timeline, cursor)?.aria ?? 'No timeline segment selected'
     );
   }
 

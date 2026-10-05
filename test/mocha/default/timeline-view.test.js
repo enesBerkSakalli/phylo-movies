@@ -284,6 +284,23 @@ describe('TimelineView', () => {
     );
   });
 
+  it('rewrites the slider text only when the playhead changes segment or step', () => {
+    const { timeline } = makeTimelineFixture();
+    const { view } = mountView(timeline);
+    const setAttribute = sinon.spy(view.canvas, 'setAttribute');
+    const writes = (name) => setAttribute.getCalls().filter((call) => call.args[0] === name).length;
+
+    for (let ms = 1100; ms < 2000; ms += 100) view.setCustomTime(ms);
+    // Nine moves inside the transition: one new text, nine new values.
+    expect(writes('aria-valuetext')).to.equal(1);
+    expect(writes('aria-valuenow')).to.equal(9);
+    expect(view.canvas.getAttribute('aria-valuenow')).to.equal('1900');
+
+    view.setCustomTime(2500);
+    expect(writes('aria-valuetext')).to.equal(2);
+    expect(view.canvas.getAttribute('aria-valuetext')).to.equal('Input tree 2 of 2');
+  });
+
   it('cancels pending frame work and the hover clear on destroy', () => {
     const clock = sinon.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     const originalCancelAnimationFrame = global.cancelAnimationFrame;
