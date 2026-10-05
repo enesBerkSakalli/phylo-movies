@@ -20,3 +20,9 @@
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
+
+/* Radix wraps floating content in a box of its own: when the content ignores the pointer (the
+   segment hover readout), so must the box. */
+[data-radix-popper-content-wrapper]:has(> .pointer-events-none) {
+  pointer-events: none;
+}

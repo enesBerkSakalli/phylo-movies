@@ -30,8 +30,8 @@ TooltipTrigger.displayName = TooltipPrimitive.Trigger.displayName;
 
 const TooltipContent = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content> & { arrow?: boolean }
+>(({ className, sideOffset = 4, arrow = true, ...props }, ref) => (
   <TooltipPrimitive.Portal>
     <TooltipPrimitive.Content
       ref={ref}
@@ -44,7 +44,9 @@ const TooltipContent = React.forwardRef<
       {...props}
     >
       {props.children}
-      <TooltipPrimitive.Arrow className="bg-foreground fill-foreground z-[2200] size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px]" />
+      {arrow && (
+        <TooltipPrimitive.Arrow className="bg-foreground fill-foreground z-[2200] size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px]" />
+      )}
     </TooltipPrimitive.Content>
   </TooltipPrimitive.Portal>
 ));

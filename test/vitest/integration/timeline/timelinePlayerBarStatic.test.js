@@ -191,11 +191,15 @@ describe('movie timeline player bar semantics', () => {
       'timeline',
       'TimelineSegmentTooltip.jsx'
     );
-    expect(playerBarSource).toContain("pointerEvents: 'none'");
-    expect(playerBarSource).not.toContain("pointerEvents: 'auto'");
+    // Radix floats it 8px above a point on the bar's top edge and keeps it inside the viewport.
+    expect(playerBarSource).toContain('bottom-[var(--movie-player-bar-height)]');
+    expect(playerBarSource).toContain('side="top"');
+    expect(playerBarSource).toContain('sideOffset={8}');
+    expect(playerBarSource).toContain('collisionPadding={8}');
+    expect(playerBarSource.match(/pointer-events-none/g)).toHaveLength(2);
+    expect(playerBarSource).not.toContain('pointer-events-auto');
     expect(playerBarSource).not.toContain('selectSetTooltipHovered');
     expect(playerBarSource).not.toContain('onMouseLeave');
-    expect(playerBarSource).toContain('playerBarRef.current.getBoundingClientRect().top');
     expect(tooltipSource).not.toContain('Button');
   });
 

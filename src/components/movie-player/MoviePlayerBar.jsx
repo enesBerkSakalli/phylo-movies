@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 
 import { TransportControls } from './TransportControls.jsx';
 import {
@@ -33,14 +33,9 @@ import { Button } from '../ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Activity, CircleHelp, Dna, Menu, PanelRightOpen } from 'lucide-react';
 import { AppTooltip } from '../ui/app-tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { cn } from '../../lib/utils';
-import { clampTooltipLeft } from '../timeline/timelineSegmentTooltipUtils.js';
 import { MOVIE_PLAYER_ARIA_LABELS, TIMELINE_LEGEND_ITEMS } from './MoviePlayerBar.contract.js';
-
-// ==========================================================================
-// CONSTANTS
-// ==========================================================================
-const TOOLTIP_MARGIN = 8;
 
 export function MoviePlayerBar() {
   const forward = useAppStore(selectForward);
@@ -192,87 +187,57 @@ export function MoviePlayerBar() {
         </div>
       </div>
 
-      <TimelineSegmentTooltipOverlay playerBarRef={playerBarRef} pairChanges={pairChanges} />
+      <TimelineSegmentTooltipOverlay pairChanges={pairChanges} />
     </>
   );
 }
 
-function TimelineSegmentTooltipOverlay({ playerBarRef, pairChanges }) {
+function TimelineSegmentTooltipOverlay({ pairChanges }) {
   const hovered = useAppStore(selectHoveredSegment);
   const timeline = useAppStore(selectTimeline);
   const selectedSegmentIndex = useAppStore(selectSelectedTimelineSegmentIndex);
   const playing = useAppStore(selectPlaying);
   const setHoveredSegment = useAppStore(selectSetHoveredSegment);
   const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
-  const tooltipRef = useRef(null);
   const segment = timeline?.segments[hovered?.index];
-  const anchorX = hovered?.x;
-  const [placement, setPlacement] = useState(null);
 
   // Picking a segment or starting playback is a decision; the hover preview has done its job.
   useEffect(() => {
     setHoveredSegment(null);
   }, [selectedSegmentIndex, playing, setHoveredSegment]);
 
-  // Sits just above the whole player bar so it never covers the controls; only x follows the pointer.
-  useLayoutEffect(() => {
-    const tooltip = tooltipRef.current;
-    const playerBar = playerBarRef.current;
-    if (!tooltip || !playerBar) {
-      setPlacement(null);
-      return undefined;
-    }
-
-    const updatePlacement = () => {
-      const next = {
-        left: clampTooltipLeft(anchorX, tooltip.getBoundingClientRect().width, window.innerWidth),
-        top: playerBarRef.current.getBoundingClientRect().top - TOOLTIP_MARGIN,
-      };
-      setPlacement((current) =>
-        current?.left === next.left && current?.top === next.top ? current : next
-      );
-    };
-
-    updatePlacement();
-    window.addEventListener('resize', updatePlacement);
-    const resizeObserver =
-      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updatePlacement) : null;
-    resizeObserver?.observe(tooltip);
-
-    return () => {
-      window.removeEventListener('resize', updatePlacement);
-      resizeObserver?.disconnect();
-    };
-  }, [anchorX, segment, playerBarRef]);
-
   if (!segment) return null;
 
+  // A 0x0 point on the player bar's top edge (the bar sits at the viewport bottom), at the
+  // segment's x. The tooltip floats 8px above it, clear of the controls, and is shifted to stay
+  // 8px inside the viewport even when that moves it past the point. floating-ui does not watch a
+  // 0x0 anchor move, so it re-places the tooltip every frame.
   return (
-    <div
-      ref={tooltipRef}
-      style={{
-        position: 'fixed',
-        left: `${placement?.left ?? 0}px`,
-        top: `${placement?.top ?? 0}px`,
-        transform: 'translateY(-100%)',
-        zIndex: 10000,
-        pointerEvents: 'none',
-        width: 'max-content',
-        minWidth: '200px',
-        maxWidth: `min(300px, calc(100vw - ${TOOLTIP_MARGIN * 2}px))`,
-        visibility: placement ? 'visible' : 'hidden',
-      }}
-      className="animate-in fade-in-0 duration-200"
-    >
-      <div className="rounded-lg border bg-card p-2 shadow-lg">
+    <Tooltip open>
+      <TooltipTrigger asChild>
+        <span
+          aria-hidden
+          className="pointer-events-none fixed bottom-[var(--movie-player-bar-height)] size-0"
+          style={{ left: hovered.x }}
+        />
+      </TooltipTrigger>
+      <TooltipContent
+        arrow={false}
+        side="top"
+        sideOffset={8}
+        collisionPadding={8}
+        sticky="always"
+        updatePositionStrategy="always"
+        className="pointer-events-none min-w-[200px] max-w-[min(300px,calc(100vw-1rem))] rounded-lg border bg-card p-2 text-foreground shadow-lg"
+      >
         <TimelineSegmentTooltip
           segment={segment}
           pairChange={pairChanges.byPairId.get(segment.pairId)}
           pairCount={pairChanges.byPairId.size}
           leafNamesByIndex={leafNamesByIndex}
         />
-      </div>
-    </div>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 

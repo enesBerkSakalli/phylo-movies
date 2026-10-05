@@ -62,8 +62,3 @@ export function getSegmentStepRange(segment) {
     total,
   };
 }
-
-/** Left edge that keeps a tooltip centred on the pointer, margin px inside the viewport. */
-export function clampTooltipLeft(anchorX, width, viewportWidth, margin = 8) {
-  return Math.max(margin, Math.min(anchorX - width / 2, viewportWidth - margin - width));
-}

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  clampTooltipLeft,
   extractAffectedSubtreeGroups,
   formatPairFacts,
   formatPivotEdgePreview,
@@ -106,14 +105,5 @@ describe('TimelineSegmentTooltip step numbering', () => {
     expect(
       getSegmentStepRange({ ...transition, targetGlobalIndex: 11, globalStart: 10, globalEnd: 11 })
     ).toBeNull();
-  });
-});
-
-describe('TimelineSegmentTooltip placement', () => {
-  it('follows the pointer and stays 8px inside the viewport', () => {
-    expect(clampTooltipLeft(500, 300, 1000)).toBe(350);
-    expect(clampTooltipLeft(20, 300, 1000)).toBe(8);
-    expect(clampTooltipLeft(990, 300, 1000)).toBe(692);
-    expect(clampTooltipLeft(100, 500, 375)).toBe(8);
   });
 });
