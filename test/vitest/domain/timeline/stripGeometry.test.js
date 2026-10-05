@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { TIMELINE_THEME } from '../../../../src/timeline/deckLayers.js';
 import { buildPairChangeProfile } from '../../../../src/timeline/data/pairChangeProfile.js';
-import { buildPairSpans, projectPairStrip } from '../../../../src/timeline/stripGeometry.js';
+import {
+  TIMELINE_THEME,
+  buildPairSpans,
+  projectPairStrip,
+} from '../../../../src/timeline/stripGeometry.js';
 import { buildTimeline } from '../../../../src/timeline/timeline.js';
 import { smallExampleMovieData } from '../../../fixtures/timeline/generatedMovieData.js';
 
@@ -63,7 +66,6 @@ describe('projectPairStrip', () => {
     visEnd: 11000,
     width,
     height,
-    theme: TIMELINE_THEME,
   };
   const topology = (pairId, startMs, endMs, rf, pips = []) => ({
     pairId,

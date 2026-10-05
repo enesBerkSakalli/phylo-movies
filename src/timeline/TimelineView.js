@@ -5,7 +5,6 @@ if (typeof document !== 'undefined') {
 import { Deck, OrthographicView } from '@deck.gl/core';
 import { teardownDeckRenderer } from '../lib/deckTeardown.js';
 import {
-  TIMELINE_THEME,
   createBaselineLayer,
   createInputTreeTickLayer,
   createInputTreeLayer,
@@ -19,7 +18,12 @@ import {
 } from './deckLayers.js';
 import { msToX, xToMs, calculateZoomScale } from './math/coordinateUtils.js';
 import { stepAt } from './timeline.js';
-import { getDevicePixelRatio, processSegments, projectPairStrip } from './stripGeometry.js';
+import {
+  TIMELINE_THEME,
+  getDevicePixelRatio,
+  processSegments,
+  projectPairStrip,
+} from './stripGeometry.js';
 import { attachTimelineInput } from './timelineInput.js';
 import { describeCursor } from './describeCursor.js';
 
@@ -269,7 +273,6 @@ export class TimelineView {
       visStart,
       visEnd,
       zoomScale,
-      theme: TIMELINE_THEME,
       segments: this.timeline.segments,
       selectedSegmentIndex: this.selected,
       hoverIndex: this.hovered,
@@ -311,7 +314,6 @@ export class TimelineView {
       ...view,
       spans: this.strip.spans,
       maxRf: this.strip.maxRf,
-      theme: TIMELINE_THEME,
       hoverPairId: hoveredSegment?.isInputTreeSegment === false ? hoveredSegment.pairId : null,
       selectedPairId: selectedSegment?.isInputTreeSegment === false ? selectedSegment.pairId : null,
       selectedBounds: selectedSegment?.isInputTreeSegment === false ? selectedSegment : null,
@@ -347,13 +349,12 @@ export class TimelineView {
     height,
   }) {
     const theme = TIMELINE_THEME;
-    const separatorWidth = calculateSeparatorWidth(this.timeline.segments.length, theme);
 
     return [
-      createSeparatorLayer(separators, theme, separatorWidth),
-      createBaselineLayer(baselines, theme),
-      createInputTreeTickLayer(inputTreeTicks, theme),
-      createInputTreeTickLayer(activeInputTreeTicks, theme, true),
+      createSeparatorLayer(separators, calculateSeparatorWidth(this.timeline.segments.length)),
+      createBaselineLayer(baselines),
+      createInputTreeTickLayer(inputTreeTicks),
+      createInputTreeTickLayer(activeInputTreeTicks, true),
       createPairMarkLayer('pair-mark-layer', pairStrip.marks, theme.stripMarkRGB),
       createPairMarkLayer('pair-hover-layer', pairStrip.hoverMarks, theme.stripMarkHoverRGB),
       createPairMarkLayer(
@@ -369,7 +370,7 @@ export class TimelineView {
       // Circles sit on the baseline, so they draw over the bars they overlap
       createInputTreeLayer(inputTreePoints, theme.inputTreeStrokeWidth),
       createInputTreeHoverLayer(hoverInputTrees, theme.connectionHoverRGB),
-      createInputTreeSelectionLayer(selectionInputTrees, theme),
+      createInputTreeSelectionLayer(selectionInputTrees),
       createPairPipLayer('pair-pip-layer', pairStrip.pips, theme.stripPipRGB, theme.stripPipAlpha),
       createPairPipLayer(
         'pair-selection-pip-layer',
@@ -383,7 +384,6 @@ export class TimelineView {
         this._rangeEnd,
         width,
         height,
-        theme,
         this.scrubbing
       ),
     ];

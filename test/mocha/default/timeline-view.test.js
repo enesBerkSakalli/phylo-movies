@@ -17,7 +17,7 @@ clearTimelineModuleCache();
 
 // Now require the SUT after mocks are in place
 const { TimelineView } = require('../../../src/timeline/TimelineView.js');
-const { TIMELINE_THEME } = require('../../../src/timeline/deckLayers.js');
+const { TIMELINE_THEME } = require('../../../src/timeline/stripGeometry.js');
 
 describe('TimelineView', () => {
   function makeContainer(w = 800, h = 100) {
@@ -159,6 +159,16 @@ describe('TimelineView', () => {
     expect(findLayer(view, 'input-tree-tick-layer').props.data).to.have.length(100);
     expect(findLayer(view, 'input-tree-layer').props.data).to.have.length(0);
     expect(findLayer(view, 'pair-mark-layer').props.data).to.have.length(0);
+    expect(findLayer(view, 'separator-layer').props.data).to.have.length(0);
+  });
+
+  it('marks each segment start with a separator while the input trees are drawn as circles', () => {
+    const { timeline } = makeTimelineFixture();
+    const { view } = mountView(timeline);
+    const separators = findLayer(view, 'separator-layer');
+
+    expect(separators.props.data).to.have.length(3);
+    expect(separators.props.getColor).to.deep.equal([0, 0, 0, TIMELINE_THEME.separatorAlpha]);
   });
 
   it('keeps the old amber transition layers off the strip', () => {

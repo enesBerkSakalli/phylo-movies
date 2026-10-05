@@ -8,6 +8,46 @@ import { rgba } from '../services/ui/colorUtils.js';
  * them into canvas geometry for the visible range.
  */
 
+export const TIMELINE_THEME = {
+  connectionSelectionRGB: [5, 150, 105],
+  connectionHoverRGB: [128, 128, 128],
+  // The strip reads bottom-up: pips sit under the baseline, RF bars rise from it.
+  // Every y is in px from the top of the strip.
+  stripBaselineY: 30,
+  stripBaselineRGB: [203, 213, 225],
+  stripBarMaxHeight: 24,
+  stripBarMinHeight: 2,
+  stripBarInset: 0.5,
+  stripBarMinWidth: 1,
+  stripMarkRGB: [100, 116, 139],
+  stripMarkHoverRGB: [30, 41, 59],
+  stripDashWidth: 2,
+  stripDashLength: 4,
+  stripDashGap: 3,
+  stripSelectionSpanWidth: 2,
+  stripPipY: 39,
+  stripPipRGB: [51, 65, 85],
+  stripPipAlpha: 220,
+  stripPipRadiusBase: 1.5,
+  stripPipRadiusPerSqrtTaxon: 0.9,
+  stripPipRadiusMax: 4,
+  inputTreeStrokeWidth: 3,
+  inputTreeFillRGB: [240, 240, 245],
+  inputTreeStrokeRGB: [60, 60, 80],
+  inputTreeRadiusVar: 7,
+  inputTreeDenseThresholdPx: 18,
+  inputTreeTickLength: 4,
+  inputTreeTickWidth: 1,
+  activeInputTreeTickWidth: 4,
+  separatorRGB: [0, 0, 0],
+  separatorWidthMax: 2,
+  separatorWidthMin: 1,
+  separatorAlpha: 56,
+  scrubberCoreRGB: [64, 128, 255],
+};
+
+const theme = TIMELINE_THEME;
+
 export function getDevicePixelRatio() {
   return typeof window !== 'undefined' && window.devicePixelRatio ? window.devicePixelRatio : 1;
 }
@@ -71,7 +111,6 @@ export function projectPairStrip({
   visEnd,
   width,
   height,
-  theme,
   hoverPairId = null,
   selectedPairId = null,
   selectedBounds = null,
@@ -89,13 +128,13 @@ export function projectPairStrip({
     const left = toX(span.startMs);
     const right = toX(span.endMs);
     if (span.kind === 'branch-lengths') {
-      marks.push(...dashes(span.pairId, left, right, width, theme, toY));
+      marks.push(...dashes(span.pairId, left, right, width, toY));
     } else if (span.rf > 0) {
       const barHeight = Math.max(
         theme.stripBarMinHeight,
         Math.round((theme.stripBarMaxHeight * span.rf) / maxRf)
       );
-      const [x0, x1] = insetBar(left, right, theme);
+      const [x0, x1] = insetBar(left, right);
       marks.push({ pairId: span.pairId, polygon: rect(x0, x1, baseline, baseline + barHeight) });
     }
     for (const { ms, taxaCount } of span.pips) {
@@ -131,7 +170,7 @@ export function projectPairStrip({
   };
 }
 
-function insetBar(left, right, theme) {
+function insetBar(left, right) {
   const x0 = left + theme.stripBarInset;
   const x1 = right - theme.stripBarInset;
   if (x1 - x0 >= theme.stripBarMinWidth) return [x0, x1];
@@ -140,7 +179,7 @@ function insetBar(left, right, theme) {
 }
 
 // Only the dashes inside the viewport are made, so a deeply zoomed pair stays cheap.
-function dashes(pairId, left, right, width, theme, toY) {
+function dashes(pairId, left, right, width, toY) {
   const period = theme.stripDashLength + theme.stripDashGap;
   const top = toY(theme.stripBaselineY - theme.stripDashWidth / 2);
   const bottom = toY(theme.stripBaselineY + theme.stripDashWidth / 2);
@@ -183,7 +222,6 @@ export function processSegments({
   visStart,
   visEnd,
   zoomScale,
-  theme,
   segments,
   selectedSegmentIndex,
   hoverIndex,
@@ -195,7 +233,9 @@ export function processSegments({
   const inputTrees = { normal: [], selected: [], hovered: [] };
   const inputTreeTicks = { normal: [], active: [] };
   const separators = [];
-  const markerProfile = getMarkerProfile(segments, width, theme);
+  // Too many input trees for circles: ticks instead, and no separators
+  const inputTreeCount = segments.filter((segment) => segment.isInputTreeSegment).length;
+  const dense = inputTreeCount > 1 && width / inputTreeCount < theme.inputTreeDenseThresholdPx;
 
   for (let i = startIdx; i <= endIdx; i++) {
     const segment = segments[i];
@@ -207,12 +247,11 @@ export function processSegments({
     const startX = msToX(segment.start, rangeStart, rangeEnd, width);
     const endX = msToX(segment.end, rangeStart, rangeEnd, width);
 
-    const separator = createSeparator(startX, width, height, theme, snap, markerProfile.mode);
-    if (separator) separators.push(separator);
+    if (!dense) separators.push(createSeparator(startX, width, height, snap));
 
     if (segment.isInputTreeSegment) {
-      if (markerProfile.mode === 'strip') {
-        const tick = createInputTreeTick(startX, endX, width, height, theme, snap);
+      if (dense) {
+        const tick = createInputTreeTick(startX, endX, width, height, snap);
         if (tick) {
           const bucket = state === 'selected' || state === 'hovered' ? 'active' : 'normal';
           inputTreeTicks[bucket].push(tick);
@@ -226,7 +265,6 @@ export function processSegments({
         endX,
         width,
         height,
-        theme,
         zoomScale,
         snap
       );
@@ -236,7 +274,7 @@ export function processSegments({
 
   return {
     inputTreeTicks: inputTreeTicks.normal,
-    baselines: [createBaseline(width, height, theme, snap)],
+    baselines: [createBaseline(width, height, snap)],
     separators,
     inputTreePoints: inputTrees.normal,
     activeInputTreeTicks: inputTreeTicks.active,
@@ -245,30 +283,14 @@ export function processSegments({
   };
 }
 
-function getMarkerProfile(segments, width, theme) {
-  const inputTreeCount = segments.reduce(
-    (count, segment) => count + (segment?.isInputTreeSegment ? 1 : 0),
-    0
-  );
-  if (inputTreeCount <= 1) return { mode: 'circle', inputTreeCount };
-
-  const pixelsPerInputTree = width / inputTreeCount;
-  if (pixelsPerInputTree < theme.inputTreeDenseThresholdPx)
-    return { mode: 'strip', inputTreeCount };
-  return { mode: 'circle', inputTreeCount };
-}
-
-function createSeparator(x, width, height, theme, snap, markerMode) {
-  if (markerMode === 'strip') return null;
-
+function createSeparator(x, width, height, snap) {
   const centeredX = snap(x - width / 2);
-  const y = baselineY(height, theme);
+  const y = baselineY(height);
   const h = Math.max(MIN_SEPARATOR_HEIGHT, Math.floor(height * SEPARATOR_HEIGHT_FRACTION));
   // Centred on the baseline, but never past the bottom of the strip
   const halfHeight = Math.min(h / 2, y + height / 2);
 
   return {
-    markerMode,
     path: [
       [centeredX, y - halfHeight],
       [centeredX, y + halfHeight],
@@ -281,7 +303,7 @@ function toCanvasCentered(x, canvasWidth) {
 }
 
 // The canvas is centred and y points up; the strip's own y counts down from its top.
-function baselineY(height, theme) {
+function baselineY(height) {
   return height / 2 - theme.stripBaselineY;
 }
 
@@ -290,24 +312,21 @@ function clampToViewport(x, radius, width) {
   return Math.max(-halfWidth + radius, Math.min(halfWidth - radius, x));
 }
 
-function calculateRadius(inputTreeRadiusVar, height, zoomScale) {
-  const baseRadius = Number.isFinite(inputTreeRadiusVar)
-    ? inputTreeRadiusVar
-    : Math.max(3, Math.min(6, Math.floor(height * 0.18)));
+function calculateRadius(height, zoomScale) {
   const maxRadius = Math.floor(height * 0.25);
   const minRadius = 1;
-  return Math.max(minRadius, Math.min(maxRadius, baseRadius * zoomScale));
+  return Math.max(minRadius, Math.min(maxRadius, theme.inputTreeRadiusVar * zoomScale));
 }
 
-function createInputTreeMarker(segmentIndex, x0, x1, width, height, theme, zoomScale, snap) {
+function createInputTreeMarker(segmentIndex, x0, x1, width, height, zoomScale, snap) {
   const center = (x0 + x1) / 2;
-  const radius = calculateRadius(theme.inputTreeRadiusVar, height, zoomScale);
+  const radius = calculateRadius(height, zoomScale);
   const centeredX = toCanvasCentered(center, width);
   const clampedX = clampToViewport(centeredX, radius, width);
 
   return {
     segmentIndex,
-    position: [snap(clampedX), baselineY(height, theme)],
+    position: [snap(clampedX), baselineY(height)],
     fillColor: rgba(...theme.inputTreeFillRGB),
     borderColor: rgba(...theme.inputTreeStrokeRGB),
     radius,
@@ -315,13 +334,13 @@ function createInputTreeMarker(segmentIndex, x0, x1, width, height, theme, zoomS
   };
 }
 
-function createInputTreeTick(x0, x1, width, height, theme, snap) {
+function createInputTreeTick(x0, x1, width, height, snap) {
   const center = (x0 + x1) / 2;
   // An odd device-pixel width is crisp only when centred mid-pixel
   const dpr = getDevicePixelRatio();
   const half = Math.round(theme.inputTreeTickWidth * dpr) % 2 === 1 ? 0.5 / dpr : 0;
   const x = snap(center - half) + half - width / 2;
-  const y = baselineY(height, theme);
+  const y = baselineY(height);
 
   return {
     path: [
@@ -331,8 +350,8 @@ function createInputTreeTick(x0, x1, width, height, theme, snap) {
   };
 }
 
-function createBaseline(width, height, theme, snap) {
-  const y = baselineY(height, theme);
+function createBaseline(width, height, snap) {
+  const y = baselineY(height);
 
   return {
     path: [
