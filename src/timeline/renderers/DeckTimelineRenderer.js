@@ -4,8 +4,8 @@ if (typeof document !== 'undefined') {
 }
 import { Deck, OrthographicView } from '@deck.gl/core';
 import { teardownDeckRenderer } from '../../lib/deckTeardown.js';
-import { TIMELINE_THEME } from '../constants.js';
 import {
+  TIMELINE_THEME,
   createPathLayer,
   createBaselineLayer,
   createInputTreeTickLayer,
@@ -16,19 +16,12 @@ import {
   createInputTreeSelectionLayer,
   createSeparatorLayer,
   createScrubberLayer,
-  getDevicePixelRatio,
   calculateSeparatorWidth,
-} from '../utils/layerFactories.js';
+} from '../deckLayers.js';
 import { msToX, xToMs, calculateZoomScale } from '../math/coordinateUtils.js';
-import {
-  getSegmentBounds,
-  timeToSegmentIndex,
-  toSegmentIndex,
-  toTimelineItemId,
-} from '../utils/segmentTiming.js';
+import { getSegmentBounds, timeToSegmentIndex } from '../utils/segmentTiming.js';
 import { getTargetSegmentIndex } from '../utils/segmentUtils.js';
-import { processSegments } from '../data/segmentProcessor.js';
-import { projectPairStrip } from '../data/pairStripGeometry.js';
+import { getDevicePixelRatio, processSegments, projectPairStrip } from '../stripGeometry.js';
 
 const HOVER_CLEAR_DELAY_MS = 150;
 
@@ -74,7 +67,7 @@ export class DeckTimelineRenderer {
 
     // Interaction state
     this._selectedSegmentIndex = null;
-    this._lastHoverId = null;
+    this._hoverIndex = null;
     this._getIsScrubbing = () => false;
     this._setHoveredSegment = () => {};
     this._scrubThresholdPx = 24;
@@ -448,20 +441,20 @@ export class DeckTimelineRenderer {
     const rect = this.container.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const ms = this._xToMs(x);
-    const segIndex = this._timeToSegmentIndex(ms);
-    const id = segIndex >= 0 ? toTimelineItemId(segIndex) : null;
+    const found = this._timeToSegmentIndex(ms);
+    const segIndex = found >= 0 ? found : null;
 
-    if (id !== this._lastHoverId) {
-      if (this._lastHoverId != null) this._scheduleHoveredSegmentClear();
+    if (segIndex !== this._hoverIndex) {
+      if (this._hoverIndex !== null) this._scheduleHoveredSegmentClear();
 
-      if (id != null) {
+      if (segIndex !== null) {
         this._clearHoverTimeout();
         this._publishHoveredSegment(segIndex, rect);
       }
 
-      this._lastHoverId = id;
+      this._hoverIndex = segIndex;
       this._scheduleUpdate();
-    } else if (id != null) {
+    } else if (segIndex !== null) {
       this._publishHoveredSegment(segIndex, rect);
     }
   }
@@ -521,7 +514,7 @@ export class DeckTimelineRenderer {
 
     if (initialSegIndex === -1) {
       this.setSelectedSegment(null);
-      this._emit('select', { id: null, segmentIndex: null });
+      this._emit('select', { segmentIndex: null });
       return;
     }
 
@@ -603,10 +596,10 @@ export class DeckTimelineRenderer {
   }
 
   _handleMouseLeave() {
-    if (this._lastHoverId == null) return;
+    if (this._hoverIndex === null) return;
 
     this._scheduleHoveredSegmentClear();
-    this._lastHoverId = null;
+    this._hoverIndex = null;
     this._scheduleUpdate();
   }
 
@@ -626,35 +619,18 @@ export class DeckTimelineRenderer {
   }
 
   _handleHoverLayerClick(info) {
-    if (!info?.object?.id) return;
+    const targetIndex = info?.object?.segmentIndex;
+    if (targetIndex == null) return;
 
-    const targetIndex = Number.isInteger(info.object.segmentIndex)
-      ? info.object.segmentIndex
-      : toSegmentIndex(info.object.id);
-    const targetId = info.object.id;
-    const segment = this.segments[targetIndex];
-
-    if (targetIndex >= 0 && targetIndex < this.segments.length) {
-      this._selectSegment(targetIndex, this._getClickMsFromPickingInfo(info), targetId, segment);
-    }
+    this._selectSegment(targetIndex, this._getClickMsFromPickingInfo(info));
   }
 
-  _selectSegment(
-    segmentIndex,
-    ms,
-    id = toTimelineItemId(segmentIndex),
-    segment = this.segments[segmentIndex]
-  ) {
+  _selectSegment(segmentIndex, ms) {
     if (!Number.isInteger(segmentIndex) || segmentIndex < 0 || segmentIndex >= this.segments.length)
       return;
 
     this.setSelectedSegment(segmentIndex);
-    this._emit('select', {
-      id,
-      segmentIndex,
-      ms,
-      segment,
-    });
+    this._emit('select', { segmentIndex, ms, segment: this.segments[segmentIndex] });
   }
 
   _getClickMsFromPickingInfo(info) {
@@ -746,7 +722,7 @@ export class DeckTimelineRenderer {
       timelineData: this.timelineData,
       segments: this.segments,
       selectedSegmentIndex: this._selectedSegmentIndex,
-      lastHoverId: this._lastHoverId,
+      hoverIndex: this._hoverIndex,
       rangeStart,
       rangeEnd,
     });
@@ -778,7 +754,7 @@ export class DeckTimelineRenderer {
   }
 
   _projectPairStrip(view) {
-    const hoveredSegment = this.segments[toSegmentIndex(this._lastHoverId)];
+    const hoveredSegment = this.segments[this._hoverIndex];
     const selectedSegment = this.segments[this._selectedSegmentIndex];
     return projectPairStrip({
       ...view,
@@ -918,7 +894,7 @@ export class DeckTimelineRenderer {
     this.deck = null;
 
     this.container = null;
-    this._lastHoverId = null;
+    this._hoverIndex = null;
     this._updateScheduled = false;
     this._handlers.clear();
   }

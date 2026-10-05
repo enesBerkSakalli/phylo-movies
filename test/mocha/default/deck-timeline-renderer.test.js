@@ -16,7 +16,7 @@ clearTimelineModuleCache();
 
 // Now require the SUT after mocks are in place
 const { DeckTimelineRenderer } = require('../../../src/timeline/renderers/DeckTimelineRenderer.js');
-const { TIMELINE_THEME } = require('../../../src/timeline/constants.js');
+const { TIMELINE_THEME } = require('../../../src/timeline/deckLayers.js');
 
 describe('DeckTimelineRenderer', () => {
   function makeContainer(w = 800, h = 100) {
@@ -185,7 +185,7 @@ describe('DeckTimelineRenderer', () => {
       makeContainer(800, 44)
     );
 
-    renderer._lastHoverId = 2;
+    renderer._hoverIndex = 1;
     renderer.setSelectedSegment(1);
 
     expect(findLayer(renderer, 'pair-hover-layer').props.data).to.have.length(1);
@@ -345,7 +345,6 @@ describe('DeckTimelineRenderer', () => {
 
     expect(selections).to.have.length(1);
     expect(selections[0].segmentIndex).to.equal(1);
-    expect(selections[0].id).to.equal(2);
     expect(renderer._selectedSegmentIndex).to.equal(1);
 
     renderer.deck.canvas.dispatchEvent(
@@ -447,7 +446,7 @@ describe('DeckTimelineRenderer', () => {
     clickTimeline(renderer, 500);
 
     expect(selections).to.have.length(1);
-    expect(selections[0].id).to.equal(1);
+    expect(selections[0].segmentIndex).to.equal(0);
     expect(selections[0].segment).to.equal(segments[0]);
     expect(renderer._selectedSegmentIndex).to.equal(0);
   });
@@ -461,7 +460,7 @@ describe('DeckTimelineRenderer', () => {
     clickTimeline(renderer, 1500);
 
     expect(selections).to.have.length(1);
-    expect(selections[0].id).to.equal(2);
+    expect(selections[0].segmentIndex).to.equal(1);
     expect(selections[0].segment).to.equal(segments[1]);
     expect(renderer._selectedSegmentIndex).to.equal(1);
   });
@@ -482,7 +481,7 @@ describe('DeckTimelineRenderer', () => {
     clickTimeline(renderer, 51500);
 
     expect(selections).to.have.length(1);
-    expect(selections[0].id).to.equal(52);
+    expect(selections[0].segmentIndex).to.equal(51);
     expect(selections[0].segment).to.equal(segments[51]);
     expect(renderer._selectedSegmentIndex).to.equal(51);
   });
@@ -498,7 +497,7 @@ describe('DeckTimelineRenderer', () => {
     clickTimeline(renderer, 2500);
 
     expect(selections).to.have.length(1);
-    expect(selections[0].id).to.equal(3);
+    expect(selections[0].segmentIndex).to.equal(2);
     expect(selections[0].segment).to.equal(segments[2]);
     expect(renderer._selectedSegmentIndex).to.equal(2);
   });

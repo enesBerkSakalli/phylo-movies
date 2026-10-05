@@ -1,5 +1,3 @@
-import { TIMELINE_CONSTANTS } from '../constants.js';
-
 export function getSegmentBounds(segmentIndex, timelineData) {
   const cumulativeDurations = timelineData?.cumulativeDurations;
   if (!Number.isInteger(segmentIndex) || !Array.isArray(cumulativeDurations)) {
@@ -58,12 +56,4 @@ export function timeToSegmentIndex(ms, timelineData, options = {}) {
   }
 
   return ans;
-}
-
-export function toTimelineItemId(segmentIndex) {
-  return Number.isInteger(segmentIndex) ? segmentIndex + TIMELINE_CONSTANTS.INDEX_OFFSET_UI : null;
-}
-
-export function toSegmentIndex(itemId) {
-  return Number.isInteger(itemId) ? itemId - TIMELINE_CONSTANTS.INDEX_OFFSET_UI : null;
 }

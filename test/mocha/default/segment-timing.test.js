@@ -3,8 +3,6 @@ const { expect } = require('chai');
 const {
   getSegmentBounds,
   timeToSegmentIndex,
-  toSegmentIndex,
-  toTimelineItemId,
 } = require('../../../src/timeline/utils/segmentTiming.js');
 
 describe('segmentTiming utilities', () => {
@@ -39,14 +37,5 @@ describe('segmentTiming utilities', () => {
   it('supports math callers that need first-boundary and timeline-end lookup', () => {
     expect(timeToSegmentIndex(500, timelineData, { preferLastAtSameTime: false })).to.equal(1);
     expect(timeToSegmentIndex(3000, timelineData, { includeEnd: true })).to.equal(3);
-  });
-
-  it('converts between zero-based segment indexes and one-based item ids', () => {
-    expect(toTimelineItemId(0)).to.equal(1);
-    expect(toTimelineItemId(4)).to.equal(5);
-    expect(toTimelineItemId(null)).to.equal(null);
-    expect(toSegmentIndex(1)).to.equal(0);
-    expect(toSegmentIndex(5)).to.equal(4);
-    expect(toSegmentIndex(null)).to.equal(null);
   });
 });

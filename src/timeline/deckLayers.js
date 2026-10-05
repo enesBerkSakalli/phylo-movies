@@ -1,19 +1,49 @@
 import { PathLayer, PolygonLayer, ScatterplotLayer } from '@deck.gl/layers';
 import { COORDINATE_SYSTEM } from '@deck.gl/core';
-import { msToX } from '../math/coordinateUtils.js';
-import { rgba } from '../../services/ui/colorUtils.js';
+import { msToX } from './math/coordinateUtils.js';
+import { createSnapFunction, getDevicePixelRatio } from './stripGeometry.js';
 
-// ==========================================================================
-// DEVICE PIXEL RATIO HELPERS
-// ==========================================================================
-
-export function getDevicePixelRatio() {
-  return typeof window !== 'undefined' && window.devicePixelRatio ? window.devicePixelRatio : 1;
-}
-
-export function createSnapFunction(dpr) {
-  return (v) => Math.round(v * dpr) / dpr;
-}
+export const TIMELINE_THEME = {
+  connectionSelectionRGB: [5, 150, 105],
+  connectionHoverRGB: [128, 128, 128],
+  // The strip reads bottom-up: pips sit under the baseline, RF bars rise from it.
+  // Every y is in px from the top of the strip.
+  stripBaselineY: 30,
+  stripBaselineRGB: [203, 213, 225],
+  stripBarMaxHeight: 24,
+  stripBarMinHeight: 2,
+  stripBarInset: 0.5,
+  stripBarMinWidth: 1,
+  stripMarkRGB: [100, 116, 139],
+  stripMarkHoverRGB: [30, 41, 59],
+  stripDashWidth: 2,
+  stripDashLength: 4,
+  stripDashGap: 3,
+  stripSelectionSpanWidth: 2,
+  stripPipY: 39,
+  stripPipRGB: [51, 65, 85],
+  stripPipAlpha: 220,
+  stripPipRadiusBase: 1.5,
+  stripPipRadiusPerSqrtTaxon: 0.9,
+  stripPipRadiusMax: 4,
+  inputTreeStrokeWidth: 3,
+  inputTreeFillRGB: [240, 240, 245],
+  inputTreeStrokeRGB: [60, 60, 80],
+  inputTreeRadiusVar: 7,
+  inputTreeDenseThresholdPx: 18,
+  inputTreeTickLength: 4,
+  inputTreeTickWidth: 1,
+  activeInputTreeTickWidth: 4,
+  separatorRGB: [0, 0, 0],
+  separatorWidthMax: 2,
+  separatorWidthMin: 1,
+  separatorAlpha: 56,
+  separatorDenseAlpha: 24,
+  scrubberCoreRGB: [64, 128, 255],
+  transitionGap: 3,
+  paddingX: 8,
+  paddingY: 0,
+};
 
 // ==========================================================================
 // BASE LAYER FACTORIES
@@ -200,86 +230,5 @@ export function createScrubberLayer(ms, rangeStart, rangeEnd, width, height, the
     widthMinPixels: isScrubbing ? 10 : 7,
     getLineColor: [255, 255, 255, 180],
     lineWidthMinPixels: 1,
-  };
-}
-
-// ==========================================================================
-// GEOMETRY DATA FACTORIES
-// ==========================================================================
-
-function toCanvasCentered(x, canvasWidth) {
-  return x - canvasWidth / 2;
-}
-
-// The canvas is centred and y points up; the strip's own y counts down from its top.
-function baselineY(height, theme) {
-  return height / 2 - theme.stripBaselineY;
-}
-
-function clampToViewport(x, radius, width) {
-  const halfWidth = width / 2;
-  return Math.max(-halfWidth + radius, Math.min(halfWidth - radius, x));
-}
-
-function calculateRadius(inputTreeRadiusVar, height, zoomScale) {
-  const baseRadius = Number.isFinite(inputTreeRadiusVar)
-    ? inputTreeRadiusVar
-    : Math.max(3, Math.min(6, Math.floor(height * 0.18)));
-  const maxRadius = Math.floor(height * 0.25);
-  const minRadius = 1;
-  return Math.max(minRadius, Math.min(maxRadius, baseRadius * zoomScale));
-}
-
-export function createInputTreeMarker(
-  segmentIndex,
-  id,
-  x0,
-  x1,
-  width,
-  height,
-  theme,
-  zoomScale,
-  snap
-) {
-  const center = (x0 + x1) / 2;
-  const radius = calculateRadius(theme.inputTreeRadiusVar, height, zoomScale);
-  const centeredX = toCanvasCentered(center, width);
-  const clampedX = clampToViewport(centeredX, radius, width);
-
-  return {
-    segmentIndex,
-    id,
-    position: [snap(clampedX), baselineY(height, theme)],
-    fillColor: rgba(...theme.inputTreeFillRGB),
-    borderColor: rgba(...theme.inputTreeStrokeRGB),
-    radius,
-    lineWidth: theme.inputTreeStrokeWidth,
-  };
-}
-
-export function createInputTreeTick(x0, x1, width, height, theme, snap) {
-  const center = (x0 + x1) / 2;
-  // An odd device-pixel width is crisp only when centred mid-pixel
-  const dpr = getDevicePixelRatio();
-  const half = Math.round(theme.inputTreeTickWidth * dpr) % 2 === 1 ? 0.5 / dpr : 0;
-  const x = snap(center - half) + half - width / 2;
-  const y = baselineY(height, theme);
-
-  return {
-    path: [
-      [x, y],
-      [x, y - theme.inputTreeTickLength],
-    ],
-  };
-}
-
-export function createBaseline(width, height, theme, snap) {
-  const y = baselineY(height, theme);
-
-  return {
-    path: [
-      [snap(-width / 2), y],
-      [snap(width / 2), y],
-    ],
   };
 }

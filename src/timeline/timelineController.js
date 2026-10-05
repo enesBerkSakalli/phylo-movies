@@ -1,5 +1,5 @@
 import { TIMELINE_CONSTANTS } from './constants.js';
-import { buildPairSpans } from './data/pairStripGeometry.js';
+import { buildPairSpans } from './stripGeometry.js';
 import { cursorForFrame } from './timeline.js';
 import { getSegmentBounds } from './utils/segmentTiming.js';
 import { selectInputFrameIndices } from '../state/phyloStore/selectors/treeSelectors.js';

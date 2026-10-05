@@ -1,9 +1,5 @@
 export const TIMELINE_CONSTANTS = {
   SCRUB_THROTTLE_MS: 16,
-  DEFAULT_SEGMENT_INDEX: -1,
-  DEFAULT_TREE_IN_SEGMENT: 1,
-  DEFAULT_TREES_IN_SEGMENT: 1,
-  INDEX_OFFSET_UI: 1,
 };
 
 export const TIMING_PROFILE = {
@@ -12,46 +8,4 @@ export const TIMING_PROFILE = {
   pivotHoldMs: 900,
   inputTreeHoldMs: 1500,
   noOpPairHoldMs: 300,
-};
-
-export const TIMELINE_THEME = {
-  connectionSelectionRGB: [5, 150, 105],
-  connectionHoverRGB: [128, 128, 128],
-  // The strip reads bottom-up: pips sit under the baseline, RF bars rise from it.
-  // Every y is in px from the top of the strip.
-  stripBaselineY: 30,
-  stripBaselineRGB: [203, 213, 225],
-  stripBarMaxHeight: 24,
-  stripBarMinHeight: 2,
-  stripBarInset: 0.5,
-  stripBarMinWidth: 1,
-  stripMarkRGB: [100, 116, 139],
-  stripMarkHoverRGB: [30, 41, 59],
-  stripDashWidth: 2,
-  stripDashLength: 4,
-  stripDashGap: 3,
-  stripSelectionSpanWidth: 2,
-  stripPipY: 39,
-  stripPipRGB: [51, 65, 85],
-  stripPipAlpha: 220,
-  stripPipRadiusBase: 1.5,
-  stripPipRadiusPerSqrtTaxon: 0.9,
-  stripPipRadiusMax: 4,
-  inputTreeStrokeWidth: 3,
-  inputTreeFillRGB: [240, 240, 245],
-  inputTreeStrokeRGB: [60, 60, 80],
-  inputTreeRadiusVar: 7,
-  inputTreeDenseThresholdPx: 18,
-  inputTreeTickLength: 4,
-  inputTreeTickWidth: 1,
-  activeInputTreeTickWidth: 4,
-  separatorRGB: [0, 0, 0],
-  separatorWidthMax: 2,
-  separatorWidthMin: 1,
-  separatorAlpha: 56,
-  separatorDenseAlpha: 24,
-  scrubberCoreRGB: [64, 128, 255],
-  transitionGap: 3,
-  paddingX: 8,
-  paddingY: 0,
 };

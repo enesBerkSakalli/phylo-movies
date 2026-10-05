@@ -97,7 +97,7 @@ function clearTimelineModuleCache() {
   [
     'src/timeline/timelineController.js',
     'src/timeline/renderers/DeckTimelineRenderer.js',
-    'src/timeline/utils/layerFactories.js',
+    'src/timeline/deckLayers.js',
   ].forEach((modulePath) => {
     const resolved = require.resolve(path.join(__dirname, '..', '..', modulePath));
     delete require.cache[resolved];

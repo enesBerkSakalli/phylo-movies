@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { TIMELINE_THEME } from '../../../../src/timeline/constants.js';
+import { TIMELINE_THEME } from '../../../../src/timeline/deckLayers.js';
 import { buildPairChangeProfile } from '../../../../src/timeline/data/pairChangeProfile.js';
-import {
-  buildPairSpans,
-  projectPairStrip,
-} from '../../../../src/timeline/data/pairStripGeometry.js';
+import { buildPairSpans, projectPairStrip } from '../../../../src/timeline/stripGeometry.js';
 import { buildTimeline } from '../../../../src/timeline/timeline.js';
 import { smallExampleMovieData } from '../../../fixtures/timeline/generatedMovieData.js';
 
