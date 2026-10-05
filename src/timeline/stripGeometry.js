@@ -4,7 +4,7 @@ import { rgba } from '../services/ui/colorUtils.js';
 /**
  * The strip as plain geometry, no deck.gl: input trees as circles or ticks, and one mark per
  * input-tree pair (not per playback segment): a bar for its RF, dashes for a branch-length-only
- * change, and one pip per SPR move (one per pair when its moves would overlap). Spans are built
+ * change, and one pip per SPR move (one per pair when its moves would crowd). Spans are built
  * once, in movie time; projectPairStrip turns them into canvas geometry for the visible range.
  */
 
@@ -157,7 +157,8 @@ export function projectPairStrip({
 }
 
 // A dot per move while they fit. A pair too narrow for them (under two max dots wide), or whose
-// dots would overlap, gets one dot at its centre instead, sized by its move count.
+// dots would come within the gap of touching, gets one dot at its centre instead, sized by its
+// move count.
 function spanPips({ pairId, pips }, left, right, toX, pipY) {
   const moves = pips.map(({ ms, taxaCount }) => ({
     pairId,
@@ -170,7 +171,9 @@ function spanPips({ pairId, pips }, left, right, toX, pipY) {
   const narrow = right - left < 4 * theme.stripPipRadiusMax;
   const overlapping = moves.some(
     (move, i) =>
-      i > 0 && move.position[0] - moves[i - 1].position[0] < move.radius + moves[i - 1].radius
+      i > 0 &&
+      move.position[0] - moves[i - 1].position[0] <
+        move.radius + moves[i - 1].radius + theme.stripMergedPipGapPx
   );
   if (!moves.length || !(narrow || overlapping)) return moves;
 

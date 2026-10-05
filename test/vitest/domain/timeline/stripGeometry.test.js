@@ -197,6 +197,12 @@ describe('projectPairStrip', () => {
       expect(pips[0].position[0]).toBeCloseTo(x(3000));
     });
 
+    it('merges dots that would almost touch, not only those that overlap', () => {
+      // r = 2.4 each: 5.5px apart leaves a gap under the 2px a dot keeps from its neighbour
+      expect(pipsOf([topology('a', 1000, 5000, 0.2, moves(2, 2000, 55))])).toHaveLength(1);
+      expect(pipsOf([topology('a', 1000, 5000, 0.2, moves(2, 2000, 80))])).toHaveLength(2);
+    });
+
     it('goes back to per-move dots when zoomed in', () => {
       const spans = [topology('a', 1000, 1100, 0.2, moves(3, 1020, 30))];
       expect(pipsOf(spans)).toHaveLength(1);
