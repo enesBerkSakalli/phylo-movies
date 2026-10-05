@@ -11,7 +11,7 @@ import {
   selectMsaColumnCount,
   selectMsaStepSize,
   selectMsaWindowSize,
-  selectPairMetrics,
+  selectPairChanges,
   selectScaleList,
   selectSelectedTimelineSegmentIndex,
   selectTemporalEvents,
@@ -29,7 +29,7 @@ export function TransitionInspectorPanel() {
     segmentIndex,
     movieTimelineManager,
     leafNamesByIndex,
-    pairMetrics,
+    pairChanges,
     temporalEvents,
     scaleList,
     hasMsa,
@@ -41,7 +41,7 @@ export function TransitionInspectorPanel() {
       segmentIndex: selectSelectedTimelineSegmentIndex(state),
       movieTimelineManager: selectMovieTimelineManager(state),
       leafNamesByIndex: selectLeafNamesByIndex(state),
-      pairMetrics: selectPairMetrics(state),
+      pairChanges: selectPairChanges(state),
       temporalEvents: selectTemporalEvents(state),
       scaleList: selectScaleList(state),
       hasMsa: selectHasMsa(state),
@@ -59,7 +59,7 @@ export function TransitionInspectorPanel() {
       buildInspectorDetails({
         segment,
         leafNamesByIndex,
-        pairMetrics,
+        pairChanges,
         temporalEvents,
         scaleList,
         hasMsa,
@@ -70,7 +70,7 @@ export function TransitionInspectorPanel() {
     [
       segment,
       leafNamesByIndex,
-      pairMetrics,
+      pairChanges,
       temporalEvents,
       scaleList,
       hasMsa,
@@ -206,7 +206,7 @@ function SubtreeList({ groups }) {
 function buildInspectorDetails({
   segment,
   leafNamesByIndex,
-  pairMetrics,
+  pairChanges,
   temporalEvents,
   scaleList,
   hasMsa,
@@ -219,7 +219,7 @@ function buildInspectorDetails({
   const getLeafNames = (indices) => getLeafNamesByIndices(indices, leafNamesByIndex);
   const subtreeGroups = extractAffectedSubtreeGroups(segment.affectedSubtrees, getLeafNames);
   const pair = resolvePairContext(segment);
-  const metric = pair ? getPairMetric(pairMetrics, pair) : null;
+  const change = pairChanges.byPairId.get(segment.pairId);
   const sourceGlobalIndex = resolveSourceGlobalIndex(segment);
   const scaleValue = getScaleValue(scaleList, sourceGlobalIndex);
   const stepRange = segment.isInputTreeSegment ? null : getSegmentStepRange(segment);
@@ -246,12 +246,12 @@ function buildInspectorDetails({
       ? `${formatRange(stepRange.start, stepRange.end, '–')} of ${stepRange.total}`
       : null,
     eventLabel: splitEvent ? `${splitEvent.index} of ${splitEvent.count}` : null,
-    positionLabel: formatPosition(segment, pairMetrics?.rows?.length),
+    positionLabel: formatPosition(segment, pairChanges.byPairId.size),
     movingTaxaLabel: formatCount(segment.subtreeMoveCount, 'taxon', 'taxa'),
     animationStepLabel: formatCount(resolveAnimationStepCount(segment), 'step', 'steps'),
     pivotEdgeLabel: formatPivotEdgeLabel(segment.pivotEdge),
-    rfLabel: formatNumber(metric?.robinson_foulds, 3),
-    weightedRfLabel: formatNumber(metric?.weighted_robinson_foulds, 3),
+    rfLabel: formatNumber(change?.rf, 3),
+    weightedRfLabel: formatNumber(change?.weightedRf, 3),
     scaleLabel: Number.isFinite(scaleValue) ? formatScaleValue(scaleValue) : null,
     msaWindowLabel: msaWindow
       ? `${msaWindow.startPosition}-${msaWindow.midPosition}-${msaWindow.endPosition}`
@@ -311,11 +311,6 @@ function resolveMsaFrameIndex(segment, pair) {
     return segment.originalTreeIndex;
   }
   return Number.isInteger(pair?.sourceInputTreeIndex) ? pair.sourceInputTreeIndex : null;
-}
-
-function getPairMetric(pairMetrics, pair) {
-  const metric = pairMetrics.rows[pair.pairOrdinal];
-  return metric.pair_id === pair.pairId ? metric : null;
 }
 
 function formatTreeName(segment, pair) {

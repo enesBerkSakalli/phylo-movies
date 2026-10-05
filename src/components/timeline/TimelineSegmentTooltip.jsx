@@ -18,7 +18,7 @@ import {
  *
  * @param {Object} props
  * @param {Object} props.segment - The segment data object
- * @param {Object} [props.pairChange] - The segment's pair in buildPairChangeProfile().byPairId
+ * @param {Object} [props.pairChange] - The segment's pair in pairChanges.byPairId
  * @param {number} props.pairCount - Number of transitions (pairs) in the movie
  * @param {Function} props.getLeafNames - Function to convert leaf indices to names
  */

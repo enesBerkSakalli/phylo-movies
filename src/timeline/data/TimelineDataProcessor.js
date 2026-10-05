@@ -9,6 +9,7 @@
 import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
 import { TimelineEventIndex } from './TimelineEventIndex.js';
 import { TimelineSegmentBuilder } from './TimelineSegmentBuilder.js';
+import { isInputFrame } from './timelineFrameIndex.js';
 
 export class TimelineDataProcessor {
   /**
@@ -30,9 +31,7 @@ export class TimelineDataProcessor {
     const eventIndex = TimelineEventIndex.from({ pairs, temporalEvents });
     const pairMetricsById = new Map(pairMetricRows.map((row) => [row.pair_id, row]));
 
-    const inputFrames = frames
-      .filter((frame) => frame.frame_type === 'input_tree' || frame.is_observed_input === true)
-      .sort((a, b) => a.frame_index - b.frame_index);
+    const inputFrames = frames.filter(isInputFrame).sort((a, b) => a.frame_index - b.frame_index);
 
     for (let index = 0; index < inputFrames.length - 1; index += 1) {
       const frame = inputFrames[index];

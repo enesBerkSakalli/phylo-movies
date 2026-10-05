@@ -8,6 +8,7 @@ import {
   parseBinaryMoviePayload,
 } from '../../domain/backend/binaryPayload.ts';
 import { createBinaryTreeSource } from '../../domain/backend/treeSource.js';
+import { isInputFrame } from '../../timeline/data/timelineFrameIndex.js';
 
 /**
  * Unified data service for PhyloMovies
@@ -565,9 +566,7 @@ function createPayloadHashSummary(data) {
 
 function countInputTrees(data) {
   if (Array.isArray(data?.frames)) {
-    const inputFrameCount = data.frames.filter(
-      (frame) => frame?.frame_type === 'input_tree' || frame?.is_observed_input === true
-    ).length;
+    const inputFrameCount = data.frames.filter(isInputFrame).length;
     if (inputFrameCount > 0) return inputFrameCount;
   }
   if (Array.isArray(data?.pairs)) return data.pairs.length + 1;

@@ -47,7 +47,7 @@ export function formatTransitionHeading(segment, pairCount) {
 /**
  * One pair's RF distances and what changed, in the words the tooltip shows.
  *
- * @param {Object} [change] - An entry of buildPairChangeProfile().byPairId.
+ * @param {Object} [change] - An entry of pairChanges.byPairId.
  * @returns {{metrics: string|null, change: string}|null}
  */
 export function formatPairFacts(change) {

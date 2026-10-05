@@ -1,3 +1,5 @@
+import { isInputFrame } from './timelineFrameIndex.js';
+
 export function buildTimelineFrameViews(movieData) {
   const frames = movieData.frames;
   const pairById = new Map(movieData.pairs.map((pair) => [pair.pair_id, pair]));
@@ -18,6 +20,7 @@ export function buildTimelineFrameViews(movieData) {
       frameType: frame.frame_type,
       stateSemantics: frame.state_semantics,
       isObservedInput: frame.is_observed_input,
+      isInputFrame: isInputFrame(frame),
       pairId: frame.pair_id,
       pairOrdinal: frame.pair_ordinal,
       sourceInputTreeIndex: pair === null ? inputTreeIndex : pair.source_input_tree_index,

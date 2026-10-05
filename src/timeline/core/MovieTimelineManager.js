@@ -1,6 +1,5 @@
 import { TimelineDataProcessor } from '../data/TimelineDataProcessor.js';
 import { TimelineDataset } from '../data/TimelineDataset.js';
-import { buildPairChangeProfile } from '../data/pairChangeProfile.js';
 import { buildPairSpans } from '../data/pairStripGeometry.js';
 import { ScrubberAPI } from './ScrubberAPI.js';
 import { TimelineNavigationController } from './TimelineNavigationController.js';
@@ -51,7 +50,7 @@ export class MovieTimelineManager {
       timelineData: this.timelineData,
       treeList,
     });
-    this.pairStrip = this._buildPairStrip(movieData);
+    this.pairStrip = null;
     this.navigationController = new TimelineNavigationController({
       timelineDataset: this.timelineDataset,
       segments: this.segments,
@@ -76,12 +75,8 @@ export class MovieTimelineManager {
   // INITIALIZATION
   // ==========================================================================
 
-  _buildPairStrip(movieData) {
-    const profile = buildPairChangeProfile({
-      pairs: movieData.pairs,
-      pairMetrics: movieData.pair_metrics,
-      temporalEvents: movieData.temporal_events,
-    });
+  _buildPairStrip() {
+    const profile = this.store.getState().pairChanges;
     const dataset = this.timelineDataset;
     return {
       spans: buildPairSpans({
@@ -206,6 +201,7 @@ export class MovieTimelineManager {
       return null;
     }
 
+    this.pairStrip ??= this._buildPairStrip();
     const timeline = new DeckTimelineRenderer(
       this.timelineData,
       this.segments,

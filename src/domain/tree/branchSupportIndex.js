@@ -1,3 +1,5 @@
+import { isInputFrame } from '../../timeline/data/timelineFrameIndex.js';
+
 function normalizeIndices(indices) {
   return Array.from(new Set(Array.isArray(indices) ? indices : []))
     .filter(Number.isFinite)
@@ -289,7 +291,7 @@ function getInputFrameRows(frames) {
     if (!frame || typeof frame !== 'object') {
       throw new Error(`buildBranchSupportIndex frames[${index}] must be a timeline frame row`);
     }
-    return frame.frame_type === 'input_tree' || frame.is_observed_input === true;
+    return isInputFrame(frame);
   });
 }
 

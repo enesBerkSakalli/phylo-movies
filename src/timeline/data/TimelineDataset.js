@@ -69,7 +69,7 @@ export class TimelineDataset {
   getInputFrameIndices() {
     if (!this._inputFrameIndices) {
       this._inputFrameIndices = this.frameViews
-        .filter((frame) => frame.isObservedInput === true)
+        .filter((frame) => frame.isInputFrame)
         .map((frame) => frame.frameIndex);
     }
     return this._inputFrameIndices;
@@ -225,7 +225,7 @@ function selectOccurrence(occurrences, occurrenceSelector = 'semantic', frameVie
   if (selector === 'input_tree_hold') {
     return findInputTreeHold(occurrences) ?? occurrences[0];
   }
-  if (selector === 'semantic' && frameView?.isObservedInput === true) {
+  if (selector === 'semantic' && frameView?.isInputFrame) {
     return findInputTreeHold(occurrences) ?? occurrences[0];
   }
   if (Number.isInteger(selector)) {

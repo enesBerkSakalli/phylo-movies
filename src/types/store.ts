@@ -151,6 +151,7 @@ export interface AppStoreState {
   datasetVersion: number;
   pairMetrics: PhyloMovieData['pair_metrics'] | null;
   pairs: TimelinePair[];
+  pairChanges: { byPairId: Map<string, unknown>; maxRf: number };
   subtreeHighlightTracking: SubtreeHighlightTracking;
   temporalEvents: TemporalEvent[];
   ensureInputTreesHydrated: () => Array<TreeNode | null>;

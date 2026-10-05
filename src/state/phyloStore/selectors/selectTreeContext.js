@@ -1,5 +1,6 @@
 import { selectActiveTreeList } from './selectActiveTreeList.js';
 import { selectTimelineFrameAtIndex } from './selectTimelineFrameAtIndex.js';
+import { isInputFrame } from '../../../timeline/data/timelineFrameIndex.js';
 
 // Cache keyed on the two mutable references this selector actually reads, so
 // repeated calls with an unchanged tree/frame return the same object
@@ -25,7 +26,7 @@ export const selectTreeContext = (state, index) => {
   }
 
   const pairId = frame?.pair_id ?? null;
-  const isInputTree = frame?.frame_type === 'input_tree' || frame?.is_observed_input === true;
+  const isInputTree = isInputFrame(frame);
 
   cachedTree = tree;
   cachedFrame = frame;

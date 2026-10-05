@@ -63,6 +63,7 @@ export { selectMsaWindowSize } from './selectMsaWindowSize.js';
 export { selectNodeSize } from './selectNodeSize.js';
 export { selectOpenMsaViewer } from './selectOpenMsaViewer.js';
 export { selectPairById } from './selectPairById.js';
+export { selectPairChanges } from './selectPairChanges.js';
 export { selectPairMetrics } from './selectPairMetrics.js';
 export { selectPairs } from './selectPairs.js';
 export { selectTemporalEvents } from './selectTemporalEvents.js';

@@ -262,6 +262,10 @@ describe('phylo store dataset normalization', () => {
     expect(state.temporalEvents).toBe(movieData.temporal_events);
     expect(state.pairMetrics).toBe(movieData.pair_metrics);
     expect(state.pairs).toBe(movieData.pairs);
+    expect(phyloStoreModule.selectPairChanges(state)).toMatchObject({
+      maxRf: 1,
+      byPairId: new Map([['pair_0_1', expect.objectContaining({ rf: 1, weightedRf: 1 })]]),
+    });
     expect(state.labelsVisible).toBe(true);
     expect(phyloStoreModule.selectPairById(state).pair_0_1).toBe(movieData.pairs[0]);
     expect(phyloStoreModule.selectInputFrameIndices(state)).toEqual([0, 2]);

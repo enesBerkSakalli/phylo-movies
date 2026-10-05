@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { TransportControls } from './TransportControls.jsx';
 import {
@@ -21,13 +21,11 @@ import {
   selectLeafNamesByIndex,
   selectMovieTimelineManager,
   selectOpenMsaViewer,
-  selectPairMetrics,
-  selectPairs,
+  selectPairChanges,
   selectPlaying,
   selectSelectedTimelineSegmentIndex,
   selectSetAnimationSpeed,
   selectSetHoveredSegment,
-  selectTemporalEvents,
   useAppStore,
 } from '../../state/phyloStore/store.js';
 import { openPanel, togglePanel, useIsPanelOpen } from '../dock/dockRuntime.js';
@@ -37,7 +35,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Activity, CircleHelp, Dna, Menu, PanelRightOpen } from 'lucide-react';
 import { AppTooltip } from '../ui/app-tooltip';
 import { cn } from '../../lib/utils';
-import { buildPairChangeProfile } from '../../timeline/data/pairChangeProfile.js';
 import { clampTooltipLeft } from '../timeline/timelineSegmentTooltipUtils.js';
 import { MOVIE_PLAYER_ARIA_LABELS, TIMELINE_LEGEND_ITEMS } from './MoviePlayerBar.contract.js';
 
@@ -53,9 +50,7 @@ export function MoviePlayerBar() {
   const animationSpeed = useAppStore(selectAnimationSpeed);
   const hasMsa = useAppStore(selectHasMsa);
   const openMsaViewer = useAppStore(selectOpenMsaViewer);
-  const pairs = useAppStore(selectPairs);
-  const pairMetrics = useAppStore(selectPairMetrics);
-  const temporalEvents = useAppStore(selectTemporalEvents);
+  const pairChanges = useAppStore(selectPairChanges);
   const selectedSegmentIndex = useAppStore(selectSelectedTimelineSegmentIndex);
 
   const movieTimelineManager = useAppStore(selectMovieTimelineManager);
@@ -69,10 +64,6 @@ export function MoviePlayerBar() {
     [hasTimeline, movieTimelineManager]
   );
 
-  const pairProfile = useMemo(
-    () => buildPairChangeProfile({ pairs: pairs ?? [], pairMetrics, temporalEvents }),
-    [pairs, pairMetrics, temporalEvents]
-  );
   const canInspect =
     movieTimelineManager?.getSegment?.(selectedSegmentIndex)?.isInputTreeSegment === false;
 
@@ -199,7 +190,7 @@ export function MoviePlayerBar() {
                 <TimelineScrollControls />
                 <TimelineLegend
                   hasTransitionSegments={hasTransitionSegments}
-                  maxRf={pairProfile.maxRf}
+                  maxRf={pairChanges.maxRf}
                 />
               </div>
             )}
@@ -207,12 +198,12 @@ export function MoviePlayerBar() {
         </div>
       </div>
 
-      <TimelineSegmentTooltipOverlay playerBarRef={playerBarRef} pairProfile={pairProfile} />
+      <TimelineSegmentTooltipOverlay playerBarRef={playerBarRef} pairChanges={pairChanges} />
     </>
   );
 }
 
-function TimelineSegmentTooltipOverlay({ playerBarRef, pairProfile }) {
+function TimelineSegmentTooltipOverlay({ playerBarRef, pairChanges }) {
   const hoveredSegmentIndex = useAppStore(selectHoveredSegmentIndex);
   const hoveredSegmentData = useAppStore(selectHoveredSegmentData);
   const hoveredSegmentPosition = useAppStore(selectHoveredSegmentPosition);
@@ -299,8 +290,8 @@ function TimelineSegmentTooltipOverlay({ playerBarRef, pairProfile }) {
       <div className="rounded-lg border bg-card p-2 shadow-lg">
         <TimelineSegmentTooltip
           segment={hoveredSegmentData}
-          pairChange={pairProfile.byPairId.get(hoveredSegmentData.pairId)}
-          pairCount={pairProfile.byPairId.size}
+          pairChange={pairChanges.byPairId.get(hoveredSegmentData.pairId)}
+          pairCount={pairChanges.byPairId.size}
           getLeafNames={getLeafNames}
         />
       </div>

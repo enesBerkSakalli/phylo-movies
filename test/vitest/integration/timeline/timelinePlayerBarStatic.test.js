@@ -172,7 +172,9 @@ describe('movie timeline player bar semantics', () => {
 
   it('draws the legend swatches the strip uses, with the dataset RF maximum', () => {
     const playerBarSource = readRepoFile('src', 'components', 'movie-player', 'MoviePlayerBar.jsx');
-    expect(playerBarSource).toContain('buildPairChangeProfile');
+    // The pair changes are built once into the store, not per component.
+    expect(playerBarSource).toContain('selectPairChanges');
+    expect(playerBarSource).not.toContain('buildPairChangeProfile');
     // The legend opens from a (?) button beside the zoom controls instead of taking a row.
     expect(playerBarSource).toContain("from '../ui/popover'");
     expect(playerBarSource).toContain('<PopoverTrigger asChild>');

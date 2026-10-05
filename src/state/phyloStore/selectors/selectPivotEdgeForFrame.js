@@ -1,8 +1,10 @@
+import { isInputFrame } from '../../../timeline/data/timelineFrameIndex.js';
+
 const NO_PIVOT_EDGE = Object.freeze([]);
 
 export function selectPivotEdgeForFrame(state, frameIndex) {
   const frame = state.timelineFrames[frameIndex] ?? null;
-  if (!frame || frame.frame_type === 'input_tree' || frame.is_observed_input) {
+  if (!frame || isInputFrame(frame)) {
     return NO_PIVOT_EDGE;
   }
 

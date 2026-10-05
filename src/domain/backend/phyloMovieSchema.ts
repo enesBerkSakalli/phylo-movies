@@ -22,6 +22,7 @@ import {
 } from './treePayloadValidators';
 import { hydrateMovieTreeAtIndex as hydrateMovieTreePayloadAtIndex } from './treeHydration.js';
 import { flattenTreeAnnotationValues } from './annotationValueLayout';
+import { isInputFrame } from '../../timeline/data/timelineFrameIndex.js';
 
 export type { PhyloMovieData, TemporalEvent, TimelineFrame, TimelinePair } from './phyloMovieTypes';
 
@@ -246,9 +247,7 @@ function validateTimelineContracts(
   temporalEvents: TemporalEvent[],
   pairMetricRows: PhyloMovieData['pair_metrics']['rows']
 ): void {
-  const inputFrames = frames
-    .filter((frame) => frame.frame_type === 'input_tree' || frame.is_observed_input)
-    .sort((a, b) => a.frame_index - b.frame_index);
+  const inputFrames = frames.filter(isInputFrame).sort((a, b) => a.frame_index - b.frame_index);
   const inputFrameIndices = new Set(inputFrames.map((frame) => frame.frame_index));
   const pairIds = new Set<string>();
   const pairByAdjacency = new Map<string, TimelinePair>();
@@ -307,7 +306,7 @@ function validateTimelineContracts(
   const pairById = new Map(pairs.map((pair) => [pair.pair_id, pair]));
 
   frames.forEach((frame, index) => {
-    if (frame.frame_type === 'input_tree' || frame.is_observed_input) {
+    if (isInputFrame(frame)) {
       if (
         frame.pair_id !== null ||
         frame.pair_ordinal !== null ||

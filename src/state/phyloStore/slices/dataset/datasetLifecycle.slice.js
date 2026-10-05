@@ -1,5 +1,6 @@
 import { MovieTimelineManager } from '../../../../timeline/core/MovieTimelineManager.js';
 import { createTreeSource } from '../../../../domain/backend/treeSource.js';
+import { buildPairChangeProfile } from '../../../../timeline/data/pairChangeProfile.js';
 import { createTreeDatasetInitialState } from './treeDataset.slice.js';
 
 const LARGE_DATASET_LABEL_TAXA_THRESHOLD = 300;
@@ -80,6 +81,7 @@ export const createDatasetLifecycleSlice = (set, get, store) => ({
       datasetVersion,
       pairMetrics,
       pairs,
+      pairChanges: buildPairChangeProfile({ pairs, pairMetrics, temporalEvents }),
       subtreeHighlightTracking,
       temporalEvents,
       selectedTimelineSegmentIndex: null,
