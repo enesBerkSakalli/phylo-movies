@@ -1,7 +1,5 @@
 import { buildBundledBezierPath } from '../../builders/geometry/connectors/ConnectorGeometryBuilder.js';
-import { pushOutward, chooseBundlePoint } from './ComparisonGeometryUtils.js';
-import { createConnectorPathConnection } from './ConnectorConnectionObjects.js';
-import { buildConnectorInfoById } from './ConnectorInfoIndex.js';
+import { getBundleAncestor, pushOutward, chooseBundlePoint } from './ComparisonGeometryUtils.js';
 
 const CONNECTOR_PATH_SAMPLES = 24;
 const PASSIVE_CONNECTOR_STYLE = Object.freeze({
@@ -16,10 +14,17 @@ const ACTIVE_CONNECTOR_STYLE = Object.freeze({
   outwardPushFactor: 1.08,
 });
 
+const indexById = (positions) =>
+  new Map(
+    Array.from(positions.values())
+      .filter((info) => info.id)
+      .map((info) => [info.id, info])
+  );
+
 export function buildConnectorPathConnections(params) {
   const {
     activeConnections,
-    passiveConnectionGroups = [],
+    passiveConnections,
     leftCenter,
     rightCenter,
     leftRadius,
@@ -27,11 +32,11 @@ export function buildConnectorPathConnections(params) {
     leftPositions,
     rightPositions,
   } = params;
-  const leftInfoById = buildConnectorInfoById(leftPositions);
-  const rightInfoById = buildConnectorInfoById(rightPositions);
+  const leftInfoById = indexById(leftPositions);
+  const rightInfoById = indexById(rightPositions);
 
   const passivePaths = buildBundledConnectorPaths({
-    connectionGroups: passiveConnectionGroups,
+    connectionGroups: groupPassiveConnections(passiveConnections, leftInfoById, rightInfoById),
     leftCenter,
     rightCenter,
     leftRadius,
@@ -111,9 +116,12 @@ function buildBundledConnectorPaths(params) {
         );
 
         if (path.length) {
-          results.push(
-            createConnectorPathConnection(connection, path, `-active-${groupIndex}-${index}`, width)
-          );
+          results.push({
+            ...connection,
+            id: `${connection.id}-active-${groupIndex}-${index}`,
+            path,
+            width,
+          });
         }
       });
     });
@@ -147,12 +155,28 @@ function buildBundledConnectorPaths(params) {
       );
 
       if (path.length) {
-        results.push(createConnectorPathConnection(connection, path, `-${index}`, width));
+        results.push({ ...connection, id: `${connection.id}-${index}`, path, width });
       }
     });
   }
 
   return results;
+}
+
+function groupPassiveConnections(connections, leftInfoById, rightInfoById) {
+  const groups = new Map();
+
+  connections.forEach((connection) => {
+    const groupKey = `${getBundleAncestor(connection.sourceInfo, leftInfoById).id}|${
+      getBundleAncestor(connection.targetInfo, rightInfoById).id
+    }`;
+    if (!groups.has(groupKey)) {
+      groups.set(groupKey, { connections: [] });
+    }
+    groups.get(groupKey).connections.push(connection);
+  });
+
+  return Array.from(groups.values());
 }
 
 function groupActiveConnectorConnections(connections) {

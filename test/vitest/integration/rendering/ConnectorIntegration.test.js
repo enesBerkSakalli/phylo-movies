@@ -42,7 +42,7 @@ describe('Connector Integration', function () {
       affectedSubtreesBySplit: { '[0, 0]': [[0]] },
       pivotEdge: [0, 0],
       colorManager: mockColorManager,
-      subtreeHighlightTracking: [[0]],
+      subtreeHighlightTracking: [[[0]]],
       frameIndex: 0,
       subtreeHighlightsEnabled: true,
       linkConnectionOpacity: 0.6,

@@ -206,7 +206,7 @@ describe('Complex Data Layer Integration', () => {
         affectedSubtreesBySplit: { [edgeKey]: [movingSubtree] },
         pivotEdge: pivotEdge,
         colorManager: mockColorManager,
-        subtreeHighlightTracking: [movingSubtree], // "Current tree" structure
+        subtreeHighlightTracking: [[movingSubtree]], // per frame: the list of moving subtrees
         frameIndex: 0,
         subtreeHighlightsEnabled: true,
         leftCenter: [-200, 0],

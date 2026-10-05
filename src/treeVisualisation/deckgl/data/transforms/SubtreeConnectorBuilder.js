@@ -1,17 +1,23 @@
-import { flattenSplitSets, getBackendSplitMapValue } from '../../../../domain/tree/splits.js';
 import {
-  normalizeConnectorSubtreeHighlightsToSets,
-  toConnectorSubtreeSetList,
-} from './ConnectorSplitNormalization.js';
-import { buildRawConnectorConnections } from './ConnectorRawConnections.js';
+  flattenSplitSets,
+  getBackendSplitMapValue,
+  getSplitIndices,
+  getSplitKey,
+  isSubset,
+  parseSubtreeHighlightEntry,
+  toSubtreeKey,
+} from '../../../../domain/tree/splits.js';
+import { computeConnectionColor } from './ComparisonColorUtils.js';
 import {
   sortConnectorConnectionsByAngle,
   splitActivePassiveConnectorConnections,
 } from './ConnectorConnectionOrdering.js';
-import { groupPassiveConnectorConnections } from './ConnectorPassiveGroups.js';
 import { buildConnectorPathConnections } from './ConnectorPathBuilder.js';
 
 const DEFAULT_CENTER = [0, 0];
+
+const hasLeafPosition = (info) => Boolean(info.isLeaf && info.position?.length >= 2);
+const leafTip = (info) => [info.position[0], info.position[1], 0];
 
 /**
  * SubtreeConnectorBuilder
@@ -37,45 +43,65 @@ export function buildSubtreeConnectors(options) {
   } = options;
 
   const subtreesForPivot = getBackendSplitMapValue(affectedSubtreesBySplit, pivotEdge);
-  const flattenedSubtrees = flattenSplitSets(subtreesForPivot || []);
-  if (flattenedSubtrees.length === 0) {
+  const jumpingSets = flattenSplitSets(subtreesForPivot || []).map((subtree) => new Set(subtree));
+  if (jumpingSets.length === 0) {
     return [];
   }
-
-  const jumpingSubtreeSets = toConnectorSubtreeSetList(flattenedSubtrees);
-  const currentSubtreeSets = normalizeConnectorSubtreeHighlightsToSets(
-    subtreeHighlightTracking?.[frameIndex]
+  const currentSets = parseSubtreeHighlightEntry(subtreeHighlightTracking?.[frameIndex]).map(
+    (subtree) => new Set(subtree)
   );
-  const rawConnections = buildRawConnectorConnections({
-    leftPositions,
-    rightPositions,
-    jumpingSubtreeSets,
-    currentSubtreeSets,
-    colorManager,
-    subtreeHighlightsEnabled,
-    linkConnectionOpacity,
-    highlightColorMode,
-    subtreeHighlightColor,
-  });
-  if (!rawConnections.length) {
-    return [];
+
+  const rightLeaves = new Map();
+  for (const [key, info] of rightPositions) {
+    const splitKey = getSplitKey(info);
+    if (info.isLeaf && splitKey) rightLeaves.set(splitKey, { key, info });
   }
 
-  const sortedConnections = sortConnectorConnectionsByAngle(
-    rawConnections,
-    leftCenter,
-    rightCenter
-  );
-  const { activeConnections, passiveConnections } =
-    splitActivePassiveConnectorConnections(sortedConnections);
-  const passiveConnectionGroups = groupPassiveConnectorConnections(
-    passiveConnections,
-    leftPositions,
-    rightPositions
+  const connections = [];
+  for (const [key, leftInfo] of leftPositions) {
+    if (!hasLeafPosition(leftInfo)) continue;
+    const splitIndices = getSplitIndices(leftInfo);
+    const jumpingSet = jumpingSets.find((set) => isSubset(splitIndices, set));
+    const right = rightLeaves.get(getSplitKey(leftInfo));
+    if (!jumpingSet || !right || !hasLeafPosition(right.info)) continue;
+
+    // A taxon inside a larger moving subtree is coloured like that subtree's node.
+    const colorEntry =
+      (splitIndices.length < jumpingSet.size && leftPositions.get(toSubtreeKey(jumpingSet))) ||
+      leftInfo;
+    const currentSet = currentSets.find((set) => isSubset(splitIndices, set));
+    const isMoving = Boolean(
+      currentSet ||
+      colorManager?.isNodePivotEdge?.(colorEntry) ||
+      colorManager?.isNodeHistorySubtree?.(colorEntry)
+    );
+
+    connections.push({
+      id: `connector-${key}-${right.key}`,
+      source: leafTip(leftInfo),
+      target: leafTip(right.info),
+      color: computeConnectionColor(
+        colorEntry,
+        isMoving,
+        colorManager,
+        subtreeHighlightsEnabled,
+        linkConnectionOpacity,
+        highlightColorMode,
+        subtreeHighlightColor
+      ),
+      isCurrentlyMoving: isMoving,
+      bundleGroupKey: getSplitKey(currentSet ?? colorEntry),
+      sourceInfo: leftInfo,
+      targetInfo: right.info,
+    });
+  }
+
+  const { activeConnections, passiveConnections } = splitActivePassiveConnectorConnections(
+    sortConnectorConnectionsByAngle(connections, leftCenter, rightCenter)
   );
   return buildConnectorPathConnections({
     activeConnections,
-    passiveConnectionGroups,
+    passiveConnections,
     leftCenter,
     rightCenter,
     leftRadius,
