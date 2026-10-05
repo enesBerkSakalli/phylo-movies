@@ -3,6 +3,7 @@ import {
   detectCurrentAnimationStage,
 } from '../deckgl/interpolation/stages/animationStageDetector.js';
 import { applyRenderProgressEasing } from '../deckgl/interpolation/stages/stageEasing.js';
+import { movieTimeAt } from '../../core/slices/playbackSlice.js';
 import { rightComparisonIndex } from '../../domain/indexing/treeIndexSemantics.js';
 import {
   selectActiveTreeList,
@@ -305,34 +306,15 @@ export class AnimationRunner {
 // --- Pure Helper Functions ---
 
 /**
- * Extracts and calculates basic timing info
+ * Where the playback clock is: the movie time, its frame and whether the movie has ended.
  */
 function getPlaybackState(state, timestamp) {
-  const { animationStartTime, animationSpeed } = state;
-  const totalDurationMs = state.timeline?.totalDuration;
-
-  if (
-    !Number.isFinite(animationStartTime) ||
-    !Number.isFinite(totalDurationMs) ||
-    totalDurationMs <= 0
-  ) {
-    return null;
-  }
-
-  const safeSpeed = Number.isFinite(animationSpeed) && animationSpeed > 0 ? animationSpeed : 1;
-  const elapsedMs = Math.max(0, timestamp - animationStartTime) * safeSpeed;
-  const movieTimeMs = Math.min(elapsedMs, totalDurationMs);
+  const movieTimeMs = movieTimeAt(state, timestamp);
   const transitionFrame = state.frameAt(movieTimeMs);
 
-  if (!transitionFrame) {
-    return null;
-  }
-
-  return {
-    movieTimeMs,
-    isFinished: elapsedMs >= totalDurationMs,
-    transitionFrame,
-  };
+  return transitionFrame
+    ? { movieTimeMs, isFinished: movieTimeMs >= state.timeline.totalDuration, transitionFrame }
+    : null;
 }
 
 function isFrameSensitiveLifecycleStage(transitionChangeModel) {

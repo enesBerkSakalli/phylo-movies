@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   resolveCursorTreeIndex,
   resolveHighlightTreeIndex,
-  resolveMsaSourceFrameIndex,
   rightComparisonIndex,
 } from '../../../../src/domain/indexing/treeIndexSemantics.js';
 
@@ -19,16 +18,6 @@ describe('tree index semantics during transitions', () => {
     expect(resolveHighlightTreeIndex(4, 5, 1e-7)).toBe(4);
     expect(resolveHighlightTreeIndex(4, 5, 1e-5)).toBe(5);
     expect(resolveHighlightTreeIndex(4, 5, 1)).toBe(5);
-  });
-
-  it('maps generated timeline frames to the previous MSA source frame', () => {
-    const sourceTreeSequenceIndices = [0, 3, 5];
-
-    expect(resolveMsaSourceFrameIndex(sourceTreeSequenceIndices, 0)).toBe(0);
-    expect(resolveMsaSourceFrameIndex(sourceTreeSequenceIndices, 2)).toBe(0);
-    expect(resolveMsaSourceFrameIndex(sourceTreeSequenceIndices, 3)).toBe(1);
-    expect(resolveMsaSourceFrameIndex(sourceTreeSequenceIndices, 4)).toBe(1);
-    expect(resolveMsaSourceFrameIndex(sourceTreeSequenceIndices, 5)).toBe(2);
   });
 
   it('compares with the next input tree, or the last one past it', () => {

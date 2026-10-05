@@ -6,22 +6,12 @@ import { clamp01 } from '../domain/math/mathUtils.js';
 
 export class TransitionFrame {
   static from(frame = {}, options = {}) {
-    const sourceTreeIndex = normalizeIndex(frame.sourceTreeIndex, 0);
-    const targetTreeIndex = normalizeIndex(frame.targetTreeIndex, sourceTreeIndex);
-    const transitionProgress = clamp01(frame.transitionProgress);
-    const targetTree =
-      frame.targetTree ?? (targetTreeIndex === sourceTreeIndex ? frame.sourceTree : null);
-
     return new TransitionFrame({
-      sourceTree: frame.sourceTree ?? null,
-      targetTree,
-      sourceTreeIndex,
-      targetTreeIndex,
-      transitionProgress,
-      renderProgress: options.renderProgress ?? frame.renderProgress ?? transitionProgress,
-      holdKind: options.holdKind ?? frame.holdKind ?? null,
-      stage: options.stage ?? frame.stage ?? null,
-      transitionChangeModel: options.transitionChangeModel ?? frame.transitionChangeModel ?? null,
+      ...frame,
+      renderProgress: options.renderProgress ?? frame.renderProgress,
+      holdKind: options.holdKind ?? frame.holdKind,
+      stage: options.stage ?? frame.stage,
+      transitionChangeModel: options.transitionChangeModel ?? frame.transitionChangeModel,
     });
   }
 

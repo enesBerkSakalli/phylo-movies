@@ -98,7 +98,6 @@ describe('playback navigation', () => {
     expect(getCursorAtMovieTime).toHaveBeenCalledWith(2600);
     expect(useAppStore.getState().frameIndex).toBe(1);
     expect(useAppStore.getState().timelineCursor).toBe(cursor);
-    expect(() => useAppStore.getState().seek(Number.NaN)).toThrow('movie time must be finite');
   });
 
   it('captures the exact semantic movie position when pausing inside a hold', () => {

@@ -18,51 +18,46 @@ export const createPlaybackSlice = (set, get) => ({
     const state = get();
     if (state.playing || state.treeList.length === 0) return;
 
-    const timeline = requireTimeline(state);
-    const totalDurationMs = requireTimelineDuration(timeline);
-    const animationSpeed = normalizeAnimationSpeed(state.animationSpeed);
+    const { timeline, animationSpeed } = state;
     const storedMovieTimeMs = state.timelineCursor?.movieTimeMs ?? 0;
-    const initialMovieTimeMs =
-      Number.isFinite(storedMovieTimeMs) && storedMovieTimeMs < totalDurationMs
-        ? clamp(storedMovieTimeMs, 0, totalDurationMs)
-        : 0;
-    const cursor = requireCursor(timeline.cursorAt(initialMovieTimeMs));
+    const cursor = timeline.cursorAt(
+      storedMovieTimeMs < timeline.totalDuration ? storedMovieTimeMs : 0
+    );
 
     set({
       playing: true,
       animationStartTime: performance.now() - cursor.movieTimeMs / animationSpeed,
-      ...createPlaybackPosition(cursor),
+      ...positionOf(cursor),
     });
   },
 
   stop: () => {
     const state = get();
-    const movieTimeMs = resolveCurrentMovieTime(state, performance.now());
-    const cursor = state.timeline?.cursorAt(movieTimeMs) ?? state.timelineCursor;
+    const cursor =
+      state.timeline?.cursorAt(movieTimeAt(state, performance.now())) ?? state.timelineCursor;
 
     set({
       playing: false,
       animationStartTime: null,
-      ...(cursor ? createPlaybackPosition(cursor) : {}),
+      ...(cursor ? positionOf(cursor) : {}),
     });
   },
 
   setAnimationSpeed: (newSpeed) => {
-    const speed = normalizeAnimationSpeed(newSpeed);
+    const speed = Number.isFinite(newSpeed) && newSpeed > 0 ? newSpeed : 1;
     const state = get();
 
-    if (!state.playing || !Number.isFinite(state.animationStartTime)) {
+    if (!state.playing) {
       set({ animationSpeed: speed });
       return;
     }
 
     const now = performance.now();
-    const movieTimeMs = resolveCurrentMovieTime(state, now);
-    const cursor = requireCursor(requireTimeline(state).cursorAt(movieTimeMs));
+    const movieTimeMs = movieTimeAt(state, now);
     set({
       animationSpeed: speed,
       animationStartTime: now - movieTimeMs / speed,
-      ...createPlaybackPosition(cursor),
+      ...positionOf(state.timeline.cursorAt(movieTimeMs)),
     });
   },
 
@@ -70,22 +65,14 @@ export const createPlaybackSlice = (set, get) => ({
     const state = get();
     if (state.renderInProgress || state.treeList.length === 0) return;
 
-    const timeline = requireTimeline(state);
-    if (!Number.isFinite(position)) {
-      throw new Error('[playbackSlice] navigation position must be finite');
-    }
-    const requestedFrameIndex = clamp(Math.floor(position), 0, state.treeList.length - 1);
+    const { timeline } = state;
     const cursor = Number.isFinite(options.movieTimeMs)
       ? timeline.cursorAt(options.movieTimeMs)
-      : timeline.cursorForFrame(requestedFrameIndex, {
+      : timeline.cursorForFrame(clamp(Math.floor(position), 0, state.treeList.length - 1), {
           occurrence: direction === 'backward' ? 'last' : 'semantic',
         });
 
-    set({
-      playing: false,
-      animationStartTime: null,
-      ...createPlaybackPosition(requireCursor(cursor)),
-    });
+    set({ playing: false, animationStartTime: null, ...positionOf(cursor) });
     syncColorManagerForFrame(get, cursor.frameIndex);
   },
 
@@ -114,21 +101,11 @@ export const createPlaybackSlice = (set, get) => ({
   goToPreviousInputTree: () => {
     const state = get();
     if (state.renderInProgress) return;
-    const inputTreeIndices = selectInputFrameIndices(state);
-    for (let index = inputTreeIndices.length - 1; index >= 0; index -= 1) {
-      if (inputTreeIndices[index] < state.frameIndex) {
-        state.goToPosition(inputTreeIndices[index], 'backward');
-        return;
-      }
-    }
+    const previous = selectInputFrameIndices(state).findLast((index) => index < state.frameIndex);
+    if (previous !== undefined) state.goToPosition(previous, 'backward');
   },
 
-  seek: (movieTimeMs) => {
-    if (!Number.isFinite(movieTimeMs)) {
-      throw new Error('[playbackSlice] movie time must be finite');
-    }
-    set(createPlaybackPosition(requireCursor(requireTimeline(get()).cursorAt(movieTimeMs))));
-  },
+  seek: (movieTimeMs) => set(positionOf(get().timeline.cursorAt(movieTimeMs))),
 
   /** The frame to draw at a movie time, with its trees hydrated; null when they are unavailable. */
   frameAt: (movieTimeMs) => {
@@ -155,60 +132,18 @@ export const createPlaybackSlice = (set, get) => ({
     }),
 });
 
-function createPlaybackPosition(cursor) {
-  if (!Number.isInteger(cursor.frameIndex) || !Number.isFinite(cursor.movieTimeMs)) {
-    throw new Error('[playbackSlice] timeline cursor requires frameIndex and movieTimeMs');
-  }
-
-  return {
-    frameIndex: cursor.frameIndex,
-    timelineCursor: cursor,
-  };
+function positionOf(cursor) {
+  return { frameIndex: cursor.frameIndex, timelineCursor: cursor };
 }
 
-function requireTimeline(state) {
-  const timeline = state.timeline;
-  if (
-    !timeline ||
-    typeof timeline.cursorAt !== 'function' ||
-    typeof timeline.cursorForFrame !== 'function'
-  ) {
-    throw new Error('[playbackSlice] semantic timeline is required');
-  }
-  return timeline;
-}
-
-function requireTimelineDuration(timeline) {
-  const duration = timeline.totalDuration;
-  if (!Number.isFinite(duration) || duration <= 0) {
-    throw new Error('[playbackSlice] semantic timeline duration is required');
-  }
-  return duration;
-}
-
-function requireCursor(cursor) {
-  if (!cursor) throw new Error('[playbackSlice] timeline cursor is required');
-  return cursor;
-}
-
-function normalizeAnimationSpeed(value) {
-  return Number.isFinite(value) && value > 0 ? value : 1;
-}
-
-function resolveCurrentMovieTime(state, timestamp) {
-  const totalDurationMs = state.timeline?.totalDuration;
-  if (
-    !state.playing ||
-    !Number.isFinite(state.animationStartTime) ||
-    !Number.isFinite(totalDurationMs)
-  ) {
-    return Number.isFinite(state.timelineCursor?.movieTimeMs)
-      ? state.timelineCursor.movieTimeMs
-      : 0;
-  }
-
-  const elapsed = Math.max(0, timestamp - state.animationStartTime);
-  return clamp(elapsed * normalizeAnimationSpeed(state.animationSpeed), 0, totalDurationMs);
+/** Movie time on the playback clock at `now`; where the cursor rests when not playing. */
+export function movieTimeAt(state, now) {
+  if (!state.playing) return state.timelineCursor?.movieTimeMs ?? 0;
+  return clamp(
+    (now - state.animationStartTime) * state.animationSpeed,
+    0,
+    state.timeline.totalDuration
+  );
 }
 
 function syncColorManagerForFrame(get, frameIndex) {

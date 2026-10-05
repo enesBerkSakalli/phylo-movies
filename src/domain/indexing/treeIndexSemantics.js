@@ -1,55 +1,18 @@
-import { clamp01 } from '../../domain/math/mathUtils.js';
 const HIGHLIGHT_TARGET_EPSILON = 1e-6;
 
-export function resolveCursorTreeIndex(fromIndex, toIndex, timeFactor) {
-  const { from, to, t } = normalizeTransitionIndexInputs(fromIndex, toIndex, timeFactor);
-  if (t <= 0) return from;
-  if (t >= 1) return to;
-  return t < 0.5 ? from : to;
-}
+/** The tree the playhead belongs to: the source until the midpoint of a transition. */
+export const resolveCursorTreeIndex = (fromIndex, toIndex, timeFactor) =>
+  timeFactor < 0.5 ? fromIndex : toIndex;
 
-export function resolveHighlightTreeIndex(fromIndex, toIndex, timeFactor) {
-  const { from, to, t } = normalizeTransitionIndexInputs(fromIndex, toIndex, timeFactor);
-  return t <= HIGHLIGHT_TARGET_EPSILON ? from : to;
-}
+export const resolveHighlightTreeIndex = (fromIndex, toIndex, timeFactor) =>
+  timeFactor <= HIGHLIGHT_TARGET_EPSILON ? fromIndex : toIndex;
 
-export function resolveMsaSourceFrameIndex(sourceTreeSequenceIndices = [], sequenceIndex = 0) {
-  if (!sourceTreeSequenceIndices?.length) return 0;
+export const findPreviousInputTreeSequenceIndex = (inputTreeIndices, position) =>
+  inputTreeIndices.findLast((index) => index <= position) ?? inputTreeIndices[0];
 
-  const safeSequenceIndex = Number.isFinite(sequenceIndex) ? sequenceIndex : 0;
-  for (let i = sourceTreeSequenceIndices.length - 1; i >= 0; i--) {
-    if (sourceTreeSequenceIndices[i] <= safeSequenceIndex) {
-      return i;
-    }
-  }
-  return 0;
-}
-
-export function findPreviousInputTreeSequenceIndex(inputTreeIndices, position) {
-  if (!inputTreeIndices?.length) return 0;
-  const ordinal = resolveMsaSourceFrameIndex(inputTreeIndices, position);
-  return inputTreeIndices[ordinal] ?? 0;
-}
-
-export function findNextInputTreeSequenceIndex(inputTreeIndices, position) {
-  if (!inputTreeIndices?.length) return null;
-  for (const inputTreeIndex of inputTreeIndices) {
-    if (inputTreeIndex > position) {
-      return inputTreeIndex;
-    }
-  }
-  return null;
-}
+export const findNextInputTreeSequenceIndex = (inputTreeIndices, position) =>
+  inputTreeIndices.find((index) => index > position) ?? null;
 
 /** The input tree to compare with at `position`: the next one, or the last once past it. */
-export function rightComparisonIndex(inputTreeIndices, position) {
-  return findNextInputTreeSequenceIndex(inputTreeIndices, position) ?? inputTreeIndices?.at(-1);
-}
-
-function normalizeTransitionIndexInputs(fromIndex, toIndex, timeFactor) {
-  const from = Number.isInteger(fromIndex) ? fromIndex : 0;
-  const to = Number.isInteger(toIndex) ? toIndex : from;
-  const t = clamp01(timeFactor);
-
-  return { from, to, t };
-}
+export const rightComparisonIndex = (inputTreeIndices, position) =>
+  findNextInputTreeSequenceIndex(inputTreeIndices, position) ?? inputTreeIndices.at(-1);
