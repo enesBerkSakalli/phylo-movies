@@ -6,7 +6,6 @@ import {
   selectFrameIndex,
   selectHasMsa,
   selectInputFrameIndices,
-  selectMovieTimelineManager,
   selectMsaColumnCount,
   selectMsaStepSize,
   selectMsaWindowSize,
@@ -21,42 +20,35 @@ export function TimelineStatusStrip() {
   const timelineCursor = useAppStore(selectTimelineCursor);
   const inputFrameIndices = useAppStore(selectInputFrameIndices);
   const treeListLength = useAppStore(selectActiveTreeListLength);
-  const movieTimelineManager = useAppStore(selectMovieTimelineManager);
   const hasMsa = useAppStore(selectHasMsa);
   const msaWindowSize = useAppStore(selectMsaWindowSize);
   const msaStepSize = useAppStore(selectMsaStepSize);
   const msaColumnCount = useAppStore(selectMsaColumnCount);
   const playing = useAppStore(selectPlaying);
 
-  const status = useMemo(() => {
-    const statusRequest = {
+  const status = useMemo(
+    () =>
+      buildTimelineStatusSnapshot({
+        frameIndex,
+        inputFrameIndices,
+        timelineCursor,
+        hasMsa,
+        msaStepSize,
+        msaWindowSize,
+        msaColumnCount,
+        treeListLength,
+      }),
+    [
       frameIndex,
-      inputFrameIndices,
-      timelineCursor,
       hasMsa,
+      inputFrameIndices,
+      msaColumnCount,
       msaStepSize,
       msaWindowSize,
-      msaColumnCount,
-    };
-
-    return (
-      movieTimelineManager?.getTimelineStatusSnapshot?.(statusRequest) ??
-      buildTimelineStatusSnapshot({
-        ...statusRequest,
-        treeListLength,
-      })
-    );
-  }, [
-    frameIndex,
-    hasMsa,
-    inputFrameIndices,
-    movieTimelineManager,
-    msaColumnCount,
-    msaStepSize,
-    msaWindowSize,
-    timelineCursor,
-    treeListLength,
-  ]);
+      timelineCursor,
+      treeListLength,
+    ]
+  );
 
   return (
     <div

@@ -6,8 +6,8 @@ import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { TimelineDataProcessor } from '../../../../src/timeline/data/TimelineDataProcessor.js';
-import { TimelineDataset } from '../../../../src/timeline/data/TimelineDataset.js';
+import { buildTimeline } from '../../../../src/timeline/timeline.js';
+import { TransitionFrame } from '../../../../src/timeline/time/TransitionFrame.js';
 import { applyRenderProgressEasing } from '../../../../src/treeVisualisation/deckgl/interpolation/stages/stageEasing.js';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
@@ -22,19 +22,10 @@ const FIXTURES = {
   paper_example: 'publication_data/precomputed/paper_example.movie.json',
 };
 
-function buildTimeline(movieData) {
-  const segments = TimelineDataProcessor.createSegments(movieData);
-  const timelineData = TimelineDataProcessor.createTimelineData(segments);
-  const dataset = TimelineDataset.fromMovieData(movieData, {
-    segments,
-    timelineData,
-    treeList: movieData.interpolated_trees,
-  });
-  return { dataset, segments, ends: timelineData.cumulativeDurations };
-}
-
 function goldenRows(movieData) {
-  const { dataset, segments, ends } = buildTimeline(movieData);
+  const timeline = buildTimeline(movieData);
+  const { segments } = timeline;
+  const ends = timeline.cumulativeDurations;
   const total = ends[ends.length - 1];
 
   const times = new Set([0, total]);
@@ -48,7 +39,7 @@ function goldenRows(movieData) {
   const frames = [];
   for (let f = 0; f < movieData.frames.length; f += 1) {
     for (const occurrence of ['semantic', 'last']) {
-      const cursor = dataset.getCursorForFrame(f, { occurrence });
+      const cursor = timeline.cursorForFrame(f, { occurrence });
       frames.push([f, occurrence, cursor.movieTimeMs, cursor.segmentIndex]);
     }
   }
@@ -62,14 +53,13 @@ function goldenRows(movieData) {
       ends[i],
     ]),
     cursors: sortedTimes.map((ms) => {
-      const cursor = dataset.getCursorAtMovieTime(ms);
+      const cursor = timeline.cursorAt(ms);
       return [ms, cursor?.frameIndex ?? null, cursor?.segmentIndex ?? null];
     }),
     frames,
-    // What the tree renderer gets per ms: the manager's frameAt minus tree hydration,
-    // plus the eased render t.
+    // What the tree renderer gets per ms: the frame minus tree hydration, plus the eased render t.
     resolved: sortedTimes.map((ms) => {
-      const f = dataset.frameAt(ms);
+      const f = TransitionFrame.from(timeline.frameAt(ms));
       return [
         ms,
         f.sourceTreeIndex,

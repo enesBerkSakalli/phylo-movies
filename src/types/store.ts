@@ -31,19 +31,24 @@ export interface TreeControllerRuntime {
   [key: string]: unknown;
 }
 
-export interface MovieTimelineManagerRuntime {
-  destroy?: () => void;
-  getCursorForFrame?: (
+export interface TimelineRuntime {
+  segments: Array<{ isInputTreeSegment: boolean; [key: string]: unknown }>;
+  steps: unknown[];
+  totalDuration: number;
+  segmentDurations: number[];
+  cumulativeDurations: number[];
+  frameAt: (movieTimeMs: number) => unknown;
+  cursorAt: (movieTimeMs: number) => TimelineCursorState | null;
+  cursorForFrame: (
     frameIndex: number,
     options?: TimelineCursorFrameOptions
   ) => TimelineCursorState | null;
-  getSegment?: (segmentIndex: number) => unknown;
-  getCursorAtMovieTime?: (movieTimeMs: number) => TimelineCursorState | null;
-  frameAt?: (movieTimeMs: number) => unknown;
-  hasTransitionSegments?: () => boolean;
+}
+
+export interface MovieTimelineManagerRuntime {
+  destroy?: () => void;
   mount?: (container: HTMLElement) => void;
   scrubController?: { isScrubbing?: boolean };
-  timelineData?: { totalDuration?: number };
   unmount?: () => void;
   [key: string]: unknown;
 }
@@ -158,6 +163,7 @@ export interface AppStoreState {
   treeController: TreeControllerRuntime | null;
 
   // From timelineRuntime.slice
+  timeline: TimelineRuntime | null;
   movieTimelineManager: MovieTimelineManagerRuntime | null;
 
   // From treeTimeline.slice
@@ -270,6 +276,7 @@ export interface AppStoreState {
   goToNextInputTree: () => void;
   goToPreviousInputTree: () => void;
   seek: (movieTimeMs: number) => void;
+  frameAt: (movieTimeMs: number) => unknown;
   setRenderInProgress: (inProgress: boolean) => void;
   resetPlayback: () => void;
 

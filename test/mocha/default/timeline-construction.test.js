@@ -9,8 +9,7 @@ global.document = dom.window.document;
 global.requestAnimationFrame = dom.window.requestAnimationFrame || ((cb) => setTimeout(cb, 0));
 global.cancelAnimationFrame = dom.window.cancelAnimationFrame || ((id) => clearTimeout(id));
 
-const { TimelineDataProcessor } = require('../../../src/timeline/data/TimelineDataProcessor.js');
-const { TimelineDataset } = require('../../../src/timeline/data/TimelineDataset.js');
+const { buildTimeline, createSegments } = require('../../../src/timeline/timeline.js');
 const { useAppStore } = require('../../../src/state/phyloStore/store.js');
 const {
   MOVIE_PLAYER_ARIA_LABELS,
@@ -425,11 +424,11 @@ describe('Timeline construction from normalized backend result', () => {
     expect(data).to.not.have.property('tree_pair_solutions');
     expect(data).to.not.have.property('split_change_timeline');
 
-    const segments = TimelineDataProcessor.createSegments(data);
+    const timeline = buildTimeline(data);
+    const { segments } = timeline;
     expect(segments.length).to.be.greaterThan(0);
     const frameIndices = new Set(data.frames.map((frame) => frame.frame_index));
 
-    const timeline = TimelineDataProcessor.createTimelineData(segments);
     const sum = timeline.segmentDurations.reduce((a, b) => a + b, 0);
     expect(sum).to.equal(timeline.totalDuration);
     expect(timeline.cumulativeDurations.at(-1)).to.equal(timeline.totalDuration);
@@ -497,7 +496,6 @@ describe('Timeline construction from normalized backend result', () => {
       }
     }
 
-    const dataset = TimelineDataset.fromMovieData(data, { segments, timelineData: timeline });
     const unshownFrames = data.pairs.flatMap((pair) => {
       const missing = [];
       for (
@@ -505,7 +503,7 @@ describe('Timeline construction from normalized backend result', () => {
         frameIndex <= pair.target_frame_index;
         frameIndex += 1
       ) {
-        if (dataset.getCursorForFrame(frameIndex).segmentIndex === null) {
+        if (timeline.cursorForFrame(frameIndex).segmentIndex === null) {
           missing.push(`${pair.pair_id}:${frameIndex}`);
         }
       }
@@ -518,7 +516,7 @@ describe('Timeline construction from normalized backend result', () => {
 
   it('fulfills every adjacent frame transition inside each pair range', () => {
     const { data } = loadMovieData();
-    const segments = TimelineDataProcessor.createSegments(data);
+    const segments = createSegments(data);
     const motionEdges = collectMotionEdges(segments);
     const noOpHoldTargets = collectNoOpHoldTargets(segments);
 
@@ -543,7 +541,7 @@ describe('Timeline construction from normalized backend result', () => {
 
   it('keeps the paper example timeline to its two pivot segments', () => {
     const { data } = loadPaperExampleMovieData();
-    const segments = TimelineDataProcessor.createSegments(data);
+    const segments = createSegments(data);
     const transitionSegments = segments.filter((segment) => !segment.isInputTreeSegment);
 
     expect(transitionSegments).to.have.length(2);
@@ -561,7 +559,7 @@ describe('Timeline construction from normalized backend result', () => {
 
   it('keeps final fulfillment motion separate after a single split-event segment', () => {
     const movieData = makeSyntheticTimingMovieData();
-    const segments = TimelineDataProcessor.createSegments(movieData);
+    const segments = createSegments(movieData);
     const motionEdges = collectMotionEdges(segments);
     const splitEventSegment = segments.find(
       (segment) =>
@@ -589,7 +587,7 @@ describe('Timeline construction from normalized backend result', () => {
 
   it('keeps the ostrich zero-shrink final fulfillment as a separate transition segment', () => {
     const { data } = loadOstrichBugMovieData();
-    const segments = TimelineDataProcessor.createSegments(data);
+    const segments = createSegments(data);
     const transitionSegments = segments.filter((segment) => !segment.isInputTreeSegment);
 
     expect(
@@ -674,7 +672,7 @@ describe('Timeline construction from normalized backend result', () => {
       ],
     };
 
-    const segments = TimelineDataProcessor.createSegments(movieData);
+    const segments = createSegments(movieData);
 
     const transition = segments.find((segment) => segment.pairId === 'opaque-pair');
     expect(transition.affectedSubtrees).to.deep.equal([[[13], [12]]]);
@@ -683,7 +681,7 @@ describe('Timeline construction from normalized backend result', () => {
 
   it('adds input-tree hold timing for observed input tree delimiters without duplicating trees', () => {
     const movieData = makeSyntheticTimingMovieData();
-    const segments = TimelineDataProcessor.createSegments(movieData);
+    const segments = createSegments(movieData);
     const inputTree = segments.find(
       (segment) => segment.isInputTreeSegment && segment.globalIndex === 0
     );
@@ -701,7 +699,7 @@ describe('Timeline construction from normalized backend result', () => {
 
   it('uses a short static hold for exact no-op adjacent input pairs', () => {
     const movieData = makeTwoInputPairMovieData({ weightedRfDistance: 0 });
-    const segments = TimelineDataProcessor.createSegments(movieData);
+    const segments = createSegments(movieData);
     const transition = segments.find((segment) => segment.pairId === 'pair_0_1');
 
     expect(transition.timing).to.deep.equal([
@@ -716,7 +714,7 @@ describe('Timeline construction from normalized backend result', () => {
 
   it('keeps branch-length-only pairs as motion when weighted distance changes', () => {
     const movieData = makeTwoInputPairMovieData({ weightedRfDistance: 2 });
-    const segments = TimelineDataProcessor.createSegments(movieData);
+    const segments = createSegments(movieData);
     const transition = segments.find((segment) => segment.pairId === 'pair_0_1');
 
     expect(transition.timing).to.deep.equal([
@@ -732,7 +730,7 @@ describe('Timeline construction from normalized backend result', () => {
   it('builds semantic mover and pivot timing from temporal SPR events', () => {
     const movieData = makeSyntheticTimingMovieData();
     const moveEvents = movieData.temporal_events.filter((event) => event.event_type === 'spr_move');
-    const segments = TimelineDataProcessor.createSegments(movieData);
+    const segments = createSegments(movieData);
     const transition = segments.find(
       (segment) => segment.pairId === 'opaque-pair' && !segment.isInputTreeSegment
     );

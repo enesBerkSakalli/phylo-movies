@@ -103,7 +103,6 @@ describe('movie timeline player bar semantics', () => {
 
   it('renders timeline status in the movie player instead of the floating HUD', () => {
     const playerBarSource = readRepoFile('src', 'components', 'movie-player', 'MoviePlayerBar.jsx');
-    const managerSource = readRepoFile('src', 'timeline', 'core', 'MovieTimelineManager.js');
     const statusStripPath = join(
       repoRoot,
       'src',
@@ -120,9 +119,6 @@ describe('movie timeline player bar semantics', () => {
     expect(playerBarSource).toContain('selectOpenMsaViewer');
     expect(playerBarSource).toContain('Open alignment viewer');
     expect(playerBarSource).toContain('ml-auto');
-    expect(managerSource).toContain('getTimelineStatusSnapshot');
-    expect(managerSource).toContain('buildTimelineStatusSnapshot');
-    expect(statusStripSource).toContain('selectMovieTimelineManager');
     expect(playerBarSource).toContain('selectCurrentAnimationStage');
     // The transition stage lives in its own component next to the status strip,
     // so stage updates during playback never re-render the strip.
@@ -133,7 +129,6 @@ describe('movie timeline player bar semantics', () => {
     expect(playerBarSource).not.toContain('MotionStatusSlot');
     expect(statusStripSource).not.toContain('selectCurrentAnimationStage');
     expect(statusStripSource).not.toContain('AnimationStageStatus');
-    expect(statusStripSource).toContain('getTimelineStatusSnapshot');
     expect(statusStripSource).toContain('buildTimelineStatusSnapshot');
     expect(statusStripSource).toContain('Movie timeline status');
     expect(statusStripSource).toContain('flex-nowrap overflow-hidden');

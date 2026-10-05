@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { readMoviePayload } from '../../../../src/services/data/dataService.js';
 import { hydrateMovieTreeAtIndex } from '../../../../src/domain/backend/treeHydration.js';
-import { TimelineDataProcessor } from '../../../../src/timeline/data/TimelineDataProcessor.js';
+import { createSegments } from '../../../../src/timeline/timeline.js';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 const fixtureDir = path.join(repoRoot, 'test/fixtures/binary');
@@ -98,9 +98,9 @@ describe('readMoviePayload encoding dispatch', () => {
     const fromJson = readMoviePayload(jsonBuffer);
     const fromBinary = readMoviePayload(binaryBuffer);
 
-    const fromBinarySegments = TimelineDataProcessor.createSegments(fromBinary);
+    const fromBinarySegments = createSegments(fromBinary);
     expect(fromBinarySegments.length).toBeGreaterThan(0);
-    expect(fromBinarySegments).toEqual(TimelineDataProcessor.createSegments(fromJson));
+    expect(fromBinarySegments).toEqual(createSegments(fromJson));
   });
 
   it('applies the same contract checks to a PMB1 header as to a JSON payload', () => {

@@ -47,25 +47,15 @@ describe('TimelineNavigationController', () => {
     };
   }
 
-  function makeTimelineDataset(resolve) {
-    return {
-      getCursorInSegmentAtMovieTime: (segmentIndex, movieTimeMs) =>
-        resolve(movieTimeMs, segmentIndex),
-      getSegmentBounds: () => ({ start: 0, end: 3000, duration: 3000 }),
-    };
+  function makeTimeline(segments, cursorAt) {
+    return { segments, cumulativeDurations: segments.map(() => 3000), cursorAt };
   }
 
   it('navigates to input-tree segments and updates the clipboard', () => {
     const store = makeStore({ frameIndex: 1 });
     let updateCalls = 0;
     const controller = new TimelineNavigationController({
-      segments: [
-        {
-          isInputTreeSegment: true,
-          firstFrame: 4,
-          lastFrame: 4,
-        },
-      ],
+      timeline: makeTimeline([{ isInputTreeSegment: true, firstFrame: 4, lastFrame: 4 }]),
       store,
       onTimelinePositionUpdated: () => {
         updateCalls += 1;
@@ -87,13 +77,7 @@ describe('TimelineNavigationController', () => {
   it('navigates to transition segments without updating the clipboard', () => {
     const store = makeStore({ frameIndex: 5 });
     const controller = new TimelineNavigationController({
-      segments: [
-        {
-          isInputTreeSegment: false,
-          firstFrame: 2,
-          lastFrame: 2,
-        },
-      ],
+      timeline: makeTimeline([{ isInputTreeSegment: false, firstFrame: 2, lastFrame: 2 }]),
       store,
       onTimelinePositionUpdated: () => {},
     });
@@ -109,27 +93,14 @@ describe('TimelineNavigationController', () => {
   it('uses click time to resolve the nearest transition frame', () => {
     const store = makeStore({ frameIndex: 0 });
     const controller = new TimelineNavigationController({
-      segments: [
-        {
-          isInputTreeSegment: false,
-          firstFrame: 2,
-          lastFrame: 4,
-          timing: [
-            { type: 'motion', fromIndex: 2, toIndex: 3, durationMs: 1500 },
-            { type: 'motion', fromIndex: 3, toIndex: 4, durationMs: 1500 },
-          ],
-        },
-      ],
-      timelineData: {
-        totalDuration: 3000,
-        segmentDurations: [3000],
-        cumulativeDurations: [3000],
-      },
-      timelineDataset: makeTimelineDataset((movieTimeMs) => ({
-        frameIndex: movieTimeMs < 2250 ? 3 : 4,
-        segmentIndex: 0,
-        movieTimeMs,
-      })),
+      timeline: makeTimeline(
+        [{ isInputTreeSegment: false, firstFrame: 2, lastFrame: 4 }],
+        (movieTimeMs) => ({
+          frameIndex: movieTimeMs < 2250 ? 3 : 4,
+          segmentIndex: 0,
+          movieTimeMs,
+        })
+      ),
       store,
       onTimelinePositionUpdated: () => {},
     });
@@ -147,23 +118,7 @@ describe('TimelineNavigationController', () => {
   it('uses jump direction and preserves exact timeline position when clicking the already active tree', () => {
     const store = makeStore({ frameIndex: 3 });
     const controller = new TimelineNavigationController({
-      segments: [
-        {
-          isInputTreeSegment: false,
-          firstFrame: 2,
-          lastFrame: 4,
-          timing: [
-            { type: 'motion', fromIndex: 2, toIndex: 3, durationMs: 1500 },
-            { type: 'motion', fromIndex: 3, toIndex: 4, durationMs: 1500 },
-          ],
-        },
-      ],
-      timelineData: {
-        totalDuration: 3000,
-        segmentDurations: [3000],
-        cumulativeDurations: [3000],
-      },
-      timelineDataset: makeTimelineDataset(() => ({
+      timeline: makeTimeline([{ isInputTreeSegment: false, firstFrame: 2, lastFrame: 4 }], () => ({
         frameIndex: 3,
         segmentIndex: 0,
         movieTimeMs: 1500,
@@ -182,31 +137,19 @@ describe('TimelineNavigationController', () => {
     expect(store.getState().goToPositionCalls[0].options).to.deep.equal({ movieTimeMs: 1500 });
   });
 
-  it('throws when a timed click targets a segment without timing intervals', () => {
+  it('throws when a timed click resolves outside its segment', () => {
     const store = makeStore({ frameIndex: 0 });
     const controller = new TimelineNavigationController({
-      segments: [
-        {
-          isInputTreeSegment: false,
-          firstFrame: 2,
-          lastFrame: 3,
-        },
-      ],
-      timelineData: {
-        totalDuration: 1000,
-        segmentDurations: [1000],
-        cumulativeDurations: [1000],
-      },
-      timelineDataset: makeTimelineDataset(() => {
-        throw new Error('[TimelineDataset] segment timing bounds are required');
-      }),
+      timeline: makeTimeline([{ isInputTreeSegment: false, firstFrame: 2, lastFrame: 3 }], () => ({
+        frameIndex: 3,
+        segmentIndex: 1,
+        movieTimeMs: 1000,
+      })),
       store,
       onTimelinePositionUpdated: () => {},
     });
 
-    expect(() => controller.handleTimelineClick(0, 500)).to.throw(
-      /segment timing bounds are required/
-    );
+    expect(() => controller.handleTimelineClick(0, 500)).to.throw(/outside its segment/);
     expect(store.getState().goToPositionCalls).to.deep.equal([]);
   });
 });

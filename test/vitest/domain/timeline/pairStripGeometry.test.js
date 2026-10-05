@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { TIMELINE_THEME } from '../../../../src/timeline/constants.js';
-import { TimelineDataProcessor } from '../../../../src/timeline/data/TimelineDataProcessor.js';
 import { buildPairChangeProfile } from '../../../../src/timeline/data/pairChangeProfile.js';
 import {
   buildPairSpans,
   projectPairStrip,
 } from '../../../../src/timeline/data/pairStripGeometry.js';
+import { buildTimeline } from '../../../../src/timeline/timeline.js';
 import { smallExampleMovieData } from '../../../fixtures/timeline/generatedMovieData.js';
 
 const movie = smallExampleMovieData;
-const segments = TimelineDataProcessor.createSegments(movie);
-const timelineData = TimelineDataProcessor.createTimelineData(segments);
+const timelineData = buildTimeline(movie);
+const { segments } = timelineData;
 const profile = buildPairChangeProfile({
   pairs: movie.pairs,
   pairMetrics: movie.pair_metrics,

@@ -307,11 +307,10 @@ export class AnimationRunner {
  * Extracts and calculates basic timing info
  */
 function getPlaybackState(state, timestamp) {
-  const { animationStartTime, animationSpeed, movieTimelineManager } = state;
-  const totalDurationMs = movieTimelineManager?.timelineData?.totalDuration;
+  const { animationStartTime, animationSpeed } = state;
+  const totalDurationMs = state.timeline?.totalDuration;
 
   if (
-    typeof movieTimelineManager?.frameAt !== 'function' ||
     !Number.isFinite(animationStartTime) ||
     !Number.isFinite(totalDurationMs) ||
     totalDurationMs <= 0
@@ -322,7 +321,7 @@ function getPlaybackState(state, timestamp) {
   const safeSpeed = Number.isFinite(animationSpeed) && animationSpeed > 0 ? animationSpeed : 1;
   const elapsedMs = Math.max(0, timestamp - animationStartTime) * safeSpeed;
   const movieTimeMs = Math.min(elapsedMs, totalDurationMs);
-  const transitionFrame = movieTimelineManager.frameAt(movieTimeMs);
+  const transitionFrame = state.frameAt(movieTimeMs);
 
   if (!transitionFrame) {
     return null;

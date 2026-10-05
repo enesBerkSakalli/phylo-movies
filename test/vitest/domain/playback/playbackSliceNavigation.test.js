@@ -12,15 +12,15 @@ const resetPlaybackState = () => {
     frameIndex: 0,
     renderInProgress: false,
     treeList: [],
-    movieTimelineManager: null,
+    timeline: null,
   });
 };
 
-function createManager(overrides = {}) {
+function createTimeline(overrides = {}) {
   return {
-    timelineData: { totalDuration: 17_000 },
-    getCursorForFrame: vi.fn(),
-    getCursorAtMovieTime: vi.fn(),
+    totalDuration: 17_000,
+    cursorForFrame: vi.fn(),
+    cursorAt: vi.fn(),
     ...overrides,
   };
 }
@@ -46,7 +46,7 @@ describe('playback navigation', () => {
       animationStartTime: 1000,
       treeList: trees,
       frameIndex: 0,
-      movieTimelineManager: createManager({ getCursorForFrame }),
+      timeline: createTimeline({ cursorForFrame: getCursorForFrame }),
     });
 
     useAppStore.getState().goToPosition(2, 'forward');
@@ -75,7 +75,7 @@ describe('playback navigation', () => {
       animationStartTime: 1000,
       treeList: trees,
       frameIndex: 1,
-      movieTimelineManager: createManager({ getCursorAtMovieTime }),
+      timeline: createTimeline({ cursorAt: getCursorAtMovieTime }),
     });
 
     useAppStore.getState().goToPosition(1, 'forward', { movieTimeMs: 2600 });
@@ -94,7 +94,7 @@ describe('playback navigation', () => {
     const getCursorAtMovieTime = vi.fn(() => cursor);
     useAppStore.setState({
       treeList: trees,
-      movieTimelineManager: createManager({ getCursorAtMovieTime }),
+      timeline: createTimeline({ cursorAt: getCursorAtMovieTime }),
     });
 
     useAppStore.getState().seek(2600);
@@ -122,7 +122,7 @@ describe('playback navigation', () => {
       animationSpeed: 1,
       treeList: Array.from({ length: 13 }, (_, index) => ({ id: index })),
       frameIndex: 7,
-      movieTimelineManager: createManager({ getCursorAtMovieTime }),
+      timeline: createTimeline({ cursorAt: getCursorAtMovieTime }),
     });
 
     useAppStore.getState().stop();
@@ -153,7 +153,7 @@ describe('playback navigation', () => {
       animationSpeed: 1,
       treeList: Array.from({ length: 13 }, (_, index) => ({ id: index })),
       frameIndex: 12,
-      movieTimelineManager: createManager({ getCursorAtMovieTime }),
+      timeline: createTimeline({ cursorAt: getCursorAtMovieTime }),
     });
 
     useAppStore.getState().play();

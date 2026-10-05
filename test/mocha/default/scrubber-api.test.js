@@ -1,8 +1,7 @@
 const { expect } = require('chai');
 
 const { ScrubberAPI } = require('../../../src/timeline/core/ScrubberAPI.js');
-const { TimelineDataset } = require('../../../src/timeline/data/TimelineDataset.js');
-const { TransitionFrame } = require('../../../src/timeline/time/TransitionFrame.js');
+const { buildTimeline } = require('../../../src/timeline/timeline.js');
 const { useAppStore } = require('../../../src/state/phyloStore/store.js');
 
 function createMovieData() {
@@ -46,6 +45,11 @@ function createMovieData() {
         target_frame_index: null,
       },
     ],
+    temporal_events: [],
+    pair_metrics: {
+      rows: [{ pair_id: 'pair_0_1', robinson_foulds: 1, weighted_robinson_foulds: 1 }],
+      semantics: {},
+    },
     pairs: [
       {
         pair_id: 'pair_0_1',
@@ -64,34 +68,11 @@ function createMovieData() {
   };
 }
 
-function createTimelineManager(movieData) {
-  const segments = [
-    {
-      isInputTreeSegment: false,
-      firstFrame: 0,
-      lastFrame: 2,
-      timing: [
-        { type: 'motion', fromIndex: 0, toIndex: 1, durationMs: 1500 },
-        { type: 'motion', fromIndex: 1, toIndex: 2, durationMs: 1500 },
-      ],
-    },
-  ];
-  const timelineData = {
-    totalDuration: 3000,
-    segmentDurations: [3000],
-    cumulativeDurations: [3000],
-  };
-  const timelineDataset = TimelineDataset.fromMovieData(movieData, {
-    segments,
-    timelineData,
-  });
-  return {
-    destroy: () => {},
-    frameAt: (movieTimeMs) => timelineDataset.frameAt(movieTimeMs),
-    getCursorAtMovieTime: (movieTimeMs) => timelineDataset.getCursorAtMovieTime(movieTimeMs),
-    getCursorForFrame: (frameIndex, options) =>
-      timelineDataset.getCursorForFrame(frameIndex, options),
-  };
+// Two motions, frame 0 -> 1 and 1 -> 2, between the input-tree holds; `at` picks a time inside one.
+function createMotions(timeline) {
+  const [first, second] = timeline.steps.filter((step) => step.from !== step.to);
+  const at = (step, progress) => step.start + progress * (step.end - step.start);
+  return { first, second, at };
 }
 
 function flushMicrotasks() {
@@ -103,12 +84,11 @@ function flushMicrotasks() {
 describe('ScrubberAPI', () => {
   beforeEach(() => {
     const movieData = createMovieData();
-    const movieTimelineManager = createTimelineManager(movieData);
     useAppStore.setState({
       comparisonMode: false,
       movieData,
       treeList: movieData.interpolated_trees,
-      movieTimelineManager,
+      timeline: buildTimeline(movieData),
       timelineFrames: [
         { frame_index: 0, frame_type: 'input_tree', is_observed_input: true },
         {
@@ -130,8 +110,7 @@ describe('ScrubberAPI', () => {
   });
 
   it('serializes scrub renders and collapses pending updates to the latest movie time', async () => {
-    const movieData = createMovieData();
-    const timelineManager = createTimelineManager(movieData);
+    const { first, second, at } = createMotions(useAppStore.getState().timeline);
     const resolvers = [];
     const renderCalls = [];
     let activeRenderCount = 0;
@@ -152,12 +131,12 @@ describe('ScrubberAPI', () => {
       },
     };
 
-    const api = new ScrubberAPI(treeController, timelineManager, useAppStore);
+    const api = new ScrubberAPI(treeController, useAppStore);
     await api.startScrubbing(0);
 
-    const firstUpdate = api.updatePosition(600);
-    const secondUpdate = api.updatePosition(1200);
-    const thirdUpdate = api.updatePosition(2400);
+    const firstUpdate = api.updatePosition(at(first, 0.4));
+    const secondUpdate = api.updatePosition(at(second, 0.2));
+    const thirdUpdate = api.updatePosition(at(second, 0.6));
 
     await flushMicrotasks();
 
@@ -176,15 +155,14 @@ describe('ScrubberAPI', () => {
     resolvers.shift()();
     await Promise.all([firstUpdate, secondUpdate, thirdUpdate]);
 
-    expect(api.lastTransitionState.movieTimeMs).to.equal(2400);
+    expect(api.lastTransitionState.movieTimeMs).to.equal(at(second, 0.6));
     expect(api.lastTransitionState.transitionFrame.cursorTreeIndex).to.equal(2);
-    expect(useAppStore.getState().timelineCursor.movieTimeMs).to.equal(2400);
+    expect(useAppStore.getState().timelineCursor.movieTimeMs).to.equal(at(second, 0.6));
     expect(useAppStore.getState().frameIndex).to.equal(2);
   });
 
   it('uses target-frame highlights as soon as scrubbed transition motion begins', async () => {
-    const movieData = createMovieData();
-    const timelineManager = createTimelineManager(movieData);
+    const { first, at } = createMotions(useAppStore.getState().timeline);
     const highlightIndices = [];
     const originalUpdateCurrent = useAppStore.getState().updateColorManagerForCurrentIndex;
     const originalUpdateForIndex = useAppStore.getState().updateColorManagerForIndex;
@@ -199,9 +177,9 @@ describe('ScrubberAPI', () => {
         renderComparisonAwareScrubFrame: async () => {},
       };
 
-      const api = new ScrubberAPI(treeController, timelineManager, useAppStore);
+      const api = new ScrubberAPI(treeController, useAppStore);
       await api.startScrubbing(0);
-      await api.updatePosition(300);
+      await api.updatePosition(at(first, 0.2));
 
       expect(highlightIndices).to.deep.equal([1]);
     } finally {
@@ -229,36 +207,16 @@ describe('ScrubberAPI', () => {
       },
     });
 
-    const transitionFrame = TransitionFrame.from({
-      sourceTree: null,
-      targetTree: null,
-      sourceTreeIndex: 0,
-      targetTreeIndex: 1,
-      transitionProgress: 0.5,
-    });
-    const timelineManager = {
-      frameAt: () => {
-        const [sourceTree, targetTree] = useAppStore
-          .getState()
-          .ensureTreesHydrated([transitionFrame.sourceTreeIndex, transitionFrame.targetTreeIndex]);
-        return TransitionFrame.from({
-          sourceTree,
-          targetTree,
-          sourceTreeIndex: transitionFrame.sourceTreeIndex,
-          targetTreeIndex: transitionFrame.targetTreeIndex,
-          transitionProgress: transitionFrame.transitionProgress,
-        });
-      },
-    };
+    const { first, at } = createMotions(useAppStore.getState().timeline);
     const treeController = {
       renderComparisonAwareScrubFrame: async (...args) => {
         renderCalls.push(args);
       },
     };
 
-    const api = new ScrubberAPI(treeController, timelineManager, useAppStore);
+    const api = new ScrubberAPI(treeController, useAppStore);
     await api.startScrubbing(0);
-    await api.updatePosition(1500);
+    await api.updatePosition(at(first, 0.5));
 
     expect(hydratedIndices).to.deep.equal([[0, 1]]);
     expect(renderCalls).to.have.length(1);
@@ -267,8 +225,7 @@ describe('ScrubberAPI', () => {
   });
 
   it('flushes the latest requested movie time before ending a scrub', async () => {
-    const movieData = createMovieData();
-    const timelineManager = createTimelineManager(movieData);
+    const { first, second, at } = createMotions(useAppStore.getState().timeline);
     const resolvers = [];
 
     const treeController = {
@@ -279,11 +236,11 @@ describe('ScrubberAPI', () => {
       },
     };
 
-    const api = new ScrubberAPI(treeController, timelineManager, useAppStore);
+    const api = new ScrubberAPI(treeController, useAppStore);
     await api.startScrubbing(0);
 
-    const updatePromise = api.updatePosition(600);
-    const endPromise = api.endScrubbing(2700);
+    const updatePromise = api.updatePosition(at(first, 0.4));
+    const endPromise = api.endScrubbing(at(second, 0.8));
 
     await flushMicrotasks();
 
@@ -296,14 +253,13 @@ describe('ScrubberAPI', () => {
     await updatePromise;
 
     const snapshot = await endPromise;
-    expect(snapshot.movieTimeMs).to.equal(2700);
+    expect(snapshot.movieTimeMs).to.equal(at(second, 0.8));
     expect(snapshot.transitionFrame.sourceTreeIndex).to.equal(1);
     expect(snapshot.transitionFrame.targetTreeIndex).to.equal(2);
   });
 
   it('reports scrub render failures without throwing away the scrub session', async () => {
-    const movieData = createMovieData();
-    const timelineManager = createTimelineManager(movieData);
+    const { first, at } = createMotions(useAppStore.getState().timeline);
     const renderError = new Error('render failed');
     const originalError = console.error;
     const errorCalls = [];
@@ -319,25 +275,24 @@ describe('ScrubberAPI', () => {
         },
       };
 
-      const api = new ScrubberAPI(treeController, timelineManager, useAppStore);
+      const api = new ScrubberAPI(treeController, useAppStore);
       await api.startScrubbing(0);
 
-      await api.updatePosition(1500);
+      await api.updatePosition(at(first, 0.5));
       const snapshot = await api.endScrubbing();
 
       expect(snapshot).to.equal(null);
       expect(errorCalls).to.have.length(1);
       expect(errorCalls[0][0]).to.equal('[ScrubberAPI] Scrub update failed:');
-      expect(errorCalls[0][1]).to.deep.include({ movieTimeMs: 1500, error: renderError });
-      expect(useAppStore.getState().timelineCursor.movieTimeMs).to.equal(1500);
+      expect(errorCalls[0][1]).to.deep.include({ movieTimeMs: at(first, 0.5), error: renderError });
+      expect(useAppStore.getState().timelineCursor.movieTimeMs).to.equal(at(first, 0.5));
     } finally {
       console.error = originalError;
     }
   });
 
   it('uses timeline frames for comparison scrub input trees', async () => {
-    const movieData = createMovieData();
-    const timelineManager = createTimelineManager(movieData);
+    const { first, at } = createMotions(useAppStore.getState().timeline);
     const renderCalls = [];
 
     useAppStore.setState({
@@ -350,10 +305,10 @@ describe('ScrubberAPI', () => {
       },
     };
 
-    const api = new ScrubberAPI(treeController, timelineManager, useAppStore);
+    const api = new ScrubberAPI(treeController, useAppStore);
 
     await api.startScrubbing(0);
-    await api.updatePosition(600);
+    await api.updatePosition(at(first, 0.4));
 
     expect(renderCalls).to.have.length(1);
     expect(renderCalls[0][3]).to.include({
@@ -375,7 +330,8 @@ describe('ScrubberAPI', () => {
         },
       };
 
-      const api = new ScrubberAPI(treeController, null, useAppStore);
+      useAppStore.setState({ timeline: null });
+      const api = new ScrubberAPI(treeController, useAppStore);
       await api.startScrubbing(0);
       await api.updatePosition(1500);
 

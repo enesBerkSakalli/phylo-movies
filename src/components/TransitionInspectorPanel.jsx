@@ -7,7 +7,7 @@ import { useAppStore } from '../state/phyloStore/store.js';
 import {
   selectHasMsa,
   selectLeafNamesByIndex,
-  selectMovieTimelineManager,
+  selectTimeline,
   selectMsaColumnCount,
   selectMsaStepSize,
   selectMsaWindowSize,
@@ -27,7 +27,7 @@ import {
 export function TransitionInspectorPanel() {
   const {
     segmentIndex,
-    movieTimelineManager,
+    timeline,
     leafNamesByIndex,
     pairChanges,
     temporalEvents,
@@ -39,7 +39,7 @@ export function TransitionInspectorPanel() {
   } = useAppStore(
     useShallow((state) => ({
       segmentIndex: selectSelectedTimelineSegmentIndex(state),
-      movieTimelineManager: selectMovieTimelineManager(state),
+      timeline: selectTimeline(state),
       leafNamesByIndex: selectLeafNamesByIndex(state),
       pairChanges: selectPairChanges(state),
       temporalEvents: selectTemporalEvents(state),
@@ -51,7 +51,7 @@ export function TransitionInspectorPanel() {
     }))
   );
   const segment = Number.isInteger(segmentIndex)
-    ? (movieTimelineManager?.getSegment?.(segmentIndex) ?? null)
+    ? (timeline?.segments[segmentIndex] ?? null)
     : null;
 
   const details = useMemo(

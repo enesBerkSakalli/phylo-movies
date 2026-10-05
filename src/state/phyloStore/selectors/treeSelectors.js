@@ -17,6 +17,7 @@ export { selectContextMenuPosition } from './selectContextMenuPosition.js';
 export { selectCurrentTree } from './selectCurrentTree.js';
 export { selectCurrentAnimationStage } from './selectCurrentAnimationStage.js';
 export { selectFrameIndex } from './selectFrameIndex.js';
+export { selectTimeline } from './selectTimeline.js';
 export { selectTimelineCursor } from './selectTimelineCursor.js';
 export { selectDimmingEnabled } from './selectDimmingEnabled.js';
 export { selectDimmingOpacity } from './selectDimmingOpacity.js';

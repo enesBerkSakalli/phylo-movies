@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { validatePhyloMovieData } from '../../../../src/domain/backend/phyloMovieSchema';
-import { TimelineDataProcessor } from '../../../../src/timeline/data/TimelineDataProcessor.js';
+import { createSegments } from '../../../../src/timeline/timeline.js';
 
 const tree = {
   name: 'root',
@@ -154,7 +154,7 @@ describe('current backend timing data contract', () => {
     });
     expect(event).not.toHaveProperty('moving_taxa');
 
-    const segments = TimelineDataProcessor.createSegments(movieData);
+    const segments = createSegments(movieData);
     const transition = segments.find(
       (segment) => segment.pairId === 'pair_7_8' && !segment.isInputTreeSegment
     );

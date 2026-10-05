@@ -387,9 +387,9 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
       frameIndex: 2,
     };
     useAppStore.setState({
-      movieTimelineManager: {
-        getCursorAtMovieTime: () => timelineCursor,
-        getCursorForFrame: () => timelineCursor,
+      timeline: {
+        cursorAt: () => timelineCursor,
+        cursorForFrame: () => timelineCursor,
       },
     });
     controller.animationRunner.updateProgress({ movieTimeMs: 4200 });

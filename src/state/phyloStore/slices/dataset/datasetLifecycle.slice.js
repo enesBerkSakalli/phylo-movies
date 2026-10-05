@@ -1,4 +1,5 @@
 import { MovieTimelineManager } from '../../../../timeline/core/MovieTimelineManager.js';
+import { buildTimeline } from '../../../../timeline/timeline.js';
 import { createTreeSource } from '../../../../domain/backend/treeSource.js';
 import { buildPairChangeProfile } from '../../../../timeline/data/pairChangeProfile.js';
 import { createTreeDatasetInitialState } from './treeDataset.slice.js';
@@ -23,6 +24,7 @@ export const createDatasetLifecycleSlice = (set, get, store) => ({
     set({
       ...createTreeDatasetInitialState(),
       datasetVersion: (get().datasetVersion ?? 0) + 1,
+      timeline: null,
       movieTimelineManager: null,
       timelineCursor: null,
       selectedTimelineSegmentIndex: null,
@@ -65,12 +67,13 @@ export const createDatasetLifecycleSlice = (set, get, store) => ({
     const existingManager = get().movieTimelineManager;
     existingManager?.destroy();
 
-    const movieTimelineManager = new MovieTimelineManager(movieData, treeList, store);
-    const timelineCursor = movieTimelineManager.getCursorForFrame(0);
+    const timeline = buildTimeline(movieData);
+    const movieTimelineManager = new MovieTimelineManager(timeline, store);
 
     set({
+      timeline,
       movieTimelineManager,
-      timelineCursor,
+      timelineCursor: timeline.cursorForFrame(0),
       treeList,
       treeSource,
       treeHydrationVersion: 0,

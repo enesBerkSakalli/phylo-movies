@@ -89,9 +89,9 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
       styleConfig: { labelOffsets: { DEFAULT: 20, EXTENSION: 5 } },
       timelineCursor: null,
       frameIndex: 0,
-      movieTimelineManager: {
-        getCursorAtMovieTime: () => ({ frameIndex: 0, movieTimeMs: 0 }),
-        getCursorForFrame: () => null,
+      timeline: {
+        cursorAt: () => ({ frameIndex: 0, movieTimeMs: 0 }),
+        cursorForFrame: () => null,
       },
       // Ensure functions exist if called
       setAnimationStage: sandbox.stub(),

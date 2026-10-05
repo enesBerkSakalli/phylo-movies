@@ -1,11 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { TimelineDataProcessor } from '../../../../src/timeline/data/TimelineDataProcessor.js';
-import { buildSteps, cursorForFrame, stepAt } from '../../../../src/timeline/timeline.js';
+import { buildTimeline, cursorForFrame, stepAt } from '../../../../src/timeline/timeline.js';
 import { smallExampleMovieData } from '../../../fixtures/timeline/generatedMovieData.js';
 
-const segments = TimelineDataProcessor.createSegments(smallExampleMovieData);
-const { totalDuration, cumulativeDurations } = TimelineDataProcessor.createTimelineData(segments);
-const steps = buildSteps(segments);
+const { steps, totalDuration, cumulativeDurations } = buildTimeline(smallExampleMovieData);
 
 describe('timeline steps', () => {
   it('tile the movie in order, each inside its segment', () => {

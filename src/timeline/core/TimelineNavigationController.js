@@ -1,3 +1,7 @@
+import { getSegmentBounds } from '../utils/segmentTiming.js';
+
+const EDGE_MS = 1;
+
 /**
  * Owns segment-click navigation policy for the timeline.
  *
@@ -7,26 +11,26 @@
  * - dispatch directional navigation through the store
  */
 export class TimelineNavigationController {
-  constructor({ timelineDataset, segments, timelineData, store, onTimelinePositionUpdated }) {
-    this.timelineDataset = timelineDataset;
-    this.segments = segments;
-    this.timelineData = timelineData;
+  constructor({ timeline, store, onTimelinePositionUpdated }) {
+    this.timeline = timeline;
     this.store = store;
     this.onTimelinePositionUpdated = onTimelinePositionUpdated;
   }
 
   handleTimelineClick(segmentIndex, clickTimeMs = null) {
-    const segment = this._validateSegment(segmentIndex);
+    const segment = this.timeline.segments[segmentIndex];
     if (!segment) return;
 
     if (segment.isInputTreeSegment) {
-      const originalIndex = this._resolveSegmentFrameIndex(segment);
-      this.store.getState().setClipboardTreeIndex(originalIndex);
+      this.store.getState().setClipboardTreeIndex(segment.firstFrame);
     }
 
-    const targetFrameIndex = this._resolveTargetFrameIndex(segmentIndex, clickTimeMs);
-    const seekOptions = this._resolveSeekOptions(segmentIndex, clickTimeMs);
-    this.navigateToFrame(targetFrameIndex, seekOptions);
+    // A timed click lands strictly inside the segment, so a boundary click stays on it.
+    const cursor = Number.isFinite(clickTimeMs)
+      ? this._cursorInSegment(segmentIndex, clickTimeMs)
+      : null;
+    if (cursor) this.navigateToFrame(cursor.frameIndex, { movieTimeMs: cursor.movieTimeMs });
+    else this.navigateToFrame(segment.firstFrame);
     requestAnimationFrame(() => this.onTimelinePositionUpdated?.());
   }
 
@@ -41,53 +45,14 @@ export class TimelineNavigationController {
     goToPosition(targetFrameIndex, direction, seekOptions);
   }
 
-  _validateSegment(segmentIndex) {
-    if (segmentIndex < 0 || segmentIndex >= this.segments.length) return null;
-    return this.segments[segmentIndex];
-  }
-
-  _resolveTargetFrameIndex(segmentIndex, clickTimeMs) {
-    const segment = this.segments[segmentIndex];
-    const segmentFrameIndex = this._resolveSegmentFrameIndex(segment);
-
-    if (!Number.isFinite(clickTimeMs)) {
-      return segmentFrameIndex;
+  _cursorInSegment(segmentIndex, ms) {
+    const { start, end } = getSegmentBounds(segmentIndex, this.timeline);
+    const bounded =
+      end - start <= EDGE_MS ? start : Math.max(start + EDGE_MS, Math.min(ms, end - EDGE_MS));
+    const cursor = this.timeline.cursorAt(bounded);
+    if (cursor?.segmentIndex !== segmentIndex) {
+      throw new Error('[TimelineNavigationController] movie time resolved outside its segment');
     }
-
-    if (
-      !this.timelineData ||
-      !Array.isArray(this.timelineData.segmentDurations) ||
-      !Array.isArray(this.timelineData.cumulativeDurations)
-    ) {
-      throw new Error('[TimelineNavigationController] timeline timing data is required');
-    }
-
-    const target = this.timelineDataset.getCursorInSegmentAtMovieTime(segmentIndex, clickTimeMs);
-
-    return target?.frameIndex;
-  }
-
-  _resolveSegmentFrameIndex(segment) {
-    const frameIndex = segment?.firstFrame;
-    if (!Number.isInteger(frameIndex)) {
-      throw new Error('[TimelineNavigationController] segment frame index is required');
-    }
-    return frameIndex;
-  }
-
-  _resolveSeekOptions(segmentIndex, clickTimeMs) {
-    if (
-      !Number.isFinite(clickTimeMs) ||
-      !Number.isFinite(this.timelineData?.totalDuration) ||
-      this.timelineData.totalDuration <= 0
-    ) {
-      return undefined;
-    }
-
-    const bounds = this.timelineDataset.getSegmentBounds(segmentIndex);
-    if (!bounds || bounds.end < bounds.start) return undefined;
-
-    const cursor = this.timelineDataset.getCursorInSegmentAtMovieTime(segmentIndex, clickTimeMs);
-    return { movieTimeMs: cursor.movieTimeMs };
+    return cursor;
   }
 }

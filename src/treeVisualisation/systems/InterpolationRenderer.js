@@ -139,7 +139,7 @@ export class InterpolationRenderer {
     if (isControllerDestroyed(this.controller)) return;
 
     const state = useAppStore.getState();
-    const transitionFrame = state.movieTimelineManager?.frameAt?.(movieTimeMs);
+    const transitionFrame = state.frameAt(movieTimeMs);
 
     if (!transitionFrame?.sourceTree || !transitionFrame?.targetTree) {
       return;

@@ -6,7 +6,6 @@ const {
 const {
   InterpolationRenderer,
 } = require('../../../src/treeVisualisation/systems/InterpolationRenderer.js');
-const { TransitionFrame } = require('../../../src/timeline/time/TransitionFrame.js');
 const { useAppStore } = require('../../../src/state/phyloStore/store.js');
 
 describe('Interpolation cache reset', () => {
@@ -122,13 +121,6 @@ describe('InterpolationRenderer movie time', () => {
   });
 
   it('does not fall back to linear progress when timeline transition frames are unavailable', async () => {
-    useAppStore.setState({
-      movieTimelineManager: {
-        destroy: () => {},
-        frameAt: () => null,
-      },
-    });
-
     const controller = {
       ready: true,
       readyPromise: Promise.resolve(),
@@ -146,16 +138,9 @@ describe('InterpolationRenderer movie time', () => {
     const targetTree = { id: 'target-tree' };
 
     useAppStore.setState({
-      movieTimelineManager: {
-        destroy: () => {},
-        frameAt: () =>
-          TransitionFrame.from({
-            sourceTree,
-            targetTree,
-            sourceTreeIndex: 1,
-            targetTreeIndex: 2,
-            transitionProgress: 0,
-          }),
+      treeList: [null, sourceTree, targetTree],
+      timeline: {
+        frameAt: () => ({ sourceTreeIndex: 1, targetTreeIndex: 2, transitionProgress: 0 }),
       },
     });
 
@@ -309,18 +294,8 @@ describe('InterpolationRenderer movie time', () => {
       treeList: sparseTreeList,
       treeHydrationVersion: 0,
       ensureTreesHydrated,
-      movieTimelineManager: {
-        destroy: () => {},
-        frameAt: () => {
-          const [hydratedSource, hydratedTarget] = ensureTreesHydrated([0, 1]);
-          return TransitionFrame.from({
-            sourceTree: hydratedSource,
-            targetTree: hydratedTarget,
-            sourceTreeIndex: 0,
-            targetTreeIndex: 1,
-            transitionProgress: 0.5,
-          });
-        },
+      timeline: {
+        frameAt: () => ({ sourceTreeIndex: 0, targetTreeIndex: 1, transitionProgress: 0.5 }),
       },
     });
 

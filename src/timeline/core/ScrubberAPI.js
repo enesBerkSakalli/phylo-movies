@@ -5,9 +5,8 @@ import { selectInputFrameIndices } from '../../state/phyloStore/selectors/treeSe
 // ============================================================================
 
 export class ScrubberAPI {
-  constructor(treeController, timelineManager = null, store) {
+  constructor(treeController, store) {
     this.treeController = treeController;
-    this.timelineManager = timelineManager;
     this.store = store;
     this.currentMs = 0;
     this.lastTransitionState = null;
@@ -63,7 +62,7 @@ export class ScrubberAPI {
   async _performScrubUpdate(movieTimeMs) {
     this.currentMs = movieTimeMs;
     try {
-      const transitionFrame = this.timelineManager?.frameAt?.(movieTimeMs);
+      const transitionFrame = this.store.getState().frameAt(movieTimeMs);
       if (!transitionFrame) return;
 
       this.store.getState().seek(movieTimeMs);

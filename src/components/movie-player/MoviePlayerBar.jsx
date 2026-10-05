@@ -26,6 +26,7 @@ import {
   selectSelectedTimelineSegmentIndex,
   selectSetAnimationSpeed,
   selectSetHoveredSegment,
+  selectTimeline,
   useAppStore,
 } from '../../state/phyloStore/store.js';
 import { openPanel, togglePanel, useIsPanelOpen } from '../dock/dockRuntime.js';
@@ -53,19 +54,18 @@ export function MoviePlayerBar() {
   const pairChanges = useAppStore(selectPairChanges);
   const selectedSegmentIndex = useAppStore(selectSelectedTimelineSegmentIndex);
 
+  const timeline = useAppStore(selectTimeline);
   const movieTimelineManager = useAppStore(selectMovieTimelineManager);
   const timelineHostRef = useRef(null);
   const playerBarRef = useRef(null);
 
-  const hasTimeline = Boolean(movieTimelineManager);
+  const hasTimeline = Boolean(timeline);
   usePlaybackShortcuts(hasTimeline);
-  const hasTransitionSegments = React.useMemo(
-    () => (hasTimeline ? (movieTimelineManager?.hasTransitionSegments?.() ?? false) : false),
-    [hasTimeline, movieTimelineManager]
+  const hasTransitionSegments = Boolean(
+    timeline?.segments.some((segment) => !segment.isInputTreeSegment)
   );
 
-  const canInspect =
-    movieTimelineManager?.getSegment?.(selectedSegmentIndex)?.isInputTreeSegment === false;
+  const canInspect = timeline?.segments[selectedSegmentIndex]?.isInputTreeSegment === false;
 
   useEffect(() => {
     const container = timelineHostRef.current;

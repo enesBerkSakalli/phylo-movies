@@ -1,5 +1,6 @@
 import { clamp } from '../../domain/math/mathUtils.js';
 import { selectInputFrameIndices } from '../../state/phyloStore/selectors/treeSelectors.js';
+import { TransitionFrame } from '../../timeline/time/TransitionFrame.js';
 
 /**
  * Playback state is anchored to semantic movie time. Frame and timeline cursor
@@ -17,15 +18,15 @@ export const createPlaybackSlice = (set, get) => ({
     const state = get();
     if (state.playing || state.treeList.length === 0) return;
 
-    const manager = requireTimelineManager(state);
-    const totalDurationMs = requireTimelineDuration(manager);
+    const timeline = requireTimeline(state);
+    const totalDurationMs = requireTimelineDuration(timeline);
     const animationSpeed = normalizeAnimationSpeed(state.animationSpeed);
     const storedMovieTimeMs = state.timelineCursor?.movieTimeMs ?? 0;
     const initialMovieTimeMs =
       Number.isFinite(storedMovieTimeMs) && storedMovieTimeMs < totalDurationMs
         ? clamp(storedMovieTimeMs, 0, totalDurationMs)
         : 0;
-    const cursor = requireCursor(manager.getCursorAtMovieTime(initialMovieTimeMs));
+    const cursor = requireCursor(timeline.cursorAt(initialMovieTimeMs));
 
     set({
       playing: true,
@@ -36,9 +37,8 @@ export const createPlaybackSlice = (set, get) => ({
 
   stop: () => {
     const state = get();
-    const manager = state.movieTimelineManager;
     const movieTimeMs = resolveCurrentMovieTime(state, performance.now());
-    const cursor = manager?.getCursorAtMovieTime?.(movieTimeMs) ?? state.timelineCursor;
+    const cursor = state.timeline?.cursorAt(movieTimeMs) ?? state.timelineCursor;
 
     set({
       playing: false,
@@ -58,8 +58,7 @@ export const createPlaybackSlice = (set, get) => ({
 
     const now = performance.now();
     const movieTimeMs = resolveCurrentMovieTime(state, now);
-    const manager = requireTimelineManager(state);
-    const cursor = requireCursor(manager.getCursorAtMovieTime(movieTimeMs));
+    const cursor = requireCursor(requireTimeline(state).cursorAt(movieTimeMs));
     set({
       animationSpeed: speed,
       animationStartTime: now - movieTimeMs / speed,
@@ -71,14 +70,14 @@ export const createPlaybackSlice = (set, get) => ({
     const state = get();
     if (state.renderInProgress || state.treeList.length === 0) return;
 
-    const manager = requireTimelineManager(state);
+    const timeline = requireTimeline(state);
     if (!Number.isFinite(position)) {
       throw new Error('[playbackSlice] navigation position must be finite');
     }
     const requestedFrameIndex = clamp(Math.floor(position), 0, state.treeList.length - 1);
     const cursor = Number.isFinite(options.movieTimeMs)
-      ? manager.getCursorAtMovieTime(options.movieTimeMs)
-      : manager.getCursorForFrame(requestedFrameIndex, {
+      ? timeline.cursorAt(options.movieTimeMs)
+      : timeline.cursorForFrame(requestedFrameIndex, {
           occurrence: direction === 'backward' ? 'last' : 'semantic',
         });
 
@@ -128,8 +127,20 @@ export const createPlaybackSlice = (set, get) => ({
     if (!Number.isFinite(movieTimeMs)) {
       throw new Error('[playbackSlice] movie time must be finite');
     }
-    const manager = requireTimelineManager(get());
-    set(createPlaybackPosition(requireCursor(manager.getCursorAtMovieTime(movieTimeMs))));
+    set(createPlaybackPosition(requireCursor(requireTimeline(get()).cursorAt(movieTimeMs))));
+  },
+
+  /** The frame to draw at a movie time, with its trees hydrated; null when they are unavailable. */
+  frameAt: (movieTimeMs) => {
+    const { timeline, ensureTreesHydrated } = get();
+    const frame = timeline?.frameAt(movieTimeMs);
+    if (!frame) return null;
+
+    const [sourceTree, targetTree] =
+      ensureTreesHydrated?.([frame.sourceTreeIndex, frame.targetTreeIndex]) ?? [];
+    return sourceTree && targetTree
+      ? TransitionFrame.from({ ...frame, sourceTree, targetTree })
+      : null;
   },
 
   setRenderInProgress: (inProgress) => set({ renderInProgress: inProgress }),
@@ -155,20 +166,20 @@ function createPlaybackPosition(cursor) {
   };
 }
 
-function requireTimelineManager(state) {
-  const manager = state.movieTimelineManager;
+function requireTimeline(state) {
+  const timeline = state.timeline;
   if (
-    !manager ||
-    typeof manager.getCursorAtMovieTime !== 'function' ||
-    typeof manager.getCursorForFrame !== 'function'
+    !timeline ||
+    typeof timeline.cursorAt !== 'function' ||
+    typeof timeline.cursorForFrame !== 'function'
   ) {
-    throw new Error('[playbackSlice] semantic timeline manager is required');
+    throw new Error('[playbackSlice] semantic timeline is required');
   }
-  return manager;
+  return timeline;
 }
 
-function requireTimelineDuration(manager) {
-  const duration = manager.timelineData?.totalDuration;
+function requireTimelineDuration(timeline) {
+  const duration = timeline.totalDuration;
   if (!Number.isFinite(duration) || duration <= 0) {
     throw new Error('[playbackSlice] semantic timeline duration is required');
   }
@@ -185,7 +196,7 @@ function normalizeAnimationSpeed(value) {
 }
 
 function resolveCurrentMovieTime(state, timestamp) {
-  const totalDurationMs = state.movieTimelineManager?.timelineData?.totalDuration;
+  const totalDurationMs = state.timeline?.totalDuration;
   if (
     !state.playing ||
     !Number.isFinite(state.animationStartTime) ||

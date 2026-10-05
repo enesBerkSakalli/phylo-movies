@@ -1,12 +1,8 @@
-import { TimelineDataProcessor } from '../data/TimelineDataProcessor.js';
-import { TimelineDataset } from '../data/TimelineDataset.js';
 import { buildPairSpans } from '../data/pairStripGeometry.js';
 import { cursorForFrame } from '../timeline.js';
 import { ScrubberAPI } from './ScrubberAPI.js';
 import { TimelineNavigationController } from './TimelineNavigationController.js';
 import { TimelineScrubController } from './TimelineScrubController.js';
-import { buildTimelineStatusSnapshot } from '../view/timelineStatusModel.js';
-import { TransitionFrame } from '../time/TransitionFrame.js';
 
 let deckTimelineRendererModulePromise = null;
 
@@ -28,15 +24,11 @@ function loadDeckTimelineRenderer() {
  * - store subscription wiring
  */
 export class MovieTimelineManager {
-  constructor(movieData, treeList, store) {
-    if (!Array.isArray(treeList) || treeList.length === 0) {
-      throw new Error('MovieTimelineManager requires a non-empty normalized treeList');
-    }
+  constructor(timeline, store) {
     if (!store || typeof store.getState !== 'function' || typeof store.subscribe !== 'function') {
       throw new Error('MovieTimelineManager requires an injected store API');
     }
 
-    this.treeList = treeList;
     this.store = store;
     this.isDestroyed = false;
     this.container = null;
@@ -44,18 +36,11 @@ export class MovieTimelineManager {
     this.timeline = null;
     this._timelineCreationToken = 0;
     this._timelineUpdateFrameId = null;
-    this.segments = TimelineDataProcessor.createSegments(movieData);
-    this.timelineData = TimelineDataProcessor.createTimelineData(this.segments);
-    this.timelineDataset = TimelineDataset.fromMovieData(movieData, {
-      segments: this.segments,
-      timelineData: this.timelineData,
-      treeList,
-    });
+    this.timelineData = timeline;
+    this.segments = timeline.segments;
     this.pairStrip = null;
     this.navigationController = new TimelineNavigationController({
-      timelineDataset: this.timelineDataset,
-      segments: this.segments,
-      timelineData: this.timelineData,
+      timeline,
       store: this.store,
       onTimelinePositionUpdated: () => this.updateCurrentPosition(),
     });
@@ -75,16 +60,16 @@ export class MovieTimelineManager {
 
   _buildPairStrip() {
     const profile = this.store.getState().pairChanges;
-    const dataset = this.timelineDataset;
+    const timeline = this.timelineData;
     return {
       spans: buildPairSpans({
         segments: this.segments,
         timelineData: this.timelineData,
         profile,
-        frameToMs: (frameIndex) => cursorForFrame(dataset.steps, frameIndex)?.ms ?? null,
+        frameToMs: (frameIndex) => cursorForFrame(timeline.steps, frameIndex)?.ms ?? null,
       }),
       maxRf: profile.maxRf,
-      getFrameIndexAtMs: (ms) => dataset.getCursorAtMovieTime(ms)?.frameIndex ?? null,
+      getFrameIndexAtMs: (ms) => timeline.cursorAt(ms)?.frameIndex ?? null,
     };
   }
 
@@ -123,7 +108,7 @@ export class MovieTimelineManager {
     if (controller === this.scrubberAPI?.treeController) return;
 
     this.scrubberAPI?.destroy();
-    this.scrubberAPI = controller ? new ScrubberAPI(controller, this, this.store) : null;
+    this.scrubberAPI = controller ? new ScrubberAPI(controller, this.store) : null;
   }
 
   _selectScrubberController() {
@@ -298,7 +283,7 @@ export class MovieTimelineManager {
 
   _syncRendererFromStore() {
     const movieTimeMs = this.store.getState().timelineCursor?.movieTimeMs ?? 0;
-    const cursor = this.timelineDataset.getCursorAtMovieTime(movieTimeMs);
+    const cursor = this.timelineData.cursorAt(movieTimeMs);
     if (cursor) this.timeline.setCustomTime(cursor.movieTimeMs);
   }
 
@@ -311,17 +296,6 @@ export class MovieTimelineManager {
     if (store.playing) store.stop();
   }
 
-  getSegment(index) {
-    return Number.isInteger(index) ? (this.segments?.[index] ?? null) : null;
-  }
-
-  hasTransitionSegments() {
-    return (
-      Array.isArray(this.segments) &&
-      this.segments.some((segment) => segment && !segment.isInputTreeSegment)
-    );
-  }
-
   zoomIn(factor = 0.2) {
     this.timeline?.zoomIn?.(factor);
   }
@@ -332,55 +306,6 @@ export class MovieTimelineManager {
 
   fit() {
     this.timeline?.fit?.();
-  }
-
-  /** The dataset's frame with its trees, hydrating any the store has not loaded yet. */
-  frameAt(movieTimeMs) {
-    const frame = this.timelineDataset?.frameAt(movieTimeMs);
-    if (!frame || (frame.sourceTree && frame.targetTree)) return frame;
-
-    const [source, target] =
-      this.store.getState().ensureTreesHydrated?.([frame.sourceTreeIndex, frame.targetTreeIndex]) ??
-      [];
-    const sourceTree = frame.sourceTree ?? source;
-    const targetTree = frame.targetTree ?? target;
-    return sourceTree && targetTree
-      ? TransitionFrame.from({ ...frame, sourceTree, targetTree })
-      : null;
-  }
-
-  getCursorAtMovieTime(movieTimeMs) {
-    return this.timelineDataset?.getCursorAtMovieTime(movieTimeMs) ?? null;
-  }
-
-  getCursorForFrame(frameIndex, options = {}) {
-    return this.timelineDataset?.getCursorForFrame(frameIndex, options) ?? null;
-  }
-
-  getTimelineStatusSnapshot({
-    frameIndex = null,
-    timelineCursor = null,
-    inputFrameIndices = null,
-    hasMsa = false,
-    msaStepSize = null,
-    msaWindowSize = null,
-    msaColumnCount = null,
-  } = {}) {
-    const resolvedCursor =
-      timelineCursor ?? (Number.isInteger(frameIndex) ? this.getCursorForFrame(frameIndex) : null);
-    const resolvedFrameIndex =
-      resolvedCursor?.frameIndex ?? (Number.isInteger(frameIndex) ? frameIndex : 0);
-
-    return buildTimelineStatusSnapshot({
-      frameIndex: resolvedFrameIndex,
-      treeListLength: this.treeList?.length ?? 0,
-      inputFrameIndices: inputFrameIndices ?? this.timelineDataset?.getInputFrameIndices?.() ?? [],
-      timelineCursor: resolvedCursor,
-      hasMsa,
-      msaStepSize,
-      msaWindowSize,
-      msaColumnCount,
-    });
   }
 
   // ==========================================================================
@@ -404,7 +329,6 @@ export class MovieTimelineManager {
     this.segments = null;
     this.timelineData = null;
     this.pairStrip = null;
-    this.timelineDataset = null;
     this.navigationController = null;
     this.scrubberAPI = null;
     this.scrubController = null;
