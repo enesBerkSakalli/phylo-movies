@@ -209,21 +209,6 @@ function TimelineSegmentTooltipOverlay({ playerBarRef, pairChanges }) {
   const anchorX = hovered?.x;
   const [placement, setPlacement] = useState(null);
 
-  const getLeafNames = useCallback(
-    (indices) => {
-      if (!Array.isArray(leafNamesByIndex)) return [];
-
-      const leafNames = [];
-      for (const index of indices) {
-        if (Number.isInteger(index) && index >= 0 && index < leafNamesByIndex.length) {
-          leafNames.push(leafNamesByIndex[index]);
-        }
-      }
-      return leafNames;
-    },
-    [leafNamesByIndex]
-  );
-
   // Picking a segment or starting playback is a decision; the hover preview has done its job.
   useEffect(() => {
     setHoveredSegment(null);
@@ -284,7 +269,7 @@ function TimelineSegmentTooltipOverlay({ playerBarRef, pairChanges }) {
           segment={segment}
           pairChange={pairChanges.byPairId.get(segment.pairId)}
           pairCount={pairChanges.byPairId.size}
-          getLeafNames={getLeafNames}
+          leafNamesByIndex={leafNamesByIndex}
         />
       </div>
     </div>

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { ArrowRightLeft, Dna, Gauge, GitBranch } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 import { calculateWindow } from '../domain/msa/msaWindowCalculator';
@@ -19,6 +19,7 @@ import { Badge } from './ui/badge';
 import {
   extractAffectedSubtreeGroups,
   formatPivotEdgePreview,
+  formatSubtreeNames,
   getSegmentStepRange,
 } from './timeline/timelineSegmentTooltipUtils.js';
 
@@ -46,33 +47,7 @@ export function TransitionInspectorPanel() {
       msaColumnCount: selectMsaColumnCount(state),
     }))
   );
-  const segment = Number.isInteger(segmentIndex)
-    ? (timeline?.segments[segmentIndex] ?? null)
-    : null;
-
-  const details = useMemo(
-    () =>
-      buildInspectorDetails({
-        segment,
-        leafNamesByIndex,
-        pairChanges,
-        scaleList,
-        hasMsa,
-        msaStepSize,
-        msaWindowSize,
-        msaColumnCount,
-      }),
-    [
-      segment,
-      leafNamesByIndex,
-      pairChanges,
-      scaleList,
-      hasMsa,
-      msaStepSize,
-      msaWindowSize,
-      msaColumnCount,
-    ]
-  );
+  const segment = timeline?.segments[segmentIndex];
 
   if (!segment) {
     return (
@@ -82,6 +57,16 @@ export function TransitionInspectorPanel() {
     );
   }
 
+  const details = buildInspectorDetails({
+    segment,
+    leafNamesByIndex,
+    pairChanges,
+    scaleList,
+    hasMsa,
+    msaStepSize,
+    msaWindowSize,
+    msaColumnCount,
+  });
   const isInputTree = segment.isInputTreeSegment;
   const Icon = isInputTree ? GitBranch : ArrowRightLeft;
 
@@ -207,127 +192,53 @@ function buildInspectorDetails({
   msaWindowSize,
   msaColumnCount,
 }) {
-  if (!segment) return null;
-
-  const getLeafNames = (indices) => getLeafNamesByIndices(indices, leafNamesByIndex);
-  const subtreeGroups = extractAffectedSubtreeGroups(segment.affectedSubtrees, getLeafNames);
-  const pair = resolvePairContext(segment);
+  const isInputTree = segment.isInputTreeSegment;
   const change = pairChanges.byPairId.get(segment.pairId);
-  const sourceGlobalIndex = resolveSourceGlobalIndex(segment);
-  const scaleValue = getScaleValue(scaleList, sourceGlobalIndex);
-  const stepRange = segment.isInputTreeSegment ? null : getSegmentStepRange(segment);
-  const msaFrameIndex = resolveMsaFrameIndex(segment, pair);
+  const scaleValue = getScaleValue(
+    scaleList,
+    isInputTree ? segment.globalIndex : segment.sourceGlobalIndex
+  );
+  const stepRange = isInputTree ? null : getSegmentStepRange(segment);
+  const msaFrameIndex = isInputTree ? segment.originalTreeIndex : segment.sourceInputTreeIndex;
   const msaWindow =
-    hasMsa &&
-    Number.isFinite(msaFrameIndex) &&
-    Number.isFinite(msaColumnCount) &&
-    msaColumnCount > 0
-      ? calculateWindow(msaFrameIndex, msaStepSize, msaWindowSize, msaColumnCount || 0)
+    hasMsa && msaColumnCount > 0
+      ? calculateWindow(msaFrameIndex, msaStepSize, msaWindowSize, msaColumnCount)
       : null;
 
   return {
-    name: formatTreeName(segment, pair),
-    directionLabel: pair
-      ? `Source tree ${pair.sourceInputTreeIndex + 1} -> Target tree ${
-          pair.targetInputTreeIndex + 1
-        }`
-      : null,
+    name: isInputTree
+      ? `Input tree ${segment.originalTreeIndex + 1}`
+      : `Tree ${segment.sourceInputTreeIndex + 1} → Tree ${segment.targetInputTreeIndex + 1}`,
+    directionLabel: isInputTree
+      ? null
+      : `Source tree ${segment.sourceInputTreeIndex + 1} -> Target tree ${
+          segment.targetInputTreeIndex + 1
+        }`,
     stepLabel: stepRange
-      ? `${formatRange(stepRange.start, stepRange.end, '–')} of ${stepRange.total}`
+      ? `${stepRange.start === stepRange.end ? stepRange.start : `${stepRange.start}–${stepRange.end}`} of ${stepRange.total}`
       : null,
     eventLabel: segment.splitCount > 1 ? `${segment.splitIndex} of ${segment.splitCount}` : null,
-    positionLabel: formatPosition(segment, pairChanges.byPairId.size),
+    positionLabel: isInputTree
+      ? `Input tree ${segment.originalTreeIndex + 1}`
+      : `Transition ${segment.pairOrdinal + 1} of ${pairChanges.byPairId.size}`,
     movingTaxaLabel: formatCount(segment.subtreeMoveCount, 'taxon', 'taxa'),
     animationStepLabel: formatCount(segment.lastFrame - segment.firstFrame, 'step', 'steps'),
     pivotEdgeLabel: formatPivotEdgeLabel(segment.pivotEdge),
-    rfLabel: formatNumber(change?.rf, 3),
-    weightedRfLabel: formatNumber(change?.weightedRf, 3),
-    scaleLabel: Number.isFinite(scaleValue) ? formatScaleValue(scaleValue) : null,
+    rfLabel: change?.rf?.toFixed(3),
+    weightedRfLabel: change?.weightedRf?.toFixed(3),
+    scaleLabel: scaleValue === null ? null : formatScaleValue(scaleValue),
     msaWindowLabel: msaWindow
       ? `${msaWindow.startPosition}-${msaWindow.midPosition}-${msaWindow.endPosition}`
       : null,
-    subtreeGroups,
+    subtreeGroups: extractAffectedSubtreeGroups(segment.affectedSubtrees, leafNamesByIndex),
   };
 }
 
-function getLeafNamesByIndices(indices, leafNamesByIndex) {
-  if (!Array.isArray(indices) || !Array.isArray(leafNamesByIndex)) return [];
-
-  return indices
-    .filter((index) => Number.isInteger(index) && index >= 0 && index < leafNamesByIndex.length)
-    .map((index) => leafNamesByIndex[index]);
-}
-
-function resolvePairContext(segment) {
-  if (
-    Number.isInteger(segment?.sourceInputTreeIndex) &&
-    Number.isInteger(segment?.targetInputTreeIndex)
-  ) {
-    return {
-      pairId: segment.pairId,
-      sourceInputTreeIndex: segment.sourceInputTreeIndex,
-      targetInputTreeIndex: segment.targetInputTreeIndex,
-      pairOrdinal: segment.pairOrdinal,
-    };
-  }
-  return null;
-}
-
-function resolveSourceGlobalIndex(segment) {
-  if (Number.isInteger(segment.globalIndex)) return segment.globalIndex;
-  if (Number.isInteger(segment.sourceGlobalIndex)) return segment.sourceGlobalIndex;
-  return null;
-}
-
-function formatPosition(segment, pairCount) {
-  if (segment.isInputTreeSegment) {
-    return Number.isInteger(segment.originalTreeIndex)
-      ? `Input tree ${segment.originalTreeIndex + 1}`
-      : null;
-  }
-  if (!Number.isInteger(segment.pairOrdinal)) return null;
-  return `Transition ${segment.pairOrdinal + 1}${pairCount ? ` of ${pairCount}` : ''}`;
-}
-
-function resolveMsaFrameIndex(segment, pair) {
-  if (segment.isInputTreeSegment && Number.isInteger(segment.originalTreeIndex)) {
-    return segment.originalTreeIndex;
-  }
-  return Number.isInteger(pair?.sourceInputTreeIndex) ? pair.sourceInputTreeIndex : null;
-}
-
-function formatTreeName(segment, pair) {
-  if (pair) return `Tree ${pair.sourceInputTreeIndex + 1} → Tree ${pair.targetInputTreeIndex + 1}`;
-  if (segment.isInputTreeSegment && Number.isInteger(segment.originalTreeIndex)) {
-    return `Input tree ${segment.originalTreeIndex + 1}`;
-  }
-  return segment.isInputTreeSegment ? null : 'Generated transition frames';
-}
-
-function formatRange(start, end, separator = '-') {
-  if (!Number.isFinite(start) || !Number.isFinite(end)) return null;
-  return start === end ? String(start) : `${start}${separator}${end}`;
-}
-
 function formatCount(value, singular, plural) {
-  if (!Number.isFinite(value)) return null;
   return `${value} ${value === 1 ? singular : plural}`;
 }
 
 function formatPivotEdgeLabel(pivotEdge) {
   const preview = formatPivotEdgePreview(pivotEdge);
-  if (!preview) return null;
-
-  const countLabel = formatCount(pivotEdge.length, 'taxon', 'taxa');
-  return `${preview} (${countLabel})`;
-}
-
-function formatNumber(value, decimals) {
-  return Number.isFinite(value) ? value.toFixed(decimals) : null;
-}
-
-function formatSubtreeNames(names) {
-  if (!Array.isArray(names) || names.length === 0) return 'Unnamed subtree';
-  if (names.length <= 3) return names.join(', ');
-  return `${names.slice(0, 2).join(', ')} +${names.length - 2}`;
+  return preview && `${preview} (${formatCount(pivotEdge.length, 'taxon', 'taxa')})`;
 }

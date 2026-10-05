@@ -1,42 +1,23 @@
-/**
- * Extracts affected subtree groups from segment data.
- *
- * @param {Array} affectedSubtrees - Affected subtree groups with leaf indices.
- * @param {Function} getLeafNamesByIndices - Converts indices to leaf names.
- * @returns {Array<string[]>} Leaf name arrays for each subtree group.
- */
-export function extractAffectedSubtreeGroups(affectedSubtrees, getLeafNamesByIndices) {
-  if (!affectedSubtrees?.length || !getLeafNamesByIndices) {
-    return [];
-  }
+import { flattenSplitSets } from '../../domain/tree/splits.js';
 
-  const subtreeGroups = [];
-
-  for (const item of affectedSubtrees) {
-    if (!Array.isArray(item)) continue;
-
-    const firstElement = item[0];
-    if (Array.isArray(firstElement)) {
-      for (const group of item) {
-        if (Array.isArray(group) && group.length > 0) {
-          const leafNames = getLeafNamesByIndices(group);
-          if (leafNames?.length > 0) subtreeGroups.push(leafNames);
-        }
-      }
-    } else if (item.length > 0) {
-      const leafNames = getLeafNamesByIndices(item);
-      if (leafNames?.length > 0) subtreeGroups.push(leafNames);
-    }
-  }
-
-  return subtreeGroups;
+/** Leaf names of each moved subtree, given the leaf names by index. */
+export function extractAffectedSubtreeGroups(affectedSubtrees, leafNamesByIndex) {
+  return flattenSplitSets(affectedSubtrees)
+    .map((group) => group.map((index) => leafNamesByIndex[index]).filter(Boolean))
+    .filter((names) => names.length > 0);
 }
 
-export function formatPivotEdgePreview(pivotEdge, maxVisible = 4) {
+/** A subtree as one short badge label: its name, both names, or the first name and a count. */
+export function formatSubtreeNames(names) {
+  if (names.length <= 2) return names.join(', ');
+  return `${names[0]}, +${names.length - 1}`;
+}
+
+export function formatPivotEdgePreview(pivotEdge) {
   if (!Array.isArray(pivotEdge) || pivotEdge.length === 0) return null;
 
-  const visible = pivotEdge.slice(0, maxVisible).join(', ');
-  const hiddenCount = pivotEdge.length - maxVisible;
+  const visible = pivotEdge.slice(0, 4).join(', ');
+  const hiddenCount = pivotEdge.length - 4;
   return hiddenCount > 0 ? `${visible} +${hiddenCount}` : visible;
 }
 

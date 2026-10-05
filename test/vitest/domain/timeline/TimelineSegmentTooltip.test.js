@@ -4,20 +4,33 @@ import {
   extractAffectedSubtreeGroups,
   formatPairFacts,
   formatPivotEdgePreview,
+  formatSubtreeNames,
   formatTransitionHeading,
   getSegmentStepRange,
 } from '../../../../src/components/timeline/timelineSegmentTooltipUtils.js';
 
 describe('TimelineSegmentTooltip subtree extraction', () => {
-  it('extracts leaf names from both flat and nested affected subtree groups', () => {
-    const getLeafNames = (indices) => indices.map((index) => `Leaf ${index}`);
+  const leafNames = ['Leaf 0', 'Leaf 1', 'Leaf 2', 'Leaf 3'];
 
-    expect(extractAffectedSubtreeGroups([[9, 10, 11]], getLeafNames)).toEqual([
-      ['Leaf 9', 'Leaf 10', 'Leaf 11'],
+  it('names the leaves of flat and nested affected subtree groups', () => {
+    expect(extractAffectedSubtreeGroups([[1, 2, 3]], leafNames)).toEqual([
+      ['Leaf 1', 'Leaf 2', 'Leaf 3'],
     ]);
-    expect(extractAffectedSubtreeGroups([[[9, 10, 11]]], getLeafNames)).toEqual([
-      ['Leaf 9', 'Leaf 10', 'Leaf 11'],
+    expect(extractAffectedSubtreeGroups([[[1, 2], [3]]], leafNames)).toEqual([
+      ['Leaf 1', 'Leaf 2'],
+      ['Leaf 3'],
     ]);
+  });
+
+  it('has no groups when nothing moved or a leaf has no name', () => {
+    expect(extractAffectedSubtreeGroups(null, leafNames)).toEqual([]);
+    expect(extractAffectedSubtreeGroups([[7, 8]], leafNames)).toEqual([]);
+  });
+
+  it('labels a subtree by its names, or by its first name and a count', () => {
+    expect(formatSubtreeNames(['A'])).toBe('A');
+    expect(formatSubtreeNames(['A', 'B'])).toBe('A, B');
+    expect(formatSubtreeNames(['A', 'B', 'C', 'D'])).toBe('A, +3');
   });
 
   it('formats compact pivot edge previews', () => {
