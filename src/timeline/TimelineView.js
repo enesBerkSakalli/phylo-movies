@@ -247,7 +247,8 @@ export class TimelineView {
     }
 
     const rect = this.container.getBoundingClientRect();
-    const width = Math.max(1, Math.round(rect.width));
+    // The exact width places marks and maps the pointer; deck is sized in whole pixels.
+    const width = Math.max(1, rect.width);
     const height = Math.max(1, Math.round(rect.height));
     this._width = width;
 
@@ -299,7 +300,7 @@ export class TimelineView {
       height,
     });
 
-    this.deck.setProps({ width, height, layers });
+    this.deck.setProps({ width: Math.round(width), height, layers });
     this._updateScheduled = false;
   }
 

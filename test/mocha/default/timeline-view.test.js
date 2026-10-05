@@ -284,6 +284,20 @@ describe('TimelineView', () => {
     );
   });
 
+  it('maps the pointer with the exact strip width on a fractional container', () => {
+    const { timeline } = makeTimelineFixture();
+    const width = 333.4;
+    const { view, events } = mountView(timeline, { container: makeContainer(width, 100) });
+
+    // 90% of the way across the strip is 90% of the 3000 ms
+    expect(view.xToMs(0.9 * width)).to.be.closeTo(2700, 1e-6);
+    expect(view.msToX(2700)).to.be.closeTo(0.9 * width, 1e-6);
+    dispatchMouse(view.canvas, 'click', 0.9 * width);
+    expect(events.selects[0].ms).to.be.closeTo(2700, 1e-6);
+    // Deck takes whole pixels
+    expect(view.deck.props.width).to.equal(333);
+  });
+
   it('rewrites the slider text only when the playhead changes segment or step', () => {
     const { timeline } = makeTimelineFixture();
     const { view } = mountView(timeline);
