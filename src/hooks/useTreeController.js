@@ -67,7 +67,7 @@ export function useTreeController() {
 
         try {
           const state = useAppStore.getState();
-          if (state.movieTimelineManager?.scrubController?.isScrubbing) return;
+          if (state.isScrubbing) return;
           if (state.playing) return;
 
           const controller = controllerRef.current || state.treeController;
@@ -149,8 +149,6 @@ export function useTreeController() {
     scheduleRender();
 
     const unsubscribe = useAppStore.subscribe((state, prevState) => {
-      const isTimelineScrubbing = state.movieTimelineManager?.scrubController?.isScrubbing ?? false;
-
       if (
         state.treeList !== prevState.treeList ||
         state.comparisonMode !== prevState.comparisonMode
@@ -177,7 +175,7 @@ export function useTreeController() {
 
       if (frameIndexChanged || timelineCursorChanged) {
         syncMsaRegion();
-        if (!isTimelineScrubbing && !state.playing) {
+        if (!state.isScrubbing && !state.playing) {
           scheduleRender();
         }
       }
@@ -198,7 +196,7 @@ export function useTreeController() {
       }
 
       if (
-        state.movieTimelineManager !== prevState.movieTimelineManager ||
+        state.timeline !== prevState.timeline ||
         state.syncMSAEnabled !== prevState.syncMSAEnabled ||
         state.msaWindowSize !== prevState.msaWindowSize ||
         state.msaStepSize !== prevState.msaStepSize ||

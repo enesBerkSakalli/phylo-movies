@@ -4,7 +4,7 @@ import { AppTooltip } from '../../ui/app-tooltip';
 import { ZoomOut, ZoomIn, Scan } from 'lucide-react';
 import {
   selectFitTimeline,
-  selectMovieTimelineManager,
+  selectTimelineView,
   selectZoomInTimeline,
   selectZoomOutTimeline,
   useAppStore,
@@ -17,8 +17,7 @@ export function TimelineScrollControls() {
   const zoomOutTimeline = useAppStore(selectZoomOutTimeline);
   const zoomInTimeline = useAppStore(selectZoomInTimeline);
   const fitTimeline = useAppStore(selectFitTimeline);
-  const movieTimelineManager = useAppStore(selectMovieTimelineManager);
-  const disabled = !movieTimelineManager;
+  const disabled = !useAppStore(selectTimelineView);
 
   const controls = [
     {

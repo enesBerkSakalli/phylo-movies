@@ -102,7 +102,8 @@ describe('useTreeController static render scheduling', () => {
       setTreeController: (treeController) => {
         storeState = { ...storeState, treeController };
       },
-      movieTimelineManager: null,
+      timeline: null,
+      isScrubbing: false,
       playing: false,
       comparisonMode: false,
       frameIndex: 0,
@@ -240,9 +241,7 @@ describe('useTreeController static render scheduling', () => {
   it('syncs MSA region while timeline scrubbing', async () => {
     storeState = {
       ...storeState,
-      movieTimelineManager: {
-        scrubController: { isScrubbing: true },
-      },
+      isScrubbing: true,
       syncMSAEnabled: true,
       msaSequences: {
         taxonA: 'ACGTACGTACGT',
@@ -274,9 +273,7 @@ describe('useTreeController static render scheduling', () => {
   it('does not sync MSA region to fractional transition positions', async () => {
     storeState = {
       ...storeState,
-      movieTimelineManager: {
-        scrubController: { isScrubbing: true },
-      },
+      isScrubbing: true,
       syncMSAEnabled: true,
       msaSequences: {
         taxonA: 'ACGTACGTACGT',

@@ -25,13 +25,7 @@ export const createTreeControllerRuntimeSlice = (set, get) => ({
   },
 
   resetControllers: () => {
-    const { treeController, movieTimelineManager } = get();
-    treeController?.destroy();
-    movieTimelineManager?.destroy();
-
-    set({
-      treeController: null,
-      movieTimelineManager: null,
-    });
+    get().treeController?.destroy();
+    set({ treeController: null });
   },
 });

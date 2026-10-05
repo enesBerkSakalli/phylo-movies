@@ -9,6 +9,7 @@ import { PlaybackSpeedControl } from './PlaybackSpeedControl/PlaybackSpeedContro
 import { TimelineStatusStrip } from './TimelineStatusStrip.jsx';
 import { usePlaybackShortcuts } from './playbackShortcuts.js';
 import { TimelineSegmentTooltip } from '../timeline/TimelineSegmentTooltip.jsx';
+import { TimelineController } from '../../timeline/timelineController.js';
 import {
   selectAnimationSpeed,
   selectBackward,
@@ -19,7 +20,6 @@ import {
   selectHoveredSegmentPosition,
   selectHasMsa,
   selectLeafNamesByIndex,
-  selectMovieTimelineManager,
   selectOpenMsaViewer,
   selectPairChanges,
   selectPlaying,
@@ -55,7 +55,6 @@ export function MoviePlayerBar() {
   const selectedSegmentIndex = useAppStore(selectSelectedTimelineSegmentIndex);
 
   const timeline = useAppStore(selectTimeline);
-  const movieTimelineManager = useAppStore(selectMovieTimelineManager);
   const timelineHostRef = useRef(null);
   const playerBarRef = useRef(null);
 
@@ -69,14 +68,13 @@ export function MoviePlayerBar() {
 
   useEffect(() => {
     const container = timelineHostRef.current;
-    if (!movieTimelineManager || !container) return;
+    if (!timeline || !container) return;
 
-    movieTimelineManager.mount(container);
+    const controller = new TimelineController(useAppStore);
+    controller.mount(container);
 
-    return () => {
-      movieTimelineManager.unmount();
-    };
-  }, [movieTimelineManager]);
+    return () => controller.unmount();
+  }, [timeline]);
 
   useEffect(() => {
     const playerBar = playerBarRef.current;

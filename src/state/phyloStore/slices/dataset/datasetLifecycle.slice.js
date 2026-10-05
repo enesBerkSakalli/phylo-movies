@@ -1,4 +1,3 @@
-import { MovieTimelineManager } from '../../../../timeline/core/MovieTimelineManager.js';
 import { buildTimeline } from '../../../../timeline/timeline.js';
 import { createTreeSource } from '../../../../domain/backend/treeSource.js';
 import { buildPairChangeProfile } from '../../../../timeline/data/pairChangeProfile.js';
@@ -6,15 +5,12 @@ import { createTreeDatasetInitialState } from './treeDataset.slice.js';
 
 const LARGE_DATASET_LABEL_TAXA_THRESHOLD = 300;
 
-export const createDatasetLifecycleSlice = (set, get, store) => ({
+export const createDatasetLifecycleSlice = (set, get) => ({
   // ==========================================================================
   // ACTIONS: Reset
   // ==========================================================================
   reset: () => {
     const { resetMsaData, resetColors, resetPlayback, resetControllers, resetComparison } = get();
-    const existingManager = get().movieTimelineManager;
-    existingManager?.destroy();
-
     resetControllers();
     resetPlayback();
     resetMsaData();
@@ -25,7 +21,6 @@ export const createDatasetLifecycleSlice = (set, get, store) => ({
       ...createTreeDatasetInitialState(),
       datasetVersion: (get().datasetVersion ?? 0) + 1,
       timeline: null,
-      movieTimelineManager: null,
       timelineCursor: null,
       selectedTimelineSegmentIndex: null,
     });
@@ -64,15 +59,10 @@ export const createDatasetLifecycleSlice = (set, get, store) => ({
     const datasetProvenance = movieData.dataset_provenance ?? null;
     const datasetVersion = (get().datasetVersion ?? 0) + 1;
 
-    const existingManager = get().movieTimelineManager;
-    existingManager?.destroy();
-
     const timeline = buildTimeline(movieData);
-    const movieTimelineManager = new MovieTimelineManager(timeline, store);
 
     set({
       timeline,
-      movieTimelineManager,
       timelineCursor: timeline.cursorForFrame(0),
       treeList,
       treeSource,

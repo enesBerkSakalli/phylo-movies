@@ -95,7 +95,7 @@ function restoreDeckGLMocks() {
 
 function clearTimelineModuleCache() {
   [
-    'src/timeline/core/MovieTimelineManager.js',
+    'src/timeline/timelineController.js',
     'src/timeline/renderers/DeckTimelineRenderer.js',
     'src/timeline/utils/layerFactories.js',
   ].forEach((modulePath) => {

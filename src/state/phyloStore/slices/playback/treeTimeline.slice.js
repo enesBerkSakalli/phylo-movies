@@ -30,24 +30,7 @@ export const createTimelineSlice = (set, get) => ({
   // ==========================================================================
   // ACTIONS: Timeline Controls
   // ==========================================================================
-  zoomInTimeline: () => {
-    callTimelineManager(get, 'zoomInTimeline', 'zoomIn');
-  },
-
-  zoomOutTimeline: () => {
-    callTimelineManager(get, 'zoomOutTimeline', 'zoomOut');
-  },
-
-  fitTimeline: () => {
-    callTimelineManager(get, 'fitTimeline', 'fit');
-  },
+  zoomInTimeline: () => get().timelineView?.zoomIn(),
+  zoomOutTimeline: () => get().timelineView?.zoomOut(),
+  fitTimeline: () => get().timelineView?.fit(),
 });
-
-function callTimelineManager(get, actionName, managerMethodName) {
-  try {
-    const manager = get().movieTimelineManager;
-    manager?.[managerMethodName]?.();
-  } catch (e) {
-    console.warn(`[Store] ${actionName} failed:`, e);
-  }
-}

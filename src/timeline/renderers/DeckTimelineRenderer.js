@@ -350,7 +350,7 @@ export class DeckTimelineRenderer {
    * Zooms in by reducing the visible time range, centered on current view.
    * @param {number} pct - Zoom factor (0.2 = 20% reduction in visible span)
    */
-  zoomIn(pct) {
+  zoomIn(pct = 0.2) {
     const span = this._rangeEnd - this._rangeStart;
     this._setZoomedSpan(Math.max(1, span * (1 - pct)));
   }
@@ -359,7 +359,7 @@ export class DeckTimelineRenderer {
    * Zooms out by expanding the visible time range, centered on current view.
    * @param {number} pct - Zoom factor (0.2 = 20% increase in visible span)
    */
-  zoomOut(pct) {
+  zoomOut(pct = 0.2) {
     const span = this._rangeEnd - this._rangeStart;
     this._setZoomedSpan(Math.min(this._totalDuration, span * (1 + pct)));
   }

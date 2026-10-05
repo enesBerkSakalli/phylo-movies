@@ -16,11 +16,11 @@ global.cancelAnimationFrame = dom.window.cancelAnimationFrame || ((id) => clearT
 installDeckGLMocks();
 clearTimelineModuleCache();
 
-const { MovieTimelineManager } = require('../../../src/timeline/core/MovieTimelineManager.js');
+const { TimelineController } = require('../../../src/timeline/timelineController.js');
 const { buildTimeline } = require('../../../src/timeline/timeline.js');
 const { AnimationRunner } = require('../../../src/treeVisualisation/systems/AnimationRunner.js');
 const { TransitionFrame } = require('../../../src/timeline/time/TransitionFrame.js');
-const { useAppStore } = require('../../../src/state/phyloStore/store.js');
+const { selectInputFrameIndices, useAppStore } = require('../../../src/state/phyloStore/store.js');
 
 function loadMovieData() {
   const filePath = path.join(
@@ -93,70 +93,67 @@ function createSemanticRunnerState(trees, { stepDurationMs = 2000, ...overrides 
   };
 }
 
-describe('MovieTimelineManager lifecycle', () => {
+const originalEnsureTreesHydrated = useAppStore.getState().ensureTreesHydrated;
+const originalUpdateColorManagerForIndex = useAppStore.getState().updateColorManagerForIndex;
+
+const resetStore = () =>
+  useAppStore.setState({
+    playing: false,
+    timelineCursor: null,
+    animationStartTime: null,
+    animationSpeed: 1,
+    frameIndex: 0,
+    treeList: [],
+    treeController: null,
+    comparisonMode: false,
+    timeline: null,
+    timelineView: null,
+    isScrubbing: false,
+    hoveredSegmentIndex: null,
+    hoveredSegmentData: null,
+    hoveredSegmentPosition: null,
+    selectedTimelineSegmentIndex: null,
+    ensureTreesHydrated: originalEnsureTreesHydrated,
+    updateColorManagerForIndex: originalUpdateColorManagerForIndex,
+  });
+
+function flushMicrotasks() {
+  return new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
+}
+
+describe('TimelineController', () => {
   let movieData;
-  const createManager = () => new MovieTimelineManager(buildTimeline(movieData), useAppStore);
+  let timeline;
+  const createController = () => new TimelineController(useAppStore);
 
   before(() => {
     movieData = loadMovieData();
+    timeline = buildTimeline(movieData);
   });
 
-  afterEach(() => {
+  beforeEach(() => {
     useAppStore.setState({
-      playing: false,
-      timelineCursor: null,
-      animationStartTime: null,
-      animationSpeed: 1,
-      frameIndex: 0,
-      treeList: [],
-      treeController: null,
-      timeline: null,
-      movieTimelineManager: null,
-      hoveredSegmentIndex: null,
-      hoveredSegmentData: null,
-      hoveredSegmentPosition: null,
-      selectedTimelineSegmentIndex: null,
+      timeline,
+      treeList: movieData.interpolated_trees,
+      timelineFrames: movieData.frames,
     });
   });
 
+  afterEach(resetStore);
+
   it('can exist before a host container is available', () => {
-    const manager = createManager();
+    const controller = createController();
 
-    expect(manager.timeline).to.equal(null);
-    expect(manager.container).to.equal(null);
-
-    manager.destroy();
-  });
-
-  it('rebinds scrubber ownership when the tree controller changes', () => {
-    const firstController = {};
-    const secondController = {};
-    useAppStore.setState({ treeController: firstController });
-    const manager = createManager();
-    const firstScrubber = manager.scrubberAPI;
-
-    expect(firstScrubber.treeController).to.equal(firstController);
-
-    useAppStore.setState({ treeController: secondController });
-    const secondScrubber = manager.scrubberAPI;
-
-    expect(firstScrubber.treeController).to.equal(null);
-    expect(secondScrubber.treeController).to.equal(secondController);
-
-    useAppStore.setState({ treeController: null });
-
-    expect(secondScrubber.treeController).to.equal(null);
-    expect(manager.scrubberAPI).to.equal(null);
-
-    manager.destroy();
+    expect(controller.view).to.equal(null);
+    expect(controller.container).to.equal(null);
   });
 
   it('resolves timeline frames through hydration instead of treating sparse treeList as invalid', () => {
     const treeList = new Array(movieData.interpolated_trees.length);
     const hydratedIndices = [];
-    const timeline = buildTimeline(movieData);
     useAppStore.setState({
-      timeline,
       treeList,
       ensureTreesHydrated: (indices) => {
         hydratedIndices.push(indices);
@@ -179,9 +176,7 @@ describe('MovieTimelineManager lifecycle', () => {
     const treeList = new Array(movieData.interpolated_trees.length);
     treeList[0] = movieData.interpolated_trees[0];
     const hydratedIndices = [];
-    const timeline = buildTimeline(movieData);
     useAppStore.setState({
-      timeline,
       treeList,
       ensureTreesHydrated: (indices) => {
         hydratedIndices.push(indices);
@@ -202,85 +197,96 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('mounts into an explicit host and unmounts cleanly', async () => {
-    const manager = createManager();
+    const controller = createController();
     const host = makeContainer();
 
-    await manager.mount(host);
+    await controller.mount(host);
 
-    expect(manager.container).to.equal(host);
-    expect(manager.timeline).to.exist;
-    expect(manager.timeline.container).to.equal(host);
+    expect(controller.container).to.equal(host);
+    expect(controller.view.container).to.equal(host);
+    expect(useAppStore.getState().timelineView).to.equal(controller.view);
     expect(host.children.length).to.equal(1);
 
-    manager.unmount();
+    controller.unmount();
 
-    expect(manager.timeline).to.equal(null);
-    expect(manager.container).to.equal(null);
+    expect(controller.view).to.equal(null);
+    expect(controller.container).to.equal(null);
+    expect(useAppStore.getState().timelineView).to.equal(null);
     expect(host.children.length).to.equal(0);
-
-    manager.destroy();
   });
 
-  it('keeps timeline viewport controls behind the manager API', () => {
-    const manager = createManager();
-    const calls = [];
+  it('keeps one strip when the same host is mounted twice', async () => {
+    const controller = createController();
+    const host = makeContainer();
 
-    manager.timeline = {
-      zoomIn: (factor) => calls.push(['zoomIn', factor]),
-      zoomOut: (factor) => calls.push(['zoomOut', factor]),
-      fit: () => calls.push(['fit']),
-      destroy: () => calls.push(['destroy']),
-    };
+    const view = await controller.mount(host);
+    await controller.mount(host);
 
-    manager.zoomIn();
-    manager.zoomOut();
-    manager.fit();
+    expect(controller.view).to.equal(view);
+    expect(host.children.length).to.equal(1);
 
-    expect(calls).to.deep.equal([['zoomIn', 0.2], ['zoomOut', 0.2], ['fit']]);
-
-    manager.timeline = null;
-    manager.destroy();
-  });
-
-  it('routes store timeline controls through manager methods', () => {
-    const calls = [];
-    useAppStore.setState({
-      movieTimelineManager: {
-        zoomIn: () => calls.push('zoomIn'),
-        zoomOut: () => calls.push('zoomOut'),
-        fit: () => calls.push('fit'),
-      },
-    });
-
-    const store = useAppStore.getState();
-    store.zoomInTimeline();
-    store.zoomOutTimeline();
-    store.fitTimeline();
-
-    expect(calls).to.deep.equal(['zoomIn', 'zoomOut', 'fit']);
+    controller.unmount();
   });
 
   it('remounts into a new host without leaving stale DOM behind', async () => {
-    const manager = createManager();
+    const controller = createController();
     const firstHost = makeContainer(640, 60);
     const secondHost = makeContainer(720, 90);
 
-    await manager.mount(firstHost);
+    await controller.mount(firstHost);
     expect(firstHost.children.length).to.equal(1);
 
-    await manager.mount(secondHost);
+    await controller.mount(secondHost);
 
     expect(firstHost.children.length).to.equal(0);
     expect(secondHost.children.length).to.equal(1);
-    expect(manager.container).to.equal(secondHost);
-    expect(manager.timeline).to.exist;
-    expect(manager.timeline.container).to.equal(secondHost);
+    expect(controller.container).to.equal(secondHost);
+    expect(controller.view.container).to.equal(secondHost);
 
-    manager.destroy();
+    controller.unmount();
+  });
+
+  it('drops a renderer that finishes loading after the strip was unmounted', async () => {
+    const controller = createController();
+    const host = makeContainer();
+
+    const pending = controller.mount(host);
+    controller.unmount();
+
+    expect(await pending).to.equal(null);
+    expect(controller.view).to.equal(null);
+    expect(useAppStore.getState().timelineView).to.equal(null);
+    expect(host.children.length).to.equal(0);
+  });
+
+  it('treats a second unmount as a no-op', async () => {
+    const controller = createController();
+    await controller.mount(makeContainer());
+
+    controller.unmount();
+
+    expect(() => controller.unmount()).to.not.throw();
+    expect(controller.view).to.equal(null);
+    expect(controller.container).to.equal(null);
+  });
+
+  it('routes the store zoom controls to the mounted strip', async () => {
+    const controller = createController();
+    await controller.mount(makeContainer());
+    const span = () => controller.view._rangeEnd - controller.view._rangeStart;
+
+    useAppStore.getState().zoomInTimeline();
+    expect(span()).to.be.closeTo(timeline.totalDuration * 0.8, 1e-6);
+
+    useAppStore.getState().fitTimeline();
+    expect(span()).to.equal(timeline.totalDuration);
+
+    controller.unmount();
+    expect(() => useAppStore.getState().zoomInTimeline()).to.not.throw();
   });
 
   it('clears transient tooltip and hover state on unmount', () => {
-    const manager = createManager();
+    const controller = createController();
     const host = makeContainer();
 
     useAppStore.setState({
@@ -289,22 +295,19 @@ describe('MovieTimelineManager lifecycle', () => {
       hoveredSegmentPosition: { x: 120, y: 40 },
     });
 
-    manager.mount(host);
-    manager.unmount();
+    controller.mount(host);
+    controller.unmount();
 
     const state = useAppStore.getState();
     expect(state.hoveredSegmentIndex).to.equal(null);
     expect(state.hoveredSegmentData).to.equal(null);
     expect(state.hoveredSegmentPosition).to.equal(null);
-
-    manager.destroy();
   });
 
   it('stores clicked timeline selection by segment index only', () => {
-    const manager = createManager();
-    const selectedSegment = manager.segments[1];
+    const controller = createController();
 
-    manager._onTimelineClick({
+    controller.select({
       segmentIndex: 1,
       ms: 0,
       segment: { stale: 'renderer payload should not be stored' },
@@ -315,9 +318,6 @@ describe('MovieTimelineManager lifecycle', () => {
     expect(Object.prototype.hasOwnProperty.call(state, 'selectedTimelineSegmentData')).to.equal(
       false
     );
-    expect(manager.segments[state.selectedTimelineSegmentIndex]).to.equal(selectedSegment);
-
-    manager.destroy();
   });
 
   it('clears selected timeline segment on dataset reset', () => {
@@ -333,31 +333,27 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('keeps clicked inspector selection visually pinned while cursor sync changes current position', async () => {
-    const manager = createManager();
-    const host = makeContainer();
-    const cursor = manager.timelineData.cursorAt(0.9 * manager.timelineData.totalDuration);
+    const controller = createController();
+    const cursor = timeline.cursorAt(0.9 * timeline.totalDuration);
 
     useAppStore.setState({
-      treeList: movieData.interpolated_trees,
       selectedTimelineSegmentIndex: 0,
       playing: true,
       timelineCursor: cursor,
     });
 
-    await manager.mount(host);
-    manager.updateCurrentPosition();
+    await controller.mount(makeContainer());
+    controller.syncPosition();
 
-    expect(manager.timeline._selectedSegmentIndex).to.equal(0);
+    expect(controller.view._selectedSegmentIndex).to.equal(0);
     expect(useAppStore.getState().selectedTimelineSegmentIndex).to.equal(0);
 
-    manager.destroy();
+    controller.unmount();
   });
 
   it('restores scrubber position and inspected segment selection on remount from store state', async () => {
-    const manager = createManager();
-    const firstHost = makeContainer(640, 60);
-    const secondHost = makeContainer(640, 60);
-    const cursor = manager.timelineData.cursorAt(0.6 * manager.timelineData.totalDuration);
+    const controller = createController();
+    const cursor = timeline.cursorAt(0.6 * timeline.totalDuration);
 
     useAppStore.setState({
       playing: false,
@@ -365,38 +361,519 @@ describe('MovieTimelineManager lifecycle', () => {
       selectedTimelineSegmentIndex: 2,
     });
 
-    await manager.mount(firstHost);
+    await controller.mount(makeContainer(640, 60));
 
-    const firstScrubberMs = manager.timeline._scrubberMs;
-    const firstSelectedSegmentIndex = manager.timeline._selectedSegmentIndex;
+    const firstScrubberMs = controller.view._scrubberMs;
+    expect(firstScrubberMs).to.equal(cursor.movieTimeMs);
+    expect(controller.view._selectedSegmentIndex).to.equal(2);
 
-    expect(firstScrubberMs).to.be.a('number');
-    expect(firstSelectedSegmentIndex).to.equal(2);
+    controller.unmount();
+    await controller.mount(makeContainer(640, 60));
 
-    manager.unmount();
-    await manager.mount(secondHost);
+    expect(controller.view._scrubberMs).to.equal(firstScrubberMs);
+    expect(controller.view._selectedSegmentIndex).to.equal(2);
 
-    expect(manager.timeline._scrubberMs).to.equal(firstScrubberMs);
-    expect(manager.timeline._selectedSegmentIndex).to.equal(firstSelectedSegmentIndex);
-
-    manager.destroy();
+    controller.unmount();
   });
 
   it('syncs renderer inspected selection when the store selection is cleared', async () => {
-    const manager = createManager();
-    const host = makeContainer();
+    const controller = createController();
 
     useAppStore.setState({ selectedTimelineSegmentIndex: 1 });
-    await manager.mount(host);
+    await controller.mount(makeContainer());
 
-    expect(manager.timeline._selectedSegmentIndex).to.equal(1);
+    expect(controller.view._selectedSegmentIndex).to.equal(1);
 
     useAppStore.setState({ selectedTimelineSegmentIndex: null });
 
-    expect(manager.timeline._selectedSegmentIndex).to.equal(null);
+    expect(controller.view._selectedSegmentIndex).to.equal(null);
 
-    manager.destroy();
+    controller.unmount();
   });
+
+  it('coalesces repeated position updates into one pending frame', () => {
+    const previousRequestAnimationFrame = global.requestAnimationFrame;
+    const previousCancelAnimationFrame = global.cancelAnimationFrame;
+    const frameCallbacks = [];
+    let scheduledCount = 0;
+
+    global.requestAnimationFrame = (callback) => {
+      scheduledCount += 1;
+      frameCallbacks.push(callback);
+      return scheduledCount;
+    };
+    global.cancelAnimationFrame = () => {};
+
+    try {
+      const controller = createController();
+
+      controller.schedulePosition();
+      controller.schedulePosition();
+      controller.schedulePosition();
+
+      expect(scheduledCount).to.equal(1);
+
+      frameCallbacks.pop()(1_000);
+      scheduledCount = 0;
+
+      controller.schedulePosition();
+
+      expect(scheduledCount).to.equal(1);
+    } finally {
+      global.requestAnimationFrame = previousRequestAnimationFrame;
+      global.cancelAnimationFrame = previousCancelAnimationFrame;
+    }
+  });
+
+  it('binds renderer scrub state to the store', async () => {
+    const controller = createController();
+
+    await controller.mount(makeContainer());
+    expect(controller.view.isScrubbing()).to.equal(false);
+
+    controller.startScrub(0);
+    expect(controller.view.isScrubbing()).to.equal(true);
+
+    controller.unmount();
+    expect(useAppStore.getState().isScrubbing).to.equal(false);
+  });
+
+  describe('clicking the strip', () => {
+    const scheduledFrames = [];
+    let originalRequestAnimationFrame;
+
+    beforeEach(() => {
+      originalRequestAnimationFrame = global.requestAnimationFrame;
+      global.requestAnimationFrame = (cb) => scheduledFrames.push(cb);
+    });
+
+    afterEach(() => {
+      scheduledFrames.length = 0;
+      global.requestAnimationFrame = originalRequestAnimationFrame;
+    });
+
+    // A store double: just what select() reads and writes.
+    function makeStore({ segments, cursorAt, frameIndex = 0 }) {
+      const state = {
+        frameIndex,
+        timeline: { segments, cumulativeDurations: segments.map(() => 3000), cursorAt },
+        timelineCursor: { movieTimeMs: 1234 },
+        goToPositionCalls: [],
+        setClipboardTreeIndexCalls: [],
+        selected: [],
+        goToPosition: (position, direction, options) =>
+          state.goToPositionCalls.push({ position, direction, options }),
+        setClipboardTreeIndex: (index) => state.setClipboardTreeIndexCalls.push(index),
+        setSelectedTimelineSegment: (index) => state.selected.push(index),
+      };
+      return { getState: () => state };
+    }
+
+    const transition = (firstFrame, lastFrame) => ({
+      isInputTreeSegment: false,
+      firstFrame,
+      lastFrame,
+    });
+
+    it('pins a clicked input tree and moves to it', () => {
+      const store = makeStore({
+        segments: [{ isInputTreeSegment: true, firstFrame: 4, lastFrame: 4 }],
+        frameIndex: 1,
+      });
+      const controller = new TimelineController(store);
+      const setCustomTimeCalls = [];
+      controller.view = { setCustomTime: (ms) => setCustomTimeCalls.push(ms) };
+
+      controller.select({ segmentIndex: 0 });
+
+      const state = store.getState();
+      expect(state.selected).to.deep.equal([0]);
+      expect(state.setClipboardTreeIndexCalls).to.deep.equal([4]);
+      expect(state.goToPositionCalls).to.deep.equal([
+        { position: 4, direction: 'forward', options: undefined },
+      ]);
+      expect(scheduledFrames).to.have.length(1);
+
+      scheduledFrames[0]();
+      expect(setCustomTimeCalls).to.deep.equal([1234]);
+    });
+
+    it('navigates to transition segments without updating the clipboard', () => {
+      const store = makeStore({ segments: [transition(2, 2)], frameIndex: 5 });
+
+      new TimelineController(store).select({ segmentIndex: 0 });
+
+      expect(store.getState().setClipboardTreeIndexCalls).to.deep.equal([]);
+      expect(store.getState().goToPositionCalls).to.deep.equal([
+        { position: 2, direction: 'backward', options: undefined },
+      ]);
+    });
+
+    it('clears the selection and goes nowhere for a click outside any segment', () => {
+      const store = makeStore({ segments: [transition(2, 2)] });
+
+      new TimelineController(store).select({ segmentIndex: null });
+
+      expect(store.getState().selected).to.deep.equal([null]);
+      expect(store.getState().goToPositionCalls).to.deep.equal([]);
+    });
+
+    it('uses click time to resolve the nearest transition frame', () => {
+      const store = makeStore({
+        segments: [transition(2, 4)],
+        cursorAt: (movieTimeMs) => ({
+          frameIndex: movieTimeMs < 2250 ? 3 : 4,
+          segmentIndex: 0,
+          movieTimeMs,
+        }),
+      });
+
+      new TimelineController(store).select({ segmentIndex: 0, ms: 2600 });
+
+      expect(store.getState().goToPositionCalls).to.deep.equal([
+        { position: 4, direction: 'forward', options: { movieTimeMs: 2600 } },
+      ]);
+    });
+
+    it('keeps a boundary click inside the clicked segment', () => {
+      const asked = [];
+      const store = makeStore({
+        segments: [transition(2, 4)],
+        cursorAt: (movieTimeMs) => {
+          asked.push(movieTimeMs);
+          return { frameIndex: 4, segmentIndex: 0, movieTimeMs };
+        },
+      });
+
+      new TimelineController(store).select({ segmentIndex: 0, ms: 9999 });
+
+      expect(asked).to.deep.equal([2999]);
+    });
+
+    it('uses jump direction and preserves exact timeline position when clicking the already active tree', () => {
+      const store = makeStore({
+        segments: [transition(2, 4)],
+        frameIndex: 3,
+        cursorAt: () => ({ frameIndex: 3, segmentIndex: 0, movieTimeMs: 1500 }),
+      });
+
+      new TimelineController(store).select({ segmentIndex: 0, ms: 1500 });
+
+      expect(store.getState().goToPositionCalls).to.deep.equal([
+        { position: 3, direction: 'jump', options: { movieTimeMs: 1500 } },
+      ]);
+    });
+
+    it('throws when a timed click resolves outside its segment', () => {
+      const store = makeStore({
+        segments: [transition(2, 3)],
+        cursorAt: () => ({ frameIndex: 3, segmentIndex: 1, movieTimeMs: 1000 }),
+      });
+
+      expect(() => new TimelineController(store).select({ segmentIndex: 0, ms: 500 })).to.throw(
+        /outside its segment/
+      );
+      expect(store.getState().goToPositionCalls).to.deep.equal([]);
+    });
+  });
+
+  describe('scrubbing', () => {
+    // Two motions of the movie, and a time inside one of them.
+    const [first, second] = buildTimeline(loadMovieData()).steps.filter(
+      (step) => step.from !== step.to
+    );
+    const at = (step, progress) => step.start + progress * (step.end - step.start);
+
+    let originalRequestAnimationFrame;
+    let originalCancelAnimationFrame;
+
+    beforeEach(() => {
+      originalRequestAnimationFrame = global.requestAnimationFrame;
+      originalCancelAnimationFrame = global.cancelAnimationFrame;
+    });
+
+    afterEach(() => {
+      global.requestAnimationFrame = originalRequestAnimationFrame;
+      global.cancelAnimationFrame = originalCancelAnimationFrame;
+    });
+
+    it('does not block the strip on slow tree renders', async () => {
+      const renders = [];
+      useAppStore.setState({
+        treeController: {
+          renderAllElements: () => {},
+          renderComparisonAwareScrubFrame: (...args) => {
+            renders.push(args);
+            return new Promise(() => {});
+          },
+        },
+      });
+      const controller = createController();
+
+      controller.startScrub(0);
+      controller.lastScrubAt = -1000;
+      controller.scrub(at(first, 0.5));
+      await flushMicrotasks();
+
+      expect(renders).to.have.length(1);
+      expect(renders[0][3]).to.include({ fromTreeIndex: first.from, toTreeIndex: first.to });
+    });
+
+    it('cancels a scheduled stale scrub update before flushing the final position', async () => {
+      let rafCallback = null;
+      let cancelledFrameId = null;
+      global.requestAnimationFrame = (callback) => {
+        rafCallback = callback;
+        return 7;
+      };
+      global.cancelAnimationFrame = (frameId) => {
+        cancelledFrameId = frameId;
+      };
+      const renderedTimes = [];
+      useAppStore.setState({
+        treeController: {
+          renderAllElements: () => {},
+          renderComparisonAwareScrubFrame: async () => {
+            renderedTimes.push(useAppStore.getState().timelineCursor.movieTimeMs);
+          },
+        },
+      });
+      const controller = createController();
+
+      controller.startScrub(0);
+      controller.lastScrubAt = performance.now();
+      controller.scrub(at(first, 0.2));
+
+      expect(rafCallback).to.be.a('function');
+      expect(renderedTimes).to.deep.equal([]);
+
+      await controller.endScrub(at(second, 0.5));
+
+      expect(cancelledFrameId).to.equal(7);
+      expect(renderedTimes).to.deep.equal([at(second, 0.5)]);
+      expect(useAppStore.getState().timelineCursor.movieTimeMs).to.equal(at(second, 0.5));
+    });
+
+    it('ends the scrub before the final cursor write so the tree controller renders it', async () => {
+      const scrubbingAtWrite = [];
+      const unsubscribe = useAppStore.subscribe((state, prevState) => {
+        if (state.timelineCursor !== prevState.timelineCursor) {
+          scrubbingAtWrite.push(state.isScrubbing);
+        }
+      });
+      const controller = createController();
+
+      controller.startScrub(0);
+      await controller.endScrub(at(second, 0.5));
+      unsubscribe();
+
+      expect(scrubbingAtWrite).to.deep.equal([false]);
+    });
+
+    it('serializes scrub renders and collapses pending updates to the latest movie time', async () => {
+      const resolvers = [];
+      const renderCalls = [];
+      let activeRenderCount = 0;
+      let maxActiveRenderCount = 0;
+      useAppStore.setState({
+        treeController: {
+          renderAllElements: () => {},
+          renderComparisonAwareScrubFrame: async (fromTree, toTree, timeFactor, options) => {
+            activeRenderCount += 1;
+            maxActiveRenderCount = Math.max(maxActiveRenderCount, activeRenderCount);
+            renderCalls.push({ fromTree, toTree, timeFactor, options });
+
+            await new Promise((resolve) => {
+              resolvers.push(() => {
+                activeRenderCount -= 1;
+                resolve();
+              });
+            });
+          },
+        },
+      });
+      const controller = createController();
+
+      const firstUpdate = controller.renderScrub(at(first, 0.4));
+      const secondUpdate = controller.renderScrub(at(second, 0.2));
+      const thirdUpdate = controller.renderScrub(at(second, 0.6));
+
+      await flushMicrotasks();
+
+      expect(renderCalls).to.have.length(1);
+      expect(maxActiveRenderCount).to.equal(1);
+
+      resolvers.shift()();
+      await flushMicrotasks();
+
+      expect(renderCalls).to.have.length(2);
+      expect(maxActiveRenderCount).to.equal(1);
+      expect(renderCalls[1].options.fromTreeIndex).to.equal(second.from);
+      expect(renderCalls[1].options.toTreeIndex).to.equal(second.to);
+      expect(renderCalls[1].timeFactor).to.be.closeTo(0.6, 1e-6);
+
+      resolvers.shift()();
+      await Promise.all([firstUpdate, secondUpdate, thirdUpdate]);
+
+      const { timelineCursor, frameIndex } = useAppStore.getState();
+      expect(timelineCursor.movieTimeMs).to.equal(at(second, 0.6));
+      expect(frameIndex).to.equal(second.to);
+    });
+
+    it('uses target-frame highlights as soon as scrubbed transition motion begins', async () => {
+      const highlightIndices = [];
+      useAppStore.setState({
+        treeController: {
+          renderAllElements: () => {},
+          renderComparisonAwareScrubFrame: async () => {},
+        },
+        updateColorManagerForIndex: (treeIndex) => highlightIndices.push(treeIndex),
+      });
+      const controller = createController();
+
+      await controller.renderScrub(at(first, 0.2));
+
+      expect(highlightIndices).to.deep.equal([first.to]);
+    });
+
+    it('hydrates missing transition-frame trees before rendering scrub frames', async () => {
+      const [hydratedSource, hydratedTarget] = movieData.interpolated_trees;
+      const hydratedIndices = [];
+      const renderCalls = [];
+      useAppStore.setState({
+        treeList: [],
+        treeController: {
+          renderAllElements: () => {},
+          renderComparisonAwareScrubFrame: async (...args) => {
+            renderCalls.push(args);
+          },
+        },
+        ensureTreesHydrated: (indices) => {
+          hydratedIndices.push(indices);
+          return [hydratedSource, hydratedTarget];
+        },
+      });
+      const controller = createController();
+
+      await controller.renderScrub(at(first, 0.5));
+
+      expect(hydratedIndices).to.deep.equal([[first.from, first.to]]);
+      expect(renderCalls[0][0]).to.equal(hydratedSource);
+      expect(renderCalls[0][1]).to.equal(hydratedTarget);
+    });
+
+    it('flushes the latest requested movie time before ending a scrub', async () => {
+      const resolvers = [];
+      useAppStore.setState({
+        treeController: {
+          renderAllElements: () => {},
+          renderComparisonAwareScrubFrame: () =>
+            new Promise((resolve) => {
+              resolvers.push(resolve);
+            }),
+        },
+      });
+      const controller = createController();
+      controller.startScrub(0);
+
+      const updatePromise = controller.renderScrub(at(first, 0.4));
+      const endPromise = controller.endScrub(at(second, 0.8));
+
+      await flushMicrotasks();
+
+      expect(resolvers).to.have.length(1);
+      resolvers.shift()();
+      await flushMicrotasks();
+      expect(resolvers).to.have.length(1);
+
+      resolvers.shift()();
+      await updatePromise;
+      await endPromise;
+
+      const { timelineCursor, isScrubbing } = useAppStore.getState();
+      expect(timelineCursor.movieTimeMs).to.equal(at(second, 0.8));
+      expect(isScrubbing).to.equal(false);
+    });
+
+    it('reports scrub render failures without throwing away the scrub session', async () => {
+      const renderError = new Error('render failed');
+      const originalError = console.error;
+      const errorCalls = [];
+      console.error = (...args) => {
+        errorCalls.push(args);
+      };
+
+      try {
+        useAppStore.setState({
+          treeController: {
+            renderAllElements: () => {},
+            renderComparisonAwareScrubFrame: async () => {
+              throw renderError;
+            },
+          },
+        });
+        const controller = createController();
+        controller.startScrub(0);
+
+        await controller.renderScrub(at(first, 0.5));
+        await controller.endScrub(at(first, 0.5));
+
+        expect(errorCalls).to.have.length(1);
+        expect(errorCalls[0][0]).to.equal('[TimelineController] Scrub update failed:');
+        expect(errorCalls[0][1]).to.deep.include({
+          movieTimeMs: at(first, 0.5),
+          error: renderError,
+        });
+        expect(useAppStore.getState().timelineCursor.movieTimeMs).to.equal(at(first, 0.5));
+      } finally {
+        console.error = originalError;
+      }
+    });
+
+    it('uses timeline frames for comparison scrub input trees', async () => {
+      const renderCalls = [];
+      useAppStore.setState({
+        comparisonMode: true,
+        treeController: {
+          renderAllElements: () => {},
+          renderComparisonAwareScrubFrame: async (...args) => {
+            renderCalls.push(args);
+          },
+        },
+      });
+      const controller = createController();
+
+      await controller.renderScrub(at(first, 0.4));
+
+      const rightTreeIndex = selectInputFrameIndices(useAppStore.getState()).find(
+        (index) => index > first.from
+      );
+      expect(rightTreeIndex).to.be.a('number');
+      expect(renderCalls[0][3]).to.include({ comparisonMode: true, rightTreeIndex });
+    });
+
+    it('does not fall back to linear interpolation without a timeline transition frame', async () => {
+      const renderCalls = [];
+      useAppStore.setState({
+        timeline: null,
+        treeController: {
+          renderAllElements: () => {},
+          renderComparisonAwareScrubFrame: async (...args) => {
+            renderCalls.push(args);
+          },
+        },
+      });
+      const controller = createController();
+
+      await controller.renderScrub(at(first, 0.5));
+
+      expect(renderCalls).to.deep.equal([]);
+    });
+  });
+});
+
+describe('timeline playback', () => {
+  afterEach(resetStore);
 
   it('resumes from the exact semantic movie position after scrubbing', () => {
     const previousPerformance = global.performance;
@@ -891,72 +1368,5 @@ describe('MovieTimelineManager lifecycle', () => {
       global.requestAnimationFrame = previousRequestAnimationFrame;
       global.cancelAnimationFrame = previousCancelAnimationFrame;
     }
-  });
-
-  it('coalesces repeated position updates into one pending frame', () => {
-    const previousRequestAnimationFrame = global.requestAnimationFrame;
-    const previousCancelAnimationFrame = global.cancelAnimationFrame;
-    const frameCallbacks = [];
-    let nextFrameId = 1;
-    let scheduledCount = 0;
-
-    global.requestAnimationFrame = (callback) => {
-      scheduledCount += 1;
-      frameCallbacks.push(callback);
-      return nextFrameId++;
-    };
-    global.cancelAnimationFrame = () => {};
-
-    try {
-      const manager = createManager();
-      frameCallbacks.pop()?.(0);
-      scheduledCount = 0;
-
-      manager._scheduleCurrentPositionUpdate();
-      manager._scheduleCurrentPositionUpdate();
-      manager._scheduleCurrentPositionUpdate();
-
-      expect(scheduledCount).to.equal(1);
-
-      frameCallbacks.pop()?.(1_000);
-      scheduledCount = 0;
-
-      manager._scheduleCurrentPositionUpdate();
-
-      expect(scheduledCount).to.equal(1);
-
-      manager.destroy();
-    } finally {
-      global.requestAnimationFrame = previousRequestAnimationFrame;
-      global.cancelAnimationFrame = previousCancelAnimationFrame;
-    }
-  });
-
-  it('binds renderer scrub state to the scrub controller', async () => {
-    const manager = createManager();
-    const host = makeContainer();
-
-    await manager.mount(host);
-    expect(manager.timeline.isScrubbing()).to.equal(false);
-
-    await manager.scrubController.startScrubbing(0);
-    expect(manager.timeline.isScrubbing()).to.equal(true);
-
-    manager.scrubController.resetOnUnmount();
-    expect(manager.timeline.isScrubbing()).to.equal(false);
-
-    manager.destroy();
-  });
-
-  it('treats unmount after destroy as a no-op', () => {
-    const manager = createManager();
-    const host = makeContainer();
-
-    manager.mount(host);
-    manager.destroy();
-
-    expect(() => manager.unmount()).to.not.throw();
-    expect(manager.timeline).to.equal(null);
-    expect(manager.container).to.equal(null);
   });
 });

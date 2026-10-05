@@ -29,9 +29,9 @@ export * from './selectors/treeSelectors.js';
  * @type {import('zustand').UseBoundStore<import('zustand').StoreApi<AppStoreState>>}
  */
 export const useAppStore = create(
-  subscribeWithSelector((set, get, store) => ({
+  subscribeWithSelector((set, get) => ({
     ...createTreeDatasetSlice(set, get),
-    ...createDatasetLifecycleSlice(set, get, store),
+    ...createDatasetLifecycleSlice(set, get),
     ...createPlaybackSlice(set, get),
     ...createTreeControllerRuntimeSlice(set, get),
     ...createTimelineRuntimeSlice(set, get),
@@ -59,9 +59,7 @@ useAppStore.subscribe(
   (state) => state.frameIndex,
   () => {
     const state = useAppStore.getState();
-    if (state.movieTimelineManager?.scrubController?.isScrubbing) {
-      return;
-    }
+    if (state.isScrubbing) return;
     state.updateColorManagerForCurrentIndex();
   }
 );

@@ -45,11 +45,10 @@ export interface TimelineRuntime {
   ) => TimelineCursorState | null;
 }
 
-export interface MovieTimelineManagerRuntime {
-  destroy?: () => void;
-  mount?: (container: HTMLElement) => void;
-  scrubController?: { isScrubbing?: boolean };
-  unmount?: () => void;
+export interface TimelineViewRuntime {
+  zoomIn: (pct?: number) => void;
+  zoomOut: (pct?: number) => void;
+  fit: () => void;
   [key: string]: unknown;
 }
 
@@ -164,7 +163,8 @@ export interface AppStoreState {
 
   // From timelineRuntime.slice
   timeline: TimelineRuntime | null;
-  movieTimelineManager: MovieTimelineManagerRuntime | null;
+  timelineView: TimelineViewRuntime | null;
+  isScrubbing: boolean;
 
   // From treeTimeline.slice
   hoveredSegmentIndex: number | null;

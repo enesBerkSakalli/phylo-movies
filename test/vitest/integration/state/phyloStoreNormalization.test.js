@@ -626,7 +626,8 @@ describe('phylo store dataset normalization', () => {
       ['selectCurrentTree.js', 'typeof frameIndex'],
       ['selectFileName.js', 'typeof state.fileName'],
       ['selectLabelsVisible.js', '!== false'],
-      ['selectMovieTimelineManager.js', '?? null'],
+      ['selectTimeline.js', '?? null'],
+      ['selectTimelineView.js', '?? null'],
       ['selectPairs.js', '??'],
       ['selectPairById.js', '??'],
       ['selectTaxaGrouping.js', '?? null'],
@@ -683,7 +684,7 @@ describe('phylo store dataset normalization', () => {
     const sourceChecks = [
       'src/timeline/timeline.js',
       'src/timeline/data/segmentProcessor.js',
-      'src/timeline/core/TimelineNavigationController.js',
+      'src/timeline/timelineController.js',
       'src/timeline/renderers/DeckTimelineRenderer.js',
       'src/timeline/utils/layerFactories.js',
       'src/timeline/utils/segmentUtils.js',
@@ -872,7 +873,7 @@ describe('phylo store dataset normalization', () => {
         ],
       },
       {
-        file: 'src/timeline/core/MovieTimelineManager.js',
+        file: 'src/timeline/timelineController.js',
         patterns: ['treeControllers', 'selectPrimaryTreeController'],
       },
     ];
