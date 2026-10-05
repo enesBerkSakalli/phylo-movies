@@ -2,11 +2,12 @@ import Shepherd from 'shepherd.js';
 import 'shepherd.js/dist/css/shepherd.css';
 import { TOUR_TARGETS, tourSelector } from './tourTargets.js';
 import { openPanel } from '../../components/dock/dockRuntime.js';
-import { SETTINGS_PANEL_ID } from '../../components/dock/panelRegistry.js';
+import { SETTINGS_PANEL_ID, TREE_PANEL_ID } from '../../components/dock/panelRegistry.js';
 
-const WORKSPACE_TOUR_STEPS = [
+export const WORKSPACE_TOUR_STEPS = [
   {
     id: 'sidebar',
+    panel: SETTINGS_PANEL_ID,
     target: TOUR_TARGETS.sidebar,
     attachOn: 'right',
     title: 'Workspace tools',
@@ -14,6 +15,7 @@ const WORKSPACE_TOUR_STEPS = [
   },
   {
     id: 'canvas',
+    panel: TREE_PANEL_ID,
     target: TOUR_TARGETS.canvas,
     attachOn: 'bottom',
     title: 'Tree canvas',
@@ -21,6 +23,7 @@ const WORKSPACE_TOUR_STEPS = [
   },
   {
     id: 'canvas-controls',
+    panel: TREE_PANEL_ID,
     target: TOUR_TARGETS.canvasControls,
     attachOn: 'left',
     title: 'Viewport controls',
@@ -42,6 +45,7 @@ const WORKSPACE_TOUR_STEPS = [
   },
   {
     id: 'export-controls',
+    panel: TREE_PANEL_ID,
     target: TOUR_TARGETS.exportControls,
     attachOn: 'left',
     title: 'Export controls',
@@ -49,15 +53,25 @@ const WORKSPACE_TOUR_STEPS = [
   },
 ];
 
-export function startWorkspaceTour() {
+const nextFrame = () =>
+  new Promise((resolve) => {
+    requestAnimationFrame(() => resolve());
+  });
+
+/** Opens Settings, then waits for dockview's portal to mount it before looking for step anchors. */
+export async function availableWorkspaceTourSteps() {
+  openPanel(SETTINGS_PANEL_ID);
+  const settingsAnchor = tourSelector(TOUR_TARGETS.sidebar);
+  for (let frame = 0; frame < 10 && !document.querySelector(settingsAnchor); frame += 1) {
+    await nextFrame();
+  }
+  return WORKSPACE_TOUR_STEPS.filter((step) => document.querySelector(tourSelector(step.target)));
+}
+
+export async function startWorkspaceTour() {
   if (typeof document === 'undefined') return;
 
-  // The settings step points into the Settings panel; make sure it is open.
-  openPanel(SETTINGS_PANEL_ID);
-
-  const availableSteps = WORKSPACE_TOUR_STEPS.filter((step) =>
-    document.querySelector(tourSelector(step.target))
-  );
+  const availableSteps = await availableWorkspaceTourSteps();
 
   if (availableSteps.length === 0) return;
 
@@ -82,6 +96,11 @@ export function startWorkspaceTour() {
       id: step.id,
       title: step.title,
       text: step.text,
+      // In a single tab group only one panel is visible; bring this step's panel to the front.
+      beforeShowPromise: () => {
+        if (step.panel) openPanel(step.panel);
+        return nextFrame();
+      },
       attachTo: {
         element: () => document.querySelector(tourSelector(step.target)),
         on: step.attachOn,
