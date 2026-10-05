@@ -3,8 +3,7 @@ import {
   createSnapFunction,
   createInputTreeMarker,
   createInputTreeTick,
-  createConnection,
-  createStripTrack,
+  createBaseline,
 } from '../utils/layerFactories.js';
 import { msToX } from '../math/coordinateUtils.js';
 import { getSegmentBounds, toTimelineItemId } from '../utils/segmentTiming.js';
@@ -17,7 +16,9 @@ const MIN_SEPARATOR_HEIGHT = 6;
  *
  * Timeline structure:
  * - Input trees (isInputTreeSegment=true): Observed phylogenetic trees, shown as circles
- * - Transitions (isInputTreeSegment=false): Interpolated sequences between input trees, shown as lines
+ * - Transitions (isInputTreeSegment=false): Interpolated sequences between input trees; drawn per
+ *   pair by pairStripGeometry, not here
+ * - Baseline: the strip's full-range line the input trees sit on
  * - Separators: Vertical ticks marking segment boundaries
  */
 export function processSegments({
@@ -39,15 +40,12 @@ export function processSegments({
   if (!timelineData?.cumulativeDurations || !Array.isArray(segments) || segments.length === 0) {
     return {
       inputTreeTicks: [],
-      stripTracks: [],
+      baselines: [],
       separators: [],
       inputTreePoints: [],
       activeInputTreeTicks: [],
       selectionInputTrees: [],
       hoverInputTrees: [],
-      connections: [],
-      selectionConnections: [],
-      hoverConnections: [],
     };
   }
 
@@ -55,12 +53,8 @@ export function processSegments({
 
   const inputTrees = { normal: [], selected: [], hovered: [] };
   const inputTreeTicks = { normal: [], active: [] };
-  const transitions = { normal: [], selected: [], hovered: [] };
   const separators = [];
-  const hasTransitions = segments.some((segment) => segment && !segment.isInputTreeSegment);
   const markerProfile = getMarkerProfile(segments, width, theme);
-  const stripTracks =
-    markerProfile.mode === 'strip' && hasTransitions ? [createStripTrack(width, snap)] : [];
 
   for (let i = startIdx; i <= endIdx; i++) {
     const segment = segments[i];
@@ -77,7 +71,7 @@ export function processSegments({
     const startX = msToX(bounds.start, rangeStart, rangeEnd, width);
     const endX = msToX(bounds.end, rangeStart, rangeEnd, width);
 
-    const separator = createSeparator(startX, width, height, snap, markerProfile.mode);
+    const separator = createSeparator(startX, width, height, theme, snap, markerProfile.mode);
     if (separator) separators.push(separator);
 
     if (segment.isInputTreeSegment) {
@@ -102,36 +96,17 @@ export function processSegments({
         snap
       );
       if (inputTreeMarker) inputTrees[state].push(inputTreeMarker);
-    } else {
-      const connection = createConnection(
-        i,
-        segmentId,
-        startX,
-        endX,
-        width,
-        height,
-        theme.inputTreeRadiusVar,
-        zoomScale,
-        theme.gapDefault,
-        theme.connectionNeutralRGB,
-        snap,
-        segments
-      );
-      if (connection) transitions[state].push(connection);
     }
   }
 
   return {
     inputTreeTicks: inputTreeTicks.normal,
-    stripTracks,
+    baselines: [createBaseline(width, height, theme, snap)],
     separators,
     inputTreePoints: inputTrees.normal,
     activeInputTreeTicks: inputTreeTicks.active,
     selectionInputTrees: inputTrees.selected,
     hoverInputTrees: inputTrees.hovered,
-    connections: transitions.normal,
-    selectionConnections: transitions.selected,
-    hoverConnections: transitions.hovered,
   };
 }
 
@@ -148,19 +123,21 @@ function getMarkerProfile(segments, width, theme) {
   return { mode: 'circle', inputTreeCount };
 }
 
-function createSeparator(x, width, height, snap, markerMode) {
+function createSeparator(x, width, height, theme, snap, markerMode) {
   if (markerMode === 'strip') return null;
 
   const centeredX = snap(x - width / 2);
+  const baselineY = height / 2 - theme.stripBaselineY;
   const heightFraction = SEPARATOR_HEIGHT_FRACTION;
   const h = Math.max(MIN_SEPARATOR_HEIGHT, Math.floor(height * heightFraction));
-  const halfHeight = h / 2;
+  // Centred on the baseline, but never past the bottom of the strip
+  const halfHeight = Math.min(h / 2, baselineY + height / 2);
 
   return {
     markerMode,
     path: [
-      [centeredX, -halfHeight],
-      [centeredX, halfHeight],
+      [centeredX, baselineY - halfHeight],
+      [centeredX, baselineY + halfHeight],
     ],
   };
 }

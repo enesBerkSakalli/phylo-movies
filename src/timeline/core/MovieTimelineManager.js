@@ -1,5 +1,7 @@
 import { TimelineDataProcessor } from '../data/TimelineDataProcessor.js';
 import { TimelineDataset } from '../data/TimelineDataset.js';
+import { buildPairChangeProfile } from '../data/pairChangeProfile.js';
+import { buildPairSpans } from '../data/pairStripGeometry.js';
 import { ScrubberAPI } from './ScrubberAPI.js';
 import { TimelineNavigationController } from './TimelineNavigationController.js';
 import { TimelineScrubController } from './TimelineScrubController.js';
@@ -50,6 +52,7 @@ export class MovieTimelineManager {
       timelineData: this.timelineData,
       treeList,
     });
+    this.pairStrip = this._buildPairStrip(movieData);
     this.stateSynchronizer = new TimelineStateSynchronizer({
       timelineDataset: this.timelineDataset,
       store: this.store,
@@ -77,6 +80,28 @@ export class MovieTimelineManager {
   // ==========================================================================
   // INITIALIZATION
   // ==========================================================================
+
+  _buildPairStrip(movieData) {
+    const profile = buildPairChangeProfile({
+      pairs: movieData.pairs,
+      pairMetrics: movieData.pair_metrics,
+      temporalEvents: movieData.temporal_events,
+    });
+    const dataset = this.timelineDataset;
+    return {
+      spans: buildPairSpans({
+        segments: this.segments,
+        timelineData: this.timelineData,
+        profile,
+        frameToMs: (frameIndex) =>
+          dataset.getOccurrencesForFrame(frameIndex).length > 0
+            ? dataset.getCursorForFrame(frameIndex).movieTimeMs
+            : null,
+      }),
+      maxRf: profile.maxRf,
+      getFrameIndexAtMs: (ms) => dataset.getCursorAtMovieTime(ms)?.frameIndex ?? null,
+    };
+  }
 
   _initialize() {
     this._initializeScrubberAPI();
@@ -187,7 +212,11 @@ export class MovieTimelineManager {
       return null;
     }
 
-    const timeline = new DeckTimelineRenderer(this.timelineData, this.segments).init(container);
+    const timeline = new DeckTimelineRenderer(
+      this.timelineData,
+      this.segments,
+      this.pairStrip
+    ).init(container);
     if (
       this.isDestroyed ||
       this.container !== container ||
@@ -217,6 +246,7 @@ export class MovieTimelineManager {
     this.timeline.on('timechange', this._onTimeChange.bind(this));
     this.timeline.on('timechanged', this._onTimeChanged.bind(this));
     this.timeline.on('select', this._onTimelineClick.bind(this));
+    this.timeline.on('inspect', this._onTimelineInspect.bind(this));
   }
 
   // ==========================================================================
@@ -249,6 +279,11 @@ export class MovieTimelineManager {
     if (segmentIndex !== null && this.navigationController) {
       this.navigationController.handleTimelineClick(segmentIndex, properties.ms);
     }
+  }
+
+  // Loaded on demand like the renderer: the dock pulls in the whole panel registry.
+  _onTimelineInspect() {
+    import('../../components/dock/dockRuntime.js').then(({ openPanel }) => openPanel('inspector'));
   }
 
   _syncSelectedSegmentFromStore() {
@@ -427,6 +462,7 @@ export class MovieTimelineManager {
 
     this.segments = null;
     this.timelineData = null;
+    this.pairStrip = null;
     this.timelineDataset = null;
     this.navigationController = null;
     this.scrubberAPI = null;

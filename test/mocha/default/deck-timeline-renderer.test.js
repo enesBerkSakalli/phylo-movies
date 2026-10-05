@@ -45,8 +45,11 @@ describe('DeckTimelineRenderer', () => {
       {
         isInputTreeSegment: false,
         pairId: 'pair_0_1',
+        pairOrdinal: 0,
         sourceInputTreeIndex: 0,
         targetInputTreeIndex: 1,
+        sourceGlobalIndex: 0,
+        targetGlobalIndex: 10,
         globalStart: 1,
         globalEnd: 9,
         localStepStart: 0,
@@ -61,6 +64,26 @@ describe('DeckTimelineRenderer', () => {
       cumulativeDurations: [1000, 2000, 3000],
     };
     return { timelineData, segments };
+  }
+
+  // One pair whose bar and SPR pip sit on the single transition segment (1000-2000ms)
+  const pairStrip = {
+    spans: [
+      {
+        pairId: 'pair_0_1',
+        startMs: 1000,
+        endMs: 2000,
+        kind: 'topology',
+        rf: 0.2,
+        pips: [{ ms: 1500, taxaCount: 2 }],
+      },
+    ],
+    maxRf: 0.2,
+    getFrameIndexAtMs: () => 5,
+  };
+
+  function findLayer(renderer, id) {
+    return renderer.deck.props.layers.find((l) => l.id === id);
   }
 
   function clickTimeline(renderer, ms) {
@@ -117,57 +140,72 @@ describe('DeckTimelineRenderer', () => {
     expect(path[1][0]).to.be.closeTo(0, 1e-6);
   });
 
-  it('draws input-window ticks without a transition strip for dense tree-only timelines', () => {
+  it('draws input-window ticks on a baseline for dense tree-only timelines', () => {
     const segments = Array.from({ length: 100 }, () => ({ isInputTreeSegment: true }));
     const timelineData = {
       segmentDurations: segments.map(() => 1000),
       totalDuration: 100000,
       cumulativeDurations: segments.map((_, index) => (index + 1) * 1000),
     };
-    const container = makeContainer(800, 120);
+    const container = makeContainer(800, 44);
     const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
 
-    const stripTrackLayer = renderer.deck.props.layers.find((l) => l.id === 'strip-track-layer');
-    const tickLayer = renderer.deck.props.layers.find((l) => l.id === 'input-tree-tick-layer');
-    const inputTreeLayer = renderer.deck.props.layers.find((l) => l.id === 'input-tree-layer');
-    expect(stripTrackLayer).to.exist;
-    expect(stripTrackLayer.props.data).to.have.length(0);
-    expect(tickLayer).to.exist;
-    expect(tickLayer.props.data).to.have.length(100);
-    expect(inputTreeLayer.props.data).to.have.length(0);
+    expect(findLayer(renderer, 'baseline-layer').props.data).to.have.length(1);
+    expect(findLayer(renderer, 'input-tree-tick-layer').props.data).to.have.length(100);
+    expect(findLayer(renderer, 'input-tree-layer').props.data).to.have.length(0);
+    expect(findLayer(renderer, 'pair-mark-layer').props.data).to.have.length(0);
   });
 
-  it('draws a transition strip for dense timelines with transition frames', () => {
-    const segments = Array.from({ length: 100 }, (_, index) => ({
-      isInputTreeSegment: index % 2 === 0,
-    }));
-    const timelineData = {
-      segmentDurations: segments.map(() => 1000),
-      totalDuration: 100000,
-      cumulativeDurations: segments.map((_, index) => (index + 1) * 1000),
-    };
-    const container = makeContainer(800, 120);
-    const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
-
-    const stripTrackLayer = renderer.deck.props.layers.find((l) => l.id === 'strip-track-layer');
-    expect(stripTrackLayer).to.exist;
-    expect(stripTrackLayer.props.data).to.have.length(1);
-  });
-
-  it('reflects selection in selection layers', () => {
+  it('keeps the old amber transition layers off the strip', () => {
     const { timelineData, segments } = makeTimelineFixture();
-    const container = makeContainer();
-    const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
-
-    renderer.setSelectedSegment(1);
-    const inputTreeSelection = renderer.deck.props.layers.find(
-      (l) => l.id === 'input-tree-selection-layer'
+    const renderer = new DeckTimelineRenderer(timelineData, segments, pairStrip).init(
+      makeContainer()
     );
-    const connSel = renderer.deck.props.layers.find((l) => l.id === 'connection-selection-layer');
-    expect(inputTreeSelection || connSel).to.exist;
-    // At least one selection layer should have data when a selection is set
-    const hasData = (layer) => Array.isArray(layer?.props?.data) && layer.props.data.length >= 0;
-    expect(hasData(inputTreeSelection) || hasData(connSel)).to.equal(true);
+    const ids = renderer.deck.props.layers.map((l) => l.id);
+
+    expect(ids).to.not.include.members(['strip-track-layer', 'connection-layer']);
+    expect(ids).to.include.members(['baseline-layer', 'pair-mark-layer', 'pair-pip-layer']);
+  });
+
+  it('draws one bar and one pip per pair, under the playhead', () => {
+    const { timelineData, segments } = makeTimelineFixture();
+    const renderer = new DeckTimelineRenderer(timelineData, segments, pairStrip).init(
+      makeContainer(800, 44)
+    );
+    const ids = renderer.deck.props.layers.map((l) => l.id);
+
+    expect(findLayer(renderer, 'pair-mark-layer').props.data).to.have.length(1);
+    expect(findLayer(renderer, 'pair-pip-layer').props.data).to.have.length(1);
+    expect(ids[ids.length - 1]).to.equal('scrubber-layer');
+    expect(ids.indexOf('pair-pip-layer')).to.be.greaterThan(ids.indexOf('pair-mark-layer'));
+  });
+
+  it('turns the hovered transition pair darker and the selected pair emerald', () => {
+    const { timelineData, segments } = makeTimelineFixture();
+    const renderer = new DeckTimelineRenderer(timelineData, segments, pairStrip).init(
+      makeContainer(800, 44)
+    );
+
+    renderer._lastHoverId = 2;
+    renderer.setSelectedSegment(1);
+
+    expect(findLayer(renderer, 'pair-hover-layer').props.data).to.have.length(1);
+    expect(findLayer(renderer, 'pair-selection-layer').props.data).to.have.length(1);
+    expect(findLayer(renderer, 'pair-selection-span-layer').props.data).to.have.length(1);
+    expect(findLayer(renderer, 'pair-selection-pip-layer').props.data).to.have.length(1);
+  });
+
+  it('leaves pair marks alone when an input tree is selected', () => {
+    const { timelineData, segments } = makeTimelineFixture();
+    const renderer = new DeckTimelineRenderer(timelineData, segments, pairStrip).init(
+      makeContainer(800, 44)
+    );
+
+    renderer.setSelectedSegment(0);
+
+    expect(findLayer(renderer, 'pair-selection-layer').props.data).to.have.length(0);
+    expect(findLayer(renderer, 'pair-selection-span-layer').props.data).to.have.length(0);
+    expect(findLayer(renderer, 'input-tree-selection-layer').props.data).to.have.length(1);
   });
 
   it('uses distinct colors for selected segments and the current playhead', () => {
@@ -231,19 +269,66 @@ describe('DeckTimelineRenderer', () => {
     expect(renderer.canvas.getAttribute('aria-valuemin')).to.equal('0');
     expect(renderer.canvas.getAttribute('aria-valuemax')).to.equal('3000');
     expect(renderer.canvas.getAttribute('aria-valuenow')).to.equal('0');
-    expect(renderer.canvas.getAttribute('aria-valuetext')).to.equal('Segment 1 of 3, input tree 1');
+    expect(renderer.canvas.getAttribute('aria-valuetext')).to.equal('Input tree 1 of 2');
   });
 
-  it('uses semantic segment labels for assistive timeline feedback', () => {
+  it('describes a transition by its pair and step for assistive timeline feedback', () => {
     const { timelineData, segments } = makeTimelineFixture();
     const container = makeContainer();
-    const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
+    const renderer = new DeckTimelineRenderer(timelineData, segments, pairStrip).init(container);
+
+    renderer.setCustomTime(1500);
+
+    // frame 5 of the 9 frames generated between frames 0 and 10
+    expect(renderer.canvas.getAttribute('aria-valuetext')).to.equal(
+      'Transition 1 of 1: tree 1 to tree 2, step 5 of 9'
+    );
+  });
+
+  it('describes a transition without a step when the frame is unknown or there are no frames', () => {
+    const { timelineData, segments } = makeTimelineFixture();
+    const renderer = new DeckTimelineRenderer(timelineData, segments).init(makeContainer());
 
     renderer.setCustomTime(1500);
 
     expect(renderer.canvas.getAttribute('aria-valuetext')).to.equal(
-      'Segment 2 of 3, generated frames 1-9, input tree 1 to 2'
+      'Transition 1 of 1: tree 1 to tree 2'
     );
+  });
+
+  it('opens the inspector request for a double-clicked transition, not an input tree', () => {
+    const { timelineData, segments } = makeTimelineFixture();
+    const renderer = new DeckTimelineRenderer(timelineData, segments).init(makeContainer());
+    const selections = collectSelections(renderer);
+    const inspections = [];
+    renderer.on('inspect', (payload) => inspections.push(payload));
+    const dblclick = (ms) =>
+      renderer.deck.canvas.dispatchEvent(
+        new global.window.MouseEvent('dblclick', {
+          bubbles: true,
+          clientX: (ms / timelineData.totalDuration) * renderer._width,
+          clientY: 10,
+        })
+      );
+
+    dblclick(500);
+    expect(inspections).to.have.length(0);
+
+    dblclick(1500);
+    expect(inspections).to.have.length(1);
+    expect(inspections[0].segmentIndex).to.equal(1);
+    expect(selections[selections.length - 1].segmentIndex).to.equal(1);
+  });
+
+  it('keeps a single click from requesting the inspector', () => {
+    const { timelineData, segments } = makeTimelineFixture();
+    const renderer = new DeckTimelineRenderer(timelineData, segments).init(makeContainer());
+    const inspections = [];
+    renderer.on('inspect', (payload) => inspections.push(payload));
+
+    clickTimeline(renderer, 1500);
+
+    expect(inspections).to.have.length(0);
   });
 
   it('moves timeline selection with keyboard navigation', () => {
