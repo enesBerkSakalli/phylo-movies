@@ -135,6 +135,14 @@ export const createPlaybackSlice = (set, get) => ({
     set(createPlaybackPosition(cursor));
   },
 
+  seek: (movieTimeMs) => {
+    if (!Number.isFinite(movieTimeMs)) {
+      throw new Error('[playbackSlice] movie time must be finite');
+    }
+    const manager = requireTimelineManager(get());
+    set(createPlaybackPosition(requireCursor(manager.getCursorAtMovieTime(movieTimeMs))));
+  },
+
   setTimelineCursor: (cursor) => set(createPlaybackPosition(requireCursor(cursor))),
 
   setRenderInProgress: (inProgress) => set({ renderInProgress: inProgress }),

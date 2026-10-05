@@ -53,8 +53,15 @@ export class TimelineDataset {
   }
 
   getTransitionFrameAtTimelineProgress(progress) {
+    return this.frameAt(
+      TimelineMathUtils.progressToTime(progress, this.timelineData.totalDuration)
+    );
+  }
+
+  /** What the tree renderer draws at `movieTimeMs`: the step's two trees and how far between them. */
+  frameAt(movieTimeMs) {
     if (!this.hasTimeline() || this.treeList.length === 0) return null;
-    const ms = TimelineMathUtils.progressToTime(progress, this.timelineData.totalDuration);
+    const ms = clampTime(movieTimeMs, this.timelineData.totalDuration);
     const { start, end, from, to, hold } = stepAt(this.steps, ms);
     return TransitionFrame.from({
       sourceTree: this.treeList[from],

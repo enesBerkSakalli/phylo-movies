@@ -92,6 +92,22 @@ describe('playback navigation', () => {
     expect(getCursorAtTimelineProgress).toHaveBeenCalledWith(0.65);
   });
 
+  it('seeks the whole semantic position to a movie time', () => {
+    const cursor = { frameIndex: 1, movieTimeMs: 2600 };
+    const getCursorAtMovieTime = vi.fn(() => cursor);
+    useAppStore.setState({
+      treeList: trees,
+      movieTimelineManager: createManager({ getCursorAtMovieTime }),
+    });
+
+    useAppStore.getState().seek(2600);
+
+    expect(getCursorAtMovieTime).toHaveBeenCalledWith(2600);
+    expect(useAppStore.getState().frameIndex).toBe(1);
+    expect(useAppStore.getState().timelineCursor).toBe(cursor);
+    expect(() => useAppStore.getState().seek(Number.NaN)).toThrow('movie time must be finite');
+  });
+
   it('captures the exact semantic movie position when pausing inside a hold', () => {
     vi.spyOn(performance, 'now').mockReturnValue(10_000);
     const cursor = {

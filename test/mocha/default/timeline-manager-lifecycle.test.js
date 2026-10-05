@@ -199,9 +199,7 @@ describe('MovieTimelineManager lifecycle', () => {
     const manager = new MovieTimelineManager(movieData, treeList, useAppStore);
     const step = manager.timelineDataset.steps.find((item) => item.to === 1 && item.from !== 1);
     const movieTimeMs = (step.start + step.end) / 2;
-    const frame = manager.resolveFrameAtTimelineProgress(
-      movieTimeMs / manager.timelineData.totalDuration
-    );
+    const frame = manager.frameAt(movieTimeMs);
 
     expect(hydratedIndices).to.not.deep.equal([]);
     expect(frame.sourceTree).to.equal(movieData.interpolated_trees[0]);
@@ -228,9 +226,7 @@ describe('MovieTimelineManager lifecycle', () => {
     const manager = new MovieTimelineManager(movieData, treeList, useAppStore);
     const step = manager.timelineDataset.steps.find((item) => item.to === 1 && item.from !== 1);
     const movieTimeMs = (step.start + step.end) / 2;
-    const frame = manager.resolveFrameAtTimelineProgress(
-      movieTimeMs / manager.timelineData.totalDuration
-    );
+    const frame = manager.frameAt(movieTimeMs);
 
     expect(hydratedIndices).to.deep.equal([[0, 1]]);
     expect(frame.sourceTree).to.equal(movieData.interpolated_trees[0]);

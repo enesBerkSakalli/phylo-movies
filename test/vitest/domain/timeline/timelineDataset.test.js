@@ -92,6 +92,23 @@ describe('TimelineDataset', () => {
     });
   });
 
+  it('resolves the animated frame at a movie time and clamps outside the movie', () => {
+    const dataset = TimelineDataset.fromMovieData(smallExampleMovieData);
+    const motion = dataset.steps.find((step) => step.from !== step.to);
+    const hold = dataset.steps.find((step) => step.hold === 'input_tree');
+
+    const mid = dataset.frameAt((motion.start + motion.end) / 2);
+    expect([mid.sourceTreeIndex, mid.targetTreeIndex]).toEqual([motion.from, motion.to]);
+    expect(mid.transitionProgress).toBeCloseTo(0.5, 10);
+
+    const held = dataset.frameAt(hold.start);
+    expect([held.sourceTreeIndex, held.targetTreeIndex]).toEqual([hold.from, hold.from]);
+    expect([held.transitionProgress, held.holdKind]).toEqual([0, 'input_tree']);
+
+    expect(dataset.frameAt(-5).sourceTreeIndex).toBe(dataset.steps[0].from);
+    expect(dataset.frameAt(1e9).targetTreeIndex).toBe(dataset.steps.at(-1).to);
+  });
+
   it('owns input-frame indices', () => {
     const dataset = TimelineDataset.fromMovieData(smallExampleMovieData);
 

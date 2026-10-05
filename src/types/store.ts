@@ -41,6 +41,7 @@ export interface MovieTimelineManagerRuntime {
   getSegment?: (segmentIndex: number) => unknown;
   getCursorAtMovieTime?: (movieTimeMs: number) => TimelineCursorState | null;
   resolveFrameAtTimelineProgress?: (timelineProgress: number) => unknown;
+  frameAt?: (movieTimeMs: number) => unknown;
   hasTransitionSegments?: () => boolean;
   mount?: (container: HTMLElement) => void;
   scrubController?: { isScrubbing?: boolean };
@@ -272,6 +273,7 @@ export interface AppStoreState {
   goToNextInputTree: () => void;
   goToPreviousInputTree: () => void;
   setTimelineProgress: (progress: number) => void;
+  seek: (movieTimeMs: number) => void;
   setTimelineCursor: (cursor: TimelineCursorState) => void;
   setRenderInProgress: (inProgress: boolean) => void;
   resetPlayback: () => void;

@@ -6,6 +6,7 @@ import { ScrubberAPI } from './ScrubberAPI.js';
 import { TimelineNavigationController } from './TimelineNavigationController.js';
 import { TimelineScrubController } from './TimelineScrubController.js';
 import { buildTimelineStatusSnapshot } from '../view/timelineStatusModel.js';
+import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
 import { TransitionFrame } from '../time/TransitionFrame.js';
 
 let deckTimelineRendererModulePromise = null;
@@ -338,39 +339,24 @@ export class MovieTimelineManager {
   }
 
   resolveFrameAtTimelineProgress(progress) {
-    const transitionFrame = this.timelineDataset?.getTransitionFrameAtTimelineProgress(progress);
-    return this._hydrateResolvedFrame(transitionFrame, progress);
+    return this.frameAt(
+      TimelineMathUtils.progressToTime(progress, this.timelineData.totalDuration)
+    );
   }
 
-  _hydrateResolvedFrame(transitionFrame, timelineProgress) {
-    if (
-      !transitionFrame ||
-      !Number.isInteger(transitionFrame.sourceTreeIndex) ||
-      !Number.isInteger(transitionFrame.targetTreeIndex)
-    ) {
-      return transitionFrame;
-    }
+  /** The dataset's frame with its trees, hydrating any the store has not loaded yet. */
+  frameAt(movieTimeMs) {
+    const frame = this.timelineDataset?.frameAt(movieTimeMs);
+    if (!frame || (frame.sourceTree && frame.targetTree)) return frame;
 
-    if (!transitionFrame.sourceTree || !transitionFrame.targetTree) {
-      const state = this.store.getState();
-      const [hydratedSource, hydratedTarget] =
-        state.ensureTreesHydrated?.([
-          transitionFrame.sourceTreeIndex,
-          transitionFrame.targetTreeIndex,
-        ]) ?? [];
-      const sourceTree = transitionFrame.sourceTree ?? hydratedSource;
-      const targetTree = transitionFrame.targetTree ?? hydratedTarget;
-      if (!sourceTree || !targetTree) return null;
-
-      return copyTransitionFrame(transitionFrame, sourceTree, targetTree, timelineProgress);
-    }
-
-    return copyTransitionFrame(
-      transitionFrame,
-      transitionFrame.sourceTree,
-      transitionFrame.targetTree,
-      timelineProgress
-    );
+    const [source, target] =
+      this.store.getState().ensureTreesHydrated?.([frame.sourceTreeIndex, frame.targetTreeIndex]) ??
+      [];
+    const sourceTree = frame.sourceTree ?? source;
+    const targetTree = frame.targetTree ?? target;
+    return sourceTree && targetTree
+      ? TransitionFrame.from({ ...frame, sourceTree, targetTree })
+      : null;
   }
 
   getCursorAtMovieTime(movieTimeMs) {
@@ -438,19 +424,4 @@ export class MovieTimelineManager {
     this.scrubController = null;
     this.store = null;
   }
-}
-
-function copyTransitionFrame(transitionFrame, sourceTree, targetTree, timelineProgress) {
-  return TransitionFrame.from({
-    sourceTree,
-    targetTree,
-    sourceTreeIndex: transitionFrame.sourceTreeIndex,
-    targetTreeIndex: transitionFrame.targetTreeIndex,
-    transitionProgress: transitionFrame.transitionProgress,
-    renderProgress: transitionFrame.renderProgress,
-    timelineProgress,
-    holdKind: transitionFrame.holdKind,
-    stage: transitionFrame.stage,
-    transitionChangeModel: transitionFrame.transitionChangeModel,
-  });
 }
