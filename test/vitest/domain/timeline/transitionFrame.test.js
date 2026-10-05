@@ -6,19 +6,14 @@ describe('TransitionFrame', () => {
     const sourceTree = { id: 'source' };
     const targetTree = { id: 'target' };
 
-    const frame = TransitionFrame.from(
-      {
-        sourceTree,
-        targetTree,
-        sourceTreeIndex: 4,
-        targetTreeIndex: 5,
-        transitionProgress: 0.25,
-        holdKind: 'mover',
-      },
-      {
-        timelineProgress: 0.4,
-      }
-    );
+    const frame = TransitionFrame.from({
+      sourceTree,
+      targetTree,
+      sourceTreeIndex: 4,
+      targetTreeIndex: 5,
+      transitionProgress: 0.25,
+      holdKind: 'mover',
+    });
 
     expect(frame.sourceTree).toBe(sourceTree);
     expect(frame.targetTree).toBe(targetTree);
@@ -26,7 +21,6 @@ describe('TransitionFrame', () => {
     expect(frame.targetTreeIndex).toBe(5);
     expect(frame.transitionProgress).toBe(0.25);
     expect(frame.renderProgress).toBe(0.25);
-    expect(frame.timelineProgress).toBe(0.4);
     expect(frame.holdKind).toBe('mover');
     expect(frame.cursorTreeIndex).toBe(4);
     expect(frame.highlightTreeIndex).toBe(5);

@@ -4,7 +4,6 @@ import { TransitionFrame } from '../time/TransitionFrame.js';
 import { buildSteps, cursorForFrame, stepAt } from '../timeline.js';
 import { selectInputFrameIndicesFromRows } from '../../domain/backend/inputFrame.js';
 import { resolveCursorTreeIndex } from '../../domain/indexing/treeIndexSemantics.js';
-import { clamp01 } from '../../domain/math/mathUtils.js';
 
 export class TimelineDataset {
   static fromMovieData(movieData, options = {}) {
@@ -52,12 +51,6 @@ export class TimelineDataset {
     return Number.isInteger(segmentIndex) ? this.segments[segmentIndex] : null;
   }
 
-  getTransitionFrameAtTimelineProgress(progress) {
-    return this.frameAt(
-      TimelineMathUtils.progressToTime(progress, this.timelineData.totalDuration)
-    );
-  }
-
   /** What the tree renderer draws at `movieTimeMs`: the step's two trees and how far between them. */
   frameAt(movieTimeMs) {
     if (!this.hasTimeline() || this.treeList.length === 0) return null;
@@ -71,15 +64,6 @@ export class TimelineDataset {
       transitionProgress: from === to ? 0 : (ms - start) / (end - start),
       holdKind: hold,
     });
-  }
-
-  getTimelineProgressAtMovieTime(movieTimeMs) {
-    return progressForTime(movieTimeMs, this.timelineData.totalDuration);
-  }
-
-  getCursorAtTimelineProgress(timelineProgress) {
-    const progress = clamp01(timelineProgress);
-    return this.getCursorAtMovieTime(progress * this.timelineData.totalDuration);
   }
 
   getCursorAtMovieTime(movieTimeMs) {
@@ -148,7 +132,6 @@ export class TimelineDataset {
       sourceInputTreeIndex,
       targetInputTreeIndex: pair ? pair.target_input_tree_index : null,
       movieTimeMs,
-      timelineProgress: progressForTime(movieTimeMs, this.timelineData.totalDuration),
       segmentIndex: step?.segment ?? null,
       occurrenceRole: role,
       holdKind: step?.hold ?? null,
@@ -162,11 +145,6 @@ function clampTime(value, totalDuration) {
   if (!Number.isFinite(value)) return 0;
   if (!Number.isFinite(totalDuration) || totalDuration <= 0) return 0;
   return Math.max(0, Math.min(value, totalDuration));
-}
-
-function progressForTime(movieTimeMs, totalDuration) {
-  if (!Number.isFinite(totalDuration) || totalDuration <= 0) return 0;
-  return clamp01(movieTimeMs / totalDuration);
 }
 
 function boundTimeToSegment(movieTimeMs, segmentStart, segmentEnd) {

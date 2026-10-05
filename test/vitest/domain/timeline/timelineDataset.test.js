@@ -34,7 +34,6 @@ describe('TimelineDataset', () => {
       sourceFrameIndex: 0,
       msaWindowIndex: 0,
       movieTimeMs: 0,
-      timelineProgress: 0,
       segmentIndex: 0,
     });
 
@@ -70,7 +69,6 @@ describe('TimelineDataset', () => {
     const cursor = dataset.getCursorForFrame(motion.to);
 
     expect(cursor.movieTimeMs).toBe(motion.end);
-    expect(cursor.timelineProgress).toBe(motion.end / dataset.timelineData.totalDuration);
     expect(cursor.occurrenceRole).toBe('motion_target');
     expect(cursor.motionSourceFrameIndex).toBe(motion.from);
     expect(cursor.motionTargetFrameIndex).toBe(motion.to);

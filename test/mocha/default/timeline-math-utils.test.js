@@ -17,14 +17,14 @@ function loadMovieData() {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 }
 
-function resolveFrame(progress, segments, timelineData, treeList) {
+function resolveFrame(movieTimeMs, segments, timelineData, treeList) {
   return new TimelineDataset({
     segments,
     timelineData,
     frames: [],
     pairs: [],
     treeList,
-  }).getTransitionFrameAtTimelineProgress(progress);
+  }).frameAt(movieTimeMs);
 }
 
 function makeSemanticTimingFixture() {
@@ -59,10 +59,6 @@ describe('TimelineMathUtils', () => {
     timelineData = TimelineDataProcessor.createTimelineData(segments);
   });
 
-  it('returns zero time when total duration is zero', () => {
-    expect(TimelineMathUtils.progressToTime(0.5, 0)).to.equal(0);
-  });
-
   it('uses explicit interpolation intervals, not frame count, for transition segment duration', () => {
     const durations = TimelineMathUtils.calculateSegmentDurations([
       {
@@ -88,18 +84,8 @@ describe('TimelineMathUtils', () => {
   it('resolves mover and pivot holds as static completed frames', () => {
     const { treeList, segments, timelineData } = makeSemanticTimingFixture();
 
-    const moverHold = resolveFrame(
-      1100 / timelineData.totalDuration,
-      segments,
-      timelineData,
-      treeList
-    );
-    const pivotHold = resolveFrame(
-      3500 / timelineData.totalDuration,
-      segments,
-      timelineData,
-      treeList
-    );
+    const moverHold = resolveFrame(1100, segments, timelineData, treeList);
+    const pivotHold = resolveFrame(3500, segments, timelineData, treeList);
 
     expect(moverHold).to.include({
       sourceTree: treeList[1],
@@ -138,7 +124,7 @@ describe('TimelineMathUtils', () => {
     ];
     const timelineData = TimelineDataProcessor.createTimelineData(segments);
 
-    const resolved = resolveFrame(0.5, segments, timelineData, treeList);
+    const resolved = resolveFrame(750, segments, timelineData, treeList);
 
     expect(resolved).to.include({
       sourceTree: treeList[0],

@@ -1,6 +1,7 @@
 // Golden pin for the timeline: segment spans, ms -> cursor, frame -> cursor, ms -> animated frames.
 // The expected files were generated from the pre-distill code (`vitest -u` rewrites them);
-// every refactor of src/timeline must leave them byte-identical.
+// every refactor of src/timeline must leave them byte-identical. The one exception: 15 `resolved`
+// rows were regenerated when the progress clock went, where ms / total * total fell 1 ULP short.
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -65,10 +66,10 @@ function goldenRows(movieData) {
       return [ms, cursor?.frameIndex ?? null, cursor?.segmentIndex ?? null];
     }),
     frames,
-    // What the tree renderer gets per ms: the manager's resolveFrameAtTimelineProgress
-    // (ms / total, as AnimationRunner passes it) minus tree hydration, plus the eased render t.
+    // What the tree renderer gets per ms: the manager's frameAt minus tree hydration,
+    // plus the eased render t.
     resolved: sortedTimes.map((ms) => {
-      const f = dataset.getTransitionFrameAtTimelineProgress(ms / total);
+      const f = dataset.frameAt(ms);
       return [
         ms,
         f.sourceTreeIndex,

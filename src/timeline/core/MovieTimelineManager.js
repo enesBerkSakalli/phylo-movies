@@ -6,7 +6,6 @@ import { ScrubberAPI } from './ScrubberAPI.js';
 import { TimelineNavigationController } from './TimelineNavigationController.js';
 import { TimelineScrubController } from './TimelineScrubController.js';
 import { buildTimelineStatusSnapshot } from '../view/timelineStatusModel.js';
-import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
 import { TransitionFrame } from '../time/TransitionFrame.js';
 
 let deckTimelineRendererModulePromise = null;
@@ -335,12 +334,6 @@ export class MovieTimelineManager {
     this.timeline?.fit?.();
   }
 
-  resolveFrameAtTimelineProgress(progress) {
-    return this.frameAt(
-      TimelineMathUtils.progressToTime(progress, this.timelineData.totalDuration)
-    );
-  }
-
   /** The dataset's frame with its trees, hydrating any the store has not loaded yet. */
   frameAt(movieTimeMs) {
     const frame = this.timelineDataset?.frameAt(movieTimeMs);
@@ -358,10 +351,6 @@ export class MovieTimelineManager {
 
   getCursorAtMovieTime(movieTimeMs) {
     return this.timelineDataset?.getCursorAtMovieTime(movieTimeMs) ?? null;
-  }
-
-  getCursorAtTimelineProgress(timelineProgress) {
-    return this.timelineDataset?.getCursorAtTimelineProgress(timelineProgress) ?? null;
   }
 
   getCursorForFrame(frameIndex, options = {}) {

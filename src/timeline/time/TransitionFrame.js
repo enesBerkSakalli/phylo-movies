@@ -4,8 +4,6 @@ import {
 } from '../../domain/indexing/treeIndexSemantics.js';
 import { clamp01 } from '../../domain/math/mathUtils.js';
 
-const normalizeOptionalProgress = (value) => (Number.isFinite(value) ? clamp01(value) : null);
-
 export class TransitionFrame {
   static from(frame = {}, options = {}) {
     const sourceTreeIndex = normalizeIndex(frame.sourceTreeIndex, 0);
@@ -21,7 +19,6 @@ export class TransitionFrame {
       targetTreeIndex,
       transitionProgress,
       renderProgress: options.renderProgress ?? frame.renderProgress ?? transitionProgress,
-      timelineProgress: options.timelineProgress ?? frame.timelineProgress,
       holdKind: options.holdKind ?? frame.holdKind ?? null,
       stage: options.stage ?? frame.stage ?? null,
       transitionChangeModel: options.transitionChangeModel ?? frame.transitionChangeModel ?? null,
@@ -35,7 +32,6 @@ export class TransitionFrame {
     targetTreeIndex = sourceTreeIndex,
     transitionProgress = 0,
     renderProgress = transitionProgress,
-    timelineProgress = null,
     holdKind = null,
     stage = null,
     transitionChangeModel = null,
@@ -49,7 +45,6 @@ export class TransitionFrame {
       targetTree ?? (this.targetTreeIndex === this.sourceTreeIndex ? sourceTree : null);
     this.transitionProgress = clamp01(transitionProgress);
     this.renderProgress = clamp01(renderProgress);
-    this.timelineProgress = normalizeOptionalProgress(timelineProgress);
     this.holdKind = holdKind;
     this.stage = stage;
     this.transitionChangeModel = transitionChangeModel;
@@ -87,7 +82,6 @@ export class TransitionFrame {
       targetTreeIndex: this.targetTreeIndex,
       transitionProgress: this.transitionProgress,
       renderProgress,
-      timelineProgress: this.timelineProgress,
       holdKind: this.holdKind,
       stage,
       transitionChangeModel,
