@@ -48,6 +48,22 @@ describe('keepSideGroupSizes', () => {
     kept.dispose();
   });
 
+  it('does not shrink the tree column back when a panel is stacked below the tree', async () => {
+    const { api, add, width } = workbench();
+    const kept = keepSideGroupSizes(api);
+    add('inspector', { referencePanel: 'tree', direction: 'right' }, { initialWidth: 340 });
+    add('alignment', { referencePanel: 'tree', direction: 'below' }, { initialHeight: 310 });
+    await settle();
+
+    api.getPanel('inspector').api.close();
+    await settle();
+
+    expect(width('settings')).toBe(280);
+    expect(width('tree')).toBe(1160);
+    expect(api.getPanel('alignment').group.api.height).toBe(310);
+    kept.dispose();
+  });
+
   it('leaves sizes alone while paused (narrow gathering moves groups on purpose)', async () => {
     const { api, add, width } = workbench();
     const kept = keepSideGroupSizes(api, { paused: () => true });

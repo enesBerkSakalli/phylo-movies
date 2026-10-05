@@ -47,6 +47,12 @@ export function floatingWithin(wanted, dock) {
   };
 }
 
+function leafPaths(node, path = [], found = new Map()) {
+  if (node.type === 'leaf') found.set(node.data.id, path);
+  else node.data.forEach((child, index) => leafPaths(child, [...path, index], found));
+  return found;
+}
+
 /**
  * Closing a side group makes dockview distribute the freed space evenly over every remaining
  * column; give the other side groups their old size back so the tree's group absorbs it.
@@ -64,11 +70,22 @@ export function keepSideGroupSizes(api, { paused = () => false } = {}) {
   remember();
   const removed = api.onDidRemoveGroup(() => {
     if (paused()) return;
+    const { root, orientation } = api.toJSON().grid;
+    const paths = leafPaths(root);
+    const treePath = paths.get(api.panels.find((panel) => panel.id === TREE_PANEL_ID)?.group.id);
+    if (!treePath) return;
+    const restores = [];
     for (const group of api.groups) {
+      const path = paths.get(group.id);
       const size = sizes.get(group.id);
-      const holdsTree = group.panels.some((panel) => panel.id === TREE_PANEL_ID);
-      if (size && !holdsTree && group.api.location.type === 'grid') group.api.setSize(size);
+      if (!path || !size || group.panels.some((panel) => panel.id === TREE_PANEL_ID)) continue;
+      // Only the axis along which the group is the tree's sibling: the other one is shared with the tree.
+      let split = 0;
+      while (path[split] === treePath[split]) split += 1;
+      const sideBySide = (orientation === 'HORIZONTAL') === (split % 2 === 0);
+      restores.push([group, sideBySide ? { width: size.width } : { height: size.height }]);
     }
+    for (const [group, size] of restores) group.api.setSize(size);
   });
   const changed = api.onDidLayoutChange(remember);
   return {
