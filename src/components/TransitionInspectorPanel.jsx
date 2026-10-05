@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { ArrowRightLeft, Dna, Gauge, GitBranch, X } from 'lucide-react';
+import { ArrowRightLeft, Dna, Gauge, GitBranch } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 import { calculateWindow } from '../domain/msa/msaWindowCalculator';
 import { formatScaleValue, getScaleValue } from '../domain/tree/scaleUtils';
@@ -14,10 +14,8 @@ import {
   selectPairMetrics,
   selectScaleList,
   selectSelectedTimelineSegmentIndex,
-  selectSetSelectedTimelineSegment,
 } from '../state/phyloStore/store.js';
 import { Badge } from './ui/badge';
-import { Button } from './ui/button';
 import {
   extractAffectedSubtreeGroups,
   formatPivotEdgePreview,
@@ -26,7 +24,6 @@ import {
 export function TransitionInspectorPanel() {
   const {
     segmentIndex,
-    setSelectedTimelineSegment,
     movieTimelineManager,
     leafNamesByIndex,
     pairMetrics,
@@ -38,7 +35,6 @@ export function TransitionInspectorPanel() {
   } = useAppStore(
     useShallow((state) => ({
       segmentIndex: selectSelectedTimelineSegmentIndex(state),
-      setSelectedTimelineSegment: selectSetSelectedTimelineSegment(state),
       movieTimelineManager: selectMovieTimelineManager(state),
       leafNamesByIndex: selectLeafNamesByIndex(state),
       pairMetrics: selectPairMetrics(state),
@@ -77,7 +73,13 @@ export function TransitionInspectorPanel() {
     ]
   );
 
-  if (!segment) return null;
+  if (!segment) {
+    return (
+      <div className="flex h-full items-center justify-center p-6 text-center text-xs text-muted-foreground">
+        Select a timeline segment to inspect its transition.
+      </div>
+    );
+  }
 
   const totalSegments = movieTimelineManager?.getSegmentCount?.() ?? 0;
   const isInputTree = segment.isInputTreeSegment;
@@ -85,7 +87,7 @@ export function TransitionInspectorPanel() {
 
   return (
     <aside
-      className="z-[70] flex w-[22rem] shrink-0 flex-col overflow-hidden border-l border-border bg-card text-card-foreground max-md:absolute max-md:inset-x-3 max-md:bottom-3 max-md:max-h-[50%] max-md:w-auto max-md:rounded-lg max-md:border max-md:shadow-xl"
+      className="flex h-full min-h-0 flex-col overflow-hidden bg-card text-card-foreground"
       aria-label="Transition Inspector"
     >
       <div className="flex items-start gap-3 border-b border-border p-4">
@@ -94,7 +96,6 @@ export function TransitionInspectorPanel() {
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h2 className="truncate text-sm font-semibold">Transition Inspector</h2>
             <Badge variant={isInputTree ? 'outline' : 'secondary'} className="text-2xs">
               {isInputTree ? 'Input tree' : 'Generated frames'}
             </Badge>
@@ -104,17 +105,6 @@ export function TransitionInspectorPanel() {
             {totalSegments ? ` of ${totalSegments}` : ''}
           </p>
         </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          className="-mr-1 -mt-1 text-muted-foreground hover:text-foreground"
-          aria-label="Close transition inspector"
-          title="Close transition inspector"
-          onClick={() => setSelectedTimelineSegment(null)}
-        >
-          <X className="size-4" aria-hidden />
-        </Button>
       </div>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 text-sm">

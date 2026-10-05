@@ -1,9 +1,3 @@
-export const ANALYTICS_WINDOW_BOUNDS = {
-  minWidth: 620,
-  minHeight: 480,
-  margin: 24,
-};
-
 export const SPR_ANALYTICS_LABELS = {
   sprMoves: 'SPR Moves',
 };

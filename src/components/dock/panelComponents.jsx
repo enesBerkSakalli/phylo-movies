@@ -2,6 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { PanelVisibility } from './PanelVisibility.js';
 import { TreePanel } from './panels/TreePanel.jsx';
 import { SettingsPanel } from './panels/SettingsPanel.jsx';
+import {
+  AlignmentBody,
+  InspectorBody,
+  MovedSubtreesBody,
+  TaxaColoringBody,
+} from './panelBodies.jsx';
 
 function useDockVisibility(api) {
   const [visible, setVisible] = useState(() => api?.isVisible ?? true);
@@ -34,6 +40,10 @@ function createPanelComponent(id, Component) {
 const PANEL_BODIES = {
   tree: TreePanel,
   settings: SettingsPanel,
+  inspector: InspectorBody,
+  'moved-subtrees': MovedSubtreesBody,
+  alignment: AlignmentBody,
+  'taxa-coloring': TaxaColoringBody,
 };
 
 export const PANEL_COMPONENTS = Object.fromEntries(

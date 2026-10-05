@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { simulateButtonPress, simulateChange, simulateClick } from '../../../helpers/domEvents.js';
 import { ColorSwatchInput } from '../../../../src/components/taxa-coloring/shared/ColorSwatchInput.jsx';
 import { TaxaColoringWindow } from '../../../../src/components/taxa-coloring/TaxaColoringWindow.jsx';
-import { TaxaColoringRndWindow } from '../../../../src/components/taxa-coloring/TaxaColoringRndWindow.jsx';
+import { TaxaColoringPanel } from '../../../../src/components/taxa-coloring/TaxaColoringPanel.jsx';
 import {
   chooseInitialCSVColumn,
   loadCSVColumn,
@@ -348,7 +348,7 @@ describe('TaxaColoringWindow palette application', () => {
   });
 });
 
-describe('TaxaColoringRndWindow palette application', () => {
+describe('TaxaColoringPanel palette application', () => {
   const initialStoreState = useAppStore.getState();
   let roots = [];
 
@@ -382,11 +382,7 @@ describe('TaxaColoringRndWindow palette application', () => {
 
     await act(async () => {
       root.render(
-        React.createElement(
-          TooltipProvider,
-          null,
-          React.createElement(TaxaColoringRndWindow, { isActive: true })
-        )
+        React.createElement(TooltipProvider, null, React.createElement(TaxaColoringPanel))
       );
     });
   }
