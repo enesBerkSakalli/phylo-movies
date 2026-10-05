@@ -83,9 +83,7 @@ export interface ContextMenuNode {
 
 export interface TimelineCursorState {
   frameIndex: number;
-  inputTreeIndex: number | null;
   sourceFrameIndex: number | null;
-  msaWindowIndex: number | null;
   sourceInputTreeIndex: number | null;
   targetInputTreeIndex: number | null;
   movieTimeMs: number;

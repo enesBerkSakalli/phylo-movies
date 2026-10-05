@@ -5,6 +5,7 @@ import {
   selectMsaStepSize,
   selectMsaWindowSize,
   selectSyncMsaEnabled,
+  selectTimeline,
   selectTimelineCursor,
   useAppStore,
 } from '../../state/phyloStore/store.js';
@@ -14,16 +15,14 @@ import { MSADeckGLViewer } from '../../msaViewer/MSADeckGLViewer';
 import { MSA_VIEWER_CONSTANTS } from '../../msaViewer/config.js';
 import { useMSA, useMSAViewport, useSetMSAVisibleRange } from './useMSA.js';
 import { MSAScrollbars } from './MSAScrollbars';
+import { describeCursor } from '../../timeline/describeCursor.js';
 import {
   buildMsaWindowOverlapStatus,
   buildMsaWindowStatus,
-  buildMsaTreeStatus,
   formatMsaWindowOverlapLabel,
   formatMsaWindowOverlapTooltip,
   formatMsaWindowStatusLabel,
   formatMsaWindowStatusTooltip,
-  formatMsaTreeStatusLabel,
-  formatMsaTreeStatusTooltip,
 } from './msaViewportStatus.js';
 
 function rangesEqual(left, right) {
@@ -157,6 +156,7 @@ export function MSAViewer() {
 
 function MSAStatusOverlay() {
   const { visibleRange } = useMSAViewport();
+  const timeline = useAppStore(selectTimeline);
   const timelineCursor = useAppStore(selectTimelineCursor);
   const msaStepSize = useAppStore(selectMsaStepSize);
   const msaWindowSize = useAppStore(selectMsaWindowSize);
@@ -179,7 +179,7 @@ function MSAStatusOverlay() {
     msaWindowSize,
     msaColumnCount
   );
-  const treeStatus = buildMsaTreeStatus(timelineCursor);
+  const position = timeline && describeCursor(timeline, timelineCursor);
 
   return (
     <div
@@ -204,10 +204,10 @@ function MSAStatusOverlay() {
               <MSAWindowStatus status={windowStatus} />
             </>
           )}
-          {treeStatus && (
+          {position && (
             <>
               <span className="text-muted-foreground/60">|</span>
-              <MSATreeStatus status={treeStatus} />
+              <MSATreeStatus position={position} />
             </>
           )}
           {overlapStatus && (
@@ -379,29 +379,24 @@ function MSAWindowStatus({ status }) {
   );
 }
 
-function MSATreeStatus({ status }) {
-  const tooltip = formatMsaTreeStatusTooltip(status);
-  const label = formatMsaTreeStatusLabel(status);
-  const sourceLabel = String(status.sourceInputTreeIndex + 1);
-  const targetLabel =
-    status.targetInputTreeIndex === null ? null : String(status.targetInputTreeIndex + 1);
-
+// The same words as the status strip: the segment under the playhead decides, not the nearest frame.
+function MSATreeStatus({ position: { from, to, aria } }) {
   return (
-    <AppTooltip content={tooltip} contentClassName="text-2xs">
+    <AppTooltip content={aria} contentClassName="text-2xs">
       <span
         className="inline-flex w-[7rem] shrink-0 items-center justify-center gap-1 rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-primary"
-        aria-label={`${tooltip}; ${label}`}
+        aria-label={aria}
       >
         <GitBranch className="size-3 shrink-0" aria-hidden />
         <span className="min-w-[1.25rem] shrink-0 text-center font-semibold leading-none">
-          {sourceLabel}
+          {from}
         </span>
-        {status.kind === 'transition' && (
+        {to && (
           <>
             <ArrowRight className="size-3 shrink-0 text-muted-foreground" aria-hidden />
             <GitBranch className="size-3 shrink-0 text-muted-foreground" aria-hidden />
             <span className="min-w-[1.25rem] shrink-0 text-center font-semibold leading-none text-muted-foreground">
-              {targetLabel}
+              {to}
             </span>
           </>
         )}

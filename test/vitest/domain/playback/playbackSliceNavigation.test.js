@@ -34,9 +34,7 @@ describe('playback navigation', () => {
   it('pauses playback and replaces the complete semantic position when seeking', () => {
     const cursor = {
       frameIndex: 2,
-      inputTreeIndex: 2,
       sourceFrameIndex: 2,
-      msaWindowIndex: 2,
       movieTimeMs: 3000,
     };
     const getCursorForFrame = vi.fn(() => cursor);
@@ -63,9 +61,7 @@ describe('playback navigation', () => {
   it('uses an explicit timeline position even when the frame index is unchanged', () => {
     const cursor = {
       frameIndex: 1,
-      inputTreeIndex: 1,
       sourceFrameIndex: 1,
-      msaWindowIndex: 1,
       movieTimeMs: 2600,
     };
     const getCursorAtMovieTime = vi.fn(() => cursor);
@@ -109,9 +105,7 @@ describe('playback navigation', () => {
     vi.spyOn(performance, 'now').mockReturnValue(10_000);
     const cursor = {
       frameIndex: 7,
-      inputTreeIndex: 1,
       sourceFrameIndex: 7,
-      msaWindowIndex: 7,
       movieTimeMs: 9000,
     };
     const getCursorAtMovieTime = vi.fn(() => cursor);
@@ -139,9 +133,7 @@ describe('playback navigation', () => {
     vi.spyOn(performance, 'now').mockReturnValue(20_000);
     const cursor = {
       frameIndex: 12,
-      inputTreeIndex: 1,
       sourceFrameIndex: 12,
-      msaWindowIndex: 12,
       movieTimeMs: 16_000,
     };
     const getCursorAtMovieTime = vi.fn(() => cursor);

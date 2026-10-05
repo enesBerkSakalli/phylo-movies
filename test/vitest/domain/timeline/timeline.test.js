@@ -17,9 +17,7 @@ describe('buildTimeline', () => {
 
     expect(timeline.cursorForFrame(7)).toMatchObject({
       frameIndex: 7,
-      inputTreeIndex: null,
       sourceFrameIndex: 0,
-      msaWindowIndex: 0,
       sourceInputTreeIndex: 0,
       targetInputTreeIndex: 1,
     });
@@ -30,9 +28,8 @@ describe('buildTimeline', () => {
     const startCursor = timeline.cursorAt(0);
     expect(startCursor).toMatchObject({
       frameIndex: 0,
-      inputTreeIndex: 0,
       sourceFrameIndex: 0,
-      msaWindowIndex: 0,
+      sourceInputTreeIndex: 0,
       movieTimeMs: 0,
       segmentIndex: 0,
     });
@@ -41,9 +38,8 @@ describe('buildTimeline', () => {
     const inputCursor = timeline.cursorAt(inputHold.start);
     expect(inputCursor).toMatchObject({
       frameIndex: 22,
-      inputTreeIndex: 1,
       sourceFrameIndex: 22,
-      msaWindowIndex: 1,
+      sourceInputTreeIndex: 1,
     });
   });
 
@@ -159,7 +155,6 @@ describe('buildTimeline', () => {
     };
 
     expect(buildTimeline(movieData).cursorForFrame(7)).toMatchObject({
-      msaWindowIndex: 10,
       sourceInputTreeIndex: 10,
       targetInputTreeIndex: 11,
     });

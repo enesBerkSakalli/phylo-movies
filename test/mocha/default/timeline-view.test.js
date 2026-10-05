@@ -118,10 +118,10 @@ describe('TimelineView', () => {
     target.dispatchEvent(new global.window.MouseEvent(type, { bubbles: true, clientX, clientY }));
   }
 
-  const clickTimeline = (view, ms) => dispatchMouse(view.deck.canvas, 'click', view.msToX(ms));
-  const mouseDownTimeline = (view, x) => dispatchMouse(view.deck.canvas, 'mousedown', x);
+  const clickTimeline = (view, ms) => dispatchMouse(view.canvas, 'click', view.msToX(ms));
+  const mouseDownTimeline = (view, x) => dispatchMouse(view.canvas, 'mousedown', x);
   const keyDown = (view, key, init = {}) =>
-    view.deck.canvas.dispatchEvent(
+    view.canvas.dispatchEvent(
       new global.window.KeyboardEvent('keydown', { bubbles: true, key, ...init })
     );
 
@@ -280,8 +280,8 @@ describe('TimelineView', () => {
     try {
       const { timeline } = makeTimelineFixture();
       const { view, events } = mountView(timeline);
-      dispatchMouse(view.deck.canvas, 'mousemove', 100);
-      dispatchMouse(view.deck.canvas, 'mouseleave', 100);
+      dispatchMouse(view.canvas, 'mousemove', 100);
+      dispatchMouse(view.canvas, 'mouseleave', 100);
 
       let canceledFrameId = null;
       global.cancelAnimationFrame = (id) => {
@@ -310,7 +310,6 @@ describe('TimelineView', () => {
     const originalRemoveEventListener = global.window.removeEventListener.bind(global.window);
     global.window.removeEventListener = (event, handler, options) => {
       if (event === 'mouseup') order.push('unbind');
-      if (event === 'resize') order.push('window-resize');
       return originalRemoveEventListener(event, handler, options);
     };
     view.deck.finalize = () => order.push('finalize');
@@ -319,24 +318,20 @@ describe('TimelineView', () => {
 
     global.window.removeEventListener = originalRemoveEventListener;
 
-    expect(order).to.deep.equal(['unbind', 'window-resize', 'finalize']);
+    expect(order).to.deep.equal(['unbind', 'finalize']);
   });
 
   describe('input', () => {
-    it('binds timeline pointer handlers to the deck canvas', () => {
+    it("hears pointer events that bubble up from deck's own canvas", () => {
       const { timeline } = makeTimelineFixture();
+      const { view, events } = mountView(timeline);
+      const deckCanvas = view.canvas.querySelector('canvas');
 
-      const { view } = mountView(timeline);
+      dispatchMouse(deckCanvas, 'mousemove', 100);
+      dispatchMouse(deckCanvas, 'click', view.msToX(1500));
 
-      const boundEvents = view.deck.eventListeners.map((entry) => entry.event);
-
-      expect(boundEvents).to.include.members([
-        'mousemove',
-        'mousedown',
-        'click',
-        'wheel',
-        'mouseleave',
-      ]);
+      expect(events.hovers).to.deep.equal([0]);
+      expect(events.selects.map(({ index }) => index)).to.deep.equal([1]);
     });
 
     it('starts scrubbing from a forgiving handle hit target', () => {
@@ -353,7 +348,7 @@ describe('TimelineView', () => {
       const { view, events } = mountView(timeline);
 
       mouseDownTimeline(view, 0);
-      dispatchMouse(view.deck.canvas, 'mousemove', 400);
+      dispatchMouse(view.canvas, 'mousemove', 400);
       dispatchMouse(global.window, 'mouseup', 400);
       clickTimeline(view, 1500);
 
@@ -382,7 +377,7 @@ describe('TimelineView', () => {
     it('opens the inspector request for a double-clicked transition, not an input tree', () => {
       const { timeline } = makeTimelineFixture();
       const { view, events } = mountView(timeline);
-      const dblclick = (ms) => dispatchMouse(view.deck.canvas, 'dblclick', view.msToX(ms));
+      const dblclick = (ms) => dispatchMouse(view.canvas, 'dblclick', view.msToX(ms));
 
       dblclick(500);
       expect(events.inspects).to.have.length(0);
@@ -443,7 +438,7 @@ describe('TimelineView', () => {
       };
       const { view, events } = mountView(timeline, { container });
 
-      dispatchMouse(view.deck.canvas, 'mousemove', 100);
+      dispatchMouse(view.canvas, 'mousemove', 100);
 
       expect(events.hovers).to.deep.equal([0]);
       expect(view.anchorOf(0).x).to.be.closeTo(400 / 3, 1e-6);
@@ -452,7 +447,7 @@ describe('TimelineView', () => {
       // The tooltip anchor follows the strip when the page moves under a still pointer
       left = 40;
       top = 12;
-      dispatchMouse(view.deck.canvas, 'mousemove', 140, 22);
+      dispatchMouse(view.canvas, 'mousemove', 140, 22);
 
       expect(events.hovers).to.deep.equal([0, 0]);
       expect(view.anchorOf(0).x).to.be.closeTo(40 + 400 / 3, 1e-6);
@@ -465,17 +460,17 @@ describe('TimelineView', () => {
         const { timeline } = makeTimelineFixture();
         const { view, events } = mountView(timeline);
 
-        dispatchMouse(view.deck.canvas, 'mousemove', 100);
-        dispatchMouse(view.deck.canvas, 'mouseleave', 100);
+        dispatchMouse(view.canvas, 'mousemove', 100);
+        dispatchMouse(view.canvas, 'mouseleave', 100);
         clock.tick(149);
         expect(events.hovers).to.deep.equal([0]);
         clock.tick(1);
         expect(events.hovers).to.deep.equal([0, null]);
 
-        dispatchMouse(view.deck.canvas, 'mousemove', 100);
-        dispatchMouse(view.deck.canvas, 'mouseleave', 100);
+        dispatchMouse(view.canvas, 'mousemove', 100);
+        dispatchMouse(view.canvas, 'mouseleave', 100);
         clock.tick(100);
-        dispatchMouse(view.deck.canvas, 'mousemove', 100);
+        dispatchMouse(view.canvas, 'mousemove', 100);
         clock.tick(1000);
         expect(events.hovers).to.deep.equal([0, null, 0, 0]);
       } finally {
@@ -558,16 +553,19 @@ describe('TimelineView', () => {
       expect(view.selected).to.equal(2);
     });
 
-    it('picks an input tree from its hover circle at the clicked time', () => {
+    it('selects a clicked hover circle once, as its own segment', () => {
       const { timeline } = makeTimelineFixture();
       const { view, events } = mountView(timeline);
-      const { onClick } = findLayer(view, 'input-tree-hover-layer').props;
+      view.setHover(0);
+      const circle = findLayer(view, 'input-tree-hover-layer');
+      const [marker] = circle.props.data;
 
-      // 100 px from the left edge of an 800 px strip of 3000 ms
-      onClick({ object: { segmentIndex: 0, position: [-300, 0] }, coordinate: [-300, 0] });
-      onClick({ object: null });
+      // A real click reaches the wrapper's own listener and, if the layer were pickable, deck's
+      // click too, a second select that the nearest-centre rule of the first can disagree with
+      clickTimeline(view, 375);
+      circle.props.onClick?.({ object: marker, coordinate: marker.position });
 
-      expect(events.selects).to.deep.equal([{ index: 0, ms: 375 }]);
+      expect(events.selects.map(({ index }) => index)).to.deep.equal([0]);
     });
 
     it('zooms about the pointer on wheel', () => {
@@ -580,7 +578,7 @@ describe('TimelineView', () => {
         deltaY: -1,
         clientX: view.msToX(1500),
       });
-      view.deck.canvas.dispatchEvent(wheel);
+      view.canvas.dispatchEvent(wheel);
 
       expect(wheel.defaultPrevented).to.equal(true);
       expect(view._rangeStart).to.be.closeTo(300, 1e-6);

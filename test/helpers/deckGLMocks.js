@@ -9,28 +9,10 @@ function createDeckGLCoreMock() {
     Deck: class {
       constructor(props) {
         this.props = props || {};
-        this.eventListeners = [];
-        this.canvas = global.document?.createElement('canvas') ?? null;
-
-        if (this.canvas) {
-          this.canvas.getBoundingClientRect = () => this.props.parent.getBoundingClientRect();
-          const addEventListener = this.canvas.addEventListener.bind(this.canvas);
-          const removeEventListener = this.canvas.removeEventListener.bind(this.canvas);
-
-          this.canvas.addEventListener = (event, handler, options) => {
-            this.eventListeners.push({ event, handler, options });
-            addEventListener(event, handler, options);
-          };
-
-          this.canvas.removeEventListener = (event, handler, options) => {
-            this.eventListeners = this.eventListeners.filter(
-              (entry) => entry.event !== event || entry.handler !== handler
-            );
-            removeEventListener(event, handler, options);
-          };
-
-          this.props.parent?.appendChild?.(this.canvas);
-        }
+        // Like the real Deck: its canvas goes into `parent` at once, but `deck.canvas` is only
+        // set once the device is ready, long after construction. Code must not wait on it.
+        this.element = global.document?.createElement('canvas') ?? null;
+        this.props.parent?.appendChild?.(this.element);
       }
 
       setProps(nextProps) {
@@ -38,7 +20,7 @@ function createDeckGLCoreMock() {
       }
 
       finalize() {
-        this.canvas?.remove?.();
+        this.element?.remove?.();
       }
     },
     OrthographicView: class {

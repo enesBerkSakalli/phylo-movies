@@ -9,8 +9,9 @@ const formatMovieTime = (ms) => {
  * `tooltip`, `time`) and the slider's aria-valuetext (`aria`). The segment under the cursor
  * decides, not the nearest frame: halfway through a motion that lands on an input tree that frame
  * already is the input tree, but the playhead is still in the transition.
- * @returns {{text: string, step?: string, aria: string, tooltip: string, time: string} | null}
- *   null when the cursor is on no segment
+ * @returns {{text: string, from: number, to?: number, step?: string, aria: string,
+ *   tooltip: string, time: string} | null} `from` is the input tree's number, or the transition's
+ *   source tree, which then has its target `to`; null when the cursor is on no segment
  */
 export function describeCursor(timeline, cursor) {
   const { segments } = timeline;
@@ -24,6 +25,7 @@ export function describeCursor(timeline, cursor) {
     const tree = segment.originalTreeIndex + 1;
     return {
       text: `Input tree ${tree}`,
+      from: tree,
       aria: `Input tree ${tree} of ${treeCount}`,
       tooltip: 'An observed tree from one alignment window or uploaded tree set.',
       time,
@@ -40,6 +42,8 @@ export function describeCursor(timeline, cursor) {
       : `step ${Math.max(1, Math.min(steps, cursor.frameIndex - segment.sourceGlobalIndex))} of ${steps}`;
   return {
     text: `Tree ${from} → ${to}`,
+    from,
+    to,
     step,
     aria: `Transition ${segment.pairOrdinal + 1} of ${treeCount - 1}: tree ${from} to tree ${to}${step && `, ${step}`}`,
     tooltip: 'Generated frames between neighboring input trees.',

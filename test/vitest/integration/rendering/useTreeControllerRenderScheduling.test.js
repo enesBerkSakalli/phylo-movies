@@ -109,9 +109,8 @@ describe('useTreeController static render scheduling', () => {
       frameIndex: 0,
       timelineCursor: {
         frameIndex: 0,
-        inputTreeIndex: 0,
         sourceFrameIndex: 0,
-        msaWindowIndex: 0,
+        sourceInputTreeIndex: 0,
         movieTimeMs: 1000,
       },
       setRenderInProgress: vi.fn(),
@@ -259,7 +258,7 @@ describe('useTreeController static render scheduling', () => {
       timelineCursor: {
         ...storeState.timelineCursor,
         frameIndex: 1,
-        msaWindowIndex: 1,
+        sourceInputTreeIndex: 1,
       },
     });
 
@@ -291,7 +290,7 @@ describe('useTreeController static render scheduling', () => {
       timelineCursor: {
         ...storeState.timelineCursor,
         frameIndex: 1,
-        msaWindowIndex: 0.5,
+        sourceInputTreeIndex: 0.5,
       },
     });
 

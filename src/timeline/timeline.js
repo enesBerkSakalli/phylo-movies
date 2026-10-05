@@ -55,10 +55,7 @@ export function buildTimeline(movieData) {
           : 'motion_target';
     return {
       frameIndex,
-      inputTreeIndex: frame.input_tree_index,
       sourceFrameIndex: frame.source_frame_index ?? frameIndex,
-      msaWindowIndex: sourceInputTreeIndex,
-      isObservedInput: frame.is_observed_input,
       sourceInputTreeIndex,
       targetInputTreeIndex: pair ? pair.target_input_tree_index : null,
       movieTimeMs,

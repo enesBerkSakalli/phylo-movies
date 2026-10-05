@@ -124,7 +124,7 @@ export function useTreeController() {
         return;
       }
 
-      const frameIndex = state.timelineCursor?.msaWindowIndex;
+      const frameIndex = state.timelineCursor?.sourceInputTreeIndex;
       if (!Number.isInteger(frameIndex) || frameIndex < 0) return;
       if (!force && frameIndex === prevMsaFrameRef.current) return;
 

@@ -88,14 +88,12 @@ export function MoviePlayerBar() {
     };
 
     updatePlayerBarHeight();
-    window.addEventListener('resize', updatePlayerBarHeight);
 
     const resizeObserver =
       typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updatePlayerBarHeight) : null;
     resizeObserver?.observe(playerBar);
 
     return () => {
-      window.removeEventListener('resize', updatePlayerBarHeight);
       resizeObserver?.disconnect();
       layoutRoot.style.removeProperty('--movie-player-bar-height');
     };

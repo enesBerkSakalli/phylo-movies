@@ -10,7 +10,7 @@ const SCRUB_GRAB_PX = 24;
  * @param {TimelineView} view
  * @param {Object} callbacks
  * @param {(ms: number, phase: 'start'|'move'|'end') => void} callbacks.onScrub - handle drag
- * @param {(segmentIndex: number|null, ms: number) => void} callbacks.onSelect - click, key or pick
+ * @param {(segmentIndex: number, ms: number) => void} callbacks.onSelect - click or key
  * @param {(segmentIndex: number|null) => void} callbacks.onHover - pointer over a segment; null
  *   150 ms after it left, so the tooltip survives a pass over the gap between two segments
  * @param {(segmentIndex: number) => void} callbacks.onInspect - double-click on a transition
@@ -19,7 +19,8 @@ const SCRUB_GRAB_PX = 24;
 export function attachTimelineInput(view, { onScrub, onSelect, onHover, onInspect }) {
   const { timeline } = view;
   const { segments, steps } = timeline;
-  const target = view.deck.canvas ?? view.canvas;
+  // The focusable wrapper: it hears the keys, and the pointer events that bubble up from deck's canvas
+  const target = view.canvas;
 
   let dragging = false; // the handle is held
   let grabbed = false; // the click that ends a handle drag selects nothing
@@ -129,11 +130,9 @@ export function attachTimelineInput(view, { onScrub, onSelect, onHover, onInspec
   listeners.forEach(([element, type, handler, options]) =>
     element.addEventListener(type, handler, options)
   );
-  view.onPick = onSelect;
 
   return () => {
     clearTimeout(hoverTimer);
-    view.onPick = null;
     listeners.forEach(([element, type, handler, options]) =>
       element.removeEventListener(type, handler, options)
     );

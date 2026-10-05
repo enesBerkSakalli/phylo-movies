@@ -4,6 +4,7 @@
 }
 
 .timeline-visual-layer {
+  position: relative;
   min-height: var(--timeline-height, 44px);
   height: var(--timeline-height, 44px);
   padding: 0 8px;

@@ -154,7 +154,7 @@ export function createPairPipLayer(id, pips, rgb, alpha) {
   });
 }
 
-export function createInputTreeHoverLayer(hoverInputTrees, hoverRGB, onClick = null) {
+export function createInputTreeHoverLayer(hoverInputTrees, hoverRGB) {
   return createScatterplotLayer('input-tree-hover-layer', hoverInputTrees, {
     getPosition: (d) => d.position,
     getFillColor: (d) => d.fillColor,
@@ -164,8 +164,6 @@ export function createInputTreeHoverLayer(hoverInputTrees, hoverRGB, onClick = n
     getRadius: (d) => d.radius + 1,
     lineWidthMinPixels: 2,
     radiusUnits: 'pixels',
-    pickable: !!onClick,
-    onClick,
   });
 }
 

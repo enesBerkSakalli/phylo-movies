@@ -44,7 +44,6 @@ export class TimelineView {
     this.deck = null;
     this.container = null;
     this.canvas = null;
-    this._onResize = () => this._scheduleUpdate();
 
     // Drawn state; the controller feeds it from the store
     this.selected = null;
@@ -60,9 +59,6 @@ export class TimelineView {
 
     this._updateScheduled = false;
     this._updateFrameId = null;
-
-    // Set by the input: a click on a hovered input-tree circle, as (segmentIndex, ms)
-    this.onPick = null;
   }
 
   /**
@@ -78,7 +74,6 @@ export class TimelineView {
     this.setCustomTime(0);
     this._updateLayers();
 
-    window.addEventListener('resize', this._onResize);
     if (typeof ResizeObserver !== 'undefined') {
       this._resizeObserver = new ResizeObserver(() => this._scheduleUpdate());
       this._resizeObserver.observe(this.container);
@@ -89,12 +84,6 @@ export class TimelineView {
   }
 
   _setupContainer(container) {
-    if (
-      !window.getComputedStyle(container).position ||
-      window.getComputedStyle(container).position === 'static'
-    ) {
-      container.style.position = 'relative';
-    }
     this.container = container;
 
     this.canvas = document.createElement('div');
@@ -131,14 +120,6 @@ export class TimelineView {
     if (!deckCanvas) return;
     deckCanvas.setAttribute('tabindex', '-1');
     deckCanvas.setAttribute('aria-hidden', 'true');
-  }
-
-  // A hit on the hovered input-tree circle always picks that tree, even where the click's own
-  // time would land in a neighbouring segment.
-  _pick({ object, coordinate }) {
-    if (object?.segmentIndex == null) return;
-    const x = (coordinate?.[0] ?? object.position[0]) + this._width / 2;
-    this.onPick?.(object.segmentIndex, this.xToMs(x));
   }
 
   // ==========================================================================
@@ -387,9 +368,7 @@ export class TimelineView {
       ),
       // Circles sit on the baseline, so they draw over the bars they overlap
       createInputTreeLayer(inputTreePoints, theme.inputTreeStrokeWidth),
-      createInputTreeHoverLayer(hoverInputTrees, theme.connectionHoverRGB, (info) =>
-        this._pick(info)
-      ),
+      createInputTreeHoverLayer(hoverInputTrees, theme.connectionHoverRGB),
       createInputTreeSelectionLayer(selectionInputTrees, theme),
       createPairPipLayer('pair-pip-layer', pairStrip.pips, theme.stripPipRGB, theme.stripPipAlpha),
       createPairPipLayer(
@@ -421,8 +400,6 @@ export class TimelineView {
     // Finalizing while input handlers are still bound would let a late event reach a torn-down deck.
     this._detachInput?.();
     this._detachInput = null;
-
-    window.removeEventListener('resize', this._onResize);
 
     teardownDeckRenderer({
       frameId: this._updateFrameId,

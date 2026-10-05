@@ -439,7 +439,7 @@ describe('TimelineController', () => {
     await controller.mount(makeContainer());
     const { view } = controller;
 
-    view.deck.canvas.dispatchEvent(
+    view.canvas.dispatchEvent(
       new global.window.MouseEvent('mousemove', { bubbles: true, clientX: 5, clientY: 10 })
     );
 
@@ -456,7 +456,7 @@ describe('TimelineController', () => {
     const controller = createController();
     await controller.mount(makeContainer());
 
-    controller.view.deck.canvas.dispatchEvent(
+    controller.view.canvas.dispatchEvent(
       new global.window.MouseEvent('mousedown', { bubbles: true, clientX: 5, clientY: 10 })
     );
     expect(useAppStore.getState().isScrubbing).to.equal(true);
