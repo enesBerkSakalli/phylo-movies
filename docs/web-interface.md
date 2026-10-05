@@ -117,7 +117,7 @@ The player bar has two rows. The top row holds, left to right:
 - **Alignment** button (when MSA data are available)
 - Playback speed control
 
-The bottom row holds the timeline strip (see [Reading the timeline](#reading-the-timeline)), the zoom out (−), fit (⛶), and zoom in (+) buttons, and a **(?)** button that opens the timeline legend.
+The bottom row holds the timeline strip (see [Reading the timeline](#reading-the-timeline)), the zoom out (−), fit (⛶), and zoom in (+) buttons, and a **(?)** button that opens the timeline legend. On a phone (under 640 px wide) the first row keeps only the menu, the transport buttons, and a **⋯** button, with the position on its own line below, and the strip takes the full width of the second row; speed, zoom, **Inspect transition**, the alignment button, and the legend are in the **⋯** popover.
 
 The position text reads "Tree a → b · step i of N" (or "Input tree n" on an input tree), and its tooltip shows the current movie time. The **Inspect transition** button next to it opens the Transition Inspector for the selected transition and is disabled until a transition is selected. When MSA data are available, the status area also reports the active alignment window and the configured window/step size.
 
@@ -136,12 +136,12 @@ The side-by-side comparison view, the link/unlink toggle (comparison mode only),
 The timeline strip draws one gray bar per transition, that is, between each pair of consecutive input trees:
 
 - Bar height is the normalized Robinson-Foulds (RF) distance of that transition, scaled to the largest RF in the dataset. The legend (the **(?)** button at the end of the strip) shows **RF change (max …)** with that maximum. RF and weighted RF per transition are also in the hover tooltip and the Transition Inspector.
-- Below the baseline, one dot marks each SPR move. Dot size is the number of taxa moved.
+- Below the baseline, one dot marks each SPR move. Dot size is the number of taxa moved. Where a transition is too narrow for its moves, they merge into one dot whose size is the move count; zoom in to see each move.
 - A dashed segment marks a transition where only branch lengths changed (RF 0, weighted RF above 0): **Branch lengths only**.
 - Short ticks mark input trees (circles at high zoom).
-- The selected transition turns green, with a green line under the exact selected part. The blue line is the playhead.
+- The selected transition turns green, with a dark bracket under the exact selected part, so it reads without the colour. The blue line is the playhead.
 
-With the strip focused, **Home** and **End** jump to the first and last segment. Numbering is 1-based and per transition. The hover tooltip appears above the player bar, so it never covers the controls. Its header reads "Transition k of P · Tree a → b", followed by "RF x · weighted RF y" and either "n SPR moves · m taxa moved" or "Branch lengths only".
+Zoomed in, **Shift + wheel**, a sideways swipe, or a drag on empty strip pans the strip; the wheel zooms about the pointer, and the zoom buttons about the playhead. During playback the view pages to keep the playhead in sight. With the strip focused, **Home** and **End** jump to the first and last segment. Numbering is 1-based and per transition. The hover tooltip appears above the player bar, so it never covers the controls. Its header reads "Transition k of P · Tree a → b", followed by "RF x · weighted RF y" and either "n SPR moves · m taxa moved" or "Branch lengths only".
 
 ### Transition Inspector
 

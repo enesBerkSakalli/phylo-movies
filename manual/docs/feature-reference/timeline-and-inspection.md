@@ -4,7 +4,7 @@ title: Timeline and Inspection
 
 # Timeline and Inspection
 
-The movie player bar controls navigation through input trees and generated transition frames. It has two rows. The top row holds the **☰** Settings toggle, the transport buttons, the current position, **Inspect transition**, the alignment button (when an MSA is loaded), and playback speed. The bottom row is the timeline strip, which summarizes each transition (RF change and SPR moves) so you can pick one to inspect, with zoom buttons and a legend button beside it. Comparison mode and the pinned tree live in **Settings ▸ View Mode**.
+The movie player bar controls navigation through input trees and generated transition frames. It has two rows. The top row holds the **☰** Settings toggle, the transport buttons, the current position, **Inspect transition**, the alignment button (when an MSA is loaded), and playback speed. The bottom row is the timeline strip, which summarizes each transition (RF change and SPR moves) so you can pick one to inspect, with zoom buttons and a legend button beside it. On a phone (under 640 px wide) the top row keeps the **☰** toggle, the transport buttons, and a **⋯** button, with the position on its own line; speed, zoom, **Inspect transition**, the alignment button, and the legend move into the **⋯** popover, and the strip takes the full width of the bottom row. Comparison mode and the pinned tree live in **Settings ▸ View Mode**.
 
 ## Transport Controls
 
@@ -36,13 +36,13 @@ These controls are in **Settings ▸ View Mode**, not in the player bar.
 
 The strip draws one gray bar per transition, between each pair of consecutive input trees. Click the **(?)** button at the right end of the strip to open the legend.
 
-| Marker                  | Meaning                                                                                                              |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| **RF change (max …)**   | Bar height: the transition's normalized Robinson-Foulds distance, scaled to the dataset's largest RF (shown as max). |
-| **SPR move**            | One dot below the baseline per SPR move. Dot size is the number of taxa moved.                                       |
-| **Branch lengths only** | Dashed segment: only branch lengths changed (RF 0, weighted RF above 0).                                             |
-| **Input tree**          | Short tick for each original input tree (a circle at high zoom).                                                     |
-| **Selected**            | The selected transition turns green, with a green line under the exact selected part.                                |
+| Marker                  | Meaning                                                                                                                                                             |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RF change (max …)**   | Bar height: the transition's normalized Robinson-Foulds distance, scaled to the dataset's largest RF (shown as max).                                                |
+| **SPR move**            | One dot below the baseline per SPR move; size is the taxa moved. A transition too narrow for its moves gets one dot sized by its move count: zoom in for each move. |
+| **Branch lengths only** | Dashed segment: only branch lengths changed (RF 0, weighted RF above 0).                                                                                            |
+| **Input tree**          | Short tick for each original input tree (a circle at high zoom).                                                                                                    |
+| **Selected**            | The selected transition turns green, with a dark bracket under the exact selected part, so it reads without the colour.                                             |
 
 The blue line is the playhead. Numbering is 1-based and per transition throughout: the status strip reads "Tree a → b · step i of N" (or "Input tree n"), and the tooltip and Inspector use "Transition k of P".
 
@@ -54,7 +54,7 @@ The blue line is the playhead. Numbering is 1-based and per transition throughou
 | **Playback Speed**                   | Adjusts animation speed from slow review to faster playback.                                      |
 | **Zoom out / Fit / Zoom in** (− ⛶ +) | Zoom the timeline strip, or fit the whole sequence to the available width.                        |
 
-Click the focused strip and press **Home** or **End** to jump to the first or last segment. **← / →** move the selection one segment at a time.
+Zoomed in, **Shift + wheel**, a sideways swipe, or a drag on empty strip pans the strip; the wheel zooms about the pointer and the buttons about the playhead. During playback the view pages to keep the playhead in sight. Click the focused strip and press **Home** or **End** to jump to the first or last segment. **← / →** move the selection one segment at a time.
 
 ## Finding Candidate Regions
 
