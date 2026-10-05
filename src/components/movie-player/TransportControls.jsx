@@ -11,8 +11,8 @@ import {
 } from '../../state/phyloStore/store.js';
 import { playbackCommands } from './playbackShortcuts.js';
 
-// 44px touch targets on a phone
-const TRANSPORT_BUTTON_CLASS = 'transport-button max-sm:size-11';
+// 44px touch targets on a phone, in px: the root font is 14px, so size-11 would be 38.5
+const TRANSPORT_BUTTON_CLASS = 'transport-button max-sm:size-[44px]';
 
 export function TransportControls() {
   const playing = useAppStore(selectPlaying);

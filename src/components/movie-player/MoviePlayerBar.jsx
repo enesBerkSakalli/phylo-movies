@@ -130,7 +130,7 @@ export function MoviePlayerBar() {
                 aria-label="Toggle settings"
                 aria-expanded={settingsOpen ? 'true' : 'false'}
                 onClick={handleNavigationToggle}
-                className="max-sm:size-11"
+                className="max-sm:size-[44px]"
               >
                 <Menu className="size-4" />
               </Button>
@@ -276,7 +276,7 @@ function MsaPlayerBarAction({ hasMsa, onOpen, label }) {
         size={label ? 'default' : 'icon-sm'}
         aria-label="Open alignment viewer"
         onClick={onOpen}
-        className={cn('shrink-0 hover:bg-accent', label && 'max-sm:h-11 justify-start')}
+        className={cn('shrink-0 hover:bg-accent', label && 'max-sm:h-[44px] justify-start')}
       >
         <Dna className="size-4" />
         {label}
@@ -304,7 +304,7 @@ function InspectTransitionAction({ canInspect, label, onDone }) {
             openPanel('inspector');
             onDone?.();
           }}
-          className={cn('hover:bg-accent', label && 'max-sm:h-11 w-full justify-start')}
+          className={cn('hover:bg-accent', label && 'max-sm:h-[44px] w-full justify-start')}
         >
           <PanelRightOpen className="size-4" />
           {label}
@@ -363,7 +363,7 @@ function MoreMenu({
           variant="ghost"
           size="icon-sm"
           aria-label="More playback and timeline options"
-          className="ml-auto size-11"
+          className="ml-auto size-[44px]"
         >
           <Ellipsis className="size-4" aria-hidden />
         </Button>

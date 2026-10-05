@@ -5,7 +5,7 @@ import { ZoomOut, ZoomIn, Scan } from 'lucide-react';
 import { selectTimelineView, useAppStore } from '../../../state/phyloStore/store.js';
 
 export const TIMELINE_VIEW_BUTTON_CLASS =
-  'size-7 max-sm:size-11 text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:text-foreground';
+  'size-7 max-sm:size-[44px] text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:text-foreground';
 
 export function TimelineScrollControls() {
   const view = useAppStore(selectTimelineView);

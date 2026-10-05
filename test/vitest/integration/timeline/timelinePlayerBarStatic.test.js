@@ -138,7 +138,7 @@ describe('movie timeline player bar semantics', () => {
       read('TimelineScrollControls', 'TimelineScrollControls.jsx'),
     ];
 
-    for (const source of sources) expect(source).toContain('max-sm:size-11');
+    for (const source of sources) expect(source).toContain('max-sm:size-[44px]');
     // Desktop sizes are the same classes as before
     expect(read('TransportControls.jsx')).toContain('size="icon"');
     expect(read('TimelineScrollControls', 'TimelineScrollControls.jsx')).toContain('size-7');

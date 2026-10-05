@@ -20,7 +20,7 @@ export function PlaybackSpeedControl({ value, setValue }) {
         value={[value]}
         onValueChange={([speed]) => setValue(speed)}
         aria-label="Playback speed"
-        className="w-32 max-sm:h-11 max-sm:w-auto max-sm:flex-1 [&_[data-slot=slider-thumb]]:size-[18px]"
+        className="w-32 max-sm:h-[44px] max-sm:w-auto max-sm:flex-1 [&_[data-slot=slider-thumb]]:size-[18px]"
       />
       <span className="w-9 text-right text-xs font-semibold tabular-nums" aria-hidden>
         {value.toFixed(1)}×
