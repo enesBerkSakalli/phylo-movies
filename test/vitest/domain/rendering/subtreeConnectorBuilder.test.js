@@ -244,8 +244,20 @@ const makeLeaf = (index, name, position, parentId = null) => ({
   position,
 });
 
+const makeClade = (id, splitIndices, position) => ({
+  id,
+  parentId: null,
+  split_indices: splitIndices,
+  isLeaf: false,
+  depth: 1,
+  position,
+});
+
 const makePositionMap = (offsetX = 0) => {
   const map = new Map();
+  // Leaves share a lowest common ancestor only when their parents are in the map.
+  map.set('clade-10-11', makeClade('clade-10-11', [10, 11], [offsetX - 30, 0, 0]));
+  map.set('clade-12-13', makeClade('clade-12-13', [12, 13], [offsetX + 30, 0, 0]));
   map.set('10', makeLeaf(10, 'A', [offsetX - 30, -20, 0], 'clade-10-11'));
   map.set('11', makeLeaf(11, 'B', [offsetX - 30, 20, 0], 'clade-10-11'));
   map.set('12', makeLeaf(12, 'C', [offsetX + 30, -20, 0], 'clade-12-13'));
@@ -780,11 +792,7 @@ describe('SubtreeConnectorBuilder', function () {
     );
 
     expect(groups).toHaveLength(2);
-    expect(groups[0].leftCenterEntry).toBe(leftParent);
-    expect(groups[0].rightCenterEntry).toBe(rightParent);
     expect(groups[0].connections).toEqual([firstConnection, secondConnection]);
-    expect(groups[1].leftCenterEntry).toBe(standaloneLeft);
-    expect(groups[1].rightCenterEntry).toBe(standaloneRight);
     expect(groups[1].connections).toEqual([standaloneConnection]);
 
     const builderSource = readFileSync(builderSourcePath, 'utf8');
@@ -963,13 +971,7 @@ describe('SubtreeConnectorBuilder', function () {
       sourceInfo: leftPositions.get('12'),
       targetInfo: rightPositions.get('12'),
     };
-    const passiveConnectionGroups = [
-      {
-        leftCenterEntry: passiveConnection.sourceInfo,
-        rightCenterEntry: passiveConnection.targetInfo,
-        connections: [passiveConnection],
-      },
-    ];
+    const passiveConnectionGroups = [{ connections: [passiveConnection] }];
 
     let paths;
     expect(() => {

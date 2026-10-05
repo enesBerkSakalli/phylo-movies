@@ -68,7 +68,6 @@ describe('ComparisonGeometryUtils', () => {
           { sourceInfo: left, source: left.position },
           { sourceInfo: right, source: right.position },
         ],
-        null,
         center,
         100,
         true,

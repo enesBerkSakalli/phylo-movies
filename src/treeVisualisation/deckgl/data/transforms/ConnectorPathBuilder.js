@@ -82,7 +82,6 @@ function buildBundledConnectorPaths(params) {
     activeGroups.forEach((group, groupIndex) => {
       let srcBundlePoint = chooseBundlePoint(
         group.connections,
-        null,
         leftCenter,
         leftRadius,
         true,
@@ -90,7 +89,6 @@ function buildBundledConnectorPaths(params) {
       );
       let dstBundlePoint = chooseBundlePoint(
         group.connections,
-        null,
         rightCenter,
         rightRadius,
         false,
@@ -125,7 +123,6 @@ function buildBundledConnectorPaths(params) {
   for (const group of connectionGroups) {
     const groupBundlePoint = chooseBundlePoint(
       group.connections,
-      group.leftCenterEntry,
       leftCenter,
       leftRadius,
       true,
@@ -133,7 +130,6 @@ function buildBundledConnectorPaths(params) {
     );
     const groupDstBundlePoint = chooseBundlePoint(
       group.connections,
-      group.rightCenterEntry,
       rightCenter,
       rightRadius,
       false,

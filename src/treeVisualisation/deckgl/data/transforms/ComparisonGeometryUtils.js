@@ -1,4 +1,3 @@
-import { calculateRadialBundlePoint } from '../../builders/geometry/connectors/ConnectorGeometryBuilder.js';
 import { findLowestCommonAncestorById } from '../../builders/geometry/connectors/CommonAncestorBuilder.js';
 
 export const ensureOutside = (pt, center, minRadius, depthOffset = 0) => {
@@ -38,66 +37,26 @@ export const getAngle = (nodeOrPoint, center) => {
 export function getBundleAncestor(entry, entryById, targetDepth = 2) {
   let current = entry;
 
-  while (getParentId(current) && getDepth(current) > targetDepth) {
-    const next = entryById.get(getParentId(current));
+  while (current.parentId && getDepth(current) > targetDepth) {
+    const next = entryById.get(current.parentId);
     if (!next) break;
     current = next;
   }
   return current;
 }
 
-export const chooseBundlePoint = (
-  connections,
-  fallbackEntry,
-  center,
-  radius,
-  isLeft,
-  entryById = null
-) => {
+export const chooseBundlePoint = (connections, center, radius, isLeft, entryById) => {
   const entries = connections.map((c) => (isLeft ? c.sourceInfo : c.targetInfo)).filter(Boolean);
-  const lca = entryById ? findLowestCommonAncestorById(entries, entryById) : null;
-  const lcaPosition = getPosition(lca);
+  const lca = findLowestCommonAncestorById(entries, entryById);
 
-  if (lcaPosition) {
-    // Hierarchical layering:
-    // Root/Shallow nodes -> Further out
-    // Deep/Leaf nodes -> Closer in
-    // Heuristic: If we assume typical tree depth ~10-15
-    // We want roughly 50-100 units of "bundling space"
+  // Hierarchical layering: shallow common ancestors bundle further out, deep ones closer in.
+  // Assumes a typical tree depth of ~15 and 5 units between lanes.
+  const depthOffset = Math.max(0, 15 - getDepth(lca, 5)) * 5;
 
-    // Default max depth guess if not provided
-    const maxDepth = 15;
-    const depth = getDepth(lca, 5);
-
-    // Invert depth: Lower depth (Root) = 0 => High Offset
-    // Higher depth (Leaf) = maxDepth => Low Offset
-    const depthFactor = Math.max(0, maxDepth - depth);
-    const spacingPerLevel = 5; // Distance between hierarchical lanes
-    const depthOffset = depthFactor * spacingPerLevel;
-
-    return ensureOutside(lcaPosition, center, radius || 0, depthOffset);
-  }
-
-  const fallbackPosition = getPosition(fallbackEntry);
-  if (fallbackPosition) {
-    return ensureOutside(fallbackPosition, center, radius || 0, 20);
-  }
-
-  const points = connections.map((c) => (isLeft ? c.source : c.target));
-  return ensureOutside(calculateRadialBundlePoint(points, center), center, radius || 0, 10);
+  return ensureOutside(lca.position, center, radius || 0, depthOffset);
 };
-
-function getPosition(entry) {
-  if (!entry) return null;
-  if (Array.isArray(entry.position)) return entry.position;
-  return null;
-}
 
 function getDepth(entry, fallback = 0) {
   const depth = entry.depth;
   return Number.isFinite(depth) ? depth : fallback;
-}
-
-function getParentId(entry) {
-  return entry.parentId ?? null;
 }
