@@ -102,6 +102,7 @@ describe('tree highlight state', () => {
         colorManager,
         changePulseEnabled: true,
         changePulsePhase: 0,
+        playing: true,
       });
 
       useAppStore.getState().startPulseAnimation();
@@ -116,6 +117,71 @@ describe('tree highlight state', () => {
         colorManager: previousColorManager,
         changePulseEnabled: previousPulseEnabled,
         changePulsePhase: previousPulsePhase,
+        playing: previousState.playing,
+      });
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('pauses the change pulse when playback stops: no further frames, highlight at full strength', () => {
+    const previous = useAppStore.getState();
+    const frames = [];
+    vi.stubGlobal('requestAnimationFrame', (callback) => frames.push(callback));
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
+    const phases = [];
+    const unsubscribe = useAppStore.subscribe((state, prevState) => {
+      if (state.changePulsePhase !== prevState.changePulsePhase)
+        phases.push(state.changePulsePhase);
+    });
+
+    try {
+      previous.stopPulseAnimation?.();
+      useAppStore.setState({
+        colorManager: { hasPivotEdges: () => true },
+        changePulseEnabled: true,
+        playing: false,
+        treeList: [{}],
+        animationSpeed: 1,
+        timeline: {
+          totalDuration: 1000,
+          cursorAt: () => ({ frameIndex: 0, movieTimeMs: 0 }),
+        },
+      });
+
+      // Paused on a pivot edge: drawn once at full strength, no animation loop.
+      useAppStore.getState().startPulseAnimation();
+      expect(frames).toHaveLength(0);
+      expect(useAppStore.getState().getPulseOpacity()).toBe(1);
+
+      // Playing: the pulse runs.
+      useAppStore.getState().play();
+      expect(frames).toHaveLength(1);
+      frames.shift()(performance.now() + 375);
+      expect(useAppStore.getState().getPulseOpacity()).toBeLessThan(1);
+      expect(frames).toHaveLength(1);
+
+      // Paused again: the next frame ends the loop and rests at full strength.
+      useAppStore.setState({ playing: false });
+      frames.shift()(performance.now() + 900);
+      expect(frames).toHaveLength(0);
+      expect(useAppStore.getState().getPulseOpacity()).toBe(1);
+
+      // Nothing else writes the phase while paused.
+      const written = phases.length;
+      useAppStore.getState().startPulseAnimation();
+      expect(frames).toHaveLength(0);
+      expect(phases.length).toBe(written);
+    } finally {
+      unsubscribe();
+      useAppStore.getState().stopPulseAnimation?.();
+      useAppStore.setState({
+        colorManager: previous.colorManager,
+        changePulseEnabled: previous.changePulseEnabled,
+        changePulsePhase: previous.changePulsePhase,
+        playing: previous.playing,
+        treeList: previous.treeList,
+        animationSpeed: previous.animationSpeed,
+        timeline: previous.timeline,
       });
       vi.unstubAllGlobals();
     }

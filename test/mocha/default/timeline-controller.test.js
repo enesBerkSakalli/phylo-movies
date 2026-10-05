@@ -698,7 +698,7 @@ describe('TimelineController', () => {
       expect(scrubbingAtWrite).to.deep.equal([false]);
     });
 
-    it('leaves the change pulse running only where the released scrub rests on a pivot edge', async () => {
+    it('leaves the change pulse off where the released scrub rests on a pivot edge', async () => {
       useAppStore.setState({
         temporalEvents: movieData.temporal_events,
         treeController: {
@@ -711,22 +711,15 @@ describe('TimelineController', () => {
       const { steps } = timeline;
       const hasPivot = (frame) => useAppStore.getState().getCurrentPivotEdge(frame).length > 0;
       const intoPivotFrame = steps.find((s) => s.from !== s.to && hasPivot(s.to));
-      const intoInputTree = steps.find(
-        (s) => s.from !== s.to && hasPivot(s.from) && !hasPivot(s.to)
-      );
-      const pulsing = () => useAppStore.getState().pulseController?.isRunning === true;
       const controller = createController();
 
       try {
         controller.startScrub(0);
         await controller.endScrub(at(intoPivotFrame, 0.5));
-        expect(pulsing()).to.equal(true);
 
-        // Early in a move into an input tree the playhead still sits on the last generated frame,
-        // but the input tree is what is highlighted, and an input tree has no pivot edge.
-        controller.startScrub(at(intoPivotFrame, 0.5));
-        await controller.endScrub(at(intoInputTree, 0.2));
-        expect(pulsing()).to.equal(false);
+        // Paused: the highlight rests at full strength instead of animating.
+        expect(useAppStore.getState().pulseController?.isRunning === true).to.equal(false);
+        expect(useAppStore.getState().getPulseOpacity()).to.equal(1);
       } finally {
         useAppStore.getState().resetColors();
         useAppStore.setState({ temporalEvents: [] });

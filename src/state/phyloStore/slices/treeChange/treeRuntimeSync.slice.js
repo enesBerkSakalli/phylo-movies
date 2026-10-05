@@ -1,4 +1,5 @@
 import {
+  PULSE_REST_PHASE,
   PulseAnimationController,
   calculatePulseOpacity,
 } from '../../../../animation/PulseAnimationController.js';
@@ -34,7 +35,7 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
   colorManager: null,
   colorVersion: 0,
   currentAnimationStage: null, // 'COLLAPSE' | 'EXPAND' | 'REORDER' | null
-  changePulsePhase: 0,
+  changePulsePhase: PULSE_REST_PHASE,
   // Held in the store rather than a module singleton so it can't outlive the store instance that
   // created it - a module-level controller keeps writing through the first store's set().
   pulseController: null,
@@ -191,8 +192,9 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
   },
 
   startPulseAnimation: () => {
-    const { changePulseEnabled, colorManager, pulseController } = get();
-    if (!changePulseEnabled) return;
+    const { changePulseEnabled, playing, colorManager, pulseController } = get();
+    // The pulse only runs during playback; paused, the highlight rests at full strength.
+    if (!changePulseEnabled || !playing) return;
 
     const hasPivotEdge = colorManager?.hasPivotEdges?.() === true;
     if (!hasPivotEdge || pulseController?.isRunning) return;
@@ -204,7 +206,7 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
         shouldContinue: () => {
           const s = get();
           const cm = s.colorManager;
-          return s.changePulseEnabled && cm?.hasPivotEdges?.() === true;
+          return s.playing && s.changePulseEnabled && cm?.hasPivotEdges?.() === true;
         },
       });
       set({ pulseController: controller });

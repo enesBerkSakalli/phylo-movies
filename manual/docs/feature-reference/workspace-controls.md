@@ -120,7 +120,7 @@ The tree canvas can also be magnified with the top-right zoom controls, mouse wh
 | **Current Change**      | Dims branches outside the current changed edge.       |
 | **Subtree Highlight**   | Dims branches outside the highlighted subtree.        |
 | **Dim Strength**        | Controls how strongly non-focused branches are faded. |
-| **Pulse**               | Animates changed edges.                               |
+| **Pulse**               | Animates changed edges while playing.                 |
 | **Dashed Edges**        | Draws changed edges as dashed lines.                  |
 | **Past/Future Changes** | Shows previous and upcoming change context.           |
 | **Connector Opacity**   | Controls group connector opacity.                     |

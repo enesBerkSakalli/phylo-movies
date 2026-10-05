@@ -29,6 +29,7 @@ export const createPlaybackSlice = (set, get) => ({
       animationStartTime: performance.now() - cursor.movieTimeMs / animationSpeed,
       ...positionOf(cursor),
     });
+    get().startPulseAnimation?.();
   },
 
   stop: () => {

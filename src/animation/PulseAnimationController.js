@@ -8,6 +8,9 @@ const PULSE_DURATION_MS = 1500;
 const PULSE_MIN_OPACITY = 0.4;
 const PULSE_MAX_OPACITY = 1.0;
 
+// Phase of peak opacity: where the highlight rests while nothing animates.
+export const PULSE_REST_PHASE = 0.25;
+
 /**
  * Calculate pulse opacity from phase (0-1)
  * Uses sine wave for smooth breathing effect
@@ -43,7 +46,7 @@ export class PulseAnimationController {
     cancelAnimationFrame(this._animationId);
     this._animationId = null;
     this._startTime = null;
-    this._onPhaseUpdate(0);
+    this._onPhaseUpdate(PULSE_REST_PHASE);
   }
 
   _animate = (timestamp) => {
