@@ -19,7 +19,6 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarSeparator,
-  SidebarRail,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
@@ -30,140 +29,115 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/colla
 import { TOOLS_SIDEBAR_GROUP_LABELS } from './ToolsSidebar.contract.js';
 import { SPR_ANALYTICS_COPY } from '../TreeStatsPanel/AnalyticsDashboard.contract.ts';
 import { selectTreeHydrationStats, useAppStore } from '../../state/phyloStore/store.js';
+import { openPanel, useIsPanelOpen } from '../dock/dockRuntime.js';
 
 const phyloTreeIcon = `${import.meta.env.BASE_URL}icons/phylo-tree-icon.svg`;
-const loadAnalyticsDashboard = () => import('../TreeStatsPanel/AnalyticsDashboard.tsx');
-const AnalyticsDashboard = React.lazy(loadAnalyticsDashboard);
 
-export function ToolsSidebar({
-  fileName,
-  datasetProvenance,
-  error,
-  sprAnalyticsOpen,
-  isSprAnalyticsActive,
-  onOpenSprAnalytics,
-  onCloseSprAnalytics,
-  onFocusSprAnalytics,
-  onOpenTaxaColoring,
-  onPreloadTaxaColoring,
-}) {
+export function ToolsSidebar({ fileName, datasetProvenance, error }) {
   const navigate = useNavigate();
+  const movedSubtreesOpen = useIsPanelOpen('moved-subtrees');
   const handleReturnHome = React.useCallback(() => {
     navigate('/');
   }, [navigate]);
 
   return (
-    <>
-      <Sidebar id="app-sidebar" collapsible="icon" data-tour-id="workspace-sidebar">
-        <SidebarHeader>
+    <Sidebar
+      id="app-sidebar"
+      collapsible="none"
+      className="h-full w-full"
+      data-tour-id="workspace-sidebar"
+    >
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild className="md:h-12">
+              <div className="flex items-center gap-3 w-full" aria-label="Phylo-Movies">
+                <img
+                  src={phyloTreeIcon}
+                  alt=""
+                  aria-hidden="true"
+                  className="size-8 shrink-0 rounded-lg"
+                />
+                <div className="flex flex-col gap-1 leading-none group-data-[collapsible=icon]:hidden overflow-hidden">
+                  <span className="font-semibold truncate">Phylo-Movies</span>
+                  <span className="text-2xs text-muted-foreground truncate">
+                    {error ? `Error: ${error}` : fileName}
+                  </span>
+                </div>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>{TOOLS_SIDEBAR_GROUP_LABELS[0]}</SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton size="lg" asChild className="md:h-12">
-                <div className="flex items-center gap-3 w-full" aria-label="Phylo-Movies">
-                  <img
-                    src={phyloTreeIcon}
-                    alt=""
-                    aria-hidden="true"
-                    className="size-8 shrink-0 rounded-lg"
-                  />
-                  <div className="flex flex-col gap-1 leading-none group-data-[collapsible=icon]:hidden overflow-hidden">
-                    <span className="font-semibold truncate">Phylo-Movies</span>
-                    <span className="text-2xs text-muted-foreground truncate">
-                      {error ? `Error: ${error}` : fileName}
-                    </span>
-                  </div>
-                </div>
+              <SidebarMenuButton tooltip="Change dataset" onClick={handleReturnHome}>
+                <ArrowLeft />
+                <span>Change Dataset</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            <DatasetProvenanceItem fileName={fileName} provenance={datasetProvenance} />
+            <MsaSidebarSection />
           </SidebarMenu>
-        </SidebarHeader>
+        </SidebarGroup>
 
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupLabel>{TOOLS_SIDEBAR_GROUP_LABELS[0]}</SidebarGroupLabel>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Change dataset" onClick={handleReturnHome}>
-                  <ArrowLeft />
-                  <span>Change Dataset</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <DatasetProvenanceItem fileName={fileName} provenance={datasetProvenance} />
-              <MsaSidebarSection />
-            </SidebarMenu>
-          </SidebarGroup>
+        <SidebarSeparator />
 
-          <SidebarSeparator />
+        <SidebarGroup>
+          <SidebarGroupLabel>{TOOLS_SIDEBAR_GROUP_LABELS[1]}</SidebarGroupLabel>
+          <SidebarMenu>
+            <TreeStructureGroup />
+            <LayoutTransformSection />
+          </SidebarMenu>
+        </SidebarGroup>
 
-          <SidebarGroup>
-            <SidebarGroupLabel>{TOOLS_SIDEBAR_GROUP_LABELS[1]}</SidebarGroupLabel>
-            <SidebarMenu>
-              <TreeStructureGroup />
-              <LayoutTransformSection />
-            </SidebarMenu>
-          </SidebarGroup>
+        <SidebarSeparator />
 
-          <SidebarSeparator />
+        <SidebarGroup>
+          <SidebarGroupLabel>{TOOLS_SIDEBAR_GROUP_LABELS[2]}</SidebarGroupLabel>
+          <SidebarMenu>
+            <GeometryDimensionsSection />
+            <TaxaAndHighlightsSection />
+            <TaxaGroupsLegend />
+          </SidebarMenu>
+        </SidebarGroup>
 
-          <SidebarGroup>
-            <SidebarGroupLabel>{TOOLS_SIDEBAR_GROUP_LABELS[2]}</SidebarGroupLabel>
-            <SidebarMenu>
-              <GeometryDimensionsSection />
-              <TaxaAndHighlightsSection
-                onOpenTaxaColoring={onOpenTaxaColoring}
-                onPreloadTaxaColoring={onPreloadTaxaColoring}
-              />
-              <TaxaGroupsLegend />
-            </SidebarMenu>
-          </SidebarGroup>
+        <SidebarSeparator />
 
-          <SidebarSeparator />
+        <SidebarGroup>
+          <SidebarGroupLabel>{TOOLS_SIDEBAR_GROUP_LABELS[3]}</SidebarGroupLabel>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                tooltip={SPR_ANALYTICS_COPY.openLabel}
+                aria-label={SPR_ANALYTICS_COPY.openLabel}
+                aria-pressed={movedSubtreesOpen}
+                isActive={movedSubtreesOpen}
+                onClick={() => openPanel('moved-subtrees')}
+              >
+                <Activity className="text-primary" />
+                <span>{SPR_ANALYTICS_COPY.title}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <TreeStatsPanel />
+          </SidebarMenu>
+        </SidebarGroup>
 
-          <SidebarGroup>
-            <SidebarGroupLabel>{TOOLS_SIDEBAR_GROUP_LABELS[3]}</SidebarGroupLabel>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  tooltip={SPR_ANALYTICS_COPY.openLabel}
-                  aria-label={SPR_ANALYTICS_COPY.openLabel}
-                  aria-pressed={sprAnalyticsOpen}
-                  isActive={sprAnalyticsOpen || isSprAnalyticsActive}
-                  onClick={sprAnalyticsOpen ? onFocusSprAnalytics : onOpenSprAnalytics}
-                  onFocus={loadAnalyticsDashboard}
-                  onMouseEnter={loadAnalyticsDashboard}
-                >
-                  <Activity className="text-primary" />
-                  <span>{SPR_ANALYTICS_COPY.title}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <TreeStatsPanel />
-            </SidebarMenu>
-          </SidebarGroup>
+        <SidebarSeparator />
 
-          <SidebarSeparator />
-
-          <SidebarGroup>
-            <SidebarGroupLabel>{TOOLS_SIDEBAR_GROUP_LABELS[4]}</SidebarGroupLabel>
-            <SidebarMenu>
-              <ViewModeSection />
-              <FocusAndChangeEffects />
-            </SidebarMenu>
-          </SidebarGroup>
-        </SidebarContent>
-        <SidebarRail />
-      </Sidebar>
-
-      {sprAnalyticsOpen ? (
-        <React.Suspense fallback={null}>
-          <AnalyticsDashboard
-            isOpen
-            isActive={isSprAnalyticsActive}
-            onClose={onCloseSprAnalytics}
-            onFocus={onFocusSprAnalytics}
-          />
-        </React.Suspense>
-      ) : null}
-    </>
+        <SidebarGroup>
+          <SidebarGroupLabel>{TOOLS_SIDEBAR_GROUP_LABELS[4]}</SidebarGroupLabel>
+          <SidebarMenu>
+            <ViewModeSection />
+            <FocusAndChangeEffects />
+          </SidebarMenu>
+        </SidebarGroup>
+      </SidebarContent>
+    </Sidebar>
   );
 }
 

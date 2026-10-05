@@ -13,7 +13,8 @@ describe('VisualizationTreeRenderOverlay', () => {
   });
 
   it('shows an accessible loader while the tree is being prepared for display', async () => {
-    const { VisualizationTreeRenderOverlay } = await import('../../../../src/App.jsx');
+    const { VisualizationTreeRenderOverlay } =
+      await import('../../../../src/components/dock/panels/TreeRenderOverlay.jsx');
     const container = document.createElement('div');
     document.body.appendChild(container);
     const root = createRoot(container);

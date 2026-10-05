@@ -23,21 +23,11 @@ describe('tools sidebar structure', () => {
     );
   });
 
-  it('loads moved-subtree analytics only when requested', () => {
+  it('opens moved-subtree analytics as a dock panel', () => {
     const sidebarSource = source('src/components/sidebar/ToolsSidebar.jsx');
 
-    expect(sidebarSource).not.toContain(
-      "import AnalyticsDashboard from '../TreeStatsPanel/AnalyticsDashboard.tsx'"
-    );
-    expect(sidebarSource).toContain(
-      "const loadAnalyticsDashboard = () => import('../TreeStatsPanel/AnalyticsDashboard.tsx')"
-    );
-    expect(sidebarSource).toContain(
-      'const AnalyticsDashboard = React.lazy(loadAnalyticsDashboard)'
-    );
-    expect(sidebarSource).toContain('onFocus={loadAnalyticsDashboard}');
-    expect(sidebarSource).toContain('onMouseEnter={loadAnalyticsDashboard}');
-    expect(sidebarSource).toContain('{sprAnalyticsOpen ? (');
+    expect(sidebarSource).not.toContain("'../TreeStatsPanel/AnalyticsDashboard.tsx'");
+    expect(sidebarSource).toContain("onClick={() => openPanel('moved-subtrees')}");
   });
 
   it('mounts expensive sidebar calculations only inside open collapsible content', () => {
@@ -110,7 +100,8 @@ describe('tools sidebar structure', () => {
     expect(sidebarSource).not.toContain("'/icons/phylo-tree-icon.svg'");
     expect(sidebarSource).not.toContain('Film');
     expect(sidebarSource).not.toContain('bg-primary text-primary-foreground');
-    expect(sidebarSource).toContain('<Sidebar id="app-sidebar"');
+    expect(sidebarSource).toContain('id="app-sidebar"');
+    expect(sidebarSource).toContain('collapsible="none"');
   });
 
   it('keeps app icon paths aware of the deployed base path', () => {
