@@ -16,7 +16,14 @@ import {
   createScrubberLayer,
   calculateSeparatorWidth,
 } from './deckLayers.js';
-import { msToX, xToMs, calculateZoomScale } from './math/coordinateUtils.js';
+import {
+  msToX,
+  xToMs,
+  calculateZoomScale,
+  followRange,
+  panRange,
+  zoomRange,
+} from './math/coordinateUtils.js';
 import { stepAt } from './timeline.js';
 import {
   TIMELINE_THEME,
@@ -30,8 +37,9 @@ import { describeCursor } from './describeCursor.js';
 /**
  * The timeline strip, drawn with deck.gl: input trees as circles or ticks, each transition pair as
  * an RF bar with SPR-move pips, and the scrubber handle. It draws what it is told (`selected`,
- * `hovered`, `scrubbing`, the scrubber time) and owns only the zoom range; the gestures it hears
- * go out through the callbacks, see timelineInput.
+ * `hovered`, `scrubbing`, the scrubber time) and owns only the visible range (zoom and pan, which
+ * follows the playhead out of view); the gestures it hears go out through the callbacks, see
+ * timelineInput.
  */
 export class TimelineView {
   /**
@@ -165,7 +173,11 @@ export class TimelineView {
    * @param {number} ms - Time in milliseconds (clamped to valid range)
    */
   setCustomTime(ms) {
+    const before = this.scrubberMs;
     this.scrubberMs = Math.max(0, Math.min(ms, this._totalDuration));
+    // A dragged handle stays under the pointer; anything else that moves it out of view is followed
+    if (!this.scrubbing)
+      this._setRange(followRange(...this._range(), this._totalDuration, before, this.scrubberMs));
     this._updateAccessibilityAttributes();
     this._scheduleUpdate();
   }
@@ -193,23 +205,43 @@ export class TimelineView {
   // ==========================================================================
 
   /**
-   * Scales the visible span, keeping `center` (default: the middle of the view) in the middle.
+   * Scales the visible span, keeping `anchor` where it is in the view.
    * @param {number} factor - 0.8 shows 20% less time, 1.2 shows 20% more
-   * @param {number} [center] - Time in milliseconds
+   * @param {number} [anchor] - Time in milliseconds; default the playhead, or the middle of the
+   *   view when the playhead is off screen
    */
-  zoom(factor, center = (this._rangeStart + this._rangeEnd) / 2) {
-    const span = (this._rangeEnd - this._rangeStart) * factor;
-    const newSpan = Math.max(1, Math.min(this._totalDuration, span));
-    this._rangeStart = Math.max(0, center - newSpan / 2);
-    this._rangeEnd = Math.min(this._totalDuration, center + newSpan / 2);
-    this._scheduleUpdate();
+  zoom(factor, anchor = this._playheadOrMiddle()) {
+    this._setRange(zoomRange(...this._range(), this._totalDuration, factor, anchor));
+  }
+
+  /** Moves the visible range by `deltaMs`, stopping at the ends of the timeline. */
+  pan(deltaMs) {
+    this._setRange(panRange(...this._range(), this._totalDuration, deltaMs));
   }
 
   /** Resets zoom to show the entire timeline. */
   fit() {
-    this._rangeStart = 0;
-    this._rangeEnd = this._totalDuration;
+    this._setRange([0, this._totalDuration]);
+  }
+
+  /** Whether less than the whole timeline is in view. */
+  get zoomed() {
+    return this._rangeEnd - this._rangeStart < this._totalDuration;
+  }
+
+  _range() {
+    return [this._rangeStart, this._rangeEnd];
+  }
+
+  _setRange([start, end]) {
+    if (start === this._rangeStart && end === this._rangeEnd) return;
+    [this._rangeStart, this._rangeEnd] = [start, end];
     this._scheduleUpdate();
+  }
+
+  _playheadOrMiddle() {
+    const inView = this.scrubberMs >= this._rangeStart && this.scrubberMs <= this._rangeEnd;
+    return inView ? this.scrubberMs : (this._rangeStart + this._rangeEnd) / 2;
   }
 
   // x is in px from the strip's left edge

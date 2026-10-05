@@ -259,6 +259,68 @@ describe('TimelineView', () => {
     expect([view._rangeStart, view._rangeEnd]).to.deep.equal([0, 3000]);
   });
 
+  it('zooms about the playhead when no time is given, or the middle when it is off screen', () => {
+    const { timeline } = makeTimelineFixture();
+    const { view } = mountView(timeline);
+
+    view.setCustomTime(500);
+    view.zoom(0.5);
+    expect(view._rangeStart).to.be.closeTo(250, 1e-6);
+    expect(view._rangeEnd).to.be.closeTo(1750, 1e-6);
+
+    view.setCustomTime(1000);
+    view.zoom(0.5);
+    // 1000 sat a third in, and stays there
+    expect(view._rangeStart).to.be.closeTo(625, 1e-6);
+    expect(view._rangeEnd).to.be.closeTo(1375, 1e-6);
+
+    view.pan(1000); // the playhead is now off screen
+    view.zoom(0.5);
+    expect(view._rangeStart).to.be.closeTo(1812.5, 1e-6);
+    expect(view._rangeEnd).to.be.closeTo(2187.5, 1e-6);
+  });
+
+  describe('following the playhead', () => {
+    // The view shows about 500..1500 ms
+    const zoomedView = () => {
+      const { timeline } = makeTimelineFixture();
+      const { view } = mountView(timeline);
+      view.zoom(1 / 3, 750);
+      return { view, shown: [view._rangeStart, view._rangeEnd] };
+    };
+
+    it('pages the view once when the playhead leaves it', () => {
+      const { view, shown } = zoomedView();
+      view.setCustomTime(1490);
+      expect([view._rangeStart, view._rangeEnd]).to.deep.equal(shown);
+
+      view.setCustomTime(1510);
+      const page = [view._rangeStart, view._rangeEnd];
+      expect(page[0]).to.be.closeTo(1410, 1e-6);
+
+      view.setCustomTime(1600);
+      view.setCustomTime(1700);
+      expect([view._rangeStart, view._rangeEnd]).to.deep.equal(page);
+    });
+
+    it('leaves the view where the user put it while the playhead is out of it', () => {
+      const { view, shown } = zoomedView();
+      view.setCustomTime(2000);
+      view.setCustomTime(2100);
+
+      expect([view._rangeStart, view._rangeEnd]).to.deep.equal(shown);
+    });
+
+    it('does not page while the handle is being dragged', () => {
+      const { view, shown } = zoomedView();
+      view.setScrubbing(true);
+      view.setCustomTime(1490);
+      view.setCustomTime(2500);
+
+      expect([view._rangeStart, view._rangeEnd]).to.deep.equal(shown);
+    });
+  });
+
   it('exposes the deck canvas as a keyboard-focusable timeline control', () => {
     const { timeline } = makeTimelineFixture();
 
@@ -671,21 +733,112 @@ describe('TimelineView', () => {
       expect(events.selects.map(({ index }) => index)).to.deep.equal([0]);
     });
 
-    it('zooms about the pointer on wheel', () => {
+    const wheel = (view, init) => {
+      const event = new global.window.WheelEvent('wheel', {
+        bubbles: true,
+        cancelable: true,
+        ...init,
+      });
+      view.canvas.dispatchEvent(event);
+      return event;
+    };
+
+    it('zooms about the pointer on wheel, which stays under it', () => {
       const { timeline } = makeTimelineFixture();
       const { view } = mountView(timeline);
 
-      const wheel = new global.window.WheelEvent('wheel', {
-        bubbles: true,
-        cancelable: true,
-        deltaY: -1,
-        clientX: view.msToX(1500),
-      });
-      view.canvas.dispatchEvent(wheel);
+      const event = wheel(view, { deltaY: -1, clientX: view.msToX(1000) });
 
-      expect(wheel.defaultPrevented).to.equal(true);
-      expect(view._rangeStart).to.be.closeTo(300, 1e-6);
-      expect(view._rangeEnd).to.be.closeTo(2700, 1e-6);
+      expect(event.defaultPrevented).to.equal(true);
+      expect(view._rangeStart).to.be.closeTo(200, 1e-6);
+      expect(view._rangeEnd).to.be.closeTo(2600, 1e-6);
+      expect(view.msToX(1000)).to.be.closeTo((1000 - 200) * (800 / 2400), 1e-6);
+    });
+
+    describe('when zoomed in', () => {
+      // 3000 ms in 800 px; the view shows 1000..2000 ms
+      const zoomedView = () => {
+        const { timeline } = makeTimelineFixture();
+        const mounted = mountView(timeline);
+        mounted.view.zoom(1 / 3, 1500);
+        return mounted;
+      };
+
+      it('pans with shift+wheel and with horizontal wheel deltas, and stops at the ends', () => {
+        const { view } = zoomedView();
+        expect([view._rangeStart, view._rangeEnd]).to.deep.equal([1000, 2000]);
+
+        // 80 px of an 800 px, 1000 ms view
+        wheel(view, { deltaY: 80, shiftKey: true });
+        expect(view._rangeStart).to.be.closeTo(1100, 1e-6);
+        wheel(view, { deltaX: -80 });
+        expect(view._rangeStart).to.be.closeTo(1000, 1e-6);
+
+        wheel(view, { deltaX: 1e6 });
+        expect([view._rangeStart, view._rangeEnd]).to.deep.equal([2000, 3000]);
+        wheel(view, { deltaX: -1e6 });
+        expect([view._rangeStart, view._rangeEnd]).to.deep.equal([0, 1000]);
+      });
+
+      it('still zooms on a plain vertical wheel', () => {
+        const { view } = zoomedView();
+
+        wheel(view, { deltaY: 1, clientX: view.msToX(1500) });
+
+        expect(view._rangeEnd - view._rangeStart).to.be.closeTo(1200, 1e-6);
+      });
+
+      it('pans by dragging empty strip, and the click that ends the drag selects nothing', () => {
+        const { view, events } = zoomedView();
+        const touch = { pointerType: 'touch' };
+
+        // The handle sits at 0 ms, off screen: this grabs the strip
+        pointerDownTimeline(view, 400, touch);
+        dispatchPointer(view.canvas, 'pointermove', 280, 10, touch);
+        dispatchPointer(view.canvas, 'pointerup', 280, 10, touch);
+        clickTimeline(view, 1500);
+
+        // 120 px to the left: content follows the finger, the view moves 150 ms on
+        expect(view._rangeStart).to.be.closeTo(1150, 1e-6);
+        expect(events.scrubs).to.deep.equal([]);
+        expect(events.selects).to.deep.equal([]);
+      });
+
+      it('takes a press that barely moves for a click', () => {
+        const { view, events } = zoomedView();
+
+        pointerDownTimeline(view, 400);
+        dispatchPointer(view.canvas, 'pointermove', 402);
+        dispatchPointer(view.canvas, 'pointerup', 402);
+        clickTimeline(view, 1500);
+
+        expect(view._rangeStart).to.equal(1000);
+        expect(events.selects).to.have.length(1);
+      });
+
+      it('grabs the handle, not the strip, when the press lands on it', () => {
+        const { view, events } = zoomedView();
+        view.setCustomTime(1500);
+
+        pointerDownTimeline(view, view.msToX(1500));
+        dispatchPointer(view.canvas, 'pointermove', view.msToX(1500) + 100);
+        dispatchPointer(view.canvas, 'pointerup', view.msToX(1500) + 100);
+
+        expect(view._rangeStart).to.equal(1000);
+        expect(events.scrubs.map(({ phase }) => phase)).to.deep.equal(['start', 'move', 'end']);
+      });
+    });
+
+    it('does not pan by dragging while the whole timeline is in view', () => {
+      const { timeline } = makeTimelineFixture();
+      const { view, events } = mountView(timeline);
+
+      pointerDownTimeline(view, 400);
+      dispatchPointer(view.canvas, 'pointermove', 280);
+      dispatchPointer(view.canvas, 'pointerup', 280);
+
+      expect([view._rangeStart, view._rangeEnd]).to.deep.equal([0, 3000]);
+      expect(events.scrubs).to.deep.equal([]);
     });
   });
 });
