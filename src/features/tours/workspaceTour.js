@@ -1,6 +1,8 @@
 import Shepherd from 'shepherd.js';
 import 'shepherd.js/dist/css/shepherd.css';
 import { TOUR_TARGETS, tourSelector } from './tourTargets.js';
+import { openPanel } from '../../components/dock/dockRuntime.js';
+import { SETTINGS_PANEL_ID } from '../../components/dock/panelRegistry.js';
 
 const WORKSPACE_TOUR_STEPS = [
   {
@@ -49,6 +51,9 @@ const WORKSPACE_TOUR_STEPS = [
 
 export function startWorkspaceTour() {
   if (typeof document === 'undefined') return;
+
+  // The settings step points into the Settings panel; make sure it is open.
+  openPanel(SETTINGS_PANEL_ID);
 
   const availableSteps = WORKSPACE_TOUR_STEPS.filter((step) =>
     document.querySelector(tourSelector(step.target))

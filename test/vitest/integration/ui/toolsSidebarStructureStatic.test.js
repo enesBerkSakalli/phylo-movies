@@ -13,7 +13,9 @@ describe('tools sidebar structure', () => {
   it('keeps sidebar composition out of App', () => {
     const appSource = source('src/App.jsx');
 
-    expect(appSource).toContain('<ToolsSidebar');
+    // App mounts the dock; the dock's Settings panel owns the sidebar body.
+    expect(appSource).toContain('<Dock />');
+    expect(source('src/components/dock/panels/SettingsPanel.jsx')).toContain('<ToolsSidebar');
     expect(appSource).not.toContain('<Sidebar collapsible="icon">');
     expect(appSource).not.toContain('<SidebarGroupLabel>');
     expect(appSource).not.toContain("from './components/nav/ButtonsMSA.jsx'");

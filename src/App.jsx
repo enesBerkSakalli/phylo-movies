@@ -1,37 +1,22 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MoviePlayerBar } from './components/movie-player/MoviePlayerBar.jsx';
-import { ToolsSidebar } from './components/sidebar/ToolsSidebar.jsx';
-import { DeckGLCanvas } from './components/deckgl/DeckGLCanvas.jsx';
-import { TreeCanvasControls } from './components/deckgl/TreeCanvasControls.jsx';
 import { NodeContextMenu } from './components/NodeContextMenu.jsx';
-import { TransitionInspectorPanel } from './components/TransitionInspectorPanel.jsx';
 import { Toaster } from './components/ui/sonner';
 import { TooltipProvider } from './components/ui/tooltip';
 import { Button } from './components/ui/button';
-import { SidebarProvider, SidebarInset } from './components/ui/sidebar';
+import { SidebarProvider } from './components/ui/sidebar';
 import { Loader2 } from 'lucide-react';
+import { Dock } from './components/dock/Dock.jsx';
+import { useDockPanelSync } from './components/dock/dockPanelSync.js';
 
-import {
-  selectFileName,
-  selectDatasetProvenance,
-  selectInitialize,
-  selectReset,
-  selectSetTaxaColoringOpen,
-  useAppStore,
-} from './state/phyloStore/store.js';
+import { selectInitialize, selectReset, useAppStore } from './state/phyloStore/store.js';
 import { phyloData } from './services/data/dataService.js';
 import { useTreeController } from './hooks/useTreeController.js';
-import { VisualizationTreeRenderOverlay } from './components/dock/panels/TreeRenderOverlay.jsx';
 
 export function App() {
-  const fileName = useAppStore(selectFileName) || 'Loading...';
-  const datasetProvenance = useAppStore(selectDatasetProvenance);
   const initializeStore = useAppStore(selectInitialize);
   const resetStore = useAppStore(selectReset);
-  const setTaxaColoringOpen = useAppStore(selectSetTaxaColoringOpen);
-  const [sprAnalyticsOpen, setSprAnalyticsOpen] = React.useState(false);
-  const [activeFloatingWindow, setActiveFloatingWindow] = React.useState(null);
   const [bootstrapState, setBootstrapState] = React.useState('loading');
 
   // Initialize Tree Controller and Rendering Logic
@@ -39,24 +24,6 @@ export function App() {
 
   const navigate = useNavigate();
   const [error, setError] = React.useState(null);
-  const focusSprAnalyticsWindow = React.useCallback(
-    () => setActiveFloatingWindow('spr-analytics'),
-    []
-  );
-  const openSprAnalyticsWindow = React.useCallback(() => {
-    setSprAnalyticsOpen(true);
-    setActiveFloatingWindow('spr-analytics');
-  }, []);
-  const openTaxaColoringWindow = React.useCallback(() => {
-    setTaxaColoringOpen(true);
-    setActiveFloatingWindow('taxa-coloring');
-  }, [setTaxaColoringOpen]);
-  const closeSprAnalyticsWindow = React.useCallback(() => {
-    setSprAnalyticsOpen(false);
-    setActiveFloatingWindow((activeWindow) =>
-      activeWindow === 'spr-analytics' ? null : activeWindow
-    );
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -99,40 +66,23 @@ export function App() {
 
   return (
     <TooltipProvider>
-      <SidebarProvider className="flex-col">
-        <div className="flex min-h-0 w-full flex-1 overflow-hidden">
-          <ToolsSidebar
-            fileName={fileName}
-            datasetProvenance={datasetProvenance}
-            error={error}
-            sprAnalyticsOpen={sprAnalyticsOpen}
-            isSprAnalyticsActive={activeFloatingWindow === 'spr-analytics'}
-            onOpenSprAnalytics={openSprAnalyticsWindow}
-            onCloseSprAnalytics={closeSprAnalyticsWindow}
-            onFocusSprAnalytics={focusSprAnalyticsWindow}
-            onOpenTaxaColoring={openTaxaColoringWindow}
-          />
-
-          <SidebarInset className="min-w-0 overflow-hidden">
-            <div className="relative flex min-h-0 flex-1 overflow-hidden">
-              <div
-                className="relative min-h-0 min-w-0 flex-1 overflow-hidden"
-                data-tree-canvas-area
-              >
-                <DeckGLCanvas />
-                <TreeCanvasControls />
-                <VisualizationTreeRenderOverlay />
-              </div>
-              <TransitionInspectorPanel />
-            </div>
-          </SidebarInset>
-        </div>
-
-        <MoviePlayerBar />
-        <NodeContextMenu />
-        <Toaster />
+      {/* Context for the settings panel's shadcn menu primitives; the dock owns visibility. */}
+      <SidebarProvider open onOpenChange={() => {}} className="flex-col">
+        <VisualizationShell />
       </SidebarProvider>
     </TooltipProvider>
+  );
+}
+
+function VisualizationShell() {
+  useDockPanelSync();
+  return (
+    <div className="flex h-svh min-h-0 w-full flex-col overflow-hidden">
+      <Dock />
+      <MoviePlayerBar />
+      <NodeContextMenu />
+      <Toaster />
+    </div>
   );
 }
 

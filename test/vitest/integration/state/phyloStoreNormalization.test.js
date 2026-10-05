@@ -623,10 +623,8 @@ describe('phylo store dataset normalization', () => {
       ['selectFileName.js', 'typeof state.fileName'],
       ['selectLabelsVisible.js', '!== false'],
       ['selectMovieTimelineManager.js', '?? null'],
-      ['selectMsaWindow.js', '?? null'],
       ['selectPairs.js', '??'],
       ['selectPairById.js', '??'],
-      ['selectTaxaColoringWindow.js', '?? null'],
       ['selectTaxaGrouping.js', '?? null'],
     ];
 

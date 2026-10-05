@@ -20,13 +20,6 @@ export interface TimelineCursorFrameOptions {
   timeAnchor?: TimelineCursorTimeAnchor;
 }
 
-export interface FloatingWindowRect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
 export interface MsaRegionRange {
   start: number;
   end: number;
@@ -208,7 +201,6 @@ export interface AppStoreState {
 
   // From taxonomyColoringPanel.slice
   taxaColoringOpen: boolean;
-  taxaColoringWindow: FloatingWindowRect;
 
   // From taxonomyColoring.slice
   monophyleticColoringEnabled: boolean;
@@ -227,7 +219,6 @@ export interface AppStoreState {
   msaRowOrder: string[] | null;
   isMsaViewerOpen: boolean;
   syncMSAEnabled: boolean;
-  msaWindow: FloatingWindowRect;
 
   // From treeComparison.slice
   comparisonMode: boolean;
@@ -334,7 +325,6 @@ export interface AppStoreState {
   setCameraMode: (mode: CameraMode) => CameraMode;
 
   setTaxaColoringOpen: (isOpen: boolean) => void;
-  setTaxaColoringWindow: (partial: Partial<FloatingWindowRect>) => void;
   setTaxaGrouping: (grouping: TaxaGrouping | null) => void;
   setMonophyleticColoring: (enabled: boolean) => void;
 
@@ -354,7 +344,6 @@ export interface AppStoreState {
   clearMsaRowOrder: () => void;
   openMsaViewer: () => void;
   closeMsaViewer: () => void;
-  setMsaWindow: (partial: Partial<FloatingWindowRect>) => void;
   setSyncMSAEnabled: (enabled: boolean) => void;
 
   toggleComparisonMode: () => void;

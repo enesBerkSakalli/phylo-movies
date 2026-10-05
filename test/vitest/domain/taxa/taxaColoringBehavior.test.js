@@ -372,7 +372,6 @@ describe('TaxaColoringPanel palette application', () => {
 
     useAppStore.setState({
       taxaColoringOpen: true,
-      taxaColoringWindow: { x: 40, y: 40, width: 640, height: 700 },
       leafNamesByIndex: taxaNames,
       treeController: { renderAllElements: vi.fn() },
       taxaGrouping: null,

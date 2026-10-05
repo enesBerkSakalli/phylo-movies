@@ -24,7 +24,8 @@ import {
   selectSetTooltipHovered,
   useAppStore,
 } from '../../state/phyloStore/store.js';
-import { useSidebar } from '../ui/sidebar';
+import { togglePanel, useIsPanelOpen } from '../dock/dockRuntime.js';
+import { SETTINGS_PANEL_ID } from '../dock/panelRegistry.js';
 import { Button } from '../ui/button';
 import { Activity, Menu, ChevronUp, ChevronDown, Dna } from 'lucide-react';
 import { AppTooltip } from '../ui/app-tooltip';
@@ -92,12 +93,8 @@ export function MoviePlayerBar() {
     };
   }, []);
 
-  const { open, toggleSidebar } = useSidebar();
-  const handleNavigationToggle = useCallback(() => {
-    try {
-      toggleSidebar();
-    } catch {}
-  }, [toggleSidebar]);
+  const settingsOpen = useIsPanelOpen(SETTINGS_PANEL_ID);
+  const handleNavigationToggle = useCallback(() => togglePanel(SETTINGS_PANEL_ID), []);
   const handleOpenMsaViewer = useCallback(() => {
     if (!hasMsa) return;
     openMsaViewer();
@@ -123,14 +120,13 @@ export function MoviePlayerBar() {
               role="group"
               aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineNavigation}
             >
-              <AppTooltip content="Toggle sidebar">
+              <AppTooltip content="Toggle settings (Ctrl/⌘+B)">
                 <Button
                   id="nav-toggle-button"
                   variant="ghost"
                   size="icon-sm"
-                  aria-label="Toggle sidebar"
-                  aria-controls="app-sidebar"
-                  aria-expanded={open ? 'true' : 'false'}
+                  aria-label="Toggle settings"
+                  aria-expanded={settingsOpen ? 'true' : 'false'}
                   onClick={handleNavigationToggle}
                 >
                   <Menu className="size-4" />
