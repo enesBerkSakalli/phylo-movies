@@ -109,9 +109,7 @@ const resetStore = () =>
     timeline: null,
     timelineView: null,
     isScrubbing: false,
-    hoveredSegmentIndex: null,
-    hoveredSegmentData: null,
-    hoveredSegmentPosition: null,
+    hoveredSegment: null,
     selectedTimelineSegmentIndex: null,
     ensureTreesHydrated: originalEnsureTreesHydrated,
     updateColorManagerForIndex: originalUpdateColorManagerForIndex,
@@ -289,19 +287,12 @@ describe('TimelineController', () => {
     const controller = createController();
     const host = makeContainer();
 
-    useAppStore.setState({
-      hoveredSegmentIndex: 2,
-      hoveredSegmentData: { treeName: 'Example' },
-      hoveredSegmentPosition: { x: 120, y: 40 },
-    });
+    useAppStore.setState({ hoveredSegment: { index: 2, x: 120 } });
 
     controller.mount(host);
     controller.unmount();
 
-    const state = useAppStore.getState();
-    expect(state.hoveredSegmentIndex).to.equal(null);
-    expect(state.hoveredSegmentData).to.equal(null);
-    expect(state.hoveredSegmentPosition).to.equal(null);
+    expect(useAppStore.getState().hoveredSegment).to.equal(null);
   });
 
   it('stores clicked timeline selection by segment index only', () => {
@@ -443,12 +434,31 @@ describe('TimelineController', () => {
       new global.window.MouseEvent('mousemove', { bubbles: true, clientX: 5, clientY: 10 })
     );
 
-    const state = useAppStore.getState();
-    expect(state.hoveredSegmentIndex).to.equal(0);
-    expect(state.hoveredSegmentData).to.equal(timeline.segments[0]);
-    expect(state.hoveredSegmentPosition).to.deep.equal(view.anchorOf(0));
+    expect(useAppStore.getState().hoveredSegment).to.deep.equal({ index: 0, x: view.anchorX(0) });
     expect(view.hovered).to.equal(0);
 
+    controller.unmount();
+  });
+
+  it('writes the hovered segment to the store once while the pointer stays over it', async () => {
+    const controller = createController();
+    await controller.mount(makeContainer());
+    const { canvas } = controller.view;
+    const moveTo = (clientX) =>
+      canvas.dispatchEvent(new global.window.MouseEvent('mousemove', { bubbles: true, clientX }));
+    let writes = 0;
+    const unsubscribe = useAppStore.subscribe(() => (writes += 1));
+
+    moveTo(5);
+    moveTo(6);
+    moveTo(7);
+    expect(writes).to.equal(1);
+
+    moveTo(790);
+    expect(writes).to.equal(2);
+    expect(useAppStore.getState().hoveredSegment.index).to.be.above(0);
+
+    unsubscribe();
     controller.unmount();
   });
 

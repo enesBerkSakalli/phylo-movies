@@ -223,11 +223,10 @@ export class TimelineView {
     return msToX(ms, this._rangeStart, this._rangeEnd, this._width);
   }
 
-  /** Viewport point on top of a segment's middle: where its tooltip hangs. */
-  anchorOf(segmentIndex) {
+  /** Viewport x of a segment's middle: where its tooltip hangs. */
+  anchorX(segmentIndex) {
     const { start, end } = this.timeline.segments[segmentIndex];
-    const rect = this.container.getBoundingClientRect();
-    return { x: rect.left + this.msToX((start + end) / 2), y: rect.top };
+    return this.container.getBoundingClientRect().left + this.msToX((start + end) / 2);
   }
 
   // ==========================================================================

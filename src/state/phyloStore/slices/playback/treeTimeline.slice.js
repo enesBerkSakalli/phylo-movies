@@ -5,21 +5,13 @@ export const createTimelineSlice = (set, get) => ({
   // ==========================================================================
   // STATE: Timeline
   // ==========================================================================
-  hoveredSegmentIndex: null,
-  hoveredSegmentData: null,
-  hoveredSegmentPosition: null,
+  hoveredSegment: null, // {index, x}: the segment under the pointer and where its tooltip hangs
   selectedTimelineSegmentIndex: null,
 
   // ==========================================================================
   // ACTIONS: Timeline Tooltip
   // ==========================================================================
-  setHoveredSegment: (segmentIndex, segmentData = null, position = null) => {
-    set({
-      hoveredSegmentIndex: segmentIndex,
-      hoveredSegmentData: segmentData,
-      hoveredSegmentPosition: position,
-    });
-  },
+  setHoveredSegment: (hoveredSegment) => set({ hoveredSegment }),
 
   setSelectedTimelineSegment: (segmentIndex) => {
     set({

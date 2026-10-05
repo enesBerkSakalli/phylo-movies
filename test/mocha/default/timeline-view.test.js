@@ -451,8 +451,7 @@ describe('TimelineView', () => {
       dispatchMouse(view.canvas, 'mousemove', 100);
 
       expect(events.hovers).to.deep.equal([0]);
-      expect(view.anchorOf(0).x).to.be.closeTo(400 / 3, 1e-6);
-      expect(view.anchorOf(0).y).to.equal(0);
+      expect(view.anchorX(0)).to.be.closeTo(400 / 3, 1e-6);
 
       // The tooltip anchor follows the strip when the page moves under a still pointer
       left = 40;
@@ -460,8 +459,7 @@ describe('TimelineView', () => {
       dispatchMouse(view.canvas, 'mousemove', 140, 22);
 
       expect(events.hovers).to.deep.equal([0, 0]);
-      expect(view.anchorOf(0).x).to.be.closeTo(40 + 400 / 3, 1e-6);
-      expect(view.anchorOf(0).y).to.equal(12);
+      expect(view.anchorX(0)).to.be.closeTo(40 + 400 / 3, 1e-6);
     });
 
     it('clears the hover 150 ms after the pointer leaves, unless it comes back', () => {

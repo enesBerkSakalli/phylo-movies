@@ -58,8 +58,7 @@ export class TimelineController {
     this.view = null;
     this.container = null;
 
-    this.store.setState({ isScrubbing: false, timelineView: null });
-    this.store.getState().setHoveredSegment(null, null);
+    this.store.setState({ isScrubbing: false, timelineView: null, hoveredSegment: null });
   }
 
   async _create(container) {
@@ -107,8 +106,8 @@ export class TimelineController {
       if (state.selectedTimelineSegmentIndex !== prevState.selectedTimelineSegmentIndex) {
         view.setSelection(state.selectedTimelineSegmentIndex);
       }
-      if (state.hoveredSegmentIndex !== prevState.hoveredSegmentIndex) {
-        view.setHover(state.hoveredSegmentIndex);
+      if (state.hoveredSegment !== prevState.hoveredSegment) {
+        view.setHover(state.hoveredSegment?.index ?? null);
       }
       if (state.isScrubbing !== prevState.isScrubbing) view.setScrubbing(state.isScrubbing);
     });
@@ -132,14 +131,15 @@ export class TimelineController {
     });
   }
 
+  // The pointer reports its segment on every move; the store hears of it when the segment or its
+  // tooltip anchor changes, since every write re-renders the tooltip.
   hover(segmentIndex) {
     const state = this.store.getState();
-    if (segmentIndex === null) return state.setHoveredSegment(null, null);
-    state.setHoveredSegment(
-      segmentIndex,
-      state.timeline.segments[segmentIndex],
-      this.view.anchorOf(segmentIndex)
-    );
+    const next =
+      segmentIndex === null ? null : { index: segmentIndex, x: this.view.anchorX(segmentIndex) };
+    const { hoveredSegment } = state;
+    if (next?.index === hoveredSegment?.index && next?.x === hoveredSegment?.x) return;
+    state.setHoveredSegment(next);
   }
 
   select(segmentIndex, ms) {

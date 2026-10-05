@@ -15,9 +15,7 @@ import {
   selectBackward,
   selectCurrentAnimationStage,
   selectForward,
-  selectHoveredSegmentData,
-  selectHoveredSegmentIndex,
-  selectHoveredSegmentPosition,
+  selectHoveredSegment,
   selectHasMsa,
   selectLeafNamesByIndex,
   selectOpenMsaViewer,
@@ -200,15 +198,15 @@ export function MoviePlayerBar() {
 }
 
 function TimelineSegmentTooltipOverlay({ playerBarRef, pairChanges }) {
-  const hoveredSegmentIndex = useAppStore(selectHoveredSegmentIndex);
-  const hoveredSegmentData = useAppStore(selectHoveredSegmentData);
-  const hoveredSegmentPosition = useAppStore(selectHoveredSegmentPosition);
+  const hovered = useAppStore(selectHoveredSegment);
+  const timeline = useAppStore(selectTimeline);
   const selectedSegmentIndex = useAppStore(selectSelectedTimelineSegmentIndex);
   const playing = useAppStore(selectPlaying);
   const setHoveredSegment = useAppStore(selectSetHoveredSegment);
   const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
   const tooltipRef = useRef(null);
-  const anchorX = Number(hoveredSegmentPosition?.x);
+  const segment = timeline?.segments[hovered?.index];
+  const anchorX = hovered?.x;
   const [placement, setPlacement] = useState(null);
 
   const getLeafNames = useCallback(
@@ -228,14 +226,14 @@ function TimelineSegmentTooltipOverlay({ playerBarRef, pairChanges }) {
 
   // Picking a segment or starting playback is a decision; the hover preview has done its job.
   useEffect(() => {
-    setHoveredSegment(null, null);
+    setHoveredSegment(null);
   }, [selectedSegmentIndex, playing, setHoveredSegment]);
 
   // Sits just above the whole player bar so it never covers the controls; only x follows the pointer.
   useLayoutEffect(() => {
     const tooltip = tooltipRef.current;
     const playerBar = playerBarRef.current;
-    if (!Number.isFinite(anchorX) || !tooltip || !playerBar) {
+    if (!tooltip || !playerBar) {
       setPlacement(null);
       return undefined;
     }
@@ -260,11 +258,9 @@ function TimelineSegmentTooltipOverlay({ playerBarRef, pairChanges }) {
       window.removeEventListener('resize', updatePlacement);
       resizeObserver?.disconnect();
     };
-  }, [anchorX, hoveredSegmentIndex, playerBarRef]);
+  }, [anchorX, segment, playerBarRef]);
 
-  if (hoveredSegmentIndex === null || !hoveredSegmentData || !Number.isFinite(anchorX)) {
-    return null;
-  }
+  if (!segment) return null;
 
   return (
     <div
@@ -285,8 +281,8 @@ function TimelineSegmentTooltipOverlay({ playerBarRef, pairChanges }) {
     >
       <div className="rounded-lg border bg-card p-2 shadow-lg">
         <TimelineSegmentTooltip
-          segment={hoveredSegmentData}
-          pairChange={pairChanges.byPairId.get(hoveredSegmentData.pairId)}
+          segment={segment}
+          pairChange={pairChanges.byPairId.get(segment.pairId)}
           pairCount={pairChanges.byPairId.size}
           getLeafNames={getLeafNames}
         />

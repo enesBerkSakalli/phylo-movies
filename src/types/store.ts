@@ -163,9 +163,7 @@ export interface AppStoreState {
   isScrubbing: boolean;
 
   // From treeTimeline.slice
-  hoveredSegmentIndex: number | null;
-  hoveredSegmentData: unknown;
-  hoveredSegmentPosition: unknown;
+  hoveredSegment: { index: number; x: number } | null;
   selectedTimelineSegmentIndex: number | null;
 
   // From treeAppearance.slice
@@ -282,11 +280,7 @@ export interface AppStoreState {
   stopAnimationPlayback: () => void;
   resetControllers: () => void;
 
-  setHoveredSegment: (
-    segmentIndex: number | null,
-    segmentData?: unknown,
-    position?: unknown
-  ) => void;
+  setHoveredSegment: (hoveredSegment: { index: number; x: number } | null) => void;
   setSelectedTimelineSegment: (segmentIndex: number | null) => void;
   zoomInTimeline: () => void;
   zoomOutTimeline: () => void;
