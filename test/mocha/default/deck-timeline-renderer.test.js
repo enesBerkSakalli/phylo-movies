@@ -53,7 +53,6 @@ describe('DeckTimelineRenderer', () => {
         globalStart: 1,
         globalEnd: 9,
         localStepStart: 0,
-        localStepEnd: 8,
       },
       { isInputTreeSegment: true, originalTreeIndex: 1 },
     ];

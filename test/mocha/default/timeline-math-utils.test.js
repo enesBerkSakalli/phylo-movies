@@ -21,7 +21,8 @@ function resolveFrame(progress, segments, timelineData, treeList) {
   return new TimelineDataset({
     segments,
     timelineData,
-    frameViews: [],
+    frames: [],
+    pairs: [],
     treeList,
   }).getTransitionFrameAtTimelineProgress(progress);
 }
@@ -31,13 +32,8 @@ function makeSemanticTimingFixture() {
   const segments = [
     {
       isInputTreeSegment: false,
-      hasInterpolation: true,
-      interpolationData: [
-        { originalIndex: 0 },
-        { originalIndex: 1 },
-        { originalIndex: 2 },
-        { originalIndex: 3 },
-      ],
+      firstFrame: 0,
+      lastFrame: 3,
       timing: [
         { type: 'motion', fromIndex: 0, toIndex: 1, durationMs: 1000 },
         { type: 'hold', holdIndex: 1, holdKind: 'mover', durationMs: 200 },
@@ -71,8 +67,8 @@ describe('TimelineMathUtils', () => {
     const durations = TimelineMathUtils.calculateSegmentDurations([
       {
         isInputTreeSegment: false,
-        hasInterpolation: true,
-        interpolationData: [{ originalIndex: 0 }, { originalIndex: 1 }, { originalIndex: 2 }],
+        firstFrame: 0,
+        lastFrame: 2,
         timing: [
           { type: 'motion', fromIndex: 0, toIndex: 1, durationMs: 700 },
           { type: 'motion', fromIndex: 1, toIndex: 2, durationMs: 1300 },
@@ -128,8 +124,8 @@ describe('TimelineMathUtils', () => {
     const segments = [
       {
         isInputTreeSegment: true,
-        hasInterpolation: false,
-        interpolationData: [{ originalIndex: 0 }],
+        firstFrame: 0,
+        lastFrame: 0,
         timing: [
           {
             type: 'hold',
@@ -157,21 +153,9 @@ describe('TimelineMathUtils', () => {
   it('rejects segments without explicit timing intervals', () => {
     expect(() =>
       TimelineMathUtils.calculateSegmentDurations([
-        {
-          isInputTreeSegment: true,
-          hasInterpolation: false,
-          interpolationData: [{ originalIndex: 0 }],
-        },
-        {
-          isInputTreeSegment: false,
-          hasInterpolation: true,
-          interpolationData: [{ originalIndex: 0 }, { originalIndex: 1 }, { originalIndex: 2 }],
-        },
-        {
-          isInputTreeSegment: false,
-          hasInterpolation: false,
-          interpolationData: [{ originalIndex: 0 }],
-        },
+        { isInputTreeSegment: true, firstFrame: 0, lastFrame: 0 },
+        { isInputTreeSegment: false, firstFrame: 0, lastFrame: 2 },
+        { isInputTreeSegment: false, firstFrame: 0, lastFrame: 0 },
       ])
     ).to.throw(/timeline segment timing is required/);
   });
@@ -179,24 +163,20 @@ describe('TimelineMathUtils', () => {
   it('resolves exact timeline boundaries consistently', () => {
     const dataset = TimelineDataset.fromMovieData(movieData, { segments, timelineData });
     const firstInterpolationIndex = segments.findIndex(
-      (segment, index) =>
-        index > 0 && segment.hasInterpolation && segment.interpolationData.length > 1
+      (segment, index) => index > 0 && segment.lastFrame > segment.firstFrame
     );
     const boundaryTime = timelineData.cumulativeDurations[firstInterpolationIndex - 1];
     const firstInterpolationSegment = segments[firstInterpolationIndex];
     const atBoundary = dataset.getCursorAtMovieTime(boundaryTime);
 
     expect(atBoundary.segmentIndex).to.equal(firstInterpolationIndex);
-    expect(atBoundary.frameIndex).to.equal(
-      firstInterpolationSegment.interpolationData[0].originalIndex
-    );
+    expect(atBoundary.frameIndex).to.equal(firstInterpolationSegment.firstFrame);
 
     const lastSegmentIndex = segments.length - 1;
     const lastSegment = segments[lastSegmentIndex];
-    const lastEntry = lastSegment.interpolationData[lastSegment.interpolationData.length - 1];
     const atTimelineEnd = dataset.getCursorAtMovieTime(timelineData.totalDuration);
 
     expect(atTimelineEnd.segmentIndex).to.equal(lastSegmentIndex);
-    expect(atTimelineEnd.frameIndex).to.equal(lastEntry.originalIndex);
+    expect(atTimelineEnd.frameIndex).to.equal(lastSegment.lastFrame);
   });
 });

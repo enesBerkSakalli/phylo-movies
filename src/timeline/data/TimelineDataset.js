@@ -1,8 +1,8 @@
 import { TimelineDataProcessor } from './TimelineDataProcessor.js';
-import { buildTimelineFrameViews } from './TimelineFrameView.js';
 import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
 import { TransitionFrame } from '../time/TransitionFrame.js';
 import { buildSteps, cursorForFrame, stepAt } from '../timeline.js';
+import { selectInputFrameIndicesFromRows } from '../../domain/backend/inputFrame.js';
 import { resolveCursorTreeIndex } from '../../domain/indexing/treeIndexSemantics.js';
 import { clamp01 } from '../../domain/math/mathUtils.js';
 
@@ -18,15 +18,17 @@ export class TimelineDataset {
     return new TimelineDataset({
       segments,
       timelineData,
-      frameViews: buildTimelineFrameViews(movieData),
+      frames: movieData.frames,
+      pairs: movieData.pairs,
       treeList: options.treeList ?? movieData.interpolated_trees,
     });
   }
 
-  constructor({ segments, timelineData, frameViews, treeList }) {
+  constructor({ segments, timelineData, frames, pairs, treeList }) {
     this.segments = segments;
     this.timelineData = timelineData;
-    this.frameViews = frameViews;
+    this.frames = frames;
+    this.pairById = new Map(pairs.map((pair) => [pair.pair_id, pair]));
     this.steps = buildSteps(segments);
     this.treeList = Array.isArray(treeList) ? treeList : [];
     this._inputFrameIndices = null;
@@ -41,16 +43,8 @@ export class TimelineDataset {
     );
   }
 
-  getFrameView(frameIndex) {
-    return Number.isInteger(frameIndex) ? (this.frameViews[frameIndex] ?? null) : null;
-  }
-
   getInputFrameIndices() {
-    if (!this._inputFrameIndices) {
-      this._inputFrameIndices = this.frameViews
-        .filter((frame) => frame.isInputFrame)
-        .map((frame) => frame.frameIndex);
-    }
+    this._inputFrameIndices ??= selectInputFrameIndicesFromRows(this.frames);
     return this._inputFrameIndices;
   }
 
@@ -125,9 +119,11 @@ export class TimelineDataset {
   }
 
   buildCursor({ frameIndex, movieTimeMs, step = null }) {
-    const frameRow = this.getFrameView(frameIndex);
-    if (!frameRow) return null;
+    const frame = this.frames[frameIndex];
+    if (!frame) return null;
 
+    const pair = this.pairById.get(frame.pair_id);
+    const sourceInputTreeIndex = pair ? pair.source_input_tree_index : frame.input_tree_index;
     const moving = step !== null && step.from !== step.to;
     const role = !step
       ? null
@@ -137,7 +133,13 @@ export class TimelineDataset {
           ? 'motion_source'
           : 'motion_target';
     return {
-      ...frameRow,
+      frameIndex,
+      inputTreeIndex: frame.input_tree_index,
+      sourceFrameIndex: frame.source_frame_index ?? frameIndex,
+      msaWindowIndex: sourceInputTreeIndex,
+      isObservedInput: frame.is_observed_input,
+      sourceInputTreeIndex,
+      targetInputTreeIndex: pair ? pair.target_input_tree_index : null,
       movieTimeMs,
       timelineProgress: progressForTime(movieTimeMs, this.timelineData.totalDuration),
       segmentIndex: step?.segment ?? null,

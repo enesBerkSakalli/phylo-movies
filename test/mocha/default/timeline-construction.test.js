@@ -435,25 +435,20 @@ describe('Timeline construction from normalized backend result', () => {
     expect(timeline.cumulativeDurations.at(-1)).to.equal(timeline.totalDuration);
 
     const firstEvent = data.temporal_events.find((event) => event.event_type === 'split_change');
-    const firstInterpSeg = segments.find(
-      (segment) => segment.hasInterpolation && !segment.isInputTreeSegment
-    );
-    const idxs = firstInterpSeg.interpolationData.map((entry) => entry.originalIndex);
+    const firstInterpSeg = segments.find((segment) => !segment.isInputTreeSegment);
     const expectedContextStart = Math.max(
       data.pairs[0].source_frame_index,
       firstEvent.frame_range[0] - 1
     );
 
-    expect(Math.min(...idxs)).to.equal(expectedContextStart);
-    expect(Math.max(...idxs)).to.equal(firstEvent.frame_range[1]);
     expect(firstInterpSeg).to.include({
       pairId: firstEvent.pair_id,
       pairOrdinal: firstEvent.pair_ordinal,
       globalStart: firstEvent.frame_range[0],
       globalEnd: firstEvent.frame_range[1],
-      contextStart: expectedContextStart,
+      firstFrame: expectedContextStart,
+      lastFrame: firstEvent.frame_range[1],
       localStepStart: firstEvent.local_step_range[0],
-      localStepEnd: firstEvent.local_step_range[1],
     });
 
     const inputFrames = data.frames.filter((frame) => frame.frame_type === 'input_tree');
@@ -462,11 +457,13 @@ describe('Timeline construction from normalized backend result', () => {
       inputFrames.map((frame) => frame.frame_index)
     );
 
-    const branchOnlySegment = segments.find((segment) => segment.generatedFrameCount === 0);
-    expect(branchOnlySegment).to.be.ok;
-    expect(branchOnlySegment.interpolationData.map((entry) => entry.originalIndex)).to.deep.equal([
-      branchOnlySegment.globalStart,
-      branchOnlySegment.globalEnd,
+    const oneStepSegment = segments.find(
+      (segment) => !segment.isInputTreeSegment && segment.lastFrame - segment.firstFrame === 1
+    );
+    expect(oneStepSegment).to.be.ok;
+    expect([oneStepSegment.firstFrame, oneStepSegment.lastFrame]).to.deep.equal([
+      oneStepSegment.globalStart,
+      oneStepSegment.globalEnd,
     ]);
 
     const redundantSegmentFields = [
@@ -554,9 +551,7 @@ describe('Timeline construction from normalized backend result', () => {
       [1, 2, 3, 4, 5, 6],
       [8, 9, 10, 11, 12, 13],
     ]);
-    expect(
-      transitionSegments[1].interpolationData.map((entry) => entry.originalIndex)
-    ).to.deep.equal([7, 8, 9, 10, 11, 12]);
+    expect(transitionSegments[1]).to.include({ firstFrame: 7, lastFrame: 12 });
     expect(transitionSegments[1].timing.at(-1)).to.deep.include({
       type: 'motion',
       fromIndex: 11,
@@ -585,19 +580,11 @@ describe('Timeline construction from normalized backend result', () => {
 
     expect(motionEdges.has('2->3')).to.equal(true);
     expect(separateFulfillmentSegment).to.include({
-      treeName: 'Transition fulfillment opaque-pair',
+      firstFrame: 2,
+      lastFrame: 3,
       subtreeMoveCount: 0,
     });
-    expect(splitEventSegment).to.include({
-      treeName: 'Transition opaque-pair',
-      subtreeMoveCount: 2,
-    });
-    expect(splitEventSegment.interpolationData.map((entry) => entry.originalIndex)).to.deep.equal([
-      0, 1, 2,
-    ]);
-    expect(
-      separateFulfillmentSegment.interpolationData.map((entry) => entry.originalIndex)
-    ).to.deep.equal([2, 3]);
+    expect(splitEventSegment).to.include({ firstFrame: 0, lastFrame: 2, subtreeMoveCount: 2 });
   });
 
   it('keeps the ostrich zero-shrink final fulfillment as a separate transition segment', () => {
@@ -606,11 +593,9 @@ describe('Timeline construction from normalized backend result', () => {
     const transitionSegments = segments.filter((segment) => !segment.isInputTreeSegment);
 
     expect(
-      transitionSegments.map((segment) =>
-        segment.interpolationData.map((entry) => entry.originalIndex)
-      )
+      transitionSegments.map((segment) => [segment.firstFrame, segment.lastFrame])
     ).to.deep.equal([
-      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+      [0, 13],
       [13, 14],
     ]);
     expect(transitionSegments[1].pivotEdge).to.deep.equal([]);
@@ -703,7 +688,7 @@ describe('Timeline construction from normalized backend result', () => {
       (segment) => segment.isInputTreeSegment && segment.globalIndex === 0
     );
 
-    expect(inputTree.interpolationData.map((entry) => entry.originalIndex)).to.deep.equal([0]);
+    expect(inputTree).to.include({ firstFrame: 0, lastFrame: 0 });
     expect(inputTree.timing).to.deep.equal([
       {
         type: 'hold',
@@ -719,7 +704,6 @@ describe('Timeline construction from normalized backend result', () => {
     const segments = TimelineDataProcessor.createSegments(movieData);
     const transition = segments.find((segment) => segment.pairId === 'pair_0_1');
 
-    expect(transition.isNoOpPair).to.equal(true);
     expect(transition.timing).to.deep.equal([
       {
         type: 'hold',
@@ -735,7 +719,6 @@ describe('Timeline construction from normalized backend result', () => {
     const segments = TimelineDataProcessor.createSegments(movieData);
     const transition = segments.find((segment) => segment.pairId === 'pair_0_1');
 
-    expect(transition.isNoOpPair).to.equal(false);
     expect(transition.timing).to.deep.equal([
       {
         type: 'motion',
@@ -763,9 +746,7 @@ describe('Timeline construction from normalized backend result', () => {
       ]);
       expect(event).to.not.have.property('moving_taxa');
     }
-    expect(transition.interpolationData.map((entry) => entry.originalIndex)).to.deep.equal([
-      0, 1, 2,
-    ]);
+    expect(transition).to.include({ firstFrame: 0, lastFrame: 2 });
     expect(transition.timing).to.deep.equal([
       { type: 'motion', fromIndex: 0, toIndex: 1, durationMs: 1000 },
       { type: 'hold', holdIndex: 1, holdKind: 'mover', durationMs: 200 },

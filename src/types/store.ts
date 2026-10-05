@@ -84,10 +84,7 @@ export interface TimelineCursorState {
   frameIndex: number;
   inputTreeIndex: number | null;
   sourceFrameIndex: number | null;
-  targetFrameIndex: number | null;
   msaWindowIndex: number | null;
-  pairId: string | null;
-  pairOrdinal: number | null;
   sourceInputTreeIndex: number | null;
   targetInputTreeIndex: number | null;
   movieTimeMs: number;

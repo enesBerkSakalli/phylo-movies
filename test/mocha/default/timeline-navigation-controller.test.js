@@ -61,9 +61,9 @@ describe('TimelineNavigationController', () => {
     const controller = new TimelineNavigationController({
       segments: [
         {
-          index: 0,
           isInputTreeSegment: true,
-          interpolationData: [{ originalIndex: 4 }],
+          firstFrame: 4,
+          lastFrame: 4,
         },
       ],
       store,
@@ -89,9 +89,9 @@ describe('TimelineNavigationController', () => {
     const controller = new TimelineNavigationController({
       segments: [
         {
-          index: 0,
           isInputTreeSegment: false,
-          interpolationData: [{ originalIndex: 2 }],
+          firstFrame: 2,
+          lastFrame: 2,
         },
       ],
       store,
@@ -111,10 +111,9 @@ describe('TimelineNavigationController', () => {
     const controller = new TimelineNavigationController({
       segments: [
         {
-          index: 0,
           isInputTreeSegment: false,
-          hasInterpolation: true,
-          interpolationData: [{ originalIndex: 2 }, { originalIndex: 3 }, { originalIndex: 4 }],
+          firstFrame: 2,
+          lastFrame: 4,
           timing: [
             { type: 'motion', fromIndex: 2, toIndex: 3, durationMs: 1500 },
             { type: 'motion', fromIndex: 3, toIndex: 4, durationMs: 1500 },
@@ -153,10 +152,9 @@ describe('TimelineNavigationController', () => {
     const controller = new TimelineNavigationController({
       segments: [
         {
-          index: 0,
           isInputTreeSegment: false,
-          hasInterpolation: true,
-          interpolationData: [{ originalIndex: 2 }, { originalIndex: 3 }, { originalIndex: 4 }],
+          firstFrame: 2,
+          lastFrame: 4,
           timing: [
             { type: 'motion', fromIndex: 2, toIndex: 3, durationMs: 1500 },
             { type: 'motion', fromIndex: 3, toIndex: 4, durationMs: 1500 },
@@ -195,10 +193,9 @@ describe('TimelineNavigationController', () => {
     const controller = new TimelineNavigationController({
       segments: [
         {
-          index: 0,
           isInputTreeSegment: false,
-          hasInterpolation: true,
-          interpolationData: [{ originalIndex: 2 }, { originalIndex: 3 }],
+          firstFrame: 2,
+          lastFrame: 3,
         },
       ],
       timelineData: {

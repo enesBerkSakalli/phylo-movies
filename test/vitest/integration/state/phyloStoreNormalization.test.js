@@ -681,7 +681,7 @@ describe('phylo store dataset normalization', () => {
 
   it('keeps timeline segment semantics on input-tree language', () => {
     const sourceChecks = [
-      'src/timeline/data/TimelineSegmentBuilder.js',
+      'src/timeline/data/TimelineDataProcessor.js',
       'src/timeline/data/segmentProcessor.js',
       'src/timeline/core/TimelineNavigationController.js',
       'src/timeline/renderers/DeckTimelineRenderer.js',

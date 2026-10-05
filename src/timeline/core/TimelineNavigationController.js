@@ -68,7 +68,7 @@ export class TimelineNavigationController {
   }
 
   _resolveSegmentFrameIndex(segment) {
-    const frameIndex = segment?.interpolationData?.[0]?.originalIndex ?? segment?.index;
+    const frameIndex = segment?.firstFrame;
     if (!Number.isInteger(frameIndex)) {
       throw new Error('[TimelineNavigationController] segment frame index is required');
     }

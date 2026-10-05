@@ -38,7 +38,6 @@ const transition = {
   globalStart: 11,
   globalEnd: 21,
   localStepStart: 0,
-  localStepEnd: 3,
 };
 
 describe('TimelineSegmentTooltip transition wording', () => {

@@ -68,8 +68,8 @@ function createTimelineManager(movieData) {
   const segments = [
     {
       isInputTreeSegment: false,
-      hasInterpolation: true,
-      interpolationData: [{ originalIndex: 0 }, { originalIndex: 1 }, { originalIndex: 2 }],
+      firstFrame: 0,
+      lastFrame: 2,
       timing: [
         { type: 'motion', fromIndex: 0, toIndex: 1, durationMs: 1500 },
         { type: 'motion', fromIndex: 1, toIndex: 2, durationMs: 1500 },

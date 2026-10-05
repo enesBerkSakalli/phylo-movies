@@ -248,7 +248,7 @@ function buildInspectorDetails({
     eventLabel: splitEvent ? `${splitEvent.index} of ${splitEvent.count}` : null,
     positionLabel: formatPosition(segment, pairChanges.byPairId.size),
     movingTaxaLabel: formatCount(segment.subtreeMoveCount, 'taxon', 'taxa'),
-    animationStepLabel: formatCount(resolveAnimationStepCount(segment), 'step', 'steps'),
+    animationStepLabel: formatCount(segment.lastFrame - segment.firstFrame, 'step', 'steps'),
     pivotEdgeLabel: formatPivotEdgeLabel(segment.pivotEdge),
     rfLabel: formatNumber(change?.rf, 3),
     weightedRfLabel: formatNumber(change?.weightedRf, 3),
@@ -297,13 +297,6 @@ function formatPosition(segment, pairCount) {
   }
   if (!Number.isInteger(segment.pairOrdinal)) return null;
   return `Transition ${segment.pairOrdinal + 1}${pairCount ? ` of ${pairCount}` : ''}`;
-}
-
-function resolveAnimationStepCount(segment) {
-  if (Number.isInteger(segment.animationStepCount)) return segment.animationStepCount;
-  return Array.isArray(segment.interpolationData)
-    ? Math.max(0, segment.interpolationData.length - 1)
-    : null;
 }
 
 function resolveMsaFrameIndex(segment, pair) {

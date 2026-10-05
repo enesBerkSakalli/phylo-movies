@@ -15,11 +15,11 @@ describe('TimelineDataset', () => {
   it('composes segments, frame rows, steps, and cursor lookup', () => {
     const dataset = TimelineDataset.fromMovieData(smallExampleMovieData);
 
-    expect(dataset.frameViews[7]).toMatchObject({
+    expect(dataset.getCursorForFrame(7)).toMatchObject({
       frameIndex: 7,
       inputTreeIndex: null,
       sourceFrameIndex: 0,
-      pairId: 'pair_0_1',
+      msaWindowIndex: 0,
       sourceInputTreeIndex: 0,
       targetInputTreeIndex: 1,
     });
@@ -108,10 +108,22 @@ describe('TimelineDataset', () => {
     expect(dataset.segments.length).toBeGreaterThan(0);
     expect(dataset.treeList).toHaveLength(trees.length);
     expect(dataset.segments[0]).toMatchObject({ isInputTreeSegment: true, globalIndex: 0 });
-    for (const segment of dataset.segments) {
-      for (const entry of segment.interpolationData) {
-        expect(entry).not.toHaveProperty('tree');
-      }
-    }
+  });
+
+  it('reads source and target input trees from the pair row, not the pair id', () => {
+    const movieData = {
+      ...smallExampleMovieData,
+      pairs: smallExampleMovieData.pairs.map((pair) =>
+        pair.pair_id === 'pair_0_1'
+          ? { ...pair, source_input_tree_index: 10, target_input_tree_index: 11 }
+          : pair
+      ),
+    };
+
+    expect(TimelineDataset.fromMovieData(movieData).getCursorForFrame(7)).toMatchObject({
+      msaWindowIndex: 10,
+      sourceInputTreeIndex: 10,
+      targetInputTreeIndex: 11,
+    });
   });
 });

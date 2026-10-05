@@ -73,6 +73,11 @@ manager that is both. TransitionFrame moves to `src/treeVisualisation`.
    pass. Then delete Occurrences, TimingResolver, Interval.
 4. **Segments**: `firstFrame` / `lastFrame` replace `interpolationData`; merge the 3 builders; drop
    FrameView.
+   Done: the builders live in `TimelineDataProcessor` until step 6 (fulfillment and branch-length-only
+   were one path); `firstFrame..lastFrame` is the played range (a split segment starts one frame early
+   and the last one may fold the closing motion), `globalStart` / `globalEnd` stay the event's own range
+   for the tooltip; segment `index` and `animationStepCount` also went (unread), and the cursor lost the
+   fields src never read.
 5. **ms only**: `frameAt(ms)`, `seek(ms)`; hydration moves tree-side; AnimationRunner uses one
    `stepAt`; delete item ids. Split into 5a add, 5b migrate callers, 5c delete.
 6. **Controller**: replaces MovieTimelineManager, ScrubberAPI, ScrubController, NavigationController;
