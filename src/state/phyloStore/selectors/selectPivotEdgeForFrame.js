@@ -1,4 +1,4 @@
-import { isInputFrame } from '../../../timeline/data/timelineFrameIndex.js';
+import { isInputFrame } from '../../../domain/backend/inputFrame.js';
 
 const NO_PIVOT_EDGE = Object.freeze([]);
 

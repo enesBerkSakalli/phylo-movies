@@ -1,4 +1,4 @@
-import { isInputFrame } from '../../timeline/data/timelineFrameIndex.js';
+import { isInputFrame } from '../backend/inputFrame.js';
 
 function normalizeIndices(indices) {
   return Array.from(new Set(Array.isArray(indices) ? indices : []))

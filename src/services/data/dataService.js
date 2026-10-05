@@ -8,7 +8,7 @@ import {
   parseBinaryMoviePayload,
 } from '../../domain/backend/binaryPayload.ts';
 import { createBinaryTreeSource } from '../../domain/backend/treeSource.js';
-import { isInputFrame } from '../../timeline/data/timelineFrameIndex.js';
+import { isInputFrame } from '../../domain/backend/inputFrame.js';
 
 /**
  * Unified data service for PhyloMovies

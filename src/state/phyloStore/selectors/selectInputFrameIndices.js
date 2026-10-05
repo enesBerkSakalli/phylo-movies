@@ -1,4 +1,4 @@
-import { selectInputFrameIndicesFromRows } from '../../../timeline/data/timelineFrameIndex.js';
+import { selectInputFrameIndicesFromRows } from '../../../domain/backend/inputFrame.js';
 
 let cachedFrames = null;
 /** @type {number[]} */

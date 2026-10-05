@@ -9,7 +9,7 @@
 import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
 import { TimelineEventIndex } from './TimelineEventIndex.js';
 import { TimelineSegmentBuilder } from './TimelineSegmentBuilder.js';
-import { isInputFrame } from './timelineFrameIndex.js';
+import { isInputFrame } from '../../domain/backend/inputFrame.js';
 
 export class TimelineDataProcessor {
   /**

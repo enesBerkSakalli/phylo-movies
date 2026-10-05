@@ -22,7 +22,7 @@ import {
 } from './treePayloadValidators';
 import { hydrateMovieTreeAtIndex as hydrateMovieTreePayloadAtIndex } from './treeHydration.js';
 import { flattenTreeAnnotationValues } from './annotationValueLayout';
-import { isInputFrame } from '../../timeline/data/timelineFrameIndex.js';
+import { isInputFrame } from './inputFrame.js';
 
 export type { PhyloMovieData, TemporalEvent, TimelineFrame, TimelinePair } from './phyloMovieTypes';
 

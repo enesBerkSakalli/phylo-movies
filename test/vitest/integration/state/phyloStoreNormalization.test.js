@@ -644,7 +644,7 @@ describe('phylo store dataset normalization', () => {
   });
 
   it('keeps timeline frame index helpers on the validated backend row contract only', () => {
-    const source = readFileSync(join(repoRoot, 'src/timeline/data/timelineFrameIndex.js'), 'utf8');
+    const source = readFileSync(join(repoRoot, 'src/domain/backend/inputFrame.js'), 'utf8');
 
     expect(source).not.toContain('frameType');
     expect(source).not.toContain('frameIndex');

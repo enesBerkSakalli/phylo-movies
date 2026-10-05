@@ -1,4 +1,4 @@
-import { isInputFrame } from './timelineFrameIndex.js';
+import { isInputFrame } from '../../domain/backend/inputFrame.js';
 
 export function buildTimelineFrameViews(movieData) {
   const frames = movieData.frames;

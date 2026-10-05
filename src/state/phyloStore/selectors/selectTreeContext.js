@@ -1,6 +1,6 @@
 import { selectActiveTreeList } from './selectActiveTreeList.js';
 import { selectTimelineFrameAtIndex } from './selectTimelineFrameAtIndex.js';
-import { isInputFrame } from '../../../timeline/data/timelineFrameIndex.js';
+import { isInputFrame } from '../../../domain/backend/inputFrame.js';
 
 // Cache keyed on the two mutable references this selector actually reads, so
 // repeated calls with an unchanged tree/frame return the same object
