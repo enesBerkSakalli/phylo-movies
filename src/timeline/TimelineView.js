@@ -6,7 +6,6 @@ import { Deck, OrthographicView } from '@deck.gl/core';
 import { teardownDeckRenderer } from '../lib/deckTeardown.js';
 import {
   TIMELINE_THEME,
-  createPathLayer,
   createBaselineLayer,
   createInputTreeTickLayer,
   createInputTreeLayer,
@@ -73,7 +72,6 @@ export class TimelineView {
    */
   init(container) {
     this._setupContainer(container);
-    this._createLayers();
     this._createDeck();
     this._setupAccessibility();
 
@@ -103,49 +101,6 @@ export class TimelineView {
     this.canvas.style.cssText =
       'position:absolute;left:0;right:0;top:0;bottom:0;z-index:2;pointer-events:auto;';
     container.appendChild(this.canvas);
-  }
-
-  _createLayers() {
-    this.separatorLayer = createSeparatorLayer([], TIMELINE_THEME);
-    this.baselineLayer = createBaselineLayer([], TIMELINE_THEME);
-    this.inputTreeTickLayer = createInputTreeTickLayer([], TIMELINE_THEME);
-    this.activeInputTreeTickLayer = createInputTreeTickLayer([], TIMELINE_THEME, true);
-    this.inputTreeLayer = createInputTreeLayer([], TIMELINE_THEME.inputTreeStrokeWidth);
-    this.pairMarkLayer = createPairMarkLayer('pair-mark-layer', [], TIMELINE_THEME.stripMarkRGB);
-    this.pairHoverLayer = createPairMarkLayer(
-      'pair-hover-layer',
-      [],
-      TIMELINE_THEME.stripMarkHoverRGB
-    );
-    this.pairSelectionLayer = createPairMarkLayer(
-      'pair-selection-layer',
-      [],
-      TIMELINE_THEME.connectionSelectionRGB
-    );
-    this.pairSelectionSpanLayer = createPairMarkLayer(
-      'pair-selection-span-layer',
-      [],
-      TIMELINE_THEME.connectionSelectionRGB
-    );
-    this.pairPipLayer = createPairPipLayer(
-      'pair-pip-layer',
-      [],
-      TIMELINE_THEME.stripPipRGB,
-      TIMELINE_THEME.stripPipAlpha
-    );
-    this.pairSelectionPipLayer = createPairPipLayer(
-      'pair-selection-pip-layer',
-      [],
-      TIMELINE_THEME.connectionSelectionRGB,
-      TIMELINE_THEME.stripPipAlpha
-    );
-    this.inputTreeHoverLayer = createInputTreeHoverLayer(
-      [],
-      TIMELINE_THEME.connectionHoverRGB,
-      (info) => this._pick(info)
-    );
-    this.inputTreeSelectionLayer = createInputTreeSelectionLayer([], TIMELINE_THEME);
-    this.scrubberLayer = createPathLayer('scrubber-layer', [], [0, 0, 0, 0], 1);
   }
 
   _createDeck() {
@@ -417,60 +372,44 @@ export class TimelineView {
     const theme = TIMELINE_THEME;
     const separatorWidth = calculateSeparatorWidth(this.timeline.segments.length, theme);
 
-    // Cache color arrays for updateTriggers (stable references for comparison)
-    const hoverColor = [
-      theme.connectionHoverRGB[0],
-      theme.connectionHoverRGB[1],
-      theme.connectionHoverRGB[2],
-      160,
-    ];
-    const selectionColor = [
-      theme.connectionSelectionRGB[0],
-      theme.connectionSelectionRGB[1],
-      theme.connectionSelectionRGB[2],
-      230,
-    ];
-
     return [
-      this.separatorLayer.clone({
-        data: separators,
-        widthMinPixels: separatorWidth,
-        updateTriggers: { getColor: [theme.separatorAlpha, theme.separatorDenseAlpha] },
-      }),
-      this.baselineLayer.clone({ data: baselines }),
-      this.inputTreeTickLayer.clone({ data: inputTreeTicks }),
-      this.activeInputTreeTickLayer.clone({ data: activeInputTreeTicks }),
-      this.pairMarkLayer.clone({ data: pairStrip.marks }),
-      this.pairHoverLayer.clone({ data: pairStrip.hoverMarks }),
-      this.pairSelectionLayer.clone({ data: pairStrip.selectionMarks }),
-      this.pairSelectionSpanLayer.clone({ data: pairStrip.selectionSpan }),
+      createSeparatorLayer(separators, theme, separatorWidth),
+      createBaselineLayer(baselines, theme),
+      createInputTreeTickLayer(inputTreeTicks, theme),
+      createInputTreeTickLayer(activeInputTreeTicks, theme, true),
+      createPairMarkLayer('pair-mark-layer', pairStrip.marks, theme.stripMarkRGB),
+      createPairMarkLayer('pair-hover-layer', pairStrip.hoverMarks, theme.stripMarkHoverRGB),
+      createPairMarkLayer(
+        'pair-selection-layer',
+        pairStrip.selectionMarks,
+        theme.connectionSelectionRGB
+      ),
+      createPairMarkLayer(
+        'pair-selection-span-layer',
+        pairStrip.selectionSpan,
+        theme.connectionSelectionRGB
+      ),
       // Circles sit on the baseline, so they draw over the bars they overlap
-      this.inputTreeLayer.clone({
-        data: inputTreePoints,
-        lineWidthMinPixels: theme.inputTreeStrokeWidth,
-      }),
-      this.inputTreeHoverLayer.clone({
-        data: hoverInputTrees,
-        getLineColor: hoverColor,
-        updateTriggers: { getLineColor: hoverColor },
-      }),
-      this.inputTreeSelectionLayer.clone({
-        data: selectionInputTrees,
-        getLineColor: selectionColor,
-        updateTriggers: { getLineColor: selectionColor },
-      }),
-      this.pairPipLayer.clone({ data: pairStrip.pips }),
-      this.pairSelectionPipLayer.clone({ data: pairStrip.selectionPips }),
-      this.scrubberLayer.clone(
-        createScrubberLayer(
-          this.scrubberMs,
-          this._rangeStart,
-          this._rangeEnd,
-          width,
-          height,
-          theme,
-          this.scrubbing
-        )
+      createInputTreeLayer(inputTreePoints, theme.inputTreeStrokeWidth),
+      createInputTreeHoverLayer(hoverInputTrees, theme.connectionHoverRGB, (info) =>
+        this._pick(info)
+      ),
+      createInputTreeSelectionLayer(selectionInputTrees, theme),
+      createPairPipLayer('pair-pip-layer', pairStrip.pips, theme.stripPipRGB, theme.stripPipAlpha),
+      createPairPipLayer(
+        'pair-selection-pip-layer',
+        pairStrip.selectionPips,
+        theme.connectionSelectionRGB,
+        theme.stripPipAlpha
+      ),
+      createScrubberLayer(
+        this.scrubberMs,
+        this._rangeStart,
+        this._rangeEnd,
+        width,
+        height,
+        theme,
+        this.scrubbing
       ),
     ];
   }

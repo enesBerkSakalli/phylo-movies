@@ -112,6 +112,7 @@ export function createInputTreeLayer(inputTreePoints, inputTreeStrokeWidth) {
     filled: true,
     getRadius: (d) => d.radius,
     getLineWidth: (d) => d.lineWidth ?? inputTreeStrokeWidth,
+    lineWidthMinPixels: inputTreeStrokeWidth,
     radiusUnits: 'pixels',
   });
 }
@@ -186,8 +187,8 @@ export function createInputTreeSelectionLayer(selectionInputTrees, theme) {
   });
 }
 
-export function createSeparatorLayer(separators, theme, widthOverride = 1) {
-  return createPathLayer('separator-layer', separators, null, widthOverride, {
+export function createSeparatorLayer(separators, theme, width) {
+  return createPathLayer('separator-layer', separators, null, width, {
     getColor: (d) => {
       const alpha = d.markerMode === 'circle' ? theme.separatorAlpha : theme.separatorDenseAlpha;
       return [theme.separatorRGB[0], theme.separatorRGB[1], theme.separatorRGB[2], alpha];
@@ -223,12 +224,5 @@ export function createScrubberLayer(ms, rangeStart, rangeEnd, width, height, the
   const coreRGB = theme.scrubberCoreRGB;
   const coreColor = [coreRGB[0], coreRGB[1], coreRGB[2], 255];
 
-  return {
-    id: 'scrubber-layer',
-    data: [{ path: scrubPoly }],
-    getColor: coreColor,
-    widthMinPixels: isScrubbing ? 10 : 7,
-    getLineColor: [255, 255, 255, 180],
-    lineWidthMinPixels: 1,
-  };
+  return createPathLayer('scrubber-layer', [{ path: scrubPoly }], coreColor, isScrubbing ? 10 : 7);
 }
