@@ -451,7 +451,7 @@ function LegendItems({ hasTransitionSegments, maxRf }) {
       )}
       <LegendItem swatchClassName="h-1.5 w-px bg-slate-500" label="Input tree" />
       <LegendItem
-        swatchClassName="h-2 w-5 rounded-t-sm border-b-2 border-slate-800 bg-emerald-600"
+        swatchClassName="h-2 w-5 border-b-2 border-slate-800 bg-emerald-600"
         label="Selected"
         title="green, with a dark bracket under it"
       />
