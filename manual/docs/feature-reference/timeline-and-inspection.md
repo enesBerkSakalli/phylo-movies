@@ -42,9 +42,9 @@ The strip draws one gray bar per transition, between each pair of consecutive in
 | **SPR move**            | One dot below the baseline per SPR move; size is the taxa moved. A transition too narrow for its moves gets one dot sized by its move count: zoom in for each move. |
 | **Branch lengths only** | Dashed segment: only branch lengths changed (RF 0, weighted RF above 0).                                                                                            |
 | **Input tree**          | Short tick for each original input tree (a circle at high zoom).                                                                                                    |
-| **Selected**            | The selected transition turns green, with a dark bracket under the exact selected part, so it reads without the colour.                                             |
+| **Selected**            | The selected transition turns dark, with a bracket under the exact selected part, so it reads by its shape as well as its colour.                                   |
 
-The blue line is the playhead: drag its knob at the top of the strip, or the line itself, to scrub. A click anywhere else selects the transition under it, even right beside the playhead. Numbering is 1-based and per transition throughout: the status strip reads "Tree a → b · step i of N" (or "Input tree n"), and the tooltip and Inspector use "Transition k of P".
+The cyan line is the playhead: drag its knob at the top of the strip, or the line itself, to scrub. A click anywhere else selects the transition under it, even right beside the playhead. Numbering is 1-based and per transition throughout: the status strip reads "Tree a → b · step i of N" (or "Input tree n"), and the tooltip and Inspector use "Transition k of P".
 
 ## Playback and Timeline View
 
@@ -78,7 +78,7 @@ RF distance and weighted RF distance per transition appear in the strip (bar hei
 | Action                         | Result                                                                                                                                                                                                         |
 | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Hover a transition             | Shows a compact tooltip above the player bar, so it never covers the controls. Header "Transition k of P · Tree a → b", then "RF x · weighted RF y" and "n SPR moves · m taxa moved" or "Branch lengths only". |
-| Select a transition            | Turns it green and updates the status strip. It does not open the Inspector.                                                                                                                                   |
+| Select a transition            | Turns it dark and updates the status strip. It does not open the Inspector.                                                                                                                                    |
 | **Inspect transition** button  | Opens the Transition Inspector. Sits next to the status strip; until a transition is selected it is dimmed but still reachable by keyboard, and its tooltip says why.                                          |
 | Double-click a transition      | Selects it and opens the Transition Inspector.                                                                                                                                                                 |
 | **Enter** on the focused strip | Opens the Transition Inspector for the selected transition, selecting the one under the playhead first if none is.                                                                                             |

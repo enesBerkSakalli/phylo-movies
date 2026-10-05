@@ -55,12 +55,15 @@ function createPolygonLayer(id, data, options = {}) {
 // ==========================================================================
 // TIMELINE LAYER FACTORIES
 // ==========================================================================
+// Colours are [r, g, b] from the theme tokens TimelineView reads; `colors` is its role map.
 
-export function createInputTreeLayer(inputTreePoints, inputTreeStrokeWidth) {
+const opaque = (rgb) => [rgb[0], rgb[1], rgb[2], 255];
+
+export function createInputTreeLayer(inputTreePoints, inputTreeStrokeWidth, colors) {
   return createScatterplotLayer('input-tree-layer', inputTreePoints, {
     getPosition: (d) => d.position,
-    getFillColor: (d) => d.fillColor,
-    getLineColor: (d) => d.borderColor,
+    getFillColor: opaque(colors.background),
+    getLineColor: opaque(colors.markStrong),
     stroked: true,
     filled: true,
     getRadius: (d) => d.radius,
@@ -70,41 +73,43 @@ export function createInputTreeLayer(inputTreePoints, inputTreeStrokeWidth) {
   });
 }
 
-export function createInputTreeTickLayer(inputTreeTicks, active = false) {
+/** Dense input trees: a tick each, the selected or hovered one wider and in the selection ink. */
+export function createInputTreeTickLayer(inputTreeTicks, rgb, active = false) {
   return createPathLayer(
     active ? 'active-input-tree-tick-layer' : 'input-tree-tick-layer',
     inputTreeTicks,
-    [...(active ? TIMELINE_THEME.scrubberCoreRGB : TIMELINE_THEME.stripMarkRGB), 255],
+    opaque(rgb),
     active ? TIMELINE_THEME.activeInputTreeTickWidth : TIMELINE_THEME.inputTreeTickWidth,
     { capRounded: true }
   );
 }
 
-export function createBaselineLayer(baselines) {
-  return createPathLayer('baseline-layer', baselines, [...TIMELINE_THEME.stripBaselineRGB, 255], 1);
+export function createBaselineLayer(baselines, rgb) {
+  return createPathLayer('baseline-layer', baselines, opaque(rgb), 1);
 }
 
 /** RF bars and branch-length dashes, filled with one solid colour. */
 export function createPairMarkLayer(id, marks, rgb) {
   return createPolygonLayer(id, marks, {
-    getFillColor: [rgb[0], rgb[1], rgb[2], 255],
+    getFillColor: opaque(rgb),
   });
 }
 
-export function createPairPipLayer(id, pips, rgb, alpha) {
+export function createPairPipLayer(id, pips, rgb) {
   return createScatterplotLayer(id, pips, {
     getPosition: (d) => d.position,
     getRadius: (d) => d.radius,
-    getFillColor: [rgb[0], rgb[1], rgb[2], alpha],
+    getFillColor: opaque(rgb),
     radiusUnits: 'pixels',
   });
 }
 
-export function createInputTreeHoverLayer(hoverInputTrees, hoverRGB) {
+export function createInputTreeHoverLayer(hoverInputTrees, colors) {
+  const { hover, background } = colors;
   return createScatterplotLayer('input-tree-hover-layer', hoverInputTrees, {
     getPosition: (d) => d.position,
-    getFillColor: (d) => d.fillColor,
-    getLineColor: [hoverRGB[0], hoverRGB[1], hoverRGB[2], 160],
+    getFillColor: opaque(background),
+    getLineColor: [hover[0], hover[1], hover[2], 160],
     stroked: true,
     filled: true,
     getRadius: (d) => d.radius + 1,
@@ -113,11 +118,11 @@ export function createInputTreeHoverLayer(hoverInputTrees, hoverRGB) {
   });
 }
 
-export function createInputTreeSelectionLayer(selectionInputTrees) {
+export function createInputTreeSelectionLayer(selectionInputTrees, colors) {
   return createScatterplotLayer('input-tree-selection-layer', selectionInputTrees, {
     getPosition: (d) => d.position,
-    getFillColor: (d) => d.fillColor,
-    getLineColor: [...TIMELINE_THEME.connectionSelectionRGB, 230],
+    getFillColor: opaque(colors.background),
+    getLineColor: opaque(colors.selection),
     stroked: true,
     filled: true,
     getRadius: (d) => d.radius + 1,
@@ -126,9 +131,8 @@ export function createInputTreeSelectionLayer(selectionInputTrees) {
   });
 }
 
-export function createSeparatorLayer(separators, width) {
-  const { separatorRGB, separatorAlpha } = TIMELINE_THEME;
-  return createPathLayer('separator-layer', separators, [...separatorRGB, separatorAlpha], width);
+export function createSeparatorLayer(separators, width, rgb) {
+  return createPathLayer('separator-layer', separators, opaque(rgb), width);
 }
 
 /**
@@ -157,25 +161,27 @@ function scrubberX(ms, rangeStart, rangeEnd, width) {
   return Math.max(SCRUBBER_EDGE_PX - width / 2, Math.min(width / 2 - SCRUBBER_EDGE_PX, x));
 }
 
-/** The playhead line: thin, so the selection it passes over stays readable. */
-export function createScrubberLayer(ms, rangeStart, rangeEnd, width, height, isScrubbing) {
+/**
+ * The playhead line: thin, so the selection it passes over stays readable. It and the bars differ
+ * in hue more than in lightness, so a background edge, 1 px either side, parts them.
+ */
+export function createScrubberLayers(ms, rangeStart, rangeEnd, width, height, isScrubbing, colors) {
   const x = scrubberX(ms, rangeStart, rangeEnd, width);
   const path = [
     [x, -height / 2],
     [x, height / 2],
   ];
+  const lineWidth = isScrubbing ? 3 : 2;
 
-  return createPathLayer(
-    'scrubber-layer',
-    [{ path }],
-    [...TIMELINE_THEME.scrubberCoreRGB, 255],
-    isScrubbing ? 3 : 2
-  );
+  return [
+    createPathLayer('scrubber-outline-layer', [{ path }], opaque(colors.background), lineWidth + 2),
+    createPathLayer('scrubber-layer', [{ path }], opaque(colors.playhead), lineWidth),
+  ];
 }
 
 /** The playhead's grab handle: a pointer in the headroom above the tallest bar. */
-export function createScrubberKnobLayer(ms, rangeStart, rangeEnd, width, height) {
-  const { scrubberKnobWidth, scrubberKnobDepth, scrubberCoreRGB } = TIMELINE_THEME;
+export function createScrubberKnobLayer(ms, rangeStart, rangeEnd, width, height, rgb) {
+  const { scrubberKnobWidth, scrubberKnobDepth } = TIMELINE_THEME;
   const x = scrubberX(ms, rangeStart, rangeEnd, width);
   const top = height / 2;
   const polygon = [
@@ -185,6 +191,6 @@ export function createScrubberKnobLayer(ms, rangeStart, rangeEnd, width, height)
   ];
 
   return createPolygonLayer('scrubber-knob-layer', [{ polygon }], {
-    getFillColor: [...scrubberCoreRGB, 255],
+    getFillColor: opaque(rgb),
   });
 }

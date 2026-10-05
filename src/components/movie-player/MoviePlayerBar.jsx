@@ -450,28 +450,29 @@ function LegendItems({ hasTransitionSegments, maxRf }) {
     <>
       {hasTransitionSegments && (
         <>
-          <LegendItem swatchClassName="h-2 w-4 rounded-sm bg-slate-500" label="RF change">
+          <LegendItem swatchClassName="h-2 w-4 rounded-sm bg-data-mark" label="RF change">
             <span className="font-normal tabular-nums">(max {maxRf.toFixed(2)})</span>
           </LegendItem>
           <LegendItem
-            swatchClassName="size-2 rounded-full bg-slate-700"
+            swatchClassName="size-2 rounded-full bg-data-mark-strong"
             label="SPR move"
             title="one dot per move (size = taxa moved); merged per transition (size = moves) when zoomed out"
           />
           <LegendItem
-            swatchClassName="w-5 border-t-2 border-dashed border-slate-500"
+            swatchClassName="w-5 border-t-2 border-dashed border-data-mark"
             label="Branch lengths only"
           />
         </>
       )}
-      <LegendItem swatchClassName="h-1.5 w-px bg-slate-500" label="Input tree" />
+      <LegendItem swatchClassName="h-1.5 w-px bg-data-mark" label="Input tree" />
+      {/* The ink bar in its bracket: the colours TimelineView reads from the same tokens */}
       <LegendItem
-        swatchClassName="h-2 w-5 border-b-2 border-slate-800 bg-emerald-600"
+        swatchClassName="h-[11px] w-5 border-2 border-t-0 border-primary bg-primary bg-clip-content pb-[2px]"
         label="Selected"
-        title="green, with a dark bracket under it"
+        title="dark, with a bracket under it"
       />
-      {/* rgb(64,128,255), the strip's playhead; drag its knob (the top) to scrub */}
-      <LegendItem swatchClassName="h-3 w-0.5 bg-[#4080ff]" label="Playhead" />
+      {/* The strip's playhead; drag its knob (the top) to scrub */}
+      <LegendItem swatchClassName="h-3 w-0.5 bg-signal" label="Playhead" />
     </>
   );
 }

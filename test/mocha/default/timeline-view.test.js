@@ -19,7 +19,25 @@ clearTimelineModuleCache();
 const { TimelineView } = require('../../../src/timeline/TimelineView.js');
 const { TIMELINE_THEME } = require('../../../src/timeline/stripGeometry.js');
 
+// Each theme token the strip reads gets its own value, so a layer's colour names its role
+const TOKENS = {
+  '--data-mark': [101, 0, 0],
+  '--data-mark-strong': [102, 0, 0],
+  '--hover-mark': [103, 0, 0],
+  '--primary': [104, 0, 0],
+  '--signal': [105, 0, 0],
+  '--background': [106, 0, 0],
+  '--axis': [107, 0, 0],
+  '--grid': [108, 0, 0],
+};
+const setTokens = (tokens) =>
+  Object.entries(tokens).forEach(([name, [r, g, b]]) =>
+    global.document.documentElement.style.setProperty(name, `rgb(${r} ${g} ${b})`)
+  );
+const tokenRgba = (name) => [...TOKENS[name], 255];
+
 describe('TimelineView', () => {
+  beforeEach(() => setTokens(TOKENS));
   function makeContainer(w = 800, h = 100) {
     const container = global.document.createElement('div');
     let width = w;
@@ -198,13 +216,22 @@ describe('TimelineView', () => {
     expect(findLayer(view, 'separator-layer').props.data).to.have.length(0);
   });
 
+  it('draws the 1 px baseline on the pixel row under the bars, not half on each of two', () => {
+    const { timeline } = makeTimelineFixture();
+    const { view } = mountView(timeline, { container: makeContainer(800, 44) });
+    const [baseline] = findLayer(view, 'baseline-layer').props.data;
+
+    // The bars stand on y = 44 / 2 - stripBaselineY (y points up); the line fills the row below
+    expect(baseline.path.map(([, y]) => y)).to.deep.equal([-8.5, -8.5]);
+  });
+
   it('marks each segment start with a separator while the input trees are drawn as circles', () => {
     const { timeline } = makeTimelineFixture();
     const { view } = mountView(timeline);
     const separators = findLayer(view, 'separator-layer');
 
     expect(separators.props.data).to.have.length(3);
-    expect(separators.props.getColor).to.deep.equal([0, 0, 0, TIMELINE_THEME.separatorAlpha]);
+    expect(separators.props.getColor).to.deep.equal(tokenRgba('--grid'));
   });
 
   it('keeps the old amber transition layers off the strip', () => {
@@ -244,7 +271,7 @@ describe('TimelineView', () => {
     expect(ids[ids.length - 1]).to.equal('scrubber-knob-layer');
   });
 
-  it('draws the knob in the headroom above the tallest bar, in the playhead blue', () => {
+  it('draws the knob in the headroom above the tallest bar, in the signal colour', () => {
     const { timeline } = makeTimelineFixture();
     const { view } = mountView(timeline, { container: makeContainer(800, 44) });
     view.setCustomTime(1500);
@@ -260,10 +287,10 @@ describe('TimelineView', () => {
     expect(TIMELINE_THEME.scrubberKnobDepth).to.be.at.most(
       TIMELINE_THEME.stripBaselineY - TIMELINE_THEME.stripBarMaxHeight
     );
-    expect(knob.props.getFillColor).to.deep.equal([...TIMELINE_THEME.scrubberCoreRGB, 255]);
+    expect(knob.props.getFillColor).to.deep.equal(tokenRgba('--signal'));
   });
 
-  it('turns the hovered transition pair darker and the selected pair emerald', () => {
+  it('turns the hovered transition pair darker and the selected pair ink', () => {
     const { timeline } = makeTimelineFixture();
     const { view } = mountView(timeline, { strip: pairStrip, container: makeContainer(800, 44) });
 
@@ -273,9 +300,15 @@ describe('TimelineView', () => {
     expect(findLayer(view, 'pair-hover-layer').props.data).to.have.length(1);
     expect(findLayer(view, 'pair-selection-layer').props.data).to.have.length(1);
     expect(findLayer(view, 'pair-selection-pip-layer').props.data).to.have.length(1);
+    expect(findLayer(view, 'pair-hover-layer').props.getFillColor).to.deep.equal(
+      tokenRgba('--hover-mark')
+    );
+    expect(findLayer(view, 'pair-selection-layer').props.getFillColor).to.deep.equal(
+      tokenRgba('--primary')
+    );
   });
 
-  it('brackets the selected transition in a dark mark, not only in emerald', () => {
+  it('brackets the selected transition: selection is a shape, not only the ink', () => {
     const { timeline } = makeTimelineFixture();
     const { view } = mountView(timeline, { strip: pairStrip, container: makeContainer(800, 44) });
 
@@ -283,7 +316,7 @@ describe('TimelineView', () => {
     const bracket = findLayer(view, 'pair-selection-span-layer');
 
     expect(bracket.props.data).to.have.length(3);
-    expect(bracket.props.getFillColor).to.deep.equal([...TIMELINE_THEME.stripMarkHoverRGB, 255]);
+    expect(bracket.props.getFillColor).to.deep.equal(tokenRgba('--primary'));
   });
 
   it('leaves pair marks alone when an input tree is selected', () => {
@@ -297,8 +330,72 @@ describe('TimelineView', () => {
     expect(findLayer(view, 'input-tree-selection-layer').props.data).to.have.length(1);
   });
 
-  it('uses distinct colors for selected segments and the current playhead', () => {
-    expect(TIMELINE_THEME.connectionSelectionRGB).to.not.deep.equal(TIMELINE_THEME.scrubberCoreRGB);
+  it('takes every colour from its theme token: marks, selection (ink), playhead (signal)', () => {
+    const { timeline } = makeTimelineFixture();
+    const { view } = mountView(timeline, { strip: pairStrip, container: makeContainer(800, 44) });
+    view.setSelection(1);
+    const color = (id, prop) => findLayer(view, id).props[prop];
+
+    expect(color('pair-mark-layer', 'getFillColor')).to.deep.equal(tokenRgba('--data-mark'));
+    expect(color('pair-pip-layer', 'getFillColor')).to.deep.equal(tokenRgba('--data-mark-strong'));
+    expect(color('pair-selection-pip-layer', 'getFillColor')).to.deep.equal(tokenRgba('--primary'));
+    expect(color('scrubber-layer', 'getColor')).to.deep.equal(tokenRgba('--signal'));
+    expect(color('baseline-layer', 'getColor')).to.deep.equal(tokenRgba('--axis'));
+    expect(color('input-tree-layer', 'getLineColor')).to.deep.equal(
+      tokenRgba('--data-mark-strong')
+    );
+    expect(color('input-tree-layer', 'getFillColor')).to.deep.equal(tokenRgba('--background'));
+  });
+
+  it('rings a selected input tree in the ink and a hovered one in the hover colour', () => {
+    const { timeline } = makeTimelineFixture();
+    const { view } = mountView(timeline);
+    view.setSelection(0);
+    view.setHover(2);
+
+    const selected = findLayer(view, 'input-tree-selection-layer').props;
+    const hovered = findLayer(view, 'input-tree-hover-layer').props;
+    expect(selected.getLineColor).to.deep.equal(tokenRgba('--primary'));
+    expect(hovered.getLineColor.slice(0, 3)).to.deep.equal(TOKENS['--hover-mark']);
+    expect(selected.getFillColor).to.deep.equal(tokenRgba('--background'));
+  });
+
+  it('draws a selected dense input-tree tick in the selection ink, not the playhead colour', () => {
+    const timeline = timelineOf(Array.from({ length: 100 }, () => ({ isInputTreeSegment: true })));
+    const { view } = mountView(timeline, { container: makeContainer(800, 44) });
+    view.setSelection(5);
+    const active = findLayer(view, 'active-input-tree-tick-layer');
+
+    expect(active.props.data).to.have.length(1);
+    expect(active.props.getColor).to.deep.equal(tokenRgba('--primary'));
+    expect(findLayer(view, 'input-tree-tick-layer').props.getColor).to.deep.equal(
+      tokenRgba('--data-mark')
+    );
+  });
+
+  it('edges the playhead line with the background, 1 px a side, so it parts from the bars', () => {
+    const { timeline } = makeTimelineFixture();
+    const { view } = mountView(timeline);
+    const ids = view.deck.props.layers.map((l) => l.id);
+    const line = findLayer(view, 'scrubber-layer').props;
+    const outline = findLayer(view, 'scrubber-outline-layer').props;
+
+    expect(ids.indexOf('scrubber-outline-layer')).to.equal(ids.indexOf('scrubber-layer') - 1);
+    expect(outline.data).to.deep.equal(line.data);
+    expect(outline.getColor).to.deep.equal(tokenRgba('--background'));
+    expect(outline.widthMinPixels).to.equal(line.widthMinPixels + 2);
+    view.setScrubbing(true);
+    expect(findLayer(view, 'scrubber-outline-layer').props.widthMinPixels).to.equal(5);
+  });
+
+  it('re-reads the theme tokens on refreshColors, for a theme switch', () => {
+    const { timeline } = makeTimelineFixture();
+    const { view } = mountView(timeline);
+
+    setTokens({ '--signal': [1, 2, 3] });
+    view.refreshColors();
+
+    expect(findLayer(view, 'scrubber-layer').props.getColor).to.deep.equal([1, 2, 3, 255]);
   });
 
   it('draws the playhead as a thin line, a little wider while scrubbing', () => {

@@ -223,13 +223,14 @@ describe('movie timeline player bar semantics', () => {
     expect(playerBarSource).toContain('aria-label="Timeline legend"');
     expect(playerBarSource).toContain('(max {maxRf.toFixed(2)})');
     expect(playerBarSource).toContain('merged per transition (size = moves) when zoomed out');
-    // rgb(100,116,139), rgb(51,65,85) and rgb(5,150,105): slate-500, slate-700, emerald-600.
-    // rgb(64,128,255), the playhead blue.
-    const swatches = ['bg-slate-500', 'bg-slate-700', 'border-slate-500', 'bg-emerald-600'];
-    for (const swatch of [...swatches, 'bg-[#4080ff]']) {
+    // The theme tokens TimelineView paints the strip with: bars and ticks, dots, selection (the
+    // ink, with its bracket), the playhead signal. No fixed colours that a theme would miss.
+    const swatches = ['bg-data-mark', 'bg-data-mark-strong', 'border-data-mark', 'bg-primary'];
+    for (const swatch of [...swatches, 'border-primary', 'bg-signal']) {
       expect(playerBarSource).toContain(swatch);
     }
-    expect(playerBarSource).not.toContain('bg-amber-600');
+    const legend = playerBarSource.slice(playerBarSource.indexOf('function LegendItems'));
+    expect(legend).not.toMatch(/(bg|border)-(slate|emerald|amber)-|#4080ff/);
   });
 
   it('keeps the segment tooltip off the controls and out of the pointer path', () => {

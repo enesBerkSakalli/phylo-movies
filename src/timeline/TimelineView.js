@@ -13,7 +13,7 @@ import {
   createInputTreeHoverLayer,
   createInputTreeSelectionLayer,
   createSeparatorLayer,
-  createScrubberLayer,
+  createScrubberLayers,
   createScrubberKnobLayer,
   calculateSeparatorWidth,
 } from './deckLayers.js';
@@ -34,10 +34,23 @@ import {
 } from './stripGeometry.js';
 import { attachTimelineInput } from './timelineInput.js';
 import { describeCursor } from './describeCursor.js';
+import { cssColor } from '../services/ui/colorUtils.js';
 
 // What the strip answers to (timelineInput, and the playback shortcuts it defers to)
 const SLIDER_KEYS =
   'Space ArrowLeft ArrowRight Shift+ArrowLeft Shift+ArrowRight PageUp PageDown Home End Enter Plus Minus 0';
+
+// The strip's colour roles and the theme tokens (src/css/index.css) they are read from
+const STRIP_COLOR_TOKENS = {
+  mark: '--data-mark', // RF bars, branch-length dashes, dense input-tree ticks
+  markStrong: '--data-mark-strong', // SPR dots, input-tree rings
+  hover: '--hover-mark',
+  selection: '--primary', // the ink: selected bar, dots, ring, tick and the bracket
+  playhead: '--signal',
+  background: '--background',
+  axis: '--axis', // the baseline
+  grid: '--grid', // segment separators
+};
 
 /**
  * The timeline strip, drawn with deck.gl: input trees as circles or ticks, each transition pair as
@@ -90,7 +103,7 @@ export class TimelineView {
     this._setupAccessibility();
 
     this.setCustomTime(0);
-    this._updateLayers();
+    this.refreshColors();
 
     if (typeof ResizeObserver !== 'undefined') {
       this._resizeObserver = new ResizeObserver(() => this._scheduleUpdate());
@@ -205,6 +218,15 @@ export class TimelineView {
   /** Whether the handle is being dragged (it draws wider). @param {boolean} scrubbing */
   setScrubbing(scrubbing) {
     this.scrubbing = scrubbing;
+    this._updateLayers();
+  }
+
+  /** Reads the strip's colours from the theme tokens again (at mount, and after a theme switch). */
+  refreshColors() {
+    const entries = Object.entries(STRIP_COLOR_TOKENS);
+    this.colors = Object.fromEntries(
+      entries.map(([role, token]) => [role, cssColor(this.container, token)])
+    );
     this._updateLayers();
   }
 
@@ -387,45 +409,45 @@ export class TimelineView {
     height,
   }) {
     const theme = TIMELINE_THEME;
+    const colors = this.colors;
 
     return [
-      createSeparatorLayer(separators, calculateSeparatorWidth(this.timeline.segments.length)),
-      createBaselineLayer(baselines),
-      createInputTreeTickLayer(inputTreeTicks),
-      createInputTreeTickLayer(activeInputTreeTicks, true),
-      createPairMarkLayer('pair-mark-layer', pairStrip.marks, theme.stripMarkRGB),
-      createPairMarkLayer('pair-hover-layer', pairStrip.hoverMarks, theme.stripMarkHoverRGB),
+      createSeparatorLayer(
+        separators,
+        calculateSeparatorWidth(this.timeline.segments.length),
+        colors.grid
+      ),
+      createBaselineLayer(baselines, colors.axis),
+      createInputTreeTickLayer(inputTreeTicks, colors.mark),
+      createInputTreeTickLayer(activeInputTreeTicks, colors.selection, true),
+      createPairMarkLayer('pair-mark-layer', pairStrip.marks, colors.mark),
+      createPairMarkLayer('pair-hover-layer', pairStrip.hoverMarks, colors.hover),
       // The selection draws over the playhead line so it stays visible; the knob tops everything
-      createScrubberLayer(
+      ...createScrubberLayers(
         this.scrubberMs,
         this._rangeStart,
         this._rangeEnd,
         width,
         height,
-        this.scrubbing
+        this.scrubbing,
+        colors
       ),
-      createPairMarkLayer(
-        'pair-selection-layer',
-        pairStrip.selectionMarks,
-        theme.connectionSelectionRGB
-      ),
-      createPairMarkLayer(
-        'pair-selection-span-layer',
-        pairStrip.selectionSpan,
-        theme.stripMarkHoverRGB
-      ),
+      createPairMarkLayer('pair-selection-layer', pairStrip.selectionMarks, colors.selection),
+      createPairMarkLayer('pair-selection-span-layer', pairStrip.selectionSpan, colors.selection),
       // Circles sit on the baseline, so they draw over the bars they overlap
-      createInputTreeLayer(inputTreePoints, theme.inputTreeStrokeWidth),
-      createInputTreeHoverLayer(hoverInputTrees, theme.connectionHoverRGB),
-      createInputTreeSelectionLayer(selectionInputTrees),
-      createPairPipLayer('pair-pip-layer', pairStrip.pips, theme.stripPipRGB, theme.stripPipAlpha),
-      createPairPipLayer(
-        'pair-selection-pip-layer',
-        pairStrip.selectionPips,
-        theme.connectionSelectionRGB,
-        theme.stripPipAlpha
+      createInputTreeLayer(inputTreePoints, theme.inputTreeStrokeWidth, colors),
+      createInputTreeHoverLayer(hoverInputTrees, colors),
+      createInputTreeSelectionLayer(selectionInputTrees, colors),
+      createPairPipLayer('pair-pip-layer', pairStrip.pips, colors.markStrong),
+      createPairPipLayer('pair-selection-pip-layer', pairStrip.selectionPips, colors.selection),
+      createScrubberKnobLayer(
+        this.scrubberMs,
+        this._rangeStart,
+        this._rangeEnd,
+        width,
+        height,
+        colors.playhead
       ),
-      createScrubberKnobLayer(this.scrubberMs, this._rangeStart, this._rangeEnd, width, height),
     ];
   }
 

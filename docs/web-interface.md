@@ -139,7 +139,7 @@ The timeline strip draws one gray bar per transition, that is, between each pair
 - Below the baseline, one dot marks each SPR move. Dot size is the number of taxa moved. Where a transition is too narrow for its moves, they merge into one dot whose size is the move count; zoom in to see each move.
 - A dashed segment marks a transition where only branch lengths changed (RF 0, weighted RF above 0): **Branch lengths only**.
 - Short ticks mark input trees (circles at high zoom).
-- The selected transition turns green, with a dark bracket under the exact selected part, so it reads without the colour. The blue line is the playhead: drag its knob at the top of the strip, or the line itself, to scrub. A click anywhere else selects the transition under it, even right beside the playhead.
+- The selected transition turns dark, with a bracket under the exact selected part, so it reads by its shape as well as its colour. The cyan line is the playhead: drag its knob at the top of the strip, or the line itself, to scrub. A click anywhere else selects the transition under it, even right beside the playhead.
 
 Zoomed in, **Shift + wheel**, a sideways swipe, or a drag on empty strip pans the strip; the wheel zooms about the pointer, and the zoom buttons about the playhead. During playback the view pages to keep the playhead in sight. Numbering is 1-based and per transition. The hover tooltip appears above the player bar, so it never covers the controls. Its header reads "Transition k of P · Tree a → b", followed by "RF x · weighted RF y" and either "n SPR moves · m taxa moved" or "Branch lengths only".
 

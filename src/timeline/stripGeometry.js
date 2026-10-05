@@ -1,5 +1,4 @@
 import { msToX } from './math/coordinateUtils.js';
-import { rgba } from '../services/ui/colorUtils.js';
 
 /**
  * The strip as plain geometry, no deck.gl: input trees as circles or ticks, and one mark per
@@ -8,27 +7,21 @@ import { rgba } from '../services/ui/colorUtils.js';
  * once, in movie time; projectPairStrip turns them into canvas geometry for the visible range.
  */
 
+// Geometry only: the colours are theme tokens, read by TimelineView
 export const TIMELINE_THEME = {
-  connectionSelectionRGB: [5, 150, 105],
-  connectionHoverRGB: [128, 128, 128],
   // The strip reads bottom-up: pips sit under the baseline, RF bars rise from it.
   // Every y is in px from the top of the strip.
   stripBaselineY: 30,
-  stripBaselineRGB: [203, 213, 225],
   stripBarMaxHeight: 24,
   stripBarMinHeight: 2,
   stripBarInset: 0.5,
   stripBarMinWidth: 1,
-  stripMarkRGB: [100, 116, 139],
-  stripMarkHoverRGB: [30, 41, 59],
   stripDashWidth: 2,
   stripDashLength: 4,
   stripDashGap: 3,
   stripSelectionSpanWidth: 2,
   stripSelectionBracketDepth: 4, // px under the baseline, clear of the dots
   stripPipY: 39,
-  stripPipRGB: [51, 65, 85],
-  stripPipAlpha: 220,
   stripPipRadiusBase: 1.5,
   stripPipRadiusPerSqrtTaxon: 0.9,
   stripPipRadiusMax: 4,
@@ -36,18 +29,13 @@ export const TIMELINE_THEME = {
   stripMergedPipRadiusBase: 0.5,
   stripMergedPipGapPx: 2,
   inputTreeStrokeWidth: 3,
-  inputTreeFillRGB: [240, 240, 245],
-  inputTreeStrokeRGB: [60, 60, 80],
   inputTreeRadiusVar: 7,
   inputTreeDenseThresholdPx: 18,
   inputTreeTickLength: 4,
   inputTreeTickWidth: 1,
   activeInputTreeTickWidth: 4,
-  separatorRGB: [0, 0, 0],
   separatorWidthMax: 2,
   separatorWidthMin: 1,
-  separatorAlpha: 56,
-  scrubberCoreRGB: [64, 128, 255],
   // The grab knob fits the headroom above the tallest bar (stripBaselineY - stripBarMaxHeight)
   scrubberKnobWidth: 10,
   scrubberKnobDepth: 6,
@@ -357,8 +345,6 @@ function createInputTreeMarker(segmentIndex, x0, x1, width, height, zoomScale, s
   return {
     segmentIndex,
     position: [snap(clampedX), baselineY(height)],
-    fillColor: rgba(...theme.inputTreeFillRGB),
-    borderColor: rgba(...theme.inputTreeStrokeRGB),
     radius,
     lineWidth: theme.inputTreeStrokeWidth,
   };
@@ -380,8 +366,9 @@ function createInputTreeTick(x0, x1, width, height, snap) {
   };
 }
 
+// Centred on the bars' foot, a 1 px line would paint two half-strength rows: it fills the row below
 function createBaseline(width, height, snap) {
-  const y = baselineY(height);
+  const y = baselineY(height) - 0.5;
 
   return {
     path: [

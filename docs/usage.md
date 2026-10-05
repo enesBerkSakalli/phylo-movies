@@ -92,7 +92,7 @@ Steps:
 Load data -> hover or select a transition on the timeline -> read the tooltip, or click Inspect transition (or double-click the transition) to open the Transition Inspector
 ```
 
-Expected result: the strip shows one bar per transition (height is its normalized RF distance, dots below the baseline are SPR moves sized by taxa moved), and the selected transition turns green. The Inspector opens on demand and shows "Transition k of P", source/target trees, step range, moving taxa count, pivot edge, RF metrics, scale, and MSA window when available. Closing the Inspector tab keeps the selection.
+Expected result: the strip shows one bar per transition (height is its normalized RF distance, dots below the baseline are SPR moves sized by taxa moved), and the selected transition turns dark, with a bracket under it. The Inspector opens on demand and shows "Transition k of P", source/target trees, step range, moving taxa count, pivot edge, RF metrics, scale, and MSA window when available. Closing the Inspector tab keeps the selection.
 
 Common failure: some metrics show unavailable. That means the processed payload did not include that metric for the selected transition.
 
