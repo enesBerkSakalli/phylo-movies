@@ -80,14 +80,18 @@ function CursorStatus({ position, fallback }) {
       }
       contentClassName="border-border/60 bg-popover text-2xs font-mono text-popover-foreground"
     >
-      <span className="inline-flex w-auto max-w-[30vw] shrink-0 items-center cursor-help sm:w-[14rem]">
+      <span className="inline-flex w-auto shrink-0 items-center cursor-help sm:w-[14rem]">
         <span className="inline-flex min-w-0 items-center gap-1 text-xs leading-tight font-semibold tabular-nums">
           <GitBranch className="size-3 shrink-0 text-primary" aria-hidden />
           <span className="min-w-0 truncate text-foreground">
-            {position?.text ?? fallback}
-            {position?.step && (
-              <span className="font-medium text-muted-foreground"> · {position.step}</span>
-            )}
+            {/* A phone gives the position a line to itself, in a form that fits it whole */}
+            <span className="sm:hidden">{position?.short ?? position?.text ?? fallback}</span>
+            <span className="max-sm:hidden">
+              {position?.text ?? fallback}
+              {position?.step && (
+                <span className="font-medium text-muted-foreground"> · {position.step}</span>
+              )}
+            </span>
           </span>
         </span>
       </span>

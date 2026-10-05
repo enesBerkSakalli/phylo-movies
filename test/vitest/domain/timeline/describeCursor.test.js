@@ -32,6 +32,7 @@ describe('describeCursor', () => {
     expect(describeCursor(timeline, { segmentIndex: 1, frameIndex: 2, movieTimeMs: 2500 })).toEqual(
       {
         text: 'Tree 1 → 2',
+        short: '1→2 · 2/2',
         from: 1,
         to: 2,
         step: 'step 2 of 2',
@@ -66,6 +67,7 @@ describe('describeCursor', () => {
     );
 
     expect(description.step).toBe('');
+    expect(description.short).toBe('1→2');
     expect(description.aria).toBe('Transition 1 of 1: tree 1 to tree 2');
   });
 

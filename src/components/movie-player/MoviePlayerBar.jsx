@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
 import { TransportControls } from './TransportControls.jsx';
 import {
@@ -29,12 +29,24 @@ import { openPanel, togglePanel, useIsPanelOpen } from '../dock/dockRuntime.js';
 import { SETTINGS_PANEL_ID } from '../dock/panelRegistry.js';
 import { Button } from '../ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Activity, CircleHelp, Dna, Menu, PanelRightOpen } from 'lucide-react';
+import { Separator } from '../ui/separator';
+import { Activity, CircleHelp, Dna, Ellipsis, Menu, PanelRightOpen } from 'lucide-react';
 import { AppTooltip } from '../ui/app-tooltip';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { cn } from '../../lib/utils';
 
+// Below Tailwind's sm (40rem) row 1 keeps the menu, transport and position, and the rest moves
+// into the More popover. The same width the sm: classes switch at.
+const COMPACT_QUERY = '(max-width: 39.99rem)';
+const watchCompact = (notify) => {
+  const query = window.matchMedia?.(COMPACT_QUERY);
+  query?.addEventListener('change', notify);
+  return () => query?.removeEventListener('change', notify);
+};
+const isCompact = () => Boolean(window.matchMedia?.(COMPACT_QUERY).matches);
+
 export function MoviePlayerBar() {
+  const compact = useSyncExternalStore(watchCompact, isCompact, () => false);
   const setAnimationSpeed = useAppStore(selectSetAnimationSpeed);
   const animationSpeed = useAppStore(selectAnimationSpeed);
   const hasMsa = useAppStore(selectHasMsa);
@@ -118,31 +130,55 @@ export function MoviePlayerBar() {
                 aria-label="Toggle settings"
                 aria-expanded={settingsOpen ? 'true' : 'false'}
                 onClick={handleNavigationToggle}
+                className="max-sm:size-11"
               >
                 <Menu className="size-4" />
               </Button>
             </AppTooltip>
 
-            <div className="rounded-md border border-border/70 bg-background/80 px-1 py-0.5 shadow-sm">
+            <div className="rounded-md border border-border/70 bg-background/80 px-1 py-0.5 shadow-sm max-sm:border-0 max-sm:bg-transparent max-sm:p-0 max-sm:shadow-none">
               <TransportControls />
             </div>
 
+            {compact && (
+              <MoreMenu
+                hasTimeline={hasTimeline}
+                canInspect={canInspect}
+                hasMsa={hasMsa}
+                onOpenMsa={handleOpenMsaViewer}
+                speed={animationSpeed}
+                onSpeedChange={setAnimationSpeed}
+                hasTransitionSegments={hasTransitionSegments}
+                maxRf={pairChanges.maxRf}
+              />
+            )}
+
             {hasTimeline && (
               <div
-                className="flex min-w-0 items-center gap-2"
+                className={cn('flex min-w-0 items-center gap-2', compact && 'basis-full')}
                 role="group"
                 aria-label="Timeline navigation controls"
               >
                 <TimelineStatusStrip />
                 <MotionStageLabel />
-                <InspectTransitionAction canInspect={canInspect} />
-                <MsaPlayerBarAction hasMsa={hasMsa} onOpen={handleOpenMsaViewer} />
+                {!compact && (
+                  <>
+                    <InspectTransitionAction canInspect={canInspect} />
+                    <MsaPlayerBarAction hasMsa={hasMsa} onOpen={handleOpenMsaViewer} />
+                  </>
+                )}
               </div>
             )}
 
-            <div className="ml-auto flex items-center" role="group" aria-label="Playback settings">
-              <PlaybackSpeedControl value={animationSpeed} setValue={setAnimationSpeed} />
-            </div>
+            {!compact && (
+              <div
+                className="ml-auto flex items-center"
+                role="group"
+                aria-label="Playback settings"
+              >
+                <PlaybackSpeedControl value={animationSpeed} setValue={setAnimationSpeed} />
+              </div>
+            )}
           </div>
 
           <div className="flex items-center bg-background">
@@ -161,7 +197,7 @@ export function MoviePlayerBar() {
                 </div>
               )}
             </div>
-            {hasTimeline && (
+            {hasTimeline && !compact && (
               <div className="flex shrink-0 items-center gap-0.5 px-1">
                 <TimelineScrollControls />
                 <TimelineLegend
@@ -228,7 +264,8 @@ function TimelineSegmentTooltipOverlay({ pairChanges }) {
   );
 }
 
-function MsaPlayerBarAction({ hasMsa, onOpen }) {
+// `label` shows the name beside the icon, for the More popover
+function MsaPlayerBarAction({ hasMsa, onOpen, label }) {
   if (!hasMsa) return null;
 
   return (
@@ -236,36 +273,41 @@ function MsaPlayerBarAction({ hasMsa, onOpen }) {
       <Button
         type="button"
         variant="ghost"
-        size="icon-sm"
+        size={label ? 'default' : 'icon-sm'}
         aria-label="Open alignment viewer"
         onClick={onOpen}
-        className="shrink-0 hover:bg-accent"
+        className={cn('shrink-0 hover:bg-accent', label && 'max-sm:h-11 justify-start')}
       >
         <Dna className="size-4" />
+        {label}
       </Button>
     </AppTooltip>
   );
 }
 
 // The inspector opens on demand: selecting a segment only enables this button.
-function InspectTransitionAction({ canInspect }) {
+function InspectTransitionAction({ canInspect, label, onDone }) {
   return (
     <AppTooltip
       content={
         canInspect ? 'Inspect transition' : 'Select a transition on the timeline to inspect it'
       }
     >
-      <span className="inline-flex shrink-0">
+      <span className={cn('inline-flex shrink-0', label && 'w-full')}>
         <Button
           type="button"
           variant="ghost"
-          size="icon-sm"
+          size={label ? 'default' : 'icon-sm'}
           aria-label="Inspect transition"
           disabled={!canInspect}
-          onClick={() => openPanel('inspector')}
-          className="hover:bg-accent"
+          onClick={() => {
+            openPanel('inspector');
+            onDone?.();
+          }}
+          className={cn('hover:bg-accent', label && 'max-sm:h-11 w-full justify-start')}
         >
           <PanelRightOpen className="size-4" />
+          {label}
         </Button>
       </span>
     </AppTooltip>
@@ -299,6 +341,66 @@ function MotionStageLabel() {
   );
 }
 
+// What row 1 leaves out on a phone: speed, zoom, the two actions and the legend.
+function MoreMenu({
+  hasTimeline,
+  canInspect,
+  hasMsa,
+  onOpenMsa,
+  speed,
+  onSpeedChange,
+  hasTransitionSegments,
+  maxRf,
+}) {
+  const [open, setOpen] = useState(false);
+  const close = () => setOpen(false);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label="More playback and timeline options"
+          className="ml-auto size-11"
+        >
+          <Ellipsis className="size-4" aria-hidden />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        side="top"
+        align="end"
+        className="z-[1300] flex w-[min(20rem,calc(100vw-1rem))] flex-col gap-1 p-3"
+      >
+        <PlaybackSpeedControl value={speed} setValue={onSpeedChange} />
+        {hasTimeline && (
+          <>
+            <TimelineScrollControls />
+            <InspectTransitionAction
+              canInspect={canInspect}
+              label="Inspect transition"
+              onDone={close}
+            />
+            <MsaPlayerBarAction
+              hasMsa={hasMsa}
+              label="Alignment viewer"
+              onOpen={() => {
+                onOpenMsa();
+                close();
+              }}
+            />
+            <Separator className="my-1" />
+            <div className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">
+              <LegendItems hasTransitionSegments={hasTransitionSegments} maxRf={maxRf} />
+            </div>
+          </>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 // Swatches mirror what the timeline strip draws; the label alone carries the meaning.
 function TimelineLegend({ hasTransitionSegments, maxRf }) {
   return (
@@ -322,30 +424,38 @@ function TimelineLegend({ hasTransitionSegments, maxRf }) {
         className="z-[1300] flex w-auto flex-col gap-1.5 p-3 text-xs font-medium text-muted-foreground"
         aria-label="Timeline legend"
       >
-        {hasTransitionSegments && (
-          <>
-            <LegendItem swatchClassName="h-2 w-4 rounded-sm bg-slate-500" label="RF change">
-              <span className="font-normal tabular-nums">(max {maxRf.toFixed(2)})</span>
-            </LegendItem>
-            <LegendItem
-              swatchClassName="size-2 rounded-full bg-slate-700"
-              label="SPR move"
-              title="one dot per move (size = taxa moved); merged per transition (size = moves) when zoomed out"
-            />
-            <LegendItem
-              swatchClassName="w-5 border-t-2 border-dashed border-slate-500"
-              label="Branch lengths only"
-            />
-          </>
-        )}
-        <LegendItem swatchClassName="h-1.5 w-px bg-slate-500" label="Input tree" />
-        <LegendItem
-          swatchClassName="h-2 w-5 rounded-t-sm border-b-2 border-slate-800 bg-emerald-600"
-          label="Selected"
-          title="green, with a dark bracket under it"
-        />
+        <LegendItems hasTransitionSegments={hasTransitionSegments} maxRf={maxRf} />
       </PopoverContent>
     </Popover>
+  );
+}
+
+function LegendItems({ hasTransitionSegments, maxRf }) {
+  return (
+    <>
+      {hasTransitionSegments && (
+        <>
+          <LegendItem swatchClassName="h-2 w-4 rounded-sm bg-slate-500" label="RF change">
+            <span className="font-normal tabular-nums">(max {maxRf.toFixed(2)})</span>
+          </LegendItem>
+          <LegendItem
+            swatchClassName="size-2 rounded-full bg-slate-700"
+            label="SPR move"
+            title="one dot per move (size = taxa moved); merged per transition (size = moves) when zoomed out"
+          />
+          <LegendItem
+            swatchClassName="w-5 border-t-2 border-dashed border-slate-500"
+            label="Branch lengths only"
+          />
+        </>
+      )}
+      <LegendItem swatchClassName="h-1.5 w-px bg-slate-500" label="Input tree" />
+      <LegendItem
+        swatchClassName="h-2 w-5 rounded-t-sm border-b-2 border-slate-800 bg-emerald-600"
+        label="Selected"
+        title="green, with a dark bracket under it"
+      />
+    </>
   );
 }
 

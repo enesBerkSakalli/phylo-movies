@@ -6,10 +6,11 @@ const formatMovieTime = (ms) => {
 
 /**
  * Where the playhead is, in words: the one description behind the status strip (`text`, `step`,
- * `tooltip`, `time`) and the slider's aria-valuetext (`aria`). The segment under the cursor
- * decides, not the nearest frame: halfway through a motion that lands on an input tree that frame
- * already is the input tree, but the playhead is still in the transition.
- * @returns {{text: string, from: number, to?: number, step?: string, aria: string,
+ * `tooltip`, `time`; `short` is a transition's text and step for a phone) and the slider's
+ * aria-valuetext (`aria`). The segment under the cursor decides, not the nearest frame: halfway
+ * through a motion that lands on an input tree that frame already is the input tree, but the
+ * playhead is still in the transition.
+ * @returns {{text: string, short?: string, from: number, to?: number, step?: string, aria: string,
  *   tooltip: string, time: string} | null} `from` is the input tree's number, or the transition's
  *   source tree, which then has its target `to`; null when the cursor is on no segment
  */
@@ -36,12 +37,11 @@ export function describeCursor(timeline, cursor) {
   const to = segment.targetInputTreeIndex + 1;
   // Generated frames between the two input trees; a pair that only changes branch lengths has none.
   const steps = segment.targetGlobalIndex - segment.sourceGlobalIndex - 1;
-  const step =
-    steps < 1
-      ? ''
-      : `step ${Math.max(1, Math.min(steps, cursor.frameIndex - segment.sourceGlobalIndex))} of ${steps}`;
+  const done = Math.max(1, Math.min(steps, cursor.frameIndex - segment.sourceGlobalIndex));
+  const step = steps < 1 ? '' : `step ${done} of ${steps}`;
   return {
     text: `Tree ${from} → ${to}`,
+    short: `${from}→${to}${steps < 1 ? '' : ` · ${done}/${steps}`}`,
     from,
     to,
     step,

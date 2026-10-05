@@ -11,6 +11,9 @@ import {
 } from '../../state/phyloStore/store.js';
 import { playbackCommands } from './playbackShortcuts.js';
 
+// 44px touch targets on a phone
+const TRANSPORT_BUTTON_CLASS = 'transport-button max-sm:size-11';
+
 export function TransportControls() {
   const playing = useAppStore(selectPlaying);
   const frameIndex = useAppStore(selectFrameIndex);
@@ -42,7 +45,7 @@ export function TransportControls() {
     >
       <AppTooltip content="Previous input tree (Shift+←)">
         <Button
-          className="transport-button"
+          className={TRANSPORT_BUTTON_CLASS}
           id="backwardInputTreeButton"
           variant="ghost"
           size="icon"
@@ -56,7 +59,7 @@ export function TransportControls() {
 
       <AppTooltip content="Previous generated frame (←)">
         <Button
-          className="transport-button"
+          className={TRANSPORT_BUTTON_CLASS}
           id="backward-button"
           variant="ghost"
           size="icon"
@@ -70,7 +73,7 @@ export function TransportControls() {
 
       <AppTooltip content={`${playbackLabel} (Space)`}>
         <Button
-          className="transport-button"
+          className={TRANSPORT_BUTTON_CLASS}
           id="play-button"
           variant="ghost"
           size="icon"
@@ -85,7 +88,7 @@ export function TransportControls() {
 
       <AppTooltip content="Next generated frame (→)">
         <Button
-          className="transport-button"
+          className={TRANSPORT_BUTTON_CLASS}
           id="forward-button"
           variant="ghost"
           size="icon"
@@ -99,7 +102,7 @@ export function TransportControls() {
 
       <AppTooltip content="Next input tree (Shift+→)">
         <Button
-          className="transport-button"
+          className={TRANSPORT_BUTTON_CLASS}
           id="forwardInputTreeButton"
           variant="ghost"
           size="icon"

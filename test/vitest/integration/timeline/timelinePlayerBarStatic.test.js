@@ -105,6 +105,45 @@ describe('movie timeline player bar semantics', () => {
     expect(playerBarSource).not.toContain('lg:grid');
   });
 
+  it('keeps row 1 to the menu, transport and position below sm, the rest in a More popover', () => {
+    const playerBarSource = readRepoFile('src', 'components', 'movie-player', 'MoviePlayerBar.jsx');
+    const moreMenu = playerBarSource.slice(
+      playerBarSource.indexOf('function MoreMenu'),
+      playerBarSource.indexOf('function TimelineLegend')
+    );
+
+    // Tailwind's sm is 40rem; the layout switches where the sm: classes do
+    expect(playerBarSource).toContain('(max-width: 39.99rem)');
+    expect(playerBarSource).toContain('aria-label="More playback and timeline options"');
+    expect(playerBarSource).toContain('Ellipsis');
+    // Speed, zoom, the two actions and the legend all live in it, once
+    for (const control of [
+      '<PlaybackSpeedControl',
+      '<TimelineScrollControls',
+      '<InspectTransitionAction',
+      '<MsaPlayerBarAction',
+      '<LegendItems',
+    ]) {
+      expect(moreMenu).toContain(control);
+    }
+    // The position gets its own line, the strip its own row
+    expect(playerBarSource).toContain('basis-full');
+  });
+
+  it('gives the visible buttons 44px touch targets below sm and leaves desktop sizes alone', () => {
+    const read = (...segments) => readRepoFile('src', 'components', 'movie-player', ...segments);
+    const sources = [
+      read('MoviePlayerBar.jsx'),
+      read('TransportControls.jsx'),
+      read('TimelineScrollControls', 'TimelineScrollControls.jsx'),
+    ];
+
+    for (const source of sources) expect(source).toContain('max-sm:size-11');
+    // Desktop sizes are the same classes as before
+    expect(read('TransportControls.jsx')).toContain('size="icon"');
+    expect(read('TimelineScrollControls', 'TimelineScrollControls.jsx')).toContain('size-7');
+  });
+
   it('renders timeline status in the movie player instead of the floating HUD', () => {
     const playerBarSource = readRepoFile('src', 'components', 'movie-player', 'MoviePlayerBar.jsx');
     const statusStripPath = join(
@@ -139,9 +178,12 @@ describe('movie timeline player bar semantics', () => {
     // The position text stands alone: no "Cursor" label chip in front of it.
     expect(statusStripSource).not.toContain('Film');
     expect(statusStripSource).not.toContain('label="Cursor"');
+    // On a phone the position has a line to itself, never cut mid-number, in its short form.
     expect(statusStripSource).toContain(
-      'inline-flex w-auto max-w-[30vw] shrink-0 items-center cursor-help sm:w-[14rem]'
+      'inline-flex w-auto shrink-0 items-center cursor-help sm:w-[14rem]'
     );
+    expect(statusStripSource).toContain('position?.short ??');
+    expect(statusStripSource).toContain('sm:hidden');
     expect(statusStripSource).toContain('inline-flex w-[6.5rem] shrink-0');
     expect(statusStripSource).toContain('hidden w-[7rem] shrink-0');
     expect(statusStripSource).toContain('xl:inline-flex');
