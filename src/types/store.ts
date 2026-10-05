@@ -35,7 +35,6 @@ export interface TimelineRuntime {
   segments: Array<{ isInputTreeSegment: boolean; [key: string]: unknown }>;
   steps: unknown[];
   totalDuration: number;
-  segmentDurations: number[];
   cumulativeDurations: number[];
   frameAt: (movieTimeMs: number) => unknown;
   cursorAt: (movieTimeMs: number) => TimelineCursorState | null;

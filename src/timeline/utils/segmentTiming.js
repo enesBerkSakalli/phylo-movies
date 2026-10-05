@@ -20,27 +20,17 @@ export function getSegmentBounds(segmentIndex, timelineData) {
   };
 }
 
-export function timeToSegmentIndex(ms, timelineData, options = {}) {
-  const cumulativeDurations = Array.isArray(timelineData)
-    ? timelineData
-    : timelineData?.cumulativeDurations;
-
-  if (!cumulativeDurations?.length) return -1;
-  const { preferLastAtSameTime = true, includeEnd = false } = options;
-
-  const lastIndex = cumulativeDurations.length - 1;
-  const timelineEnd = cumulativeDurations[lastIndex];
-  if (includeEnd && Number.isFinite(timelineEnd) && ms >= timelineEnd) {
-    return lastIndex;
-  }
+/** The segment playing at `ms` (of several ending together, the last), or -1 from the movie's end on. */
+export function timeToSegmentIndex(ms, timelineData) {
+  const ends = timelineData?.cumulativeDurations;
+  if (!ends?.length) return -1;
 
   let lo = 0;
-  let hi = lastIndex;
+  let hi = ends.length - 1;
   let ans = -1;
-
   while (lo <= hi) {
     const mid = (lo + hi) >> 1;
-    if (ms < cumulativeDurations[mid]) {
+    if (ms < ends[mid]) {
       ans = mid;
       hi = mid - 1;
     } else {
@@ -48,12 +38,6 @@ export function timeToSegmentIndex(ms, timelineData, options = {}) {
     }
   }
 
-  if (preferLastAtSameTime && ans !== -1) {
-    const targetTime = cumulativeDurations[ans];
-    while (ans + 1 < cumulativeDurations.length && cumulativeDurations[ans + 1] === targetTime) {
-      ans++;
-    }
-  }
-
+  while (ans !== -1 && ends[ans + 1] === ends[ans]) ans++;
   return ans;
 }

@@ -7,7 +7,6 @@ const {
 
 describe('segmentTiming utilities', () => {
   const timelineData = {
-    segmentDurations: [500, 1000, 0, 1500],
     cumulativeDurations: [500, 1500, 1500, 3000],
     totalDuration: 3000,
   };
@@ -32,10 +31,5 @@ describe('segmentTiming utilities', () => {
     expect(timeToSegmentIndex(500, timelineData)).to.equal(2);
     expect(timeToSegmentIndex(1500, timelineData)).to.equal(3);
     expect(timeToSegmentIndex(3000, timelineData)).to.equal(-1);
-  });
-
-  it('supports math callers that need first-boundary and timeline-end lookup', () => {
-    expect(timeToSegmentIndex(500, timelineData, { preferLastAtSameTime: false })).to.equal(1);
-    expect(timeToSegmentIndex(3000, timelineData, { includeEnd: true })).to.equal(3);
   });
 });

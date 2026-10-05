@@ -70,7 +70,6 @@ export function buildTimeline(movieData) {
     segments,
     steps,
     totalDuration,
-    segmentDurations,
     cumulativeDurations,
 
     /** What the tree renderer draws at `movieTimeMs`: two tree indices and how far between them. */
@@ -102,7 +101,7 @@ export function buildTimeline(movieData) {
   };
 }
 
-export function buildSteps(segments) {
+function buildSteps(segments) {
   const steps = [];
   let start = 0;
   segments.forEach((segment, index) => {

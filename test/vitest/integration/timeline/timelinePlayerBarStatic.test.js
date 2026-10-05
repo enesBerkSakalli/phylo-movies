@@ -129,7 +129,7 @@ describe('movie timeline player bar semantics', () => {
     expect(playerBarSource).not.toContain('MotionStatusSlot');
     expect(statusStripSource).not.toContain('selectCurrentAnimationStage');
     expect(statusStripSource).not.toContain('AnimationStageStatus');
-    expect(statusStripSource).toContain('buildTimelineStatusSnapshot');
+    expect(statusStripSource).toContain('describeCursor');
     expect(statusStripSource).toContain('Movie timeline status');
     expect(statusStripSource).toContain('flex-nowrap overflow-hidden');
     // The position text stands alone: no "Cursor" label chip in front of it.

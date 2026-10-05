@@ -1,24 +1,25 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Columns, GitBranch } from 'lucide-react';
 import { AppTooltip } from '../ui/app-tooltip';
 import {
   selectActiveTreeListLength,
   selectFrameIndex,
   selectHasMsa,
-  selectInputFrameIndices,
   selectMsaColumnCount,
   selectMsaStepSize,
   selectMsaWindowSize,
   selectPlaying,
+  selectTimeline,
   selectTimelineCursor,
   useAppStore,
 } from '../../state/phyloStore/store.js';
-import { buildTimelineStatusSnapshot } from '../../timeline/view/timelineStatusModel.js';
+import { describeCursor } from '../../timeline/describeCursor.js';
+import { buildMsaWindowStatus } from '../msa/msaViewportStatus.js';
 
 export function TimelineStatusStrip() {
   const frameIndex = useAppStore(selectFrameIndex);
+  const timeline = useAppStore(selectTimeline);
   const timelineCursor = useAppStore(selectTimelineCursor);
-  const inputFrameIndices = useAppStore(selectInputFrameIndices);
   const treeListLength = useAppStore(selectActiveTreeListLength);
   const hasMsa = useAppStore(selectHasMsa);
   const msaWindowSize = useAppStore(selectMsaWindowSize);
@@ -26,29 +27,7 @@ export function TimelineStatusStrip() {
   const msaColumnCount = useAppStore(selectMsaColumnCount);
   const playing = useAppStore(selectPlaying);
 
-  const status = useMemo(
-    () =>
-      buildTimelineStatusSnapshot({
-        frameIndex,
-        inputFrameIndices,
-        timelineCursor,
-        hasMsa,
-        msaStepSize,
-        msaWindowSize,
-        msaColumnCount,
-        treeListLength,
-      }),
-    [
-      frameIndex,
-      hasMsa,
-      inputFrameIndices,
-      msaColumnCount,
-      msaStepSize,
-      msaWindowSize,
-      timelineCursor,
-      treeListLength,
-    ]
-  );
+  const position = describeCursor(timeline, timelineCursor);
 
   return (
     <div
@@ -58,74 +37,61 @@ export function TimelineStatusStrip() {
       // Announcing every frame during playback would flood screen readers.
       aria-live={playing ? 'off' : 'polite'}
     >
-      <CursorStatus status={status} />
+      <CursorStatus
+        position={position}
+        fallback={`Frame ${frameIndex + 1} of ${Math.max(1, treeListLength)}`}
+      />
 
       {hasMsa && (
         <>
           <StatusItem icon={Columns} label="Alignment">
-            <MsaWindowStatus msaWindow={status.msaWindow} />
+            <MsaWindowStatus
+              msaWindow={buildMsaWindowStatus(
+                timelineCursor,
+                msaStepSize,
+                msaWindowSize,
+                msaColumnCount
+              )}
+            />
           </StatusItem>
-          <MsaWindowConfigStatus
-            msaWindowSize={status.msaWindowSize}
-            msaStepSize={status.msaStepSize}
-          />
+          <MsaWindowConfigStatus msaWindowSize={msaWindowSize} msaStepSize={msaStepSize} />
         </>
       )}
     </div>
   );
 }
 
-function CursorStatus({ status }) {
+function CursorStatus({ position, fallback }) {
   return (
     <AppTooltip
       content={
         <div className="flex flex-col gap-1">
           <div>Current position in the tree sequence.</div>
-          <div>{status.segment.tooltip}</div>
-          <div>Movie time:</div>
-          <div className="font-bold text-primary tabular-nums">
-            {Math.round(status.position.movieTimeMs)} ms
-          </div>
+          {position && (
+            <>
+              <div>{position.tooltip}</div>
+              <div>
+                Movie time{' '}
+                <span className="font-bold text-primary tabular-nums">{position.time}</span>
+              </div>
+            </>
+          )}
         </div>
       }
       contentClassName="border-border/60 bg-popover text-2xs font-mono text-popover-foreground"
     >
       <span className="inline-flex w-auto max-w-[30vw] shrink-0 items-center cursor-help sm:w-[14rem]">
-        <CursorPositionValue position={status.position} />
-      </span>
-    </AppTooltip>
-  );
-}
-
-function CursorPositionValue({ position }) {
-  if (position?.kind === 'transition') {
-    return (
-      <span className="inline-flex min-w-0 items-center gap-1 text-xs leading-tight font-semibold tabular-nums">
-        <GitBranch className="size-3 shrink-0 text-primary" aria-hidden />
-        <span className="min-w-0 truncate text-foreground">
-          Tree {position.sourceInputTreeIndex + 1} → {position.targetInputTreeIndex + 1}
-          <span className="font-medium text-muted-foreground">
-            {' '}
-            · step {position.frameNumber} of {position.frameCount}
+        <span className="inline-flex min-w-0 items-center gap-1 text-xs leading-tight font-semibold tabular-nums">
+          <GitBranch className="size-3 shrink-0 text-primary" aria-hidden />
+          <span className="min-w-0 truncate text-foreground">
+            {position?.text ?? fallback}
+            {position?.step && (
+              <span className="font-medium text-muted-foreground"> · {position.step}</span>
+            )}
           </span>
         </span>
       </span>
-    );
-  }
-
-  if (position?.kind === 'input') {
-    return (
-      <span className="inline-flex min-w-0 items-center gap-1 text-xs leading-tight font-semibold tabular-nums">
-        <GitBranch className="size-3 shrink-0 text-primary" aria-hidden />
-        <span className="min-w-0 truncate text-foreground">{position.display}</span>
-      </span>
-    );
-  }
-
-  return (
-    <span className="min-w-0 truncate text-xs text-foreground leading-tight font-semibold tabular-nums">
-      {position.display}
-    </span>
+    </AppTooltip>
   );
 }
 

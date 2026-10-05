@@ -62,7 +62,12 @@ describe('TimelineView', () => {
       // 3 segments of 1000ms
       totalDuration: 3000,
       cumulativeDurations: [1000, 2000, 3000],
-      cursorAt: () => null,
+      // The cursor at a time: its segment, and frame 5 for any transition
+      cursorAt: (ms) => ({
+        segmentIndex: Math.min(2, Math.floor(ms / 1000)),
+        frameIndex: 5,
+        movieTimeMs: ms,
+      }),
     };
     return { timeline, segments };
   }
@@ -146,6 +151,7 @@ describe('TimelineView', () => {
       segments,
       totalDuration: 100000,
       cumulativeDurations: segments.map((_, index) => (index + 1) * 1000),
+      cursorAt: () => null,
     };
     const { view } = mountView(timeline, { container: makeContainer(800, 44) });
 
@@ -244,7 +250,7 @@ describe('TimelineView', () => {
 
   it('describes a transition by its pair and step for assistive timeline feedback', () => {
     const { timeline } = makeTimelineFixture();
-    const { view } = mountView({ ...timeline, cursorAt: () => ({ frameIndex: 5 }) });
+    const { view } = mountView(timeline);
 
     view.setCustomTime(1500);
 
@@ -254,9 +260,12 @@ describe('TimelineView', () => {
     );
   });
 
-  it('describes a transition without a step when the frame is unknown or there are no frames', () => {
+  it('describes a transition without a step when no frames are generated between its trees', () => {
     const { timeline } = makeTimelineFixture();
-    const { view } = mountView(timeline);
+    const { view } = mountView({
+      ...timeline,
+      segments: timeline.segments.map((segment) => ({ ...segment, targetGlobalIndex: 1 })),
+    });
 
     view.setCustomTime(1500);
 
@@ -502,7 +511,12 @@ describe('TimelineView', () => {
         { isInputTreeSegment: false },
         { isInputTreeSegment: true },
       ];
-      const timeline = { segments, totalDuration: 2400, cumulativeDurations: [1000, 1400, 2400] };
+      const timeline = {
+        segments,
+        totalDuration: 2400,
+        cumulativeDurations: [1000, 1400, 2400],
+        cursorAt: () => null,
+      };
       const { view, events } = mountView(timeline);
 
       // 10 ms before the end of the input tree: 490 from its centre, 210 from the transition's
@@ -530,6 +544,7 @@ describe('TimelineView', () => {
         segments,
         totalDuration: 100000,
         cumulativeDurations: segments.map((_, index) => (index + 1) * 1000),
+        cursorAt: () => null,
       };
       const { view, events } = mountView(timeline, { container: makeContainer(800, 120) });
 

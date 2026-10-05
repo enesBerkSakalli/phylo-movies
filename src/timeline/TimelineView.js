@@ -22,6 +22,7 @@ import { msToX, xToMs, calculateZoomScale } from './math/coordinateUtils.js';
 import { getSegmentBounds, timeToSegmentIndex } from './utils/segmentTiming.js';
 import { getDevicePixelRatio, processSegments, projectPairStrip } from './stripGeometry.js';
 import { attachTimelineInput } from './timelineInput.js';
+import { describeCursor } from './describeCursor.js';
 
 /**
  * The timeline strip, drawn with deck.gl: input trees as circles or ticks, each transition pair as
@@ -39,7 +40,6 @@ export class TimelineView {
     this.timeline = timeline;
     this.strip = strip;
     this.callbacks = callbacks;
-    this._inputTreeCount = timeline.segments.filter((segment) => segment.isInputTreeSegment).length;
 
     // DOM & deck.gl
     this.deck = null;
@@ -201,34 +201,13 @@ export class TimelineView {
   }
 
   _updateAccessibilityAttributes() {
-    this.canvas.setAttribute('aria-valuenow', String(Math.round(this.scrubberMs)));
-    this.canvas.setAttribute('aria-valuetext', this._getAccessibilityValueText());
-  }
-
-  _getAccessibilityValueText() {
-    const { segments } = this.timeline;
-    const segmentIndex = timeToSegmentIndex(this.scrubberMs, this.timeline, { includeEnd: true });
-    const segment = segments[segmentIndex];
-
-    if (!segment) {
-      return 'No timeline segment selected';
-    }
-
-    if (segment.isInputTreeSegment) {
-      const treeNumber = Number.isInteger(segment.originalTreeIndex)
-        ? segment.originalTreeIndex + 1
-        : segmentIndex + 1;
-      return `Input tree ${treeNumber} of ${this._inputTreeCount}`;
-    }
-
-    const transition = `Transition ${segment.pairOrdinal + 1} of ${this._inputTreeCount - 1}`;
-    const trees = `tree ${segment.sourceInputTreeIndex + 1} to tree ${segment.targetInputTreeIndex + 1}`;
-    const stepCount = segment.targetGlobalIndex - segment.sourceGlobalIndex - 1;
-    const frameIndex = this.timeline.cursorAt(this.scrubberMs)?.frameIndex;
-    if (stepCount < 1 || !Number.isInteger(frameIndex)) return `${transition}: ${trees}`;
-
-    const step = Math.max(1, Math.min(stepCount, frameIndex - segment.sourceGlobalIndex));
-    return `${transition}: ${trees}, step ${step} of ${stepCount}`;
+    const { timeline, scrubberMs } = this;
+    this.canvas.setAttribute('aria-valuenow', String(Math.round(scrubberMs)));
+    this.canvas.setAttribute(
+      'aria-valuetext',
+      describeCursor(timeline, timeline.cursorAt(scrubberMs))?.aria ??
+        'No timeline segment selected'
+    );
   }
 
   // ==========================================================================

@@ -429,8 +429,6 @@ describe('Timeline construction from normalized backend result', () => {
     expect(segments.length).to.be.greaterThan(0);
     const frameIndices = new Set(data.frames.map((frame) => frame.frame_index));
 
-    const sum = timeline.segmentDurations.reduce((a, b) => a + b, 0);
-    expect(sum).to.equal(timeline.totalDuration);
     expect(timeline.cumulativeDurations.at(-1)).to.equal(timeline.totalDuration);
 
     const firstEvent = data.temporal_events.find((event) => event.event_type === 'split_change');
