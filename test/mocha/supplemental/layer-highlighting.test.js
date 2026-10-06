@@ -104,6 +104,14 @@ const mockUseAppStore = {
   subscribe: () => () => {},
 };
 
+// Basic hex -> RGB for testing
+const mockColorToRgb = (hex) => {
+  if (Array.isArray(hex)) return hex;
+  const trimmed = (hex || '').replace('#', '');
+  const num = parseInt(trimmed || '000000', 16);
+  return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+};
+
 // Patch module loader
 const originalLoad = Module._load;
 Module._load = function (request, _parent, _isMain) {
@@ -114,13 +122,9 @@ Module._load = function (request, _parent, _isMain) {
     return { useAppStore: mockUseAppStore };
   if (request.includes('colorUtils'))
     return {
-      colorToRgb: (hex) => {
-        if (Array.isArray(hex)) return hex;
-        // Basic hex -> RGB for testing
-        const trimmed = (hex || '').replace('#', '');
-        const num = parseInt(trimmed || '000000', 16);
-        return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
-      },
+      colorToRgb: mockColorToRgb,
+      themeColor: (_name, fallback) => mockColorToRgb(fallback), // no theme in node
+      rgbToHex: (rgb) => `#${rgb.map((c) => c.toString(16).padStart(2, '0')).join('')}`,
       getContrastingHighlightColor: () => [255, 255, 255],
     };
   if (request.includes('mathUtils')) return { easeInOutCubic: (t) => t };
@@ -521,7 +525,7 @@ describe('Layer Highlighting Configuration', () => {
       const [, g, b, a] = layer.highlightColor;
 
       // Hover color should be distinct from blue (#2196f3) and emerald (#10b981)
-      // Using cyan-ish color [0, 200, 220, 150]
+      // Using the signal cyan [8, 145, 178, 150]
       expect(g).to.be.greaterThan(100); // Has significant green
       expect(b).to.be.greaterThan(100); // Has significant blue
       expect(a).to.be.greaterThan(100); // Semi-transparent

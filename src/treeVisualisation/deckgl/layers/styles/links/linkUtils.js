@@ -1,9 +1,10 @@
-import { colorToRgb } from '../../../../../services/ui/colorUtils.js';
+import { colorToRgb, themeColor } from '../../../../../services/ui/colorUtils.js';
 import { SYSTEM_TREE_COLORS } from '../../../../../constants/TreeColors.js';
 import { resolveSubtreeHighlightRgb } from '../../../colors/highlightColorResolver.js';
 
-export const EXPANDING_LIFECYCLE_COLOR = [34, 197, 94];
-export const COLLAPSING_LIFECYCLE_COLOR = [245, 158, 11];
+// The theme's --expand and --collapse, read at boot; the literals are those tokens' values.
+export const EXPANDING_LIFECYCLE_COLOR = themeColor('--expand', [34, 197, 94]);
+export const COLLAPSING_LIFECYCLE_COLOR = themeColor('--collapse', [245, 158, 11]);
 
 export const getLifecycleLinkHighlight = (link) => {
   switch (link?.lifecycle) {

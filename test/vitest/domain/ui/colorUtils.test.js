@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
-import { colorToRgb, cssColor } from '../../../../src/services/ui/colorUtils.js';
+import { colorToRgb, cssColor, themeColor } from '../../../../src/services/ui/colorUtils.js';
 
 const expectRgbNear = (actual, expected) =>
   actual.forEach((channel, i) => expect(Math.abs(channel - expected[i])).toBeLessThanOrEqual(1));
@@ -23,6 +23,15 @@ describe('CSS colours for canvases', () => {
       '<div style="--signal: oklch(0.609 0.111 221.7)"><span></span></div>'
     ).window;
     expectRgbNear(cssColor(document.querySelector('span'), '--signal'), [8, 145, 178]);
+  });
+
+  it('reads a theme token where the theme is loaded, else the fallback', () => {
+    const { document } = new JSDOM('<html style="--moved: oklch(0.5 0.1 160)"></html>').window;
+    expect(themeColor('--moved', '#10b981', document.documentElement)).toEqual(
+      colorToRgb('oklch(0.5 0.1 160)')
+    );
+    expect(themeColor('--absent', '#10b981', document.documentElement)).toEqual([16, 185, 129]);
+    expect(themeColor('--moved', [1, 2, 3], undefined)).toEqual([1, 2, 3]); // no document: a worker
   });
 
   it('gives every theme token a dark value, so a dark toggle needs only the class', () => {

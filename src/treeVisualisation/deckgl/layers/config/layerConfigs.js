@@ -5,9 +5,10 @@
 import { PathLayer, ScatterplotLayer, TextLayer } from '@deck.gl/layers';
 import { PathStyleExtension } from '@deck.gl/extensions';
 import { CLIPBOARD_LAYER_ID_PREFIX, LAYER_ID_PREFIX } from '../../constants/layerIds.js';
+import { themeColor } from '../../../../services/ui/colorUtils.js';
 
-// Hover highlight color: semi-transparent cyan for good contrast with blue/red data highlights
-export const HOVER_HIGHLIGHT_COLOR = [0, 200, 220, 150];
+// Hover highlight: the theme's --signal (the pointer's colour), semi-transparent
+export const HOVER_HIGHLIGHT_COLOR = [...themeColor('--signal', [8, 145, 178]), 150];
 
 // Minimum node radius for internal nodes
 export const MIN_NODE_RADIUS = 3;

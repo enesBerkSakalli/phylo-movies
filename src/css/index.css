@@ -122,7 +122,7 @@
   --moved: oklch(0.696 0.149 162.5);
   --change: oklch(0.658 0.169 248.8);
   --expand: oklch(0.723 0.192 149.6);
-  --collapse: oklch(0.769 0.165 70.1);
+  --collapse: oklch(0.7686 0.1647 70.08); /* #f59e0b to the byte: the tree's collapse colour */
   --error: oklch(0.577 0.245 27.3);
   --warning: oklch(0.555 0.163 49);
   --success: oklch(0.527 0.154 150);

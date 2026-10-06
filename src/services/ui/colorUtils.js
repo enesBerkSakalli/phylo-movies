@@ -229,6 +229,19 @@ export function cssColor(element, name) {
 }
 
 /**
+ * A theme colour token at boot, or the fallback where no theme is loaded (tests, workers).
+ * @param {string} name - Custom property, e.g. '--moved'
+ * @param {string|number[]} fallback - The token's value, for where it cannot be read
+ * @param {Element} [root] - Where the token is read
+ * @returns {number[]} RGB array [r, g, b]
+ */
+export function themeColor(name, fallback, root = globalThis.document?.documentElement) {
+  const loaded =
+    root && root.ownerDocument.defaultView.getComputedStyle(root).getPropertyValue(name);
+  return loaded?.trim() ? cssColor(root, name) : colorToRgb(fallback);
+}
+
+/**
  * Pick readable foreground text for a solid RGB/RGBA background.
  * @param {number[]} backgroundRgb - RGB or RGBA background color.
  * @returns {number[]} RGBA text color.
