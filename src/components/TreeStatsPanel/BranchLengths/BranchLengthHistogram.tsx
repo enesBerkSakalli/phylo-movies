@@ -32,7 +32,7 @@ export const BranchLengthHistogram: React.FC<BranchLengthHistogramProps> = ({
     <div className="flex flex-col gap-2 w-full" role="figure" aria-label="Branch length spread">
       {showHeader && (
         <>
-          <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/70">
+          <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">
             <Palette className="size-3" aria-hidden />
             Branch Lengths
           </Label>
@@ -86,7 +86,7 @@ export const BranchLengthHistogram: React.FC<BranchLengthHistogramProps> = ({
 
       {/* Statistics summary */}
       {hasData && (
-        <div className="flex items-center justify-between text-2xs text-muted-foreground/80 font-medium tabular-nums px-1">
+        <div className="flex items-center justify-between text-2xs text-muted-foreground font-medium tabular-nums px-1">
           <div className="flex gap-2">
             <span>
               MIN: <span className="text-foreground/70">{formatScaleValue(stats.min)}</span>

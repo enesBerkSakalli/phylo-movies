@@ -29,7 +29,7 @@ export const CurrentScaleDisplay: React.FC<CurrentScaleDisplayProps> = ({
     <div className="flex flex-col gap-2">
       {showHeader && (
         <>
-          <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/70">
+          <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">
             <Ruler className="size-3" />
             Tree Size
           </Label>
@@ -38,7 +38,7 @@ export const CurrentScaleDisplay: React.FC<CurrentScaleDisplayProps> = ({
       )}
 
       {/* Explanation text */}
-      <p className="text-2xs text-muted-foreground/70 leading-relaxed">
+      <p className="text-2xs text-muted-foreground leading-relaxed">
         Longest distance from the root to any leaf, compared with the largest tree in the sequence.
       </p>
 
@@ -75,7 +75,7 @@ export const CurrentScaleDisplay: React.FC<CurrentScaleDisplayProps> = ({
 
       {/* Depth ratio bar */}
       <div className="flex flex-col gap-2" role="figure" aria-label="Relative tree size">
-        <div className="flex items-center justify-between text-2xs text-muted-foreground/70">
+        <div className="flex items-center justify-between text-2xs text-muted-foreground">
           <span className="font-medium">Relative Size</span>
           <span className="font-mono tabular-nums">{magnitudeFactor.toFixed(2)}</span>
         </div>

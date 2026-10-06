@@ -140,7 +140,7 @@ export const MovedSubtreeRecurrenceTable = ({
                 </TooltipTrigger>
                 <TooltipContent
                   side="left"
-                  className="max-w-64 border-border bg-popover text-2xs font-normal normal-case tracking-normal"
+                  className="max-w-64 border-border text-2xs font-normal normal-case tracking-normal"
                 >
                   SPR move count divided by all SPR move events in this dataset. This is not
                   tree-pair or genome-window coverage.
@@ -156,7 +156,7 @@ export const MovedSubtreeRecurrenceTable = ({
                 </TooltipTrigger>
                 <TooltipContent
                   side="left"
-                  className="max-w-72 border-border bg-popover text-2xs font-normal normal-case tracking-normal"
+                  className="max-w-72 border-border text-2xs font-normal normal-case tracking-normal"
                 >
                   Median Source → Target value on the nearest enclosing parent branch, using{' '}
                   {resolvedBranchValueLabel}.
@@ -200,12 +200,12 @@ export const MovedSubtreeRecurrenceTable = ({
                   isActive ? 'bg-primary/10 hover:bg-primary/15' : 'hover:bg-primary/5',
                 ].join(' ')}
               >
-                <td className="px-4 py-2 font-medium text-muted-foreground/60 tabular-nums text-right">
+                <td className="px-4 py-2 font-medium text-muted-foreground tabular-nums text-right">
                   {item.rank ?? idx + 1}
                 </td>
                 <td className="px-4 py-2 font-semibold" title={subtreeLabel}>
                   <div className="max-w-64 truncate">{compactSubtreeLabel}</div>
-                  <div className="text-2xs font-normal text-muted-foreground/70 mt-1">
+                  <div className="text-2xs font-normal text-muted-foreground mt-1">
                     {item.splitIndices.length} taxa
                   </div>
                 </td>
@@ -220,7 +220,7 @@ export const MovedSubtreeRecurrenceTable = ({
                     leafNamesByIndex={leafNamesByIndex}
                     compact
                   />
-                  <div className="mt-1 text-2xs text-muted-foreground/70">
+                  <div className="mt-1 text-2xs text-muted-foreground">
                     {item.topologyVariantCount && item.topologyVariantCount > 1
                       ? `${item.topologyVariantCount} variants`
                       : 'Source / Target'}
@@ -239,7 +239,7 @@ export const MovedSubtreeRecurrenceTable = ({
                 </td>
                 <td className="px-4 py-2">
                   <div className="font-semibold text-foreground">{jumpPairLabel}</div>
-                  <div className="mt-0.5 text-2xs text-muted-foreground/70">
+                  <div className="mt-0.5 text-2xs text-muted-foreground">
                     first observed move for this subtree
                   </div>
                   <Button
@@ -264,10 +264,7 @@ export const MovedSubtreeRecurrenceTable = ({
                         {sharePercentLabel}
                       </span>
                     </TooltipTrigger>
-                    <TooltipContent
-                      side="left"
-                      className="text-2xs font-mono bg-popover border-border"
-                    >
+                    <TooltipContent side="left" className="text-2xs font-mono border-border">
                       <div className="flex flex-col gap-1">
                         <div>
                           {item.count} of {totalSprMoveCount} SPR move events
@@ -285,7 +282,7 @@ export const MovedSubtreeRecurrenceTable = ({
                     {formatMedian(item.sourceParentBranchValueMedian)} →{' '}
                     {formatMedian(item.destinationParentBranchValueMedian)}
                   </div>
-                  <div className="text-2xs text-muted-foreground/60">
+                  <div className="text-2xs text-muted-foreground">
                     median source → target
                     {` (${resolvedBranchValueLabel})`}
                   </div>

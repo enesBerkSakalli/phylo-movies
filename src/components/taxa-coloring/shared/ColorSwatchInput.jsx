@@ -69,7 +69,7 @@ export function ColorSwatchInput({ label, color, onChange }) {
           </PopoverTrigger>
           <PopoverContent className="z-[1300] w-64 space-y-4 p-4 border-border/60" align="start">
             <div className="space-y-2">
-              <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+              <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Quick Colors
               </p>
               <div className="grid grid-cols-10 gap-2">
@@ -98,7 +98,7 @@ export function ColorSwatchInput({ label, color, onChange }) {
             </div>
 
             <div className="space-y-2 pt-1 border-t border-border/40">
-              <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+              <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Custom Color
               </p>
               <div className="flex items-center gap-2">
@@ -133,7 +133,7 @@ export function ColorSwatchInput({ label, color, onChange }) {
         </Popover>
         <div className="flex flex-col min-w-0 leading-tight">
           <span className="text-[10.5px] font-medium text-foreground truncate">{label}</span>
-          <span className="text-[9px] font-mono text-muted-foreground/70 uppercase tracking-tighter">
+          <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-tighter">
             {displayColor}
           </span>
         </div>

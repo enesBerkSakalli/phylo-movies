@@ -135,7 +135,7 @@ function WindowPlanStatus({ plan, windowSize, stepSize, disabled, onApplySuggest
         ) : null}
       </p>
       {warnings.map((warning) => (
-        <p key={warning} className="flex gap-1.5 text-amber-800 dark:text-amber-300">
+        <p key={warning} className="flex gap-1.5 text-warning">
           <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
           {warning}
         </p>

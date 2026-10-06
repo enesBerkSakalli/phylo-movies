@@ -31,7 +31,7 @@ const SplashApp = () => {
 
   return (
     <div
-      className={`h-screen w-screen flex flex-col items-center justify-center bg-white transition-opacity duration-500 ${isFading ? 'opacity-0' : 'opacity-100'}`}
+      className={`h-screen w-screen flex flex-col items-center justify-center bg-background transition-opacity duration-500 ${isFading ? 'opacity-0' : 'opacity-100'}`}
       style={{ WebkitAppRegion: 'drag' }}
     >
       <div className="relative mb-12">
@@ -41,12 +41,12 @@ const SplashApp = () => {
       <div className="w-64 flex flex-col items-center">
         <Progress
           value={progress}
-          className="h-0.5 bg-slate-200 mb-3 [&>div]:bg-gradient-to-r [&>div]:from-blue-500 [&>div]:to-cyan-400"
+          className="h-0.5 bg-muted mb-3 [--progress-color:var(--signal)]"
         />
-        <p className="text-[10px] text-slate-400 tracking-wider h-4">{status}</p>
+        <p className="text-[10px] text-muted-foreground tracking-wider h-4">{status}</p>
       </div>
 
-      <div className="absolute bottom-6 text-[9px] text-slate-300 tracking-tight">
+      <div className="absolute bottom-6 text-[9px] text-muted-foreground tracking-tight">
         v{appVersion}
       </div>
     </div>

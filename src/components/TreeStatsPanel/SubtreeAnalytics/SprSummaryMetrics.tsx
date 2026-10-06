@@ -19,7 +19,7 @@ const SummaryMetricCard = ({ icon, label, children }: SummaryMetricCardProps) =>
   <Card className="gap-2 rounded-md bg-muted/10 p-3 py-3 shadow-none">
     <CardHeader className="flex flex-row items-center gap-2 p-0">
       {icon}
-      <CardTitle className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/80">
+      <CardTitle className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">
         {label}
       </CardTitle>
     </CardHeader>

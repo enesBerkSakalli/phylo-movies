@@ -48,7 +48,7 @@ export function CSVPreview({ csvValidation, csvGroups }) {
                       {g.count} taxa
                     </span>
                   </div>
-                  <div className="text-2xs text-muted-foreground/70 truncate italic">
+                  <div className="text-2xs text-muted-foreground truncate italic">
                     {g.members.slice(0, 4).join(', ')}
                     {g.members.length > 4 ? '...' : ''}
                   </div>

@@ -429,7 +429,7 @@ export const SprMoveEventTable = ({
         <div className="flex items-center gap-2">
           <div className="relative min-w-0 flex-1">
             <Search
-              className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/70"
+              className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
               aria-hidden
             />
             <Input
@@ -584,7 +584,7 @@ export const SprMoveEventTable = ({
                   <span className="font-bold uppercase tracking-wider">
                     {SPR_MOVE_EVENT_TABLE_COPY.columns.branchValue}
                   </span>
-                  <span className="max-w-full truncate font-normal text-muted-foreground/80">
+                  <span className="max-w-full truncate font-normal text-muted-foreground">
                     {selectedBranchValueLabel}
                   </span>
                 </span>
@@ -722,7 +722,7 @@ function MovementEventRow({
           Jump to move
         </Button>
         {windowRange ? (
-          <div className="mt-1 space-y-0.5 font-sans text-2xs leading-tight text-muted-foreground/70">
+          <div className="mt-1 space-y-0.5 font-sans text-2xs leading-tight text-muted-foreground">
             <div className="truncate">{windowRange.displayLabel}</div>
           </div>
         ) : null}
@@ -731,7 +731,7 @@ function MovementEventRow({
         <div className="flex min-w-0 items-start justify-between gap-2">
           <div className="min-w-0">
             <div className="truncate font-medium">{subtreeLabel}</div>
-            <div className="text-2xs text-muted-foreground/70">
+            <div className="text-2xs text-muted-foreground">
               {event.splitIndices.length} taxa
               {isSelected ? (
                 <Badge variant="outline" className="ml-2 h-4 px-1 text-[10px]">
@@ -784,7 +784,7 @@ function MovementEventRow({
       >
         <div className="flex items-baseline justify-between gap-2 whitespace-nowrap">
           <span
-            className="min-w-0 truncate text-left font-sans text-muted-foreground/70"
+            className="min-w-0 truncate text-left font-sans text-muted-foreground"
             title={movedSplitValueLabel}
           >
             {SPR_MOVE_EVENT_TABLE_COPY.branchValueRows.movedSubtree}
@@ -795,7 +795,7 @@ function MovementEventRow({
           </span>
         </div>
         <div className="flex items-baseline justify-between gap-2 whitespace-nowrap">
-          <span className="min-w-0 truncate text-left font-sans text-muted-foreground/70">
+          <span className="min-w-0 truncate text-left font-sans text-muted-foreground">
             {SPR_MOVE_EVENT_TABLE_COPY.branchValueRows.attachmentSupport}
           </span>{' '}
           <span>
@@ -805,7 +805,7 @@ function MovementEventRow({
         </div>
         <div className="flex items-baseline justify-between gap-2 whitespace-nowrap">
           <span
-            className="min-w-0 truncate text-left font-sans text-muted-foreground/70"
+            className="min-w-0 truncate text-left font-sans text-muted-foreground"
             title={parentBranchValueLabel}
           >
             {SPR_MOVE_EVENT_TABLE_COPY.branchValueRows.parentBranch}
@@ -815,7 +815,7 @@ function MovementEventRow({
             {formatBranchValue(event.destinationParentBranchValue)}
           </span>
         </div>
-        <div className="text-2xs font-sans text-muted-foreground/70">
+        <div className="text-2xs font-sans text-muted-foreground">
           {formatBranchValueClass(event.branchValueClass, branchValueThreshold)}
         </div>
       </td>
@@ -827,7 +827,7 @@ function MovementEventRow({
           <div className="whitespace-nowrap text-2xs">
             <abbr
               title={SPR_MOVE_EVENT_TABLE_COPY.metrics.rfDistance}
-              className="font-sans no-underline text-muted-foreground/70"
+              className="font-sans no-underline text-muted-foreground"
             >
               RF
             </abbr>{' '}
@@ -835,7 +835,7 @@ function MovementEventRow({
             <span className="mx-1 text-muted-foreground/50">/</span>
             <abbr
               title={SPR_MOVE_EVENT_TABLE_COPY.metrics.weightedRf}
-              className="font-sans no-underline text-muted-foreground/70"
+              className="font-sans no-underline text-muted-foreground"
             >
               WRF
             </abbr>{' '}

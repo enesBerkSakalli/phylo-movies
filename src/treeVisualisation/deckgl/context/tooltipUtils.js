@@ -29,11 +29,12 @@ export function createTaxonTooltip(info, taxaGrouping) {
 
   return {
     html: formatTooltipHtml(tooltipLines),
+    className: 'deck-tooltip dark', // the app's tooltip surface (components/ui/tooltip.tsx)
     style: {
       fontSize: '11px',
       padding: '6px 10px',
-      backgroundColor: 'rgba(30, 30, 30, 0.95)',
-      color: '#fff',
+      backgroundColor: 'var(--popover)',
+      color: 'var(--popover-foreground)',
       borderRadius: '6px',
       boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
       maxWidth: '300px',

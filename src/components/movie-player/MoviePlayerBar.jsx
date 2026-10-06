@@ -196,7 +196,7 @@ export function MoviePlayerBar() {
                 </div>
               ) : (
                 <div
-                  className="interpolation-timeline-container flex items-center justify-center text-xs text-muted-foreground/60"
+                  className="interpolation-timeline-container flex items-center justify-center text-xs text-muted-foreground"
                   role="status"
                   aria-live="polite"
                 >
@@ -258,7 +258,7 @@ function TimelineSegmentTooltipOverlay({ pairChanges }) {
         collisionPadding={8}
         sticky="always"
         updatePositionStrategy="always"
-        className="pointer-events-none min-w-[200px] max-w-[min(300px,calc(100vw-1rem))] rounded-lg border bg-card p-2 text-foreground shadow-lg"
+        className="pointer-events-none min-w-[200px] max-w-[min(300px,calc(100vw-1rem))] rounded-lg border p-2 shadow-lg"
       >
         <TimelineSegmentTooltip
           segment={segment}

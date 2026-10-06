@@ -62,7 +62,7 @@ export function ViewModeSection() {
                     {cameraMode === 'orbit' ? 'Switch to 2D Camera' : 'Switch to 3D Camera'}
                   </span>
                 </Button>
-                <div className="flex items-start gap-2 text-2xs leading-relaxed text-muted-foreground/80 italic">
+                <div className="flex items-start gap-2 text-2xs leading-relaxed text-muted-foreground italic">
                   <Info className="mt-1 size-3 shrink-0" />
                   <span>
                     3D camera reveals depth for hyperbolic 3D (Walrus) layouts; radial layouts

@@ -150,7 +150,7 @@ export function CSVUpload({
                 <code className="rounded bg-muted px-1 font-mono font-bold text-primary">.tsv</code>{' '}
                 file here, or use the browse button.
               </p>
-              <p className="text-2xs text-muted-foreground/80">
+              <p className="text-2xs text-muted-foreground">
                 Keyboard: tab to the browse button and press Enter or Space.
               </p>
             </div>
@@ -205,7 +205,7 @@ export function CSVUpload({
         {visibleStatusMessage || 'No CSV file selected.'}
       </p>
 
-      <p className="text-center text-2xs italic text-muted-foreground/60">
+      <p className="text-center text-2xs italic text-muted-foreground">
         Max file size: 5MB • CSV and TSV supported • Privacy: processing happens locally.
       </p>
     </div>

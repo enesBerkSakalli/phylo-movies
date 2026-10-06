@@ -78,7 +78,7 @@ function CursorStatus({ position, fallback }) {
           )}
         </div>
       }
-      contentClassName="border-border/60 bg-popover text-2xs font-mono text-popover-foreground"
+      contentClassName="border-border/60 text-2xs font-mono"
     >
       <span className="inline-flex w-auto shrink-0 items-center cursor-help sm:w-[14rem]">
         <span className="inline-flex min-w-0 items-center gap-1 text-xs leading-tight font-semibold tabular-nums">
@@ -142,10 +142,7 @@ function MsaWindowConfigStatus({ msaWindowSize, msaStepSize }) {
   const compactLabel = `W ${msaWindowSize ?? '-'} / S ${msaStepSize ?? '-'}`;
 
   return (
-    <AppTooltip
-      content={fullLabel}
-      contentClassName="border-border/60 bg-popover text-2xs font-mono text-popover-foreground"
-    >
+    <AppTooltip content={fullLabel} contentClassName="border-border/60 text-2xs font-mono">
       <span className="hidden w-[7rem] shrink-0 items-center xl:inline-flex" aria-label={fullLabel}>
         <span className="truncate text-xs text-foreground leading-tight font-semibold tabular-nums">
           {compactLabel}

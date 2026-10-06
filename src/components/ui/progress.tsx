@@ -24,7 +24,7 @@ function Progress({
         className={cn('h-full w-full flex-1 transition-all', indicatorClassName)}
         style={{
           transform: `translateX(-${100 - (value || 0)}%)`,
-          backgroundColor: 'var(--progress-color, hsl(var(--primary)))',
+          backgroundColor: 'var(--progress-color, var(--primary))',
         }}
       />
     </ProgressPrimitive.Root>

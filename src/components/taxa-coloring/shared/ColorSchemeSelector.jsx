@@ -59,9 +59,7 @@ export function ColorSchemeSelector({
                       <div className="flex-1 truncate text-left text-2xs font-medium leading-none">
                         {id}
                       </div>
-                      {info.colorBlindSafe && (
-                        <Eye className="size-2.5 text-emerald-500 shrink-0" />
-                      )}
+                      {info.colorBlindSafe && <Eye className="size-2.5 text-success shrink-0" />}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="max-w-[300px]">

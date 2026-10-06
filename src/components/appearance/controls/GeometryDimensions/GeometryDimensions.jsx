@@ -158,7 +158,7 @@ export function GeometryDimensions({
             onChange={handleFontSizeChange}
           />
 
-          <div className="text-2xs leading-relaxed text-muted-foreground/80 italic mt-2">
+          <div className="text-2xs leading-relaxed text-muted-foreground italic mt-2">
             Branches and labels adjust with tree size so proportions stay stable.
           </div>
 
@@ -203,7 +203,7 @@ export function GeometryDimensions({
                   </SelectGroup>
                 </SelectContent>
               </Select>
-              <div className="text-2xs leading-relaxed text-muted-foreground/80 italic">
+              <div className="text-2xs leading-relaxed text-muted-foreground italic">
                 {branchAnnotationHelpText}
               </div>
             </div>

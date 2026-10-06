@@ -261,9 +261,9 @@ function MSAWindowOverlapStatus({ status }) {
       </div>
       <MSAWindowOverlapTrack status={status} />
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-2xs">
-        <OverlapLegendItem className="bg-amber-500/45" label="leaving" />
+        <OverlapLegendItem className="bg-collapse/45" label="leaving" />
         <OverlapLegendItem className="bg-primary/35" label="shared" />
-        <OverlapLegendItem className="bg-emerald-500/45" label="entering" />
+        <OverlapLegendItem className="bg-expand/45" label="entering" />
       </div>
     </div>
   );
@@ -272,7 +272,7 @@ function MSAWindowOverlapStatus({ status }) {
     <AppTooltip
       content={tooltipContent}
       side="bottom"
-      contentClassName="border border-border/60 bg-popover p-2 text-2xs text-popover-foreground shadow-lg"
+      contentClassName="border border-border/60 p-2 text-2xs shadow-lg"
     >
       <span
         className="inline-flex shrink-0 items-center rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 font-semibold leading-none text-primary"
@@ -308,20 +308,20 @@ function MSAWindowOverlapTrack({ status }) {
           style={getOverlapTrackStyle(status.source, status)}
         />
         <div
-          className="absolute bottom-1 z-20 h-3 rounded-sm border border-emerald-500/70 bg-emerald-500/15"
+          className="absolute bottom-1 z-20 h-3 rounded-sm border border-primary/70 bg-primary/10"
           style={getOverlapTrackStyle(status.target, status)}
         />
         {status.leavingRanges.map((range) => (
           <div
             key={`leaving-${range.startPosition}-${range.endPosition}`}
-            className="absolute top-1 z-30 h-3 rounded-sm bg-amber-500/45"
+            className="absolute top-1 z-30 h-3 rounded-sm bg-collapse/45"
             style={getOverlapTrackStyle(range, status)}
           />
         ))}
         {status.enteringRanges.map((range) => (
           <div
             key={`entering-${range.startPosition}-${range.endPosition}`}
-            className="absolute bottom-1 z-30 h-3 rounded-sm bg-emerald-500/45"
+            className="absolute bottom-1 z-30 h-3 rounded-sm bg-expand/45"
             style={getOverlapTrackStyle(range, status)}
           />
         ))}
@@ -338,7 +338,7 @@ function MSAWindowOverlapTrack({ status }) {
           </>
         )}
       </div>
-      <span className="self-center text-2xs font-semibold uppercase leading-none text-emerald-700 dark:text-emerald-300">
+      <span className="self-center text-2xs font-semibold uppercase leading-none text-primary">
         Target W{status.targetWindowIndex + 1}
       </span>
     </div>

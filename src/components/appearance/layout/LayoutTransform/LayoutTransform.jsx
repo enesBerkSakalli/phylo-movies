@@ -129,7 +129,7 @@ export function LayoutTransform({
             onChange={handleRotationChange}
           />
 
-          <div className="flex items-start gap-2 text-2xs text-muted-foreground/80 italic">
+          <div className="flex items-start gap-2 text-2xs text-muted-foreground italic">
             <Compass className="size-3 shrink-0 mt-1" />
             <span>Spread controls how open the tree is; rotation turns the whole tree.</span>
           </div>

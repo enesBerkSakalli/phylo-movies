@@ -14,7 +14,7 @@ export function MSAColorLegend({ colorScheme, sequenceType, hasTaxonColors }) {
       <span
         className={
           legend.tone === 'warning'
-            ? 'text-2xs font-medium text-amber-700 dark:text-amber-300'
+            ? 'text-2xs font-medium text-warning'
             : 'truncate text-2xs text-muted-foreground'
         }
         role={legend.tone === 'warning' ? 'status' : undefined}

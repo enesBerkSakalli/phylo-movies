@@ -186,7 +186,7 @@ export function ColoringPanel({ onOpenTaxaColoring, onPreloadTaxaColoring }) {
           {subtreeHighlightsEnabled && (
             <div className="flex flex-col gap-4 mx-2 mb-2 p-2 rounded-md bg-muted/20 border border-border/30">
               <div className="flex flex-col gap-2">
-                <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/80">
+                <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">
                   Highlight Scope
                 </Label>
                 <Select
@@ -206,7 +206,7 @@ export function ColoringPanel({ onOpenTaxaColoring, onPreloadTaxaColoring }) {
               </div>
 
               <div className="flex flex-col gap-2">
-                <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/80">
+                <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">
                   Highlight Style
                 </Label>
                 <Select value={highlightColorMode || 'solid'} onValueChange={setHighlightColorMode}>
@@ -242,7 +242,7 @@ export function ColoringPanel({ onOpenTaxaColoring, onPreloadTaxaColoring }) {
                 <div className="flex items-center justify-between">
                   <Label
                     htmlFor="subtree-opacity-slider"
-                    className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/80"
+                    className="text-2xs font-bold uppercase tracking-wider text-muted-foreground"
                   >
                     Highlight Opacity
                   </Label>

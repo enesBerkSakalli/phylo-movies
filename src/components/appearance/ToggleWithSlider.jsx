@@ -32,7 +32,7 @@ export function ToggleWithSlider({
           <div className="flex items-center justify-between">
             <Label
               htmlFor={`${id}-opacity-slider`}
-              className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/70"
+              className="text-2xs font-bold uppercase tracking-wider text-muted-foreground"
             >
               {sliderLabel}
             </Label>
@@ -49,7 +49,7 @@ export function ToggleWithSlider({
             onValueChange={([strength]) => onSliderChange([1 - strength])}
             className="w-full py-1"
           />
-          <div className="text-2xs text-muted-foreground/80 leading-tight">
+          <div className="text-2xs text-muted-foreground leading-tight">
             Higher values make unfocused branches fainter.
           </div>
         </div>

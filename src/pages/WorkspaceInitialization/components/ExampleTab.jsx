@@ -111,7 +111,7 @@ export function ExampleTab({
                     </>
                   )}
                   {example.runtimeWarning && (
-                    <p className="mt-2 text-2xs font-medium leading-relaxed text-amber-700 dark:text-amber-300">
+                    <p className="mt-2 text-2xs font-medium leading-relaxed text-warning">
                       {example.runtimeWarning}
                     </p>
                   )}
