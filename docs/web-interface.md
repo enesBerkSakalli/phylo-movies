@@ -119,7 +119,7 @@ The player bar has two rows. The top row holds, left to right:
 
 The bottom row holds the timeline strip (see [Reading the timeline](#reading-the-timeline)), the zoom out (−), fit (⛶), and zoom in (+) buttons, and a **(?)** button that opens the timeline legend. On a phone (under 640 px wide) the first row keeps only the menu, the transport buttons, and a **⋯** button, with the position on its own line below, and the strip takes the full width of the second row; speed, zoom, **Inspect transition**, the alignment button, and the legend are in the **⋯** popover.
 
-The position text reads "Tree a → b · step i of N" (or "Input tree n" on an input tree), and its tooltip shows the current movie time. The **Inspect transition** button next to it opens the Transition Inspector for the selected transition. Until a transition is selected it is dimmed but still reachable by keyboard, and its tooltip says why. When MSA data are available, the status area also reports the active alignment window and the configured window/step size.
+The position text reads "Tree a → b · step i of N" (or "Input tree n" on an input tree), and its tooltip shows the current movie time. The **Inspect transition** button next to it opens the Transition Inspector for the selected transition, or with nothing selected for the transition under the playhead. On an input tree with nothing selected it is dimmed but still reachable by keyboard, and its tooltip says why. When MSA data are available, the status area also reports the active alignment window and the configured window/step size.
 
 Transport buttons:
 
@@ -147,16 +147,16 @@ Zoomed in, **Shift + wheel**, a sideways swipe, or a drag on empty strip pans th
 
 Click the strip, or Tab to it, to use the keyboard on it. The focus ring (a cyan outline inside the strip) shows for keyboard focus, not after a click.
 
-| Key                   | Result                                                                                                                                                                    |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Space**             | Plays or pauses.                                                                                                                                                          |
-| **← / →**             | Previous or next generated frame, from the playhead.                                                                                                                      |
-| **Shift + ← / →**     | Previous or next input tree, from the playhead.                                                                                                                           |
-| **PageUp / PageDown** | Selects and jumps to the previous or next segment (an input tree or a transition), from the segment under the playhead.                                                   |
-| **Home / End**        | Selects and jumps to the first or last segment.                                                                                                                           |
-| **Enter**             | Opens the Transition Inspector for the selected transition. With nothing selected, it selects the segment under the playhead first; on an input tree that is all it does. |
-| **+ / −**             | Zooms the strip in or out about the playhead.                                                                                                                             |
-| **0**                 | Fits the whole sequence.                                                                                                                                                  |
+| Key                   | Result                                                                                                                                                                                      |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Space**             | Plays or pauses.                                                                                                                                                                            |
+| **← / →**             | Previous or next generated frame, from the playhead.                                                                                                                                        |
+| **Shift + ← / →**     | Previous or next input tree, from the playhead.                                                                                                                                             |
+| **PageUp / PageDown** | Selects and jumps to the previous or next transition, skipping input trees, from the segment under the playhead.                                                                            |
+| **Home / End**        | Selects and jumps to the first or last segment.                                                                                                                                             |
+| **Enter**             | Opens the Transition Inspector for the selected transition, or with nothing selected for the one under the playhead (selecting it). On an input tree with nothing selected it does nothing. |
+| **+ / −**             | Zooms the strip in or out about the playhead.                                                                                                                                               |
+| **0**                 | Fits the whole sequence.                                                                                                                                                                    |
 
 The playhead and the selection are separate: the arrow keys move the playhead and leave the selection on the transition you chose. Clicking, PageUp / PageDown, Home / End, and Enter change the selection.
 
@@ -164,7 +164,7 @@ The same Space and arrow keys work anywhere except in text fields, sliders (such
 
 ### Transition Inspector
 
-The **Transition Inspector** opens on demand, as a tab in the right column. Selecting a transition on the timeline does not open it. Click **Inspect transition** next to the position text (available when a transition is selected), double-click a transition on the strip, or press **Enter** on the focused strip. Closing the Inspector tab keeps the selection. It reports:
+The **Transition Inspector** opens on demand, as a tab in the right column. Selecting a transition on the timeline does not open it. Click **Inspect transition** next to the position text (available when a transition is selected or playing), double-click a transition on the strip, or press **Enter** on the focused strip. With nothing selected it follows the transition under the playhead and says so; selecting a transition pins it. Closing the Inspector tab keeps the selection. It reports:
 
 - Header "Transition k of P", name "Tree a → Tree b", and the direction
 - Steps "s–e of N" (global frame range and local steps), plus "Event j of m" when a transition has several split events

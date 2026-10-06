@@ -86,6 +86,7 @@ export { selectSetFontSize } from './selectSetFontSize.js';
 export { selectSetHighlightColorMode } from './selectSetHighlightColorMode.js';
 export { selectSetHoveredSegment } from './selectSetHoveredSegment.js';
 export { selectSelectedTimelineSegmentIndex } from './selectSelectedTimelineSegmentIndex.js';
+export { selectInspectedSegmentIndex } from './selectInspectedSegmentIndex.js';
 export { selectSetLabelsVisible } from './selectSetLabelsVisible.js';
 export { selectSetBranchAnnotationLabelKey } from './selectSetBranchAnnotationLabelKey.js';
 export { selectSetLayoutAngleDegrees } from './selectSetLayoutAngleDegrees.js';

@@ -6,6 +6,7 @@ import { formatScaleValue, getScaleValue } from '../domain/tree/scaleUtils';
 import { useAppStore } from '../state/phyloStore/store.js';
 import {
   selectHasMsa,
+  selectInspectedSegmentIndex,
   selectLeafNamesByIndex,
   selectTimeline,
   selectMsaColumnCount,
@@ -25,6 +26,7 @@ import {
 export function TransitionInspectorPanel() {
   const {
     segmentIndex,
+    following,
     timeline,
     leafNamesByIndex,
     pairChanges,
@@ -35,7 +37,8 @@ export function TransitionInspectorPanel() {
     msaColumnCount,
   } = useAppStore(
     useShallow((state) => ({
-      segmentIndex: selectSelectedTimelineSegmentIndex(state),
+      segmentIndex: selectInspectedSegmentIndex(state),
+      following: selectSelectedTimelineSegmentIndex(state) === null,
       timeline: selectTimeline(state),
       leafNamesByIndex: selectLeafNamesByIndex(state),
       pairChanges: selectPairChanges(state),
@@ -85,6 +88,11 @@ export function TransitionInspectorPanel() {
             </Badge>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">{details.positionLabel}</p>
+          {following && (
+            <p className="mt-1 text-2xs text-muted-foreground">
+              Following the playhead · select a transition to keep it
+            </p>
+          )}
         </div>
       </div>
 

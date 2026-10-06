@@ -824,21 +824,42 @@ describe('TimelineView', () => {
         expect(focus.calledWith({ preventScroll: true })).to.equal(true);
       });
 
-      it('steps whole segments with PageUp and PageDown, from the playhead, not the selection', () => {
+      it('steps to the previous and next transition with PageUp and PageDown, from the playhead, not the selection', () => {
         const { view, events } = mountView(fiveSegments());
         view.setSelection(0);
         view.setCustomTime(3500); // the playhead has moved on; the selection stays where it was clicked
 
         expect(press(view, 'PageUp').defaultPrevented).to.equal(true);
-        expect(events.selects.map(({ index }) => index)).to.deep.equal([2]);
-        expect(view.scrubberMs).to.equal(2500);
+        expect(events.selects.map(({ index }) => index)).to.deep.equal([1]);
+        expect(view.scrubberMs).to.equal(1500);
 
         press(view, 'PageDown');
-        press(view, 'PageDown');
-        expect(events.selects.map(({ index }) => index)).to.deep.equal([2, 3, 4]);
+        expect(events.selects.map(({ index }) => index)).to.deep.equal([1, 3]);
 
-        press(view, 'PageDown'); // stops at the last
-        expect(events.selects.at(-1).index).to.equal(4);
+        press(view, 'PageDown'); // stops at the last transition
+        press(view, 'PageUp');
+        press(view, 'PageUp'); // and at the first
+        expect(events.selects.map(({ index }) => index)).to.deep.equal([1, 3, 1]);
+      });
+
+      it('skips input trees with PageUp and PageDown: from one, the next and previous transition', () => {
+        const { view, events } = mountView(fiveSegments());
+        view.setCustomTime(2500); // input tree 2, between the two transitions
+
+        press(view, 'PageDown');
+        expect(events.selects.map(({ index }) => index)).to.deep.equal([3]);
+        expect(view.scrubberMs).to.equal(3500);
+
+        view.setCustomTime(2500);
+        press(view, 'PageUp');
+        expect(events.selects.map(({ index }) => index)).to.deep.equal([3, 1]);
+        expect(view.scrubberMs).to.equal(1500);
+
+        view.setCustomTime(4500); // the last input tree: nothing after it
+        press(view, 'PageDown');
+        view.setCustomTime(500); // the first: nothing before it
+        press(view, 'PageUp');
+        expect(events.selects).to.have.length(2);
       });
 
       it('jumps to the first and last segment with Home and End', () => {
@@ -895,14 +916,15 @@ describe('TimelineView', () => {
         expect(events.inspects).to.deep.equal([1]);
       });
 
-      it('only selects an input tree on Enter: there is nothing to inspect', () => {
+      it('does nothing on Enter on an input tree, selected or not: there is nothing to inspect', () => {
         const { view, events } = mountView(fiveSegments());
         view.setCustomTime(2500);
 
         press(view, 'Enter');
+        view.setSelection(2);
         press(view, 'Enter');
 
-        expect(events.selects.map(({ index }) => index)).to.deep.equal([2]);
+        expect(events.selects).to.have.length(0);
         expect(events.inspects).to.have.length(0);
       });
 

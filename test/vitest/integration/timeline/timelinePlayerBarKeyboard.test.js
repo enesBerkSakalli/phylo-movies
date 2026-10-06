@@ -6,6 +6,12 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+// jsdom has none, and Radix's size hook (tooltips, popovers) needs one
+globalThis.ResizeObserver ??= class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
 
 const openPanel = vi.hoisted(() => vi.fn());
 vi.mock('../../../../src/components/dock/dockRuntime.js', () => ({
@@ -15,6 +21,12 @@ vi.mock('../../../../src/components/dock/dockRuntime.js', () => ({
 }));
 vi.mock('../../../../src/components/dock/panelRegistry.js', () => ({
   SETTINGS_PANEL_ID: 'settings',
+}));
+vi.mock('../../../../src/timeline/timelineController.js', () => ({
+  TimelineController: class {
+    mount() {}
+    unmount() {}
+  },
 }));
 
 const readRepoFile = (...segments) => readFileSync(join(process.cwd(), ...segments), 'utf8');
@@ -62,14 +74,64 @@ describe('Inspect transition action', () => {
 
     expect(button.disabled).toBe(false);
     expect(button.getAttribute('aria-disabled')).toBe('true');
-    button.focus();
+    await act(async () => button.focus());
     expect(document.activeElement).toBe(button);
 
     const reason = document.getElementById(button.getAttribute('aria-describedby'));
-    expect(reason.textContent).toBe('Select a transition on the timeline to inspect it');
+    expect(reason.textContent).toBe('Move to a transition to inspect it');
 
     await act(async () => button.click());
     expect(openPanel).not.toHaveBeenCalled();
+  });
+});
+
+describe('Inspect on the player bar', () => {
+  const segments = [
+    { isInputTreeSegment: true },
+    { isInputTreeSegment: false },
+    { isInputTreeSegment: true },
+  ];
+  let root;
+  afterEach(() => {
+    act(() => root?.unmount());
+    document.body.innerHTML = '';
+  });
+
+  async function inspectButton({ selected = null, playheadSegment }) {
+    const { MoviePlayerBar } =
+      await import('../../../../src/components/movie-player/MoviePlayerBar.jsx');
+    const { TooltipProvider } = await import('../../../../src/components/ui/tooltip');
+    const { useAppStore } = await import('../../../../src/state/phyloStore/store.js');
+    useAppStore.setState({
+      timeline: { segments },
+      selectedTimelineSegmentIndex: selected,
+      timelineCursor: { segmentIndex: playheadSegment, frameIndex: 0, movieTimeMs: 0 },
+      pairChanges: { maxRf: 0, byPairId: new Map() },
+    });
+    const host = document.body.appendChild(document.createElement('div'));
+    root = createRoot(host);
+    await act(async () =>
+      root.render(React.createElement(TooltipProvider, null, React.createElement(MoviePlayerBar)))
+    );
+    return host.querySelector('button[aria-label="Inspect transition"]');
+  }
+
+  it('is on while the playhead is inside a transition, with nothing selected', async () => {
+    const button = await inspectButton({ playheadSegment: 1 });
+
+    expect(button.getAttribute('aria-disabled')).toBe('false');
+  });
+
+  it('is off on an input tree with nothing selected', async () => {
+    const button = await inspectButton({ playheadSegment: 2 });
+
+    expect(button.getAttribute('aria-disabled')).toBe('true');
+  });
+
+  it('stays on the selected transition after the playhead leaves it', async () => {
+    const button = await inspectButton({ selected: 1, playheadSegment: 2 });
+
+    expect(button.getAttribute('aria-disabled')).toBe('false');
   });
 });
 

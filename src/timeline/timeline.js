@@ -129,6 +129,16 @@ export function stepAt(steps, ms) {
 }
 
 /**
+ * The segment Inspect acts on: the selection, else the transition under the playhead. An input
+ * tree has nothing to inspect, so on one, with nothing selected, there is none (null).
+ */
+export function inspectedSegmentIndex(segments, selected, playheadSegment) {
+  return (
+    selected ?? (segments[playheadSegment]?.isInputTreeSegment === false ? playheadSegment : null)
+  );
+}
+
+/**
  * Where a frame sits on the clock, as `{step, ms}` or null when it is never shown.
  * The input-tree hold if the frame has one (it also starts the next transition, but the tree
  * is shown at its hold), else its first appearance, or with `last` its last. A frame reached

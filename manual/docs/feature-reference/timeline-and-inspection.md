@@ -56,16 +56,16 @@ The cyan line is the playhead: drag its knob at the top of the strip, or the lin
 
 Zoomed in, **Shift + wheel**, a sideways swipe, or a drag on empty strip pans the strip; the wheel zooms about the pointer and the buttons about the playhead. During playback the view pages to keep the playhead in sight. Click the strip, or Tab to it, to use the keyboard on it. The focus ring (a cyan outline inside the strip) shows for keyboard focus, not after a click.
 
-| Key                   | Result                                                                                                                                                                    |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Space**             | Plays or pauses.                                                                                                                                                          |
-| **← / →**             | Previous or next generated frame, from the playhead.                                                                                                                      |
-| **Shift + ← / →**     | Previous or next input tree, from the playhead.                                                                                                                           |
-| **PageUp / PageDown** | Selects and jumps to the previous or next segment (an input tree or a transition), from the segment under the playhead.                                                   |
-| **Home / End**        | Selects and jumps to the first or last segment.                                                                                                                           |
-| **Enter**             | Opens the Transition Inspector for the selected transition. With nothing selected, it selects the segment under the playhead first; on an input tree that is all it does. |
-| **+ / −**             | Zooms the strip in or out about the playhead.                                                                                                                             |
-| **0**                 | Fits the whole sequence.                                                                                                                                                  |
+| Key                   | Result                                                                                                                                                                                      |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Space**             | Plays or pauses.                                                                                                                                                                            |
+| **← / →**             | Previous or next generated frame, from the playhead.                                                                                                                                        |
+| **Shift + ← / →**     | Previous or next input tree, from the playhead.                                                                                                                                             |
+| **PageUp / PageDown** | Selects and jumps to the previous or next transition, skipping input trees, from the segment under the playhead.                                                                            |
+| **Home / End**        | Selects and jumps to the first or last segment.                                                                                                                                             |
+| **Enter**             | Opens the Transition Inspector for the selected transition, or with nothing selected for the one under the playhead (selecting it). On an input tree with nothing selected it does nothing. |
+| **+ / −**             | Zooms the strip in or out about the playhead.                                                                                                                                               |
+| **0**                 | Fits the whole sequence.                                                                                                                                                                    |
 
 The playhead and the selection are separate: the arrow keys move the playhead and leave the selection on the transition you chose. Clicking, PageUp / PageDown, Home / End, and Enter change the selection.
 
@@ -75,18 +75,18 @@ RF distance and weighted RF distance per transition appear in the strip (bar hei
 
 ## Hover and Selection
 
-| Action                         | Result                                                                                                                                                                                                         |
-| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Hover a transition             | Shows a compact tooltip above the player bar, so it never covers the controls. Header "Transition k of P · Tree a → b", then "RF x · weighted RF y" and "n SPR moves · m taxa moved" or "Branch lengths only". |
-| Select a transition            | Turns it dark and updates the status strip. It does not open the Inspector.                                                                                                                                    |
-| **Inspect transition** button  | Opens the Transition Inspector. Sits next to the status strip; until a transition is selected it is dimmed but still reachable by keyboard, and its tooltip says why.                                          |
-| Double-click a transition      | Selects it and opens the Transition Inspector.                                                                                                                                                                 |
-| **Enter** on the focused strip | Opens the Transition Inspector for the selected transition, selecting the one under the playhead first if none is.                                                                                             |
-| Close the Inspector tab        | Keeps the selected transition.                                                                                                                                                                                 |
+| Action                         | Result                                                                                                                                                                                                                                                                    |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hover a transition             | Shows a compact tooltip above the player bar, so it never covers the controls. Header "Transition k of P · Tree a → b", then "RF x · weighted RF y" and "n SPR moves · m taxa moved" or "Branch lengths only".                                                            |
+| Select a transition            | Turns it dark and updates the status strip. It does not open the Inspector.                                                                                                                                                                                               |
+| **Inspect transition** button  | Opens the Transition Inspector for the selected transition, or with nothing selected for the transition under the playhead. Sits next to the status strip; on an input tree with nothing selected it is dimmed but still reachable by keyboard, and its tooltip says why. |
+| Double-click a transition      | Selects it and opens the Transition Inspector.                                                                                                                                                                                                                            |
+| **Enter** on the focused strip | Opens the Transition Inspector for the selected transition, selecting the one under the playhead first if none is. Does nothing on an input tree.                                                                                                                         |
+| Close the Inspector tab        | Keeps the selected transition.                                                                                                                                                                                                                                            |
 
 ## Transition Inspector
 
-The Transition Inspector reports:
+The Transition Inspector shows the selected transition; with nothing selected it follows the transition under the playhead and says so, and selecting a transition pins it. It reports:
 
 | Section       | Fields                                                                                                                                          |
 | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |

@@ -1,4 +1,4 @@
-import { stepAt } from './timeline.js';
+import { inspectedSegmentIndex, stepAt } from './timeline.js';
 import { TIMELINE_THEME } from './stripGeometry.js';
 
 const HOVER_CLEAR_DELAY_MS = 150;
@@ -148,20 +148,28 @@ export function attachTimelineInput(view, { onScrub, onSelect, onHover, onInspec
     onSelect(index, view.scrubberMs);
   };
 
-  // The selection, or else the segment under the playhead (selected first); an input tree has
-  // nothing to inspect.
+  // The nearest transition before (-1) or after (1) the playhead; an input tree is no stop.
+  const goToTransition = (direction) => {
+    for (let i = playheadSegment() + direction; segments[i]; i += direction) {
+      if (!segments[i].isInputTreeSegment) return goToSegment(i);
+    }
+  };
+
+  // The same segment as the Inspect button; picking the one under the playhead pins it.
   const inspect = () => {
-    const index = view.selected ?? playheadSegment();
+    const index = inspectedSegmentIndex(segments, view.selected, playheadSegment());
+    if (index === null || segments[index].isInputTreeSegment) return;
+
     if (index !== view.selected) onSelect(index, view.scrubberMs);
-    if (!segments[index].isInputTreeSegment) onInspect(index);
+    onInspect(index);
   };
 
   const onKeyDown = (event) => {
     if (event.altKey || event.ctrlKey || event.metaKey) return;
 
     const action = {
-      PageUp: () => goToSegment(playheadSegment() - 1),
-      PageDown: () => goToSegment(playheadSegment() + 1),
+      PageUp: () => goToTransition(-1),
+      PageDown: () => goToTransition(1),
       Home: () => goToSegment(0),
       End: () => goToSegment(segments.length - 1),
       Enter: inspect,

@@ -22,6 +22,7 @@ import {
   selectCurrentAnimationStage,
   selectHoveredSegment,
   selectHasMsa,
+  selectInspectedSegmentIndex,
   selectLeafNamesByIndex,
   selectOpenMsaViewer,
   selectPairChanges,
@@ -59,7 +60,7 @@ export function MoviePlayerBar() {
   const hasMsa = useAppStore(selectHasMsa);
   const openMsaViewer = useAppStore(selectOpenMsaViewer);
   const pairChanges = useAppStore(selectPairChanges);
-  const selectedSegmentIndex = useAppStore(selectSelectedTimelineSegmentIndex);
+  const inspectedSegmentIndex = useAppStore(selectInspectedSegmentIndex);
 
   const timeline = useAppStore(selectTimeline);
   const timelineHostRef = useRef(null);
@@ -71,7 +72,7 @@ export function MoviePlayerBar() {
     timeline?.segments.some((segment) => !segment.isInputTreeSegment)
   );
 
-  const canInspect = timeline?.segments[selectedSegmentIndex]?.isInputTreeSegment === false;
+  const canInspect = timeline?.segments[inspectedSegmentIndex]?.isInputTreeSegment === false;
 
   useEffect(() => {
     const container = timelineHostRef.current;
@@ -292,11 +293,12 @@ function MsaPlayerBarAction({ hasMsa, onOpen, label }) {
   );
 }
 
-// The inspector opens on demand: selecting a segment only makes this button available. Unavailable it
-// is aria-disabled, not disabled, so the keyboard still reaches it and hears why.
+// The inspector opens on demand: a selected transition, or the one playing, makes this button
+// available. Unavailable it is aria-disabled, not disabled, so the keyboard still reaches it and
+// hears why.
 export function InspectTransitionAction({ canInspect, label, onDone }) {
   const reasonId = useId();
-  const reason = 'Select a transition on the timeline to inspect it';
+  const reason = 'Move to a transition to inspect it';
 
   return (
     <AppTooltip content={canInspect ? 'Inspect transition' : reason}>
