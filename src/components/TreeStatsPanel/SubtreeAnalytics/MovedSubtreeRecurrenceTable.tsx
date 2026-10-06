@@ -196,7 +196,7 @@ export const MovedSubtreeRecurrenceTable = ({
                   }
                 }}
                 className={[
-                  'cursor-pointer transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+                  'cursor-pointer transition-colors focus-visible:-outline-offset-2',
                   isActive ? 'bg-primary/10 hover:bg-primary/15' : 'hover:bg-primary/5',
                 ].join(' ')}
               >

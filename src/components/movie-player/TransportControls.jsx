@@ -73,9 +73,8 @@ export function TransportControls() {
 
       <AppTooltip content={`${playbackLabel} (Space)`}>
         <Button
-          className={TRANSPORT_BUTTON_CLASS}
+          className={`${TRANSPORT_BUTTON_CLASS} bg-signal text-signal-foreground hover:bg-signal hover:brightness-90`}
           id="play-button"
-          variant="ghost"
           size="icon"
           aria-label={playbackLabel}
           disabled={!canTogglePlayback}

@@ -82,7 +82,7 @@ function CursorStatus({ position, fallback }) {
     >
       <span className="inline-flex w-auto shrink-0 items-center cursor-help sm:w-[14rem]">
         <span className="inline-flex min-w-0 items-center gap-1 text-xs leading-tight font-semibold tabular-nums">
-          <GitBranch className="size-3 shrink-0 text-primary" aria-hidden />
+          <GitBranch className="size-3 shrink-0 text-signal" aria-hidden />
           <span className="min-w-0 truncate text-foreground">
             {/* A phone gives the position a line to itself, in a form that fits it whole */}
             <span className="sm:hidden">{position?.short ?? position?.text ?? fallback}</span>

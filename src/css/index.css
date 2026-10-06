@@ -147,7 +147,7 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(0.32 0.02 260);
   --input: oklch(0.32 0.02 260);
-  --ring: oklch(0.58 0.1 218);
+  --ring: oklch(0.72 0.12 218);
   --sidebar: oklch(0.21 0.016 262);
   --sidebar-foreground: oklch(0.968 0.007 248);
   --sidebar-primary: oklch(0.93 0.012 255);
@@ -155,9 +155,10 @@
   --sidebar-accent: oklch(0.26 0.018 260);
   --sidebar-accent-foreground: oklch(0.968 0.007 248);
   --sidebar-border: oklch(0.32 0.02 260);
-  --sidebar-ring: oklch(0.58 0.1 218);
+  --sidebar-ring: oklch(0.72 0.12 218);
 
-  --signal: oklch(0.58 0.1 218);
+  /* Lighter than the light signal: 1.66:1 on the bars, 8:1 on the page */
+  --signal: oklch(0.72 0.12 218);
   --signal-foreground: oklch(0.17 0.012 262);
   --hover-mark: oklch(0.78 0.03 257);
   --data-mark: oklch(0.6 0.04 257);
@@ -176,7 +177,12 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring;
+  }
+  /* Focus is one cyan ring: solid, 2 px, clear of the control */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
   html {
     font-size: 14px;

@@ -45,6 +45,13 @@
   --dv-active-sash-color: var(--ring);
 }
 
+/* The tab's focus ring is the app's, inset so the tab strip cannot clip it */
+.dockview-theme-phylo .dv-tab:focus-visible::after,
+.dockview-theme-phylo .dv-tab:has(:focus-visible)::after {
+  outline: 2px solid var(--ring) !important;
+  outline-offset: -2px;
+}
+
 .app-dock {
   flex: 1 1 auto;
   min-width: 0;

@@ -15,10 +15,10 @@
   pointer-events: auto;
 }
 
-/* Inside the strip, where the overflow:hidden ancestors cannot clip it, and dark enough to read
-   (--ring is 2.6:1 on white). The pointer's own focus never shows it. */
+/* The app's focus ring, inside the strip where the overflow:hidden ancestors cannot clip it
+   (--ring is 3.68:1 on white). The pointer's own focus never shows it. */
 .timeline-visual-layer [role='slider']:focus-visible {
-  outline: 2px solid var(--foreground);
+  outline: 2px solid var(--ring);
   outline-offset: -2px;
 }
 
