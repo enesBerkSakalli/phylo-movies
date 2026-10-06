@@ -231,7 +231,7 @@ describe('phylo store dataset normalization', () => {
   it('uses stable empty selector defaults before dataset initialization', () => {
     const state = useAppStore.getState();
 
-    expect(state.branchTransformation).toBe('normalized-sqrt');
+    expect(state.branchTransformation).toBe('none');
     expect(phyloStoreModule.selectInputFrameIndices(state)).toBe(
       phyloStoreModule.selectInputFrameIndices(state)
     );

@@ -5,7 +5,7 @@ import {
   normalizeLayoutProjectionMode,
 } from '../../../../treeVisualisation/layout/hyperbolicProjection/index.js';
 
-export const DEFAULT_BRANCH_TRANSFORMATION = 'normalized-sqrt';
+export const DEFAULT_BRANCH_TRANSFORMATION = 'none';
 
 function invalidateTreeLayout(get) {
   const state = get();

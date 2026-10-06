@@ -17,6 +17,19 @@ import {
 import { SidebarMenuSub, SidebarMenuSubItem } from '../../ui/sidebar';
 import { GitGraph } from 'lucide-react';
 
+const READABLE_NOTE =
+  'Readable scale applies one transform to every tree, so lengths are no longer proportional; it is not an absolute evolutionary scale.';
+const ANIMATION_NOTE =
+  'Animation scale normalizes each tree for stable motion; it is not an absolute evolutionary scale.';
+// The other modes (Original, topology only, experimental) are named by the option itself.
+const BRANCH_LENGTH_NOTES = {
+  sqrt: READABLE_NOTE,
+  log: READABLE_NOTE,
+  'normalized-sqrt': ANIMATION_NOTE,
+  normalized: ANIMATION_NOTE,
+  'normalized-log': ANIMATION_NOTE,
+};
+
 export function TreeStructure() {
   const branchTransformation = useAppStore(selectBranchTransformation);
   const linkGeometryMode = useAppStore(selectLinkGeometryMode);
@@ -68,10 +81,11 @@ export function TreeStructure() {
               </SelectGroup>
             </SelectContent>
           </Select>
-          <p className="text-[11px] leading-snug text-muted-foreground">
-            Animation scale normalizes each tree for stable motion; it is not an absolute
-            evolutionary scale.
-          </p>
+          {BRANCH_LENGTH_NOTES[branchTransformation] && (
+            <p className="text-[11px] leading-snug text-muted-foreground">
+              {BRANCH_LENGTH_NOTES[branchTransformation]}
+            </p>
+          )}
 
           <div className="flex items-center gap-2 text-muted-foreground">
             <GitGraph className="size-3.5" />

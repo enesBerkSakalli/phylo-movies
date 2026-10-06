@@ -16,7 +16,7 @@ describe('tree scaling diagnostics', () => {
     expect(report.global.maxGlobalScale).toBeGreaterThan(0);
     expect(report.global.originalMaxGlobalScale).toBeGreaterThan(0);
     expect(report.global.activeMaxGlobalScale).toBeGreaterThan(0);
-    expect(report.dataset.branchTransformation).toBe('normalized-sqrt');
+    expect(report.dataset.branchTransformation).toBe('none');
     expect(report.trees).toHaveLength(2);
     expect(report.trees[0].branchGeometry.originalRootToTipMax).toBeGreaterThan(0);
     expect(report.trees[0].branchGeometry.activeRootToTipMax).toBeGreaterThan(0);
@@ -40,6 +40,7 @@ describe('tree scaling diagnostics', () => {
     };
 
     const report = createTreeScalingDiagnostics(movieData, {
+      branchTransformation: 'normalized-sqrt',
       treeIndices: [0, 1],
       width: 1000,
       height: 800,

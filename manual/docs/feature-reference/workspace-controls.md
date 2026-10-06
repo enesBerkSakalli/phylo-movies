@@ -62,7 +62,7 @@ The **Settings** tab contains these groups:
 | **Experimental: doubled input lengths**       | Doubles input branch lengths.                                         |
 | **Experimental: squared input lengths**       | Squares input branch lengths for experimental inspection.             |
 
-Original scale preserves proportional input branch lengths. Readable scale applies one global transform. Animation scale is useful for visual continuity, but it is not absolute evolutionary scale.
+A dataset opens on **Original**. Original scale preserves proportional input branch lengths. Readable scale applies one global transform. Animation scale is useful for visual continuity, but it is not absolute evolutionary scale.
 
 ## Link Geometry
 

@@ -91,6 +91,7 @@ async function renderConnectors(movieData, [left, right, overrides = {}]) {
   const tracking = [...useAppStore.getState().subtreeHighlightTracking];
   if (drivers) tracking[left] = drivers;
   useAppStore.setState({
+    branchTransformation: 'normalized-sqrt', // the scale these fixtures were recorded on, not the app default
     viewsConnected: true,
     frameIndex: left,
     subtreeHighlightTracking: tracking,
