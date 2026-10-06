@@ -54,7 +54,7 @@ The cyan line is the playhead: drag its knob at the top of the strip, or the lin
 | **Playback Speed**                   | Adjusts animation speed from slow review to faster playback.                                      |
 | **Zoom out / Fit / Zoom in** (− ⛶ +) | Zoom the timeline strip, or fit the whole sequence to the available width.                        |
 
-Zoomed in, **Shift + wheel**, a sideways swipe, or a drag on empty strip pans the strip; the wheel zooms about the pointer and the buttons about the playhead. During playback the view pages to keep the playhead in sight. Click the strip, or Tab to it, to use the keyboard on it. The focus ring (a cyan outline inside the strip) shows for keyboard focus, not after a click.
+Zoomed in, **Shift + wheel**, a sideways swipe, or a drag on empty strip pans the strip; the wheel zooms about the pointer and the buttons about the playhead. During playback the view pages to keep the playhead in sight. Click the strip, or Tab to it, to use the keyboard on it. The focus ring (an ink outline inside the strip, so cyan stays the playhead's) shows for keyboard focus, not after a click.
 
 | Key                   | Result                                                                                                                                                                                      |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

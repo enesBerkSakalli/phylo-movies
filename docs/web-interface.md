@@ -145,7 +145,7 @@ Zoomed in, **Shift + wheel**, a sideways swipe, or a drag on empty strip pans th
 
 #### Timeline keyboard
 
-Click the strip, or Tab to it, to use the keyboard on it. The focus ring (a cyan outline inside the strip) shows for keyboard focus, not after a click.
+Click the strip, or Tab to it, to use the keyboard on it. The focus ring (an ink outline inside the strip, so cyan stays the playhead's) shows for keyboard focus, not after a click.
 
 | Key                   | Result                                                                                                                                                                                      |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

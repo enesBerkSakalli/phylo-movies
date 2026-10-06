@@ -139,8 +139,8 @@ describe('timeline strip focus ring', () => {
   const css = readRepoFile('src', 'css', 'movie-timeline', 'container.css');
   const ring = css.match(/\[role='slider'\]:focus-visible\s*{([^}]*)}/)[1];
 
-  it("is the app's --ring, the signal at 3.68:1 on white", () => {
-    expect(ring).toMatch(/outline:\s*2px solid var\(--ring\)/);
+  it('is the ink (--foreground), so the cyan --ring stays for the playhead and the controls', () => {
+    expect(ring).toMatch(/outline:\s*2px solid var\(--foreground\)/);
   });
 
   it('is drawn inside the strip, where no overflow:hidden ancestor can clip it', () => {
