@@ -41,10 +41,15 @@ export function TreeStructure() {
         <div className="flex flex-col gap-3 px-2 py-2">
           <div className="flex items-center gap-2 text-muted-foreground">
             <GitGraph className="size-3.5" />
-            <span className="text-[11px] font-medium uppercase tracking-wider">Branch Lengths</span>
+            <label
+              htmlFor="branch-lengths"
+              className="text-[11px] font-medium uppercase tracking-wider"
+            >
+              Branch Lengths
+            </label>
           </div>
           <Select value={branchTransformation || 'none'} onValueChange={handleBranchOptionChange}>
-            <SelectTrigger className="h-8 w-full min-w-0 text-xs">
+            <SelectTrigger id="branch-lengths" className="h-8 w-full min-w-0 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -70,13 +75,18 @@ export function TreeStructure() {
 
           <div className="flex items-center gap-2 text-muted-foreground">
             <GitGraph className="size-3.5" />
-            <span className="text-[11px] font-medium uppercase tracking-wider">Link Geometry</span>
+            <label
+              htmlFor="link-geometry"
+              className="text-[11px] font-medium uppercase tracking-wider"
+            >
+              Link Geometry
+            </label>
           </div>
           <Select
             value={linkGeometryMode || 'radial-elbow'}
             onValueChange={handleLinkGeometryChange}
           >
-            <SelectTrigger className="h-8 w-full min-w-0 text-xs">
+            <SelectTrigger id="link-geometry" className="h-8 w-full min-w-0 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

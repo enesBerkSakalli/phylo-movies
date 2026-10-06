@@ -72,6 +72,8 @@ export function ColoringPanel({ onOpenTaxaColoring, onPreloadTaxaColoring }) {
   const setHighlightColorMode = useAppStore(selectSetHighlightColorMode);
   const setManuallyMarkedNodes = useAppStore(selectSetManuallyMarkedNodes);
 
+  const highlightOpacityText = `${Math.round((subtreeHighlightOpacity ?? 0.5) * 100)}%`;
+
   const onToggleMonophyletic = useCallback(
     (v) => {
       setMonophyleticColoring(!!v);
@@ -135,7 +137,9 @@ export function ColoringPanel({ onOpenTaxaColoring, onPreloadTaxaColoring }) {
         <div className="flex items-center justify-between px-2 py-2 w-full">
           <div className="flex items-center gap-2 overflow-hidden">
             <Settings2 className="size-4 text-muted-foreground shrink-0" />
-            <span className="text-xs text-foreground/70 truncate">Monophyletic Branch Colors</span>
+            <label htmlFor="monophyletic-coloring" className="text-xs text-foreground/70 truncate">
+              Monophyletic Branch Colors
+            </label>
           </div>
           <Switch
             id="monophyletic-coloring"
@@ -148,12 +152,15 @@ export function ColoringPanel({ onOpenTaxaColoring, onPreloadTaxaColoring }) {
         <div className="flex items-center justify-between px-2 py-2 w-full">
           <div className="flex items-center gap-2 overflow-hidden">
             <RefreshCw className="size-4 text-primary/80 shrink-0" />
-            <span className="text-xs text-foreground/70 truncate">Changed edges</span>
+            <label htmlFor="pivot-edges-toggle" className="text-xs text-foreground/70 truncate">
+              Changed edges
+            </label>
           </div>
           <div className="flex items-center gap-2">
             <div className="size-5 rounded-md border border-border/60 overflow-hidden shrink-0 group-hover:border-primary/40 transition-colors">
               <Input
                 type="color"
+                aria-label="Changed edges color"
                 value={pivotEdgeColor || SYSTEM_TREE_COLORS.pivotEdgeColor}
                 className="size-10 -m-2 p-0 border-none bg-transparent cursor-pointer"
                 onChange={(e) => {
@@ -174,7 +181,12 @@ export function ColoringPanel({ onOpenTaxaColoring, onPreloadTaxaColoring }) {
           <div className="flex items-center justify-between px-2 py-2 w-full">
             <div className="flex items-center gap-2 overflow-hidden">
               <Highlighter className="size-4 text-primary/80 shrink-0" />
-              <span className="text-xs text-foreground/70 truncate">Subtree Highlighting</span>
+              <label
+                htmlFor="enable-subtree-highlights"
+                className="text-xs text-foreground/70 truncate"
+              >
+                Subtree Highlighting
+              </label>
             </div>
             <Switch
               id="enable-subtree-highlights"
@@ -186,14 +198,20 @@ export function ColoringPanel({ onOpenTaxaColoring, onPreloadTaxaColoring }) {
           {subtreeHighlightsEnabled && (
             <div className="flex flex-col gap-4 mx-2 mb-2 p-2 rounded-md bg-muted/20 border border-border/30">
               <div className="flex flex-col gap-2">
-                <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">
+                <Label
+                  htmlFor="highlight-scope"
+                  className="text-2xs font-bold uppercase tracking-wider text-muted-foreground"
+                >
                   Highlight Scope
                 </Label>
                 <Select
                   value={subtreeHighlightScope || 'current'}
                   onValueChange={setSubtreeHighlightScope}
                 >
-                  <SelectTrigger className="w-full h-8 text-xs bg-background/50 border-border/40">
+                  <SelectTrigger
+                    id="highlight-scope"
+                    className="w-full h-8 text-xs bg-background/50 border-border/40"
+                  >
                     <SelectValue placeholder="Select mode" />
                   </SelectTrigger>
                   <SelectContent>
@@ -206,11 +224,17 @@ export function ColoringPanel({ onOpenTaxaColoring, onPreloadTaxaColoring }) {
               </div>
 
               <div className="flex flex-col gap-2">
-                <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">
+                <Label
+                  htmlFor="highlight-style"
+                  className="text-2xs font-bold uppercase tracking-wider text-muted-foreground"
+                >
                   Highlight Style
                 </Label>
                 <Select value={highlightColorMode || 'solid'} onValueChange={setHighlightColorMode}>
-                  <SelectTrigger className="w-full h-8 text-xs bg-background/50 border-border/40">
+                  <SelectTrigger
+                    id="highlight-style"
+                    className="w-full h-8 text-xs bg-background/50 border-border/40"
+                  >
                     <SelectValue placeholder="Select color mode" />
                   </SelectTrigger>
                   <SelectContent>
@@ -227,6 +251,7 @@ export function ColoringPanel({ onOpenTaxaColoring, onPreloadTaxaColoring }) {
                     <div className="size-5 rounded-md border border-border/60 overflow-hidden shrink-0">
                       <Input
                         type="color"
+                        aria-label="Highlight Solid Color"
                         value={subtreeHighlightColor || SYSTEM_TREE_COLORS.subtreeHighlightColor}
                         className="size-10 -m-2 p-0 border-none bg-transparent cursor-pointer"
                         onChange={(e) => {
@@ -247,11 +272,13 @@ export function ColoringPanel({ onOpenTaxaColoring, onPreloadTaxaColoring }) {
                     Highlight Opacity
                   </Label>
                   <span className="text-xs font-medium tabular-nums text-muted-foreground">
-                    {Math.round((subtreeHighlightOpacity ?? 0.5) * 100)}%
+                    {highlightOpacityText}
                   </span>
                 </div>
                 <Slider
                   id="subtree-opacity-slider"
+                  aria-label="Highlight Opacity"
+                  aria-valuetext={highlightOpacityText}
                   min={0}
                   max={1}
                   step={0.05}

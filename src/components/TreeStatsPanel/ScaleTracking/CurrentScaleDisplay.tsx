@@ -57,7 +57,7 @@ export const CurrentScaleDisplay: React.FC<CurrentScaleDisplayProps> = ({
             Current tree size
           </TooltipContent>
         </Tooltip>
-        <span className="text-2xs text-muted-foreground/50">/</span>
+        <span className="text-2xs text-muted-foreground">/</span>
         <Tooltip>
           <TooltipTrigger asChild>
             <Badge

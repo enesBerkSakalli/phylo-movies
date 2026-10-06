@@ -93,7 +93,6 @@ export function LayoutTransform({
               id="hyperbolic-projection-strength"
               label="Focus Strength"
               title="Control hyperbolic radial compression"
-              ariaLabel="Hyperbolic focus strength control"
               valueDisplay={`${strengthPercent}%`}
               value={Number(hyperbolicProjectionStrength || 0)}
               min={0}
@@ -107,7 +106,6 @@ export function LayoutTransform({
             id="layout-angle"
             label="Tree Spread"
             title="Set how much of the circle the radial tree uses"
-            ariaLabel="Tree spread control"
             valueDisplay={`${layoutAngleDegrees || 360}°`}
             value={Number(layoutAngleDegrees || 360)}
             min={90}
@@ -120,7 +118,6 @@ export function LayoutTransform({
             id="layout-rotation"
             label="Rotation"
             title="Rotate the tree"
-            ariaLabel="Tree rotation control"
             valueDisplay={`${layoutRotationDegrees || 0}°`}
             value={Number(layoutRotationDegrees || 0)}
             min={0}

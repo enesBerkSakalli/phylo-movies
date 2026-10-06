@@ -115,6 +115,9 @@ function GroupConnectorsSection({
   onLinkOpacityChange,
   onConnectorStrokeWidthChange,
 }) {
+  const opacityText = `${Math.round((linkConnectionOpacity ?? 0.6) * 100)}%`;
+  const widthText = `${connectorStrokeWidth ?? 1}px`;
+
   return (
     <Collapsible asChild className="group/collapsible">
       <SidebarMenuItem>
@@ -138,11 +141,13 @@ function GroupConnectorsSection({
                       Connector Opacity
                     </Label>
                     <span className="text-xs font-medium tabular-nums text-muted-foreground">
-                      {Math.round((linkConnectionOpacity ?? 0.6) * 100)}%
+                      {opacityText}
                     </span>
                   </div>
                   <Slider
                     id="connector-opacity-slider"
+                    aria-label="Connector Opacity"
+                    aria-valuetext={opacityText}
                     min={0}
                     max={1}
                     step={0.05}
@@ -159,11 +164,13 @@ function GroupConnectorsSection({
                       Connector Width
                     </Label>
                     <span className="text-xs font-medium tabular-nums text-muted-foreground">
-                      {connectorStrokeWidth ?? 1}px
+                      {widthText}
                     </span>
                   </div>
                   <Slider
                     id="connector-stroke-width-slider"
+                    aria-label="Connector Width"
+                    aria-valuetext={widthText}
                     min={0.5}
                     max={10}
                     step={0.5}

@@ -123,7 +123,6 @@ export function GeometryDimensions({
             id="node-size"
             label="Node Size"
             title="Adjust node size"
-            ariaLabel="Node size control"
             valueDisplay={clampValue(nodeSize, 1).toFixed(2)}
             value={clampValue(nodeSize, 1)}
             min={MIN_NODE_SIZE}
@@ -136,7 +135,6 @@ export function GeometryDimensions({
             id="stroke-width"
             label="Branch Width"
             title="Adjust branch line width"
-            ariaLabel="Branch width control"
             valueDisplay={clampValue(strokeWidth, 1).toFixed(1)}
             value={clampValue(strokeWidth, 1)}
             min={1}
@@ -149,7 +147,6 @@ export function GeometryDimensions({
             id="font-size"
             label="Label Size"
             title="Adjust label text size"
-            ariaLabel="Label size control"
             valueDisplay={`${clampValue(fontSizeNumber, 1.8).toFixed(1)}×`}
             value={clampValue(fontSizeNumber, 1.8)}
             min={0.5}

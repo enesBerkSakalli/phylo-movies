@@ -24,6 +24,7 @@ export const ToggleWithLabel = React.forwardRef<HTMLLabelElement, ToggleWithLabe
       disabled,
       switchPosition = 'right',
       className,
+      'aria-describedby': describedBy,
       ...props
     },
     ref
@@ -51,7 +52,13 @@ export const ToggleWithLabel = React.forwardRef<HTMLLabelElement, ToggleWithLabe
         {...props}
       >
         {switchPosition === 'left' && (
-          <Switch id={id} checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} />
+          <Switch
+            id={id}
+            checked={checked}
+            onCheckedChange={onCheckedChange}
+            disabled={disabled}
+            aria-describedby={describedBy}
+          />
         )}
 
         <div className="flex flex-1 flex-col gap-0.5">
@@ -62,7 +69,13 @@ export const ToggleWithLabel = React.forwardRef<HTMLLabelElement, ToggleWithLabe
         </div>
 
         {switchPosition === 'right' && (
-          <Switch id={id} checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} />
+          <Switch
+            id={id}
+            checked={checked}
+            onCheckedChange={onCheckedChange}
+            disabled={disabled}
+            aria-describedby={describedBy}
+          />
         )}
       </Label>
     );

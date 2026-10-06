@@ -10,6 +10,7 @@ function Slider({
   min = 0,
   max = 100,
   'aria-label': ariaLabel,
+  'aria-valuetext': ariaValueText,
   ...props
 }: React.ComponentProps<typeof SliderPrimitive.Root>) {
   const _values = React.useMemo(
@@ -33,7 +34,7 @@ function Slider({
       <SliderPrimitive.Track
         data-slot="slider-track"
         className={cn(
-          'bg-muted relative grow overflow-hidden rounded-full data-[orientation=horizontal]:h-1.5 data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1.5'
+          'bg-input relative grow overflow-hidden rounded-full data-[orientation=horizontal]:h-1.5 data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1.5'
         )}
       >
         <SliderPrimitive.Range
@@ -48,6 +49,7 @@ function Slider({
           data-slot="slider-thumb"
           key={index}
           aria-label={ariaLabel}
+          aria-valuetext={ariaValueText}
           className="border-primary bg-background ring-signal/50 block size-4 shrink-0 rounded-full border shadow-sm transition-[color,box-shadow] hover:ring-4 disabled:pointer-events-none disabled:opacity-50"
         />
       ))}

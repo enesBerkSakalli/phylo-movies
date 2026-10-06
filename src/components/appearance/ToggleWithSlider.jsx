@@ -16,6 +16,7 @@ export function ToggleWithSlider({
   // sliderValue is the opacity of unfocused branches; the control shows how
   // strongly they are dimmed, so moving right always means fainter.
   const dimStrength = 1 - sliderValue;
+  const dimStrengthText = `${Math.round(dimStrength * 100)}%`;
 
   return (
     <div className="flex flex-col gap-3">
@@ -37,11 +38,13 @@ export function ToggleWithSlider({
               {sliderLabel}
             </Label>
             <span className="text-xs font-medium tabular-nums text-muted-foreground">
-              {Math.round(dimStrength * 100)}%
+              {dimStrengthText}
             </span>
           </div>
           <Slider
             id={`${id}-opacity-slider`}
+            aria-label={sliderLabel}
+            aria-valuetext={dimStrengthText}
             min={0}
             max={1}
             step={0.05}

@@ -1,6 +1,7 @@
 // Focus is one cyan ring everywhere (2 px solid --ring, offset) except the timeline strip, where
-// cyan is the playhead and the ring is ink; Play is the one filled signal button, and the dark
-// signal parts from the strip's bars as well as from the background.
+// cyan is the playhead and the ring is ink; Play is the one filled signal button, the dark signal
+// parts from the strip's bars as well as from the background, and the edge of a control (switch
+// off, slider track, select, input) reads at 3:1 (WCAG 1.4.11).
 import { describe, expect, it } from 'vitest';
 import { readdirSync, readFileSync } from 'node:fs';
 import { colorToRgb } from '../../../../src/services/ui/colorUtils.js';
@@ -78,5 +79,29 @@ describe('dark signal', () => {
 
   it('leaves the light signal as it is', () => {
     expect(tokens(':root')['--signal']).toBe('oklch(0.609 0.111 221.7)');
+  });
+});
+
+describe('control boundaries', () => {
+  it.each([':root', '.dark'])(
+    'are --input, 3:1 on the sidebar and on a muted surface (%s)',
+    (theme) => {
+      const t = tokens(theme);
+
+      expect(contrast(t['--input'], t['--sidebar'])).toBeGreaterThanOrEqual(3);
+      expect(contrast(t['--input'], t['--muted'])).toBeGreaterThanOrEqual(3);
+    }
+  );
+
+  it('draw the unchecked switch and the unfilled slider track, opaque', () => {
+    expect(read('src/components/ui/switch.tsx')).toMatch(/data-\[state=unchecked\]:bg-input /);
+    expect(read('src/components/ui/switch.tsx')).not.toMatch(/bg-input\/\d+/);
+    expect(read('src/components/ui/slider.tsx')).toMatch(/'bg-input relative grow/);
+  });
+
+  it('draw the outline button, like the select and the input', () => {
+    expect(read('src/components/ui/button.tsx')).toMatch(
+      /outline:\s*'border border-input bg-background/
+    );
   });
 });

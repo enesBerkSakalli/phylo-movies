@@ -9,19 +9,7 @@ import { cn } from '../../lib/utils';
  */
 export const LabeledSlider = React.forwardRef(
   (
-    {
-      id,
-      label,
-      value,
-      min = 0,
-      max = 100,
-      step = 1,
-      onChange,
-      valueDisplay,
-      title,
-      ariaLabel,
-      className,
-    },
+    { id, label, value, min = 0, max = 100, step = 1, onChange, valueDisplay, title, className },
     ref
   ) => {
     return (
@@ -47,7 +35,8 @@ export const LabeledSlider = React.forwardRef(
           step={step}
           value={[value]}
           onValueChange={onChange}
-          aria-label={ariaLabel || label}
+          aria-label={label}
+          aria-valuetext={valueDisplay}
           className="w-full py-1"
         />
       </div>

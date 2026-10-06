@@ -370,7 +370,7 @@ const SidebarSeparator = React.forwardRef<
       ref={ref}
       data-slot="sidebar-separator"
       data-sidebar="separator"
-      className={cn('bg-sidebar-border mx-2 w-auto', className)}
+      className={cn('bg-sidebar-border mx-2 data-[orientation=horizontal]:w-auto', className)}
       {...props}
     />
   );
@@ -395,16 +395,24 @@ const SidebarContent = React.forwardRef<HTMLDivElement, React.ComponentProps<'di
 );
 SidebarContent.displayName = 'SidebarContent';
 
+// A group is named by its label: the group hands the label its id.
+const GroupLabelId = React.createContext<string | undefined>(undefined);
+
 const SidebarGroup = React.forwardRef<HTMLDivElement, React.ComponentProps<'div'>>(
   ({ className, ...props }, ref) => {
+    const labelId = React.useId();
     return (
-      <div
-        ref={ref}
-        data-slot="sidebar-group"
-        data-sidebar="group"
-        className={cn('relative flex w-full min-w-0 flex-col p-1.5', className)}
-        {...props}
-      />
+      <GroupLabelId.Provider value={labelId}>
+        <div
+          ref={ref}
+          role="group"
+          aria-labelledby={labelId}
+          data-slot="sidebar-group"
+          data-sidebar="group"
+          className={cn('relative flex w-full min-w-0 flex-col p-1.5', className)}
+          {...props}
+        />
+      </GroupLabelId.Provider>
     );
   }
 );
@@ -415,10 +423,12 @@ const SidebarGroupLabel = React.forwardRef<
   React.ComponentProps<'div'> & { asChild?: boolean }
 >(({ className, asChild = false, ...props }, ref) => {
   const Comp = asChild ? Slot : 'div';
+  const id = React.useContext(GroupLabelId);
 
   return (
     <Comp
       ref={ref}
+      id={id}
       data-slot="sidebar-group-label"
       data-sidebar="group-label"
       className={cn(

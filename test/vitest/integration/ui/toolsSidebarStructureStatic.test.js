@@ -234,7 +234,7 @@ describe('tools sidebar structure', () => {
   it('contains tree-layout selects within the sidebar submenu', () => {
     const treeStructureSource = source('src/components/appearance/layout/TreeStructure.jsx');
     const containedSelectTriggers = treeStructureSource.match(
-      /<SelectTrigger className="h-8 w-full min-w-0 text-xs">/g
+      /<SelectTrigger id="[\w-]+" className="h-8 w-full min-w-0 text-xs">/g
     );
 
     expect(containedSelectTriggers).toHaveLength(2);

@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import {
   selectHasMsa,
   selectOpenMsaViewer,
@@ -23,6 +24,7 @@ export function MsaSidebarSection() {
   const syncMSAEnabled = useAppStore(selectSyncMsaEnabled);
   const setSyncMSAEnabled = useAppStore(selectSetSyncMsaEnabled);
   const openMsaViewer = useAppStore(selectOpenMsaViewer);
+  const reasonId = useId();
 
   const handleOpenViewer = async () => {
     if (!hasMsa) return;
@@ -56,7 +58,8 @@ export function MsaSidebarSection() {
             <SidebarMenuSubItem>
               <Button
                 onClick={handleOpenViewer}
-                disabled={!hasMsa}
+                aria-disabled={!hasMsa}
+                aria-describedby={hasMsa ? undefined : reasonId}
                 variant="outline"
                 className="w-full justify-start h-8 text-xs font-normal"
               >
@@ -73,6 +76,7 @@ export function MsaSidebarSection() {
                   checked={!!syncMSAEnabled && !!hasMsa}
                   onCheckedChange={(checked) => setSyncMSAEnabled(!!checked)}
                   disabled={!hasMsa}
+                  aria-describedby={hasMsa ? undefined : reasonId}
                   className="w-full gap-2 justify-between"
                   switchPosition="right"
                 />
@@ -81,9 +85,9 @@ export function MsaSidebarSection() {
 
             {!hasMsa && (
               <SidebarMenuSubItem className="px-2 py-2">
-                <div className="flex items-start gap-2 text-2xs text-muted-foreground italic leading-tight">
+                <div className="flex items-start gap-2 text-2xs text-muted-foreground italic leading-relaxed">
                   <Info className="size-3 shrink-0 mt-1" />
-                  <span>
+                  <span id={reasonId}>
                     This dataset does not include an alignment. Load an alignment demo or upload an
                     alignment file.
                   </span>
