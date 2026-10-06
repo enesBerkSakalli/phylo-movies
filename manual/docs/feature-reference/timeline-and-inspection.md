@@ -44,7 +44,7 @@ The strip draws one gray bar per transition, between each pair of consecutive in
 | **Input tree**          | Short tick for each original input tree (a circle at high zoom).                                                                                                    |
 | **Selected**            | The selected transition turns dark, with a bracket under the exact selected part, so it reads by its shape as well as its colour.                                   |
 
-The cyan line is the playhead: drag its knob at the top of the strip, or the line itself, to scrub. A click anywhere else selects the transition under it, even right beside the playhead. Numbering is 1-based and per transition throughout: the status strip reads "Tree a → b · step i of N" (or "Input tree n"), and the tooltip and Inspector use "Transition k of P".
+The cyan line is the playhead: drag its knob at the top of the strip, or the line itself, to scrub. A click anywhere else selects the transition under it, even right beside the playhead (a press on the playhead that does not move counts as a click); clicking the selected transition again clears the selection. Numbering is 1-based and per transition throughout: the status strip reads "Tree a → b · step i of N" (or "Input tree n"), and the tooltip and Inspector use "Transition k of P".
 
 ## Playback and Timeline View
 
@@ -64,10 +64,11 @@ Zoomed in, **Shift + wheel**, a sideways swipe, or a drag on empty strip pans th
 | **PageUp / PageDown** | Selects and jumps to the previous or next transition, skipping input trees, from the segment under the playhead.                                                                            |
 | **Home / End**        | Selects and jumps to the first or last segment.                                                                                                                                             |
 | **Enter**             | Opens the Transition Inspector for the selected transition, or with nothing selected for the one under the playhead (selecting it). On an input tree with nothing selected it does nothing. |
+| **Esc**               | Clears the selection, so the Inspector follows the playhead again. With nothing selected it does nothing, and the key goes to whatever else is open.                                        |
 | **+ / −**             | Zooms the strip in or out about the playhead.                                                                                                                                               |
 | **0**                 | Fits the whole sequence.                                                                                                                                                                    |
 
-The playhead and the selection are separate: the arrow keys move the playhead and leave the selection on the transition you chose. Clicking, PageUp / PageDown, Home / End, and Enter change the selection.
+The playhead and the selection are separate: the arrow keys move the playhead and leave the selection on the transition you chose. Clicking, PageUp / PageDown, Home / End, and Enter change the selection; Esc, or clicking the selected transition again, clears it.
 
 ## Finding Candidate Regions
 
@@ -78,7 +79,7 @@ RF distance and weighted RF distance per transition appear in the strip (bar hei
 | Action                         | Result                                                                                                                                                                                                                                                                    |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Hover a transition             | Shows a compact tooltip above the player bar, so it never covers the controls. Header "Transition k of P · Tree a → b", then "RF x · weighted RF y" and "n SPR moves · m taxa moved" or "Branch lengths only".                                                            |
-| Select a transition            | Turns it dark and updates the status strip. It does not open the Inspector.                                                                                                                                                                                               |
+| Select a transition            | Turns it dark, updates the status strip, and keeps the Inspector on it; it does not open the Inspector. Clicking it again, or **Esc** on the focused strip, clears the selection.                                                                                         |
 | **Inspect transition** button  | Opens the Transition Inspector for the selected transition, or with nothing selected for the transition under the playhead. Sits next to the status strip; on an input tree with nothing selected it is dimmed but still reachable by keyboard, and its tooltip says why. |
 | Double-click a transition      | Selects it and opens the Transition Inspector.                                                                                                                                                                                                                            |
 | **Enter** on the focused strip | Opens the Transition Inspector for the selected transition, selecting the one under the playhead first if none is. Does nothing on an input tree.                                                                                                                         |
@@ -86,7 +87,7 @@ RF distance and weighted RF distance per transition appear in the strip (bar hei
 
 ## Transition Inspector
 
-The Transition Inspector shows the selected transition; with nothing selected it follows the transition under the playhead and says so, and selecting a transition pins it. It reports:
+The Transition Inspector shows the selected transition; with nothing selected it follows the transition under the playhead and says so, and selecting a transition pins it until you press **Esc** or click it again. It reports:
 
 | Section       | Fields                                                                                                                                          |
 | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |

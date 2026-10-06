@@ -139,7 +139,7 @@ The timeline strip draws one gray bar per transition, that is, between each pair
 - Below the baseline, one dot marks each SPR move. Dot size is the number of taxa moved. Where a transition is too narrow for its moves, they merge into one dot whose size is the move count; zoom in to see each move.
 - A dashed segment marks a transition where only branch lengths changed (RF 0, weighted RF above 0): **Branch lengths only**.
 - Short ticks mark input trees (circles at high zoom).
-- The selected transition turns dark, with a bracket under the exact selected part, so it reads by its shape as well as its colour. The cyan line is the playhead: drag its knob at the top of the strip, or the line itself, to scrub. A click anywhere else selects the transition under it, even right beside the playhead.
+- The selected transition turns dark, with a bracket under the exact selected part, so it reads by its shape as well as its colour. The cyan line is the playhead: drag its knob at the top of the strip, or the line itself, to scrub. A click anywhere else selects the transition under it, even right beside the playhead (a press on the playhead that does not move counts as a click); clicking the selected transition again clears the selection.
 
 Zoomed in, **Shift + wheel**, a sideways swipe, or a drag on empty strip pans the strip; the wheel zooms about the pointer, and the zoom buttons about the playhead. During playback the view pages to keep the playhead in sight. Numbering is 1-based and per transition. The hover tooltip appears above the player bar, so it never covers the controls. Its header reads "Transition k of P · Tree a → b", followed by "RF x · weighted RF y" and either "n SPR moves · m taxa moved" or "Branch lengths only".
 
@@ -155,16 +155,17 @@ Click the strip, or Tab to it, to use the keyboard on it. The focus ring (an ink
 | **PageUp / PageDown** | Selects and jumps to the previous or next transition, skipping input trees, from the segment under the playhead.                                                                            |
 | **Home / End**        | Selects and jumps to the first or last segment.                                                                                                                                             |
 | **Enter**             | Opens the Transition Inspector for the selected transition, or with nothing selected for the one under the playhead (selecting it). On an input tree with nothing selected it does nothing. |
+| **Esc**               | Clears the selection, so the Inspector follows the playhead again. With nothing selected it does nothing, and the key goes to whatever else is open.                                        |
 | **+ / −**             | Zooms the strip in or out about the playhead.                                                                                                                                               |
 | **0**                 | Fits the whole sequence.                                                                                                                                                                    |
 
-The playhead and the selection are separate: the arrow keys move the playhead and leave the selection on the transition you chose. Clicking, PageUp / PageDown, Home / End, and Enter change the selection.
+The playhead and the selection are separate: the arrow keys move the playhead and leave the selection on the transition you chose. Clicking, PageUp / PageDown, Home / End, and Enter change the selection; Esc, or clicking the selected transition again, clears it.
 
 The same Space and arrow keys work anywhere except in text fields, sliders (such as Playback Speed), and menus. With the tree canvas focused, Space still plays and pauses, but the arrow keys pan the tree.
 
 ### Transition Inspector
 
-The **Transition Inspector** opens on demand, as a tab in the right column. Selecting a transition on the timeline does not open it. Click **Inspect transition** next to the position text (available when a transition is selected or playing), double-click a transition on the strip, or press **Enter** on the focused strip. With nothing selected it follows the transition under the playhead and says so; selecting a transition pins it. Closing the Inspector tab keeps the selection. It reports:
+The **Transition Inspector** opens on demand, as a tab in the right column. Selecting a transition on the timeline does not open it. Click **Inspect transition** next to the position text (available when a transition is selected or playing), double-click a transition on the strip, or press **Enter** on the focused strip. With nothing selected it follows the transition under the playhead and says so; selecting a transition pins it until you press **Esc** or click it again. Closing the Inspector tab keeps the selection. It reports:
 
 - Header "Transition k of P", name "Tree a → Tree b", and the direction
 - Steps "s–e of N" (global frame range and local steps), plus "Event j of m" when a transition has several split events

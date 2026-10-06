@@ -88,11 +88,11 @@ export function TransitionInspectorPanel() {
             </Badge>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">{details.positionLabel}</p>
-          {following && (
-            <p className="mt-1 text-2xs text-muted-foreground">
-              Following the playhead · select a transition to keep it
-            </p>
-          )}
+          <p className="mt-1 text-2xs text-muted-foreground">
+            {following
+              ? 'Following the playhead · select a transition to keep it'
+              : 'Pinned · Esc or click it again to follow the playhead'}
+          </p>
         </div>
       </div>
 

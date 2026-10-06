@@ -17,27 +17,28 @@ const ZOOM_OUT = 1.2;
  * Turns pointer and keyboard events on the strip into callbacks. It holds no selection: it asks
  * the view where things are and reports what the user meant. Pointer events, so a finger drags
  * the handle as a mouse does; only the mouse hovers. A drag on empty strip pans a zoomed view.
- * Keys: PageUp/PageDown, Home/End, Enter and + - 0 are the strip's own; Space, the arrows and
- * Shift+arrows go to the app-wide playback shortcuts (playbackShortcuts), which act from the
- * playhead and which the strip leaves alone.
+ * Keys: PageUp/PageDown, Home/End, Enter, Escape and + - 0 are the strip's own; Space, the
+ * arrows and Shift+arrows go to the app-wide playback shortcuts (playbackShortcuts), which act
+ * from the playhead and which the strip leaves alone.
  *
  * @param {TimelineView} view
  * @param {Object} callbacks
  * @param {(ms: number, phase: 'start'|'move'|'end') => void} callbacks.onScrub - handle drag
  * @param {(segmentIndex: number, ms: number) => void} callbacks.onSelect - click or key
+ * @param {() => void} callbacks.onDeselect - Escape, or a click on the selected segment
  * @param {(segmentIndex: number|null) => void} callbacks.onHover - pointer over a segment; null
  *   150 ms after it left, so the tooltip survives a pass over the gap between two segments
  * @param {(segmentIndex: number) => void} callbacks.onInspect - double-click on a transition
  * @returns {() => void} detach
  */
-export function attachTimelineInput(view, { onScrub, onSelect, onHover, onInspect }) {
+export function attachTimelineInput(view, { onScrub, onSelect, onDeselect, onHover, onInspect }) {
   const { timeline } = view;
   const { segments, steps } = timeline;
   // The focusable wrapper: it hears the keys, and the pointer events that bubble up from deck's canvas
   const target = view.canvas;
 
   let drag = null; // the pointer holding the handle ('scrub') or the zoomed strip ('pan')
-  let dragged = false; // the click that ends a drag selects nothing
+  let dragged = false; // the click that ends a drag selects nothing; a press that never moved is a click
   let hovered = null;
   let hoverTimer = null;
 
@@ -82,7 +83,9 @@ export function attachTimelineInput(view, { onScrub, onSelect, onHover, onInspec
   const onPointerMove = (event) => {
     if (drag) {
       if (event.pointerId !== drag.id) return;
-      return drag.pan ? panTo(event) : scrubTo(event, 'move');
+      if (drag.pan) return panTo(event);
+      dragged = true;
+      return scrubTo(event, 'move');
     }
     if (event.pointerType !== 'mouse') return;
 
@@ -99,7 +102,7 @@ export function attachTimelineInput(view, { onScrub, onSelect, onHover, onInspec
     const onHandle =
       fromLine < SCRUB_LINE_GRAB_PX ||
       Math.hypot(fromLine, localY(event) - KNOB_CENTRE_Y) < knobReach;
-    dragged = onHandle;
+    dragged = false;
     // Empty strip pans a zoomed view; with everything in view only a click means anything there,
     // so a drag there scrubs nothing and pans nothing (its release still clicks)
     if (!onHandle && !view.zoomed) return;
@@ -127,7 +130,10 @@ export function attachTimelineInput(view, { onScrub, onSelect, onHover, onInspec
       return;
     }
     const { ms, index } = segmentAt(event);
-    onSelect(index, ms);
+    // A click on the selected segment lets go of it, except the second of a double-click, which
+    // selects it again for the double-click to inspect.
+    if (index === view.selected && event.detail < 2) onDeselect();
+    else onSelect(index, ms);
   };
 
   // The clicks before a double-click already selected the transition.
@@ -173,6 +179,7 @@ export function attachTimelineInput(view, { onScrub, onSelect, onHover, onInspec
       Home: () => goToSegment(0),
       End: () => goToSegment(segments.length - 1),
       Enter: inspect,
+      Escape: view.selected === null ? null : onDeselect, // else it is the popovers' and the dock's
       '+': () => view.zoom(ZOOM_IN),
       '=': () => view.zoom(ZOOM_IN),
       '-': () => view.zoom(ZOOM_OUT),

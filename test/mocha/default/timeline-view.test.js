@@ -112,15 +112,19 @@ describe('TimelineView', () => {
   };
   const noStrip = { spans: [], maxRf: 0 };
 
-  // The callbacks record what the input reports. Selecting also draws the selection, which the
-  // controller does from the store.
+  // The callbacks record what the input reports. Selecting and deselecting also draw the
+  // selection, which the controller does from the store.
   function mountView(timeline, { strip = noStrip, container = makeContainer() } = {}) {
-    const events = { scrubs: [], selects: [], hovers: [], inspects: [] };
+    const events = { scrubs: [], selects: [], deselects: 0, hovers: [], inspects: [] };
     const view = new TimelineView(timeline, strip, {
       onScrub: (ms, phase) => events.scrubs.push({ ms, phase }),
       onSelect: (index, ms) => {
         events.selects.push({ index, ms });
         view.setSelection(index);
+      },
+      onDeselect: () => {
+        events.deselects += 1;
+        view.setSelection(null);
       },
       onHover: (index) => events.hovers.push(index),
       onInspect: (index) => events.inspects.push(index),
@@ -132,8 +136,10 @@ describe('TimelineView', () => {
     return view.deck.props.layers.find((l) => l.id === id);
   }
 
-  function dispatchMouse(target, type, clientX, clientY = 10) {
-    target.dispatchEvent(new global.window.MouseEvent(type, { bubbles: true, clientX, clientY }));
+  function dispatchMouse(target, type, clientX, clientY = 10, init = {}) {
+    target.dispatchEvent(
+      new global.window.MouseEvent(type, { bubbles: true, clientX, clientY, ...init })
+    );
   }
 
   // A pointer is a mouse unless told otherwise; touch has no hover.
@@ -775,6 +781,74 @@ describe('TimelineView', () => {
       expect(events.selects[events.selects.length - 1].index).to.equal(1);
     });
 
+    describe('clicking the selected transition again', () => {
+      const clickAt = (view, ms, detail) =>
+        dispatchMouse(view.canvas, 'click', view.msToX(ms), 10, { detail });
+
+      it('clears the selection, where a click on another segment selects it', () => {
+        const { timeline } = makeTimelineFixture();
+        const { view, events } = mountView(timeline);
+
+        clickAt(view, 1500, 1);
+        expect(view.selected).to.equal(1);
+        clickAt(view, 1600, 1);
+        expect(view.selected).to.equal(null);
+        expect(events.deselects).to.equal(1);
+        expect(events.selects.map(({ index }) => index)).to.deep.equal([1]);
+
+        clickAt(view, 1500, 1);
+        clickAt(view, 500, 1);
+        expect(view.selected).to.equal(0);
+        expect(events.deselects).to.equal(1);
+      });
+
+      // A click selects by moving the playhead into the segment, so at fit zoom the next click on it
+      // lands within the playhead's few px: a press there that does not move is a click, not a scrub.
+      it('clears it when the click lands on the playhead, which the first click moved there', () => {
+        const { timeline } = makeTimelineFixture();
+        const { view, events } = mountView(timeline);
+        view.setCustomTime(1500);
+        view.setSelection(1);
+        const x = view.msToX(1500);
+
+        dispatchPointer(view.canvas, 'pointerdown', x, 40);
+        dispatchPointer(view.canvas, 'pointerup', x, 40);
+        dispatchMouse(view.canvas, 'click', x, 40, { detail: 1 });
+
+        expect(events.deselects).to.equal(1);
+        expect(view.selected).to.equal(null);
+        expect(events.scrubs.map(({ phase }) => phase)).to.deep.equal(['start', 'end']);
+      });
+
+      // click, click, dblclick: the first click of a double-click on the selected transition
+      // clears it, the second selects it again, and the double-click inspects it
+      it('still inspects a double-click on the selected transition, and leaves it selected', () => {
+        const { timeline } = makeTimelineFixture();
+        const { view, events } = mountView(timeline);
+        view.setSelection(1);
+
+        clickAt(view, 1500, 1);
+        clickAt(view, 1500, 2);
+        dispatchMouse(view.canvas, 'dblclick', view.msToX(1500), 10, { detail: 2 });
+
+        expect(view.selected).to.equal(1);
+        expect(events.inspects).to.deep.equal([1]);
+      });
+
+      it('does not clear a transition the first click of a double-click just selected', () => {
+        const { timeline } = makeTimelineFixture();
+        const { view, events } = mountView(timeline);
+
+        clickAt(view, 1500, 1);
+        clickAt(view, 1500, 2);
+        dispatchMouse(view.canvas, 'dblclick', view.msToX(1500), 10, { detail: 2 });
+
+        expect(events.deselects).to.equal(0);
+        expect(view.selected).to.equal(1);
+        expect(events.inspects).to.deep.equal([1]);
+      });
+    });
+
     it('keeps a single click from requesting the inspector', () => {
       const { timeline } = makeTimelineFixture();
       const { view, events } = mountView(timeline);
@@ -928,6 +1002,26 @@ describe('TimelineView', () => {
         expect(events.inspects).to.have.length(0);
       });
 
+      it('clears the selection with Escape', () => {
+        const { view, events } = mountView(fiveSegments());
+        view.setSelection(3);
+        view.setCustomTime(500);
+
+        expect(press(view, 'Escape').defaultPrevented).to.equal(true);
+
+        expect(events.deselects).to.equal(1);
+        expect(view.selected).to.equal(null);
+        expect(view.scrubberMs).to.equal(500);
+        expect(events.selects).to.have.length(0);
+      });
+
+      it('leaves Escape alone when nothing is selected, for the popovers and the dock', () => {
+        const { view, events } = mountView(fiveSegments());
+
+        expect(press(view, 'Escape').defaultPrevented).to.equal(false);
+        expect(events.deselects).to.equal(0);
+      });
+
       it('zooms about the playhead with + and -, and fits with 0', () => {
         const { view } = mountView(fiveSegments());
         view.setCustomTime(2500);
@@ -948,7 +1042,8 @@ describe('TimelineView', () => {
       it('leaves modified and unrelated keys alone', () => {
         const { view, events } = mountView(fiveSegments());
 
-        for (const key of ['PageDown', 'Home', 'End', 'Enter', '+', '-', '0']) {
+        view.setSelection(1);
+        for (const key of ['PageDown', 'Home', 'End', 'Enter', 'Escape', '+', '-', '0']) {
           for (const modifier of ['ctrlKey', 'metaKey', 'altKey']) {
             expect(press(view, key, { [modifier]: true }).defaultPrevented, key).to.equal(false);
           }
@@ -956,6 +1051,7 @@ describe('TimelineView', () => {
         expect(press(view, 'a').defaultPrevented).to.equal(false);
         expect(events.selects).to.have.length(0);
         expect(events.inspects).to.have.length(0);
+        expect(events.deselects).to.equal(0);
         expect(view.zoomed).to.equal(false);
       });
 
@@ -973,6 +1069,7 @@ describe('TimelineView', () => {
           'Home',
           'End',
           'Enter',
+          'Escape',
           'Plus',
           'Minus',
           '0',

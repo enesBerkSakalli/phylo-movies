@@ -38,7 +38,7 @@ import { cssColor } from '../services/ui/colorUtils.js';
 
 // What the strip answers to (timelineInput, and the playback shortcuts it defers to)
 const SLIDER_KEYS =
-  'Space ArrowLeft ArrowRight Shift+ArrowLeft Shift+ArrowRight PageUp PageDown Home End Enter Plus Minus 0';
+  'Space ArrowLeft ArrowRight Shift+ArrowLeft Shift+ArrowRight PageUp PageDown Home End Enter Escape Plus Minus 0';
 
 // The strip's colour roles and the theme tokens (src/css/index.css) they are read from
 const STRIP_COLOR_TOKENS = {
@@ -63,7 +63,8 @@ export class TimelineView {
   /**
    * @param {Object} timeline - buildTimeline() result
    * @param {{spans: Object[], maxRf: number}} strip - per-pair geometry from buildPairSpans
-   * @param {Object} callbacks - { onScrub, onSelect, onHover, onInspect }, see timelineInput
+   * @param {Object} callbacks - { onScrub, onSelect, onDeselect, onHover, onInspect }, see
+   *   timelineInput
    */
   constructor(timeline, strip, callbacks) {
     this.timeline = timeline;

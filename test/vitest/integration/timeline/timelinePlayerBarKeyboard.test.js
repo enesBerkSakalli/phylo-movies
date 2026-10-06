@@ -4,6 +4,10 @@ import { createRoot } from 'react-dom/client';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+// Static, so the load of the whole player bar counts against the collection, not a test's timeout
+import { MoviePlayerBar } from '../../../../src/components/movie-player/MoviePlayerBar.jsx';
+import { TooltipProvider } from '../../../../src/components/ui/tooltip';
+import { useAppStore } from '../../../../src/state/phyloStore/store.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 // jsdom has none, and Radix's size hook (tooltips, popovers) needs one
@@ -98,10 +102,6 @@ describe('Inspect on the player bar', () => {
   });
 
   async function inspectButton({ selected = null, playheadSegment }) {
-    const { MoviePlayerBar } =
-      await import('../../../../src/components/movie-player/MoviePlayerBar.jsx');
-    const { TooltipProvider } = await import('../../../../src/components/ui/tooltip');
-    const { useAppStore } = await import('../../../../src/state/phyloStore/store.js');
     useAppStore.setState({
       timeline: { segments },
       selectedTimelineSegmentIndex: selected,

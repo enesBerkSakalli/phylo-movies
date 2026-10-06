@@ -61,12 +61,16 @@ describe('transition inspector', () => {
     expect(container.textContent).toContain(
       'Following the playhead · select a transition to keep it'
     );
+    expect(container.textContent).not.toContain('Pinned');
   });
 
-  it('stays on the selection while the playhead is elsewhere, with nothing to say about it', async () => {
+  it('stays on the selection while the playhead is elsewhere, and says how to let go', async () => {
     const container = await render({ selected: 1, playheadSegment: 0 });
 
     expect(container.textContent).toContain('Tree 1 → Tree 2');
+    expect(container.textContent).toContain(
+      'Pinned · Esc or click it again to follow the playhead'
+    );
     expect(container.textContent).not.toContain('Following the playhead');
   });
 

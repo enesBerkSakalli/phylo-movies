@@ -79,6 +79,7 @@ export class TimelineController {
       {
         onScrub: (ms, phase) => (phase === 'end' ? this.endScrub(ms) : this.scrub(ms)),
         onSelect: (segmentIndex, ms) => this.select(segmentIndex, ms),
+        onDeselect: () => this.store.getState().setSelectedTimelineSegment(null),
         onHover: (segmentIndex) => this.hover(segmentIndex),
         // Loaded on demand like the view: the dock pulls in the whole panel registry.
         onInspect: () =>

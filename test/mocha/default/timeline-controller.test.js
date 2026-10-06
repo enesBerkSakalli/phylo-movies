@@ -335,6 +335,19 @@ describe('TimelineController', () => {
     controller.unmount();
   });
 
+  it('clears the store selection when the strip asks to deselect', async () => {
+    const controller = createController();
+
+    useAppStore.setState({ selectedTimelineSegmentIndex: 1 });
+    await controller.mount(makeContainer());
+    controller.view.callbacks.onDeselect();
+
+    expect(useAppStore.getState().selectedTimelineSegmentIndex).to.equal(null);
+    expect(controller.view.selected).to.equal(null);
+
+    controller.unmount();
+  });
+
   it('syncs the strip selection when the store selection is cleared', async () => {
     const controller = createController();
 
