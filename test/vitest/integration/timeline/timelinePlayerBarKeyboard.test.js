@@ -89,11 +89,19 @@ describe('Inspect transition action', () => {
   });
 });
 
-describe('Inspect on the player bar', () => {
+describe('player bar timeline interactions', () => {
   const segments = [
-    { isInputTreeSegment: true },
-    { isInputTreeSegment: false },
-    { isInputTreeSegment: true },
+    { isInputTreeSegment: true, originalTreeIndex: 0 },
+    {
+      isInputTreeSegment: false,
+      pairId: 'pair_0_1',
+      pairOrdinal: 0,
+      sourceInputTreeIndex: 0,
+      targetInputTreeIndex: 1,
+      sourceGlobalIndex: 0,
+      targetGlobalIndex: 10,
+    },
+    { isInputTreeSegment: true, originalTreeIndex: 1 },
   ];
   let root;
   afterEach(() => {
@@ -107,6 +115,8 @@ describe('Inspect on the player bar', () => {
       selectedTimelineSegmentIndex: selected,
       timelineCursor: { segmentIndex: playheadSegment, frameIndex: 0, movieTimeMs: 0 },
       pairChanges: { maxRf: 0, byPairId: new Map() },
+      hoveredSegment: null,
+      playing: false,
     });
     const host = document.body.appendChild(document.createElement('div'));
     root = createRoot(host);
@@ -133,6 +143,173 @@ describe('Inspect on the player bar', () => {
 
     expect(button.getAttribute('aria-disabled')).toBe('false');
   });
+
+  async function hoverPreview() {
+    await inspectButton({ playheadSegment: 0 });
+    await act(async () => useAppStore.getState().setHoveredSegment({ index: 0, x: 100 }));
+    const preview = document.querySelector('[data-slot="tooltip-content"]');
+    expect(preview.textContent).toContain('Input tree 1');
+    return preview;
+  }
+
+  it('dismisses the hover preview with Escape when no segment is selected', async () => {
+    await hoverPreview();
+
+    await act(async () =>
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    );
+
+    expect(document.querySelector('[data-slot="tooltip-content"]')).toBeNull();
+    expect(useAppStore.getState().hoveredSegment).toBeNull();
+  });
+
+  it.each(['mouse', 'touch'])(
+    'clears active and retained previews when a %s gesture starts on the timeline',
+    async (pointerType) => {
+      const preview = await hoverPreview();
+      await act(async () =>
+        preview.dispatchEvent(
+          new PointerEvent('pointerover', { bubbles: true, pointerType: 'mouse' })
+        )
+      );
+
+      const strip = document.querySelector('.timeline-visual-layer');
+      await act(async () =>
+        strip.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType }))
+      );
+
+      expect(useAppStore.getState().hoveredSegment).toBeNull();
+      expect(document.querySelector('[data-slot="tooltip-content"]')).toBeNull();
+
+      await act(async () =>
+        strip.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType }))
+      );
+      expect(document.querySelector('[data-slot="tooltip-content"]')).toBeNull();
+
+      await act(async () => useAppStore.getState().setHoveredSegment({ index: 2, x: 300 }));
+      expect(document.querySelector('[data-slot="tooltip-content"]').textContent).toContain(
+        'Input tree 2'
+      );
+    }
+  );
+
+  it('dismisses the preview on the first Escape even when a status tooltip opened after it', async () => {
+    const preview = await hoverPreview();
+    preview.getBoundingClientRect = () => ({ left: 80, right: 280, top: 40, bottom: 120 });
+    document.querySelector('.interpolation-timeline-container').getBoundingClientRect = () => ({
+      top: 200,
+    });
+    const statusTrigger = document.querySelector(
+      '[aria-label="Movie timeline status"] [data-slot="tooltip-trigger"]'
+    );
+    await act(async () =>
+      statusTrigger.dispatchEvent(
+        new PointerEvent('pointermove', {
+          bubbles: true,
+          pointerType: 'mouse',
+          clientX: 100,
+          clientY: 160,
+        })
+      )
+    );
+    expect(document.querySelectorAll('[data-slot="tooltip-content"]')).toHaveLength(2);
+
+    await act(async () =>
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    );
+
+    expect(preview.isConnected).toBe(false);
+    expect(useAppStore.getState().hoveredSegment).toBeNull();
+  });
+
+  it('keeps the preview while its content is hovered after the pointer leaves the strip', async () => {
+    const preview = await hoverPreview();
+    await act(async () =>
+      preview.dispatchEvent(
+        new PointerEvent('pointerover', { bubbles: true, pointerType: 'mouse' })
+      )
+    );
+    await act(async () => useAppStore.getState().setHoveredSegment(null));
+
+    expect(preview.isConnected).toBe(true);
+    expect(preview.textContent).toContain('Input tree 1');
+
+    await act(async () =>
+      preview.dispatchEvent(
+        new PointerEvent('pointerout', {
+          bubbles: true,
+          pointerType: 'mouse',
+          relatedTarget: document.body,
+          clientX: 1000,
+          clientY: 1000,
+        })
+      )
+    );
+    expect(document.querySelector('[data-slot="tooltip-content"]')).toBeNull();
+  });
+
+  it.each([100, 350])(
+    'keeps a slow pointer from strip x=%s on its way to the preview',
+    async (x) => {
+      const preview = await hoverPreview();
+      preview.getBoundingClientRect = () => ({ left: 80, right: 280, top: 40, bottom: 120 });
+      document.querySelector('.interpolation-timeline-container').getBoundingClientRect = () => ({
+        top: 200,
+      });
+
+      await act(async () =>
+        document.querySelector('.interpolation-timeline-container').dispatchEvent(
+          new PointerEvent('pointermove', {
+            bubbles: true,
+            pointerType: 'mouse',
+            clientX: x,
+            clientY: 210,
+          })
+        )
+      );
+
+      await act(async () =>
+        document.dispatchEvent(
+          new PointerEvent('pointermove', {
+            bubbles: true,
+            pointerType: 'mouse',
+            clientX: x,
+            clientY: 160,
+          })
+        )
+      );
+      // The strip's 150 ms leave timer can expire before a slow pointer reaches the preview.
+      await act(async () => useAppStore.getState().setHoveredSegment(null));
+      expect(preview.isConnected).toBe(true);
+
+      await act(async () =>
+        document.dispatchEvent(
+          new PointerEvent('pointermove', {
+            bubbles: true,
+            pointerType: 'mouse',
+            clientX: 400,
+            clientY: 160,
+          })
+        )
+      );
+      expect(document.querySelector('[data-slot="tooltip-content"]')).toBeNull();
+    }
+  );
+
+  for (const state of [{ playing: true }, { selectedTimelineSegmentIndex: 1 }]) {
+    it(`clears a held preview when ${Object.keys(state)[0]} changes`, async () => {
+      const preview = await hoverPreview();
+      await act(async () =>
+        preview.dispatchEvent(
+          new PointerEvent('pointerover', { bubbles: true, pointerType: 'mouse' })
+        )
+      );
+      await act(async () => useAppStore.getState().setHoveredSegment(null));
+      await act(async () => useAppStore.setState(state));
+
+      expect(document.querySelector('[data-slot="tooltip-content"]')).toBeNull();
+    });
+  }
 });
 
 describe('timeline strip focus ring', () => {

@@ -13,8 +13,8 @@ const MAX_VISIBLE_SUBTREES = 3;
 
 /**
  * What the pointer is over on the timeline: an input tree, or a transition with its pair's
- * change, pivot edge and the first few moved subtrees. The tooltip never takes the pointer,
- * so the rest is "+N more" here and in full in the Transition Inspector.
+ * change, pivot edge and the first few moved subtrees. The rest is "+N more" here
+ * and in full in the Transition Inspector.
  *
  * @param {Object} props
  * @param {Object} props.segment - The segment data object

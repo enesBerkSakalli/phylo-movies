@@ -175,18 +175,12 @@ describe('movie timeline player bar semantics', () => {
     expect(statusStripSource).not.toContain('AnimationStageStatus');
     expect(statusStripSource).toContain('describeCursor');
     expect(statusStripSource).toContain('Movie timeline status');
-    expect(statusStripSource).toContain('flex-nowrap overflow-hidden');
     // The position text stands alone: no "Cursor" label chip in front of it.
     expect(statusStripSource).not.toContain('Film');
     expect(statusStripSource).not.toContain('label="Cursor"');
     // On a phone the position has a line to itself, never cut mid-number, in its short form.
-    expect(statusStripSource).toContain(
-      'inline-flex w-auto shrink-0 items-center cursor-help sm:w-[14rem]'
-    );
     expect(statusStripSource).toContain('position?.short ??');
     expect(statusStripSource).toContain('sm:hidden');
-    expect(statusStripSource).toContain('inline-flex w-[6.5rem] shrink-0');
-    expect(statusStripSource).toContain('hidden w-[7rem] shrink-0');
     expect(statusStripSource).toContain('xl:inline-flex');
     expect(statusStripSource).toContain(
       "Window size ${msaWindowSize ?? '-'} / Step size ${msaStepSize ?? '-'}"
@@ -233,7 +227,7 @@ describe('movie timeline player bar semantics', () => {
     expect(legend).not.toMatch(/(bg|border)-(slate|emerald|amber)-|#4080ff/);
   });
 
-  it('keeps the segment tooltip off the controls and out of the pointer path', () => {
+  it('keeps the segment tooltip above the controls', () => {
     const playerBarSource = readRepoFile('src', 'components', 'movie-player', 'MoviePlayerBar.jsx');
     const tooltipSource = readRepoFile(
       'src',
@@ -246,8 +240,6 @@ describe('movie timeline player bar semantics', () => {
     expect(playerBarSource).toContain('side="top"');
     expect(playerBarSource).toContain('sideOffset={8}');
     expect(playerBarSource).toContain('collisionPadding={8}');
-    expect(playerBarSource.match(/pointer-events-none/g)).toHaveLength(2);
-    expect(playerBarSource).not.toContain('pointer-events-auto');
     expect(playerBarSource).not.toContain('selectSetTooltipHovered');
     expect(playerBarSource).not.toContain('onMouseLeave');
     expect(tooltipSource).not.toContain('Button');

@@ -117,11 +117,16 @@ export function attachTimelineInput(view, { onScrub, onSelect, onDeselect, onHov
     if (onHandle) onScrub(view.scrubberMs, 'start');
   };
 
-  const onPointerEnd = (event) => {
-    if (event.pointerId !== drag?.id) return;
-    const { pan } = drag;
+  const finishDrag = () => {
+    if (!drag) return;
+    const { id, pan } = drag;
     drag = null;
+    if (target.hasPointerCapture?.(id)) target.releasePointerCapture(id);
     if (!pan) onScrub(view.scrubberMs, 'end');
+  };
+
+  const onPointerEnd = (event) => {
+    if (event.pointerId === drag?.id) finishDrag();
   };
 
   const onClick = (event) => {
@@ -211,6 +216,8 @@ export function attachTimelineInput(view, { onScrub, onSelect, onDeselect, onHov
     [target, 'pointerdown', onPointerDown],
     [target, 'pointerup', onPointerEnd],
     [target, 'pointercancel', onPointerEnd],
+    [target, 'lostpointercapture', onPointerEnd],
+    [target.ownerDocument.defaultView, 'blur', finishDrag],
     [target, 'click', onClick],
     [target, 'dblclick', onDoubleClick],
     [target, 'keydown', onKeyDown],

@@ -747,6 +747,38 @@ describe('TimelineView', () => {
       expect(events.scrubs.map(({ phase }) => phase)).to.deep.equal(['start', 'end']);
     });
 
+    for (const interruption of ['lostpointercapture', 'blur']) {
+      it(`ends a scrub once on ${interruption} and accepts the next pointer`, () => {
+        const { timeline } = makeTimelineFixture();
+        const { view, events } = mountView(timeline);
+        const touch = { pointerType: 'touch', pointerId: 7 };
+
+        pointerDownTimeline(view, 0, touch);
+        dispatchPointer(view.canvas, 'pointermove', 400, 10, touch);
+        if (interruption === 'blur') {
+          view.canvas.ownerDocument.defaultView.dispatchEvent(new dom.window.Event('blur'));
+        } else {
+          dispatchPointer(view.canvas, interruption, 400, 10, touch);
+        }
+        expect(events.scrubs.map(({ phase }) => phase)).to.deep.equal(['start', 'move', 'end']);
+        dispatchPointer(view.canvas, 'pointerup', 400, 10, touch);
+
+        pointerDownTimeline(view, 400, { ...touch, pointerId: 8 });
+        dispatchPointer(view.canvas, 'pointermove', 600, 10, { ...touch, pointerId: 8 });
+        dispatchPointer(view.canvas, 'pointerup', 600, 10, { ...touch, pointerId: 8 });
+
+        expect(events.scrubs).to.deep.equal([
+          { ms: 0, phase: 'start' },
+          { ms: 1500, phase: 'move' },
+          { ms: 1500, phase: 'end' },
+          { ms: 1500, phase: 'start' },
+          { ms: 2250, phase: 'move' },
+          { ms: 2250, phase: 'end' },
+        ]);
+        view.destroy();
+      });
+    }
+
     it('follows only the pointer that grabbed the handle', () => {
       const { timeline } = makeTimelineFixture();
       const { view, events } = mountView(timeline);

@@ -163,7 +163,7 @@ export function MoviePlayerBar() {
 
             {hasTimeline && (
               <div
-                className={cn('flex min-w-0 items-center gap-2', compact && 'basis-full')}
+                className={cn('flex min-w-0 flex-wrap items-center gap-2', compact && 'basis-full')}
                 role="group"
                 aria-label="Timeline navigation controls"
               >
@@ -224,18 +224,91 @@ export function MoviePlayerBar() {
 }
 
 function TimelineSegmentTooltipOverlay({ pairChanges }) {
-  const hovered = useAppStore(selectHoveredSegment);
-  const timeline = useAppStore(selectTimeline);
   const selectedSegmentIndex = useAppStore(selectSelectedTimelineSegmentIndex);
   const playing = useAppStore(selectPlaying);
   const setHoveredSegment = useAppStore(selectSetHoveredSegment);
-  const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
-  const segment = timeline?.segments[hovered?.index];
 
   // Picking a segment or starting playback is a decision; the hover preview has done its job.
   useEffect(() => {
     setHoveredSegment(null);
   }, [selectedSegmentIndex, playing, setHoveredSegment]);
+
+  return (
+    <TimelineSegmentTooltipPreview
+      key={`${selectedSegmentIndex}:${playing}`}
+      pairChanges={pairChanges}
+    />
+  );
+}
+
+function TimelineSegmentTooltipPreview({ pairChanges }) {
+  const hovered = useAppStore(selectHoveredSegment);
+  const timeline = useAppStore(selectTimeline);
+  const setHoveredSegment = useAppStore(selectSetHoveredSegment);
+  const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
+  // Keep the preview while it is being read, after the strip's delayed pointer-leave clears.
+  const [heldHover, setHeldHover] = useState(null);
+  const contentRef = useRef(null);
+  const pointerX = useRef(null);
+  const preview = hovered ?? heldHover;
+  const segment = timeline?.segments[preview?.index];
+  const dismiss = useCallback(() => {
+    setHeldHover(null);
+    setHoveredSegment(null);
+  }, [setHoveredSegment]);
+
+  const trackPointer = useCallback(
+    (event) => {
+      if (event.pointerType !== 'mouse') return;
+      const strip = document.querySelector('.movie-player-bar .interpolation-timeline-container');
+      if (strip?.contains(event.target)) {
+        pointerX.current = event.clientX;
+        return;
+      }
+      if (!preview) return;
+      const bounds = contentRef.current?.getBoundingClientRect();
+      if (!bounds || !strip) return;
+      const stripTop = strip.getBoundingClientRect().top;
+      const { clientX: x, clientY: y } = event;
+      const exitX = pointerX.current ?? preview.x;
+      // The control row separates the strip and preview. Keep a path across that gap without
+      // covering any controls with an invisible hit target or making slow pointers race a timer.
+      const insidePreview =
+        x >= bounds.left && x <= bounds.right && y >= bounds.top && y <= bounds.bottom;
+      const insideGap =
+        x >= Math.min(exitX, bounds.left) - 8 &&
+        x <= Math.max(exitX, bounds.right) + 8 &&
+        y >= Math.min(bounds.bottom, stripTop) &&
+        y <= Math.max(bounds.bottom, stripTop);
+      if (insidePreview || insideGap) setHeldHover(preview);
+      else dismiss();
+    },
+    [preview, dismiss]
+  );
+
+  useEffect(() => {
+    document.addEventListener('pointermove', trackPointer);
+    return () => document.removeEventListener('pointermove', trackPointer);
+  }, [trackPointer]);
+
+  useEffect(() => {
+    if (!preview) return;
+    // Crossing the control row can open another tooltip. Radix sends Escape only to that
+    // highest layer, so the segment preview also listens while it is visible.
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') dismiss();
+    };
+    // Scrubbing and panning keep selection unchanged, so end the preview on the initial press.
+    const onPointerDown = (event) => {
+      if (event.target?.closest?.('.movie-player-bar .interpolation-timeline-container')) dismiss();
+    };
+    document.addEventListener('keydown', onKeyDown, true);
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown, true);
+      document.removeEventListener('pointerdown', onPointerDown, true);
+    };
+  }, [preview, dismiss]);
 
   if (!segment) return null;
 
@@ -249,17 +322,25 @@ function TimelineSegmentTooltipOverlay({ pairChanges }) {
         <span
           aria-hidden
           className="pointer-events-none fixed bottom-[var(--movie-player-bar-height)] size-0"
-          style={{ left: hovered.x }}
+          style={{ left: preview.x }}
         />
       </TooltipTrigger>
       <TooltipContent
+        ref={contentRef}
         arrow={false}
         side="top"
         sideOffset={8}
         collisionPadding={8}
         sticky="always"
         updatePositionStrategy="always"
-        className="pointer-events-none min-w-[200px] max-w-[min(300px,calc(100vw-1rem))] rounded-lg border p-2 shadow-lg"
+        onPointerEnter={() => setHeldHover(preview)}
+        onPointerLeave={trackPointer}
+        onEscapeKeyDown={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          dismiss();
+        }}
+        className="min-w-[200px] max-w-[min(300px,calc(100vw-1rem))] rounded-lg border p-2 shadow-lg"
       >
         <TimelineSegmentTooltip
           segment={segment}
@@ -387,8 +468,9 @@ function MoreMenu({
       <PopoverContent
         side="top"
         align="end"
+        collisionPadding={8}
         aria-label="Playback and timeline options"
-        className="z-[1300] flex w-[min(20rem,calc(100vw-1rem))] flex-col gap-1 p-3"
+        className="movie-player-options z-[1300] flex max-h-[var(--radix-popover-content-available-height)] w-[min(20rem,calc(100vw-1rem))] flex-col gap-1 overflow-y-auto overscroll-contain p-3 [&>*]:shrink-0"
       >
         <PlaybackSpeedControl value={speed} setValue={onSpeedChange} />
         {hasTimeline && (

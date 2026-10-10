@@ -31,7 +31,7 @@ export function TimelineStatusStrip() {
 
   return (
     <div
-      className="flex min-w-0 flex-nowrap overflow-hidden items-center gap-2 rounded-md border border-border/40 bg-background/60 px-2 py-1 text-2xs"
+      className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-border/40 bg-background/60 px-2 py-1 text-2xs"
       role="status"
       aria-label="Movie timeline status"
       // Announcing every frame during playback would flood screen readers.
@@ -80,10 +80,10 @@ function CursorStatus({ position, fallback }) {
       }
       contentClassName="border-border/60 text-2xs font-mono"
     >
-      <span className="inline-flex w-auto shrink-0 items-center cursor-help sm:w-[14rem]">
+      <span className="inline-flex min-w-0 w-auto items-center cursor-help sm:w-[14rem]">
         <span className="inline-flex min-w-0 items-center gap-1 text-xs leading-tight font-semibold tabular-nums">
           <GitBranch className="size-3 shrink-0 text-signal" aria-hidden />
-          <span className="min-w-0 truncate text-foreground">
+          <span className="min-w-0 text-foreground">
             {/* A phone gives the position a line to itself, in a form that fits it whole */}
             <span className="sm:hidden">{position?.short ?? position?.text ?? fallback}</span>
             <span className="max-sm:hidden">
@@ -101,9 +101,9 @@ function CursorStatus({ position, fallback }) {
 
 function StatusItem({ icon: Icon, label, children }) {
   return (
-    <div className="flex shrink-0 items-center gap-2">
+    <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
       <Icon className="size-3.5 shrink-0 text-primary" aria-hidden />
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
         <div className="sr-only shrink-0 text-2xs font-medium text-muted-foreground sm:not-sr-only">
           {label}
         </div>
@@ -116,17 +116,15 @@ function StatusItem({ icon: Icon, label, children }) {
 function MsaWindowStatus({ msaWindow }) {
   if (!msaWindow) {
     return (
-      <span className="inline-flex w-[6.5rem] shrink-0 items-center">
-        <span className="truncate text-xs text-muted-foreground leading-tight font-medium">
-          Unavailable
-        </span>
+      <span className="inline-flex min-w-[6.5rem] shrink-0 items-center">
+        <span className="text-xs text-muted-foreground leading-tight font-medium">Unavailable</span>
       </span>
     );
   }
 
   return (
-    <span className="inline-flex w-[6.5rem] shrink-0 items-center">
-      <span className="min-w-0 truncate text-xs text-foreground leading-tight font-semibold tabular-nums">
+    <span className="inline-flex min-w-[6.5rem] shrink-0 items-center">
+      <span className="whitespace-nowrap text-xs text-foreground leading-tight font-semibold tabular-nums">
         <span>{msaWindow.startPosition}</span>
         <span className="mx-1 text-muted-foreground/50 text-2xs">-</span>
         <span>{msaWindow.midPosition}</span>
@@ -143,8 +141,11 @@ function MsaWindowConfigStatus({ msaWindowSize, msaStepSize }) {
 
   return (
     <AppTooltip content={fullLabel} contentClassName="border-border/60 text-2xs font-mono">
-      <span className="hidden w-[7rem] shrink-0 items-center xl:inline-flex" aria-label={fullLabel}>
-        <span className="truncate text-xs text-foreground leading-tight font-semibold tabular-nums">
+      <span
+        className="hidden min-w-[7rem] shrink-0 items-center xl:inline-flex"
+        aria-label={fullLabel}
+      >
+        <span className="text-xs text-foreground leading-tight font-semibold tabular-nums">
           {compactLabel}
         </span>
       </span>

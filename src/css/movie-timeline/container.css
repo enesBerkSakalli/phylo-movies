@@ -23,8 +23,16 @@
   outline-offset: -2px;
 }
 
-/* Radix wraps floating content in a box of its own: when the content ignores the pointer (the
-   segment hover readout), so must the box. */
-[data-radix-popper-content-wrapper]:has(> .pointer-events-none) {
-  pointer-events: none;
+/* Tablets and touch-capable laptops need the same targets as phones. */
+@media (any-pointer: coarse) {
+  .movie-player-bar button,
+  .movie-player-options button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .movie-player-bar [data-slot='slider'],
+  .movie-player-options [data-slot='slider'] {
+    min-height: 44px;
+  }
 }
