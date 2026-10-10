@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import { ArrowRight, Columns, GitBranch, Maximize2, Minimize2 } from 'lucide-react';
 import {
   selectMsaColumnCount,
@@ -15,6 +15,7 @@ import { MSADeckGLViewer } from '../../msaViewer/MSADeckGLViewer';
 import { MSA_VIEWER_CONSTANTS } from '../../msaViewer/config.js';
 import { useMSA, useMSAViewport, useSetMSAVisibleRange } from './useMSA.js';
 import { MSAScrollbars } from './MSAScrollbars';
+import '../../css/msa-viewer.css';
 import { describeCursor } from '../../timeline/describeCursor.js';
 import {
   buildMsaWindowOverlapStatus,
@@ -51,6 +52,7 @@ export function MSAViewer() {
   const syncMSAEnabled = useAppStore(selectSyncMsaEnabled);
   const [layoutMetrics, setLayoutMetrics] = useState(null);
   const containerRef = useRef(null);
+  const viewportId = useId();
   const viewerRef = useRef(null);
   const pendingRangeRef = useRef(null);
   const publishedRangeRef = useRef(null);
@@ -147,9 +149,17 @@ export function MSAViewer() {
   }, [msaRegion, processedData, syncMSAEnabled]);
 
   return (
-    <div className="msa-rnd-body relative flex-1 min-h-0 bg-background" ref={containerRef}>
-      <MSAStatusOverlay />
-      <MSAScrollbars layoutMetrics={processedData ? layoutMetrics : null} />
+    <div className="msa-rnd-body relative flex-1 bg-background">
+      <div
+        className="msa-canvas-host relative"
+        ref={containerRef}
+        id={viewportId}
+        role="group"
+        aria-label="Alignment viewport"
+      >
+        <MSAStatusOverlay />
+      </div>
+      <MSAScrollbars layoutMetrics={processedData ? layoutMetrics : null} viewportId={viewportId} />
     </div>
   );
 }

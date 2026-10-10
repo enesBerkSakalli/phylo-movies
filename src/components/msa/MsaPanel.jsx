@@ -23,10 +23,19 @@ export default function MsaPanel() {
   return (
     <MSAProvider>
       <div
-        className="flex h-full flex-col overflow-hidden bg-card"
+        className="msa-panel flex h-full flex-col overflow-y-auto bg-card"
         role="region"
         aria-label="Sequence alignment"
         aria-describedby="msa-window-description"
+        tabIndex={0}
+        onKeyDown={(event) => {
+          if (
+            event.target === event.currentTarget &&
+            ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)
+          ) {
+            event.stopPropagation();
+          }
+        }}
       >
         <AlignmentSummary />
         <MSAControls />

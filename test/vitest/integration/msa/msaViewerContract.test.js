@@ -84,6 +84,166 @@ afterEach(() => {
 });
 
 describe('MSA viewer contract', () => {
+  it('links each scrollbar to its own alignment viewport', async () => {
+    const { MSAViewer } = await import('../../../../src/components/msa/MSAViewer.jsx');
+    msaContext = createContext();
+    const { container, root } = await renderReact(
+      React.createElement(
+        React.Fragment,
+        null,
+        React.createElement(MSAViewer),
+        React.createElement(MSAViewer)
+      )
+    );
+    const controls = [...container.querySelectorAll('[role="scrollbar"]')].map((bar) =>
+      bar.getAttribute('aria-controls')
+    );
+    expect(controls[0]).toBeTruthy();
+    expect(controls[0]).toBe(controls[1]);
+    expect(controls[2]).toBe(controls[3]);
+    expect(controls[0]).not.toBe(controls[2]);
+    for (const id of controls) expect(document.getElementById(id)).not.toBeNull();
+    await act(async () => root.unmount());
+  });
+
+  it.each(['lostpointercapture', 'blur', 'pointercancel'])(
+    'stops both scrollbar drags after %s and accepts a fresh drag',
+    async (interrupt) => {
+      const { MSAScrollbars } = await import('../../../../src/components/msa/MSAScrollbars.jsx');
+      const centerViewportOn = vi.fn();
+      msaContext = createContext({
+        processedData: { ...processedData, rows: 100, cols: 100 },
+        centerViewportOn,
+      });
+      const { container, root } = await renderReact(React.createElement(MSAScrollbars));
+      const pointer = (type, pointerId = 1) => {
+        const event = new MouseEvent(type, {
+          bubbles: true,
+          clientX: 100,
+          clientY: 100,
+          button: 0,
+        });
+        Object.defineProperty(event, 'pointerId', { value: pointerId });
+        return event;
+      };
+      for (const track of container.querySelectorAll('[role="scrollbar"]')) {
+        const thumb = track.firstElementChild;
+        track.getBoundingClientRect = () => ({ left: 0, top: 0, width: 200, height: 200 });
+        await act(async () => {
+          thumb.dispatchEvent(pointer('pointerdown'));
+          (interrupt === 'lostpointercapture' ? thumb : window).dispatchEvent(pointer(interrupt));
+        });
+        centerViewportOn.mockClear();
+        await act(async () => window.dispatchEvent(pointer('pointermove')));
+        expect(centerViewportOn).not.toHaveBeenCalled();
+        await act(async () => {
+          thumb.dispatchEvent(pointer('pointerdown', 2));
+          window.dispatchEvent(pointer('pointermove', 2));
+          window.dispatchEvent(pointer('pointerup', 2));
+        });
+        expect(centerViewportOn).toHaveBeenCalledTimes(1);
+      }
+      await act(async () => root.unmount());
+    }
+  );
+
+  it('keeps a drag owned by its initiating pointer', async () => {
+    const { MSAScrollbars } = await import('../../../../src/components/msa/MSAScrollbars.jsx');
+    const centerViewportOn = vi.fn();
+    msaContext = createContext({
+      processedData: { ...processedData, rows: 100, cols: 100 },
+      centerViewportOn,
+    });
+    const { container, root } = await renderReact(React.createElement(MSAScrollbars));
+    const [horizontal, vertical] = container.querySelectorAll('[role="scrollbar"]');
+    horizontal.getBoundingClientRect = () => ({ left: 0, width: 200 });
+    const pointer = (type, pointerId) => {
+      const event = new MouseEvent(type, { bubbles: true, clientX: 100, button: 0 });
+      Object.defineProperty(event, 'pointerId', { value: pointerId });
+      return event;
+    };
+    await act(async () => {
+      horizontal.firstElementChild.dispatchEvent(pointer('pointerdown', 1));
+      window.dispatchEvent(pointer('pointermove', 2));
+      window.dispatchEvent(pointer('pointerup', 2));
+      vertical.firstElementChild.dispatchEvent(pointer('pointerdown', 2));
+    });
+    expect(centerViewportOn).not.toHaveBeenCalled();
+    await act(async () => {
+      window.dispatchEvent(pointer('pointermove', 1));
+      window.dispatchEvent(pointer('pointerup', 1));
+      window.dispatchEvent(pointer('pointermove', 1));
+    });
+    expect(centerViewportOn).toHaveBeenCalledExactlyOnceWith({ column: 50 });
+    await act(async () => root.unmount());
+  });
+
+  it('inspects named residues and gaps, validates coordinates, and follows row order', async () => {
+    const { MSAControls } = await import('../../../../src/components/msa/MSAControls.jsx');
+    const { TooltipProvider } = await import('../../../../src/components/ui/tooltip');
+    msaContext = createContext({
+      processedData: {
+        ...processedData,
+        sequences: [
+          { id: 'taxon-a', seq: 'ACGT' },
+          { id: 'taxon-b', seq: 'AG-A' },
+        ],
+      },
+      setColorScheme: vi.fn(),
+      setShowLetters: vi.fn(),
+    });
+    const { container, root } = await renderReact(
+      React.createElement(TooltipProvider, null, React.createElement(MSAControls))
+    );
+    const trigger = container.querySelector('button[aria-label="Inspect alignment residue"]');
+    expect(trigger).not.toBeNull();
+    await act(async () => trigger.click());
+    expect(document.querySelector('output')?.textContent).toContain('taxon-a');
+    expect(document.querySelector('output')?.textContent).toContain('Residue: A');
+    const [rowInput, columnInput] = document.querySelectorAll('input[type="number"]');
+    const setInput = async (input, value) => {
+      await act(async () => {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, value);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    };
+    await setInput(rowInput, '2');
+    await setInput(columnInput, '3');
+    expect(document.querySelector('output').textContent).toContain('Taxon: taxon-b');
+    expect(document.querySelector('output').textContent).toContain('Row 2 of 2 · Column 3 of 4');
+    expect(document.querySelector('output').textContent).toContain('Residue: Gap');
+    await act(async () => document.querySelector('button[type="submit"]').click());
+    expect(msaContext.centerViewportOn).toHaveBeenCalledWith({ row: 1, column: 2 });
+    msaContext.processedData = {
+      ...msaContext.processedData,
+      sequences: [...msaContext.processedData.sequences].reverse(),
+    };
+    await act(async () =>
+      root.render(React.createElement(TooltipProvider, null, React.createElement(MSAControls)))
+    );
+    expect(document.querySelector('output').textContent).toContain('Taxon: taxon-a');
+    expect(document.querySelector('output').textContent).toContain('Residue: G');
+    for (const invalid of ['', '0', '5', '1.5']) {
+      await setInput(columnInput, invalid);
+      expect(columnInput.getAttribute('aria-invalid')).toBe('true');
+      expect(document.querySelector('button[type="submit"]').disabled).toBe(true);
+      expect(document.querySelector('output').textContent).toContain('Enter a whole row');
+    }
+    await setInput(columnInput, '4');
+    expect(document.querySelector('button[type="submit"]').disabled).toBe(false);
+    expect(document.querySelector('output').textContent).toContain('Residue: T');
+    await act(async () => root.unmount());
+  });
+
+  it('disables residue inspection without alignment data', async () => {
+    const { MSAResidueInspector } =
+      await import('../../../../src/components/msa/MSAResidueInspector.jsx');
+    msaContext = createContext({ processedData: null });
+    const { container, root } = await renderReact(React.createElement(MSAResidueInspector));
+    expect(container.querySelector('button').disabled).toBe(true);
+    await act(async () => root.unmount());
+  });
+
   it('sends one transactional viewer snapshot per relevant change', async () => {
     const { MSAViewer } = await import('../../../../src/components/msa/MSAViewer.jsx');
 
@@ -326,9 +486,9 @@ describe('MSA viewer contract', () => {
     const vThumb = scrollbars[1].firstElementChild;
 
     expect(hThumb.style.width).to.equal('10%');
-    expect(hThumb.style.left).to.equal('90%');
+    expect(hThumb.style.left).to.contain('90%');
     expect(vThumb.style.height).to.equal('10%');
-    expect(vThumb.style.top).to.equal('90%');
+    expect(vThumb.style.top).to.contain('90%');
 
     await act(async () => {
       root.unmount();

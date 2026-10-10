@@ -1,0 +1,92 @@
+.msa-rnd-body {
+  --msa-scrollbar-size: 12px;
+  --msa-thumb-min-size: 24px;
+
+  min-height: 12rem;
+  flex-shrink: 0;
+}
+
+.msa-canvas-host {
+  width: calc(100% - var(--msa-scrollbar-size));
+  height: calc(100% - var(--msa-scrollbar-size));
+}
+
+.msa-scroll-track {
+  touch-action: none;
+}
+
+.msa-scroll-track-horizontal {
+  right: var(--msa-scrollbar-size);
+  height: var(--msa-scrollbar-size);
+}
+
+.msa-scroll-track-vertical {
+  bottom: var(--msa-scrollbar-size);
+  width: var(--msa-scrollbar-size);
+}
+
+.msa-scroll-corner {
+  width: var(--msa-scrollbar-size);
+  height: var(--msa-scrollbar-size);
+}
+
+.msa-scroll-thumb-fill {
+  pointer-events: none;
+}
+
+.msa-scroll-track-horizontal .msa-scroll-thumb {
+  min-width: var(--msa-thumb-min-size);
+  max-width: 100%;
+}
+
+.msa-scroll-track-vertical .msa-scroll-thumb {
+  min-height: var(--msa-thumb-min-size);
+  max-height: 100%;
+}
+
+.msa-scroll-track-horizontal .msa-scroll-thumb-fill {
+  height: 6px;
+  top: calc(50% - 3px);
+  inset-inline: 0;
+}
+
+.msa-scroll-track-vertical .msa-scroll-thumb-fill {
+  width: 6px;
+  left: calc(50% - 3px);
+  inset-block: 0;
+}
+
+.msa-scroll-thumb:hover .msa-scroll-thumb-fill,
+.msa-scroll-thumb[data-dragging='true'] .msa-scroll-thumb-fill {
+  background-color: var(--primary);
+}
+
+.msa-popover {
+  width: min(24rem, calc(100vw - 16px));
+  max-height: var(--radix-popover-content-available-height);
+  overflow-y: auto;
+}
+
+@media (any-pointer: coarse) {
+  .msa-rnd-body {
+    /* The 1px track border leaves a full 44px thumb hit area. */
+    --msa-scrollbar-size: 45px;
+    --msa-thumb-min-size: 44px;
+  }
+
+  .msa-panel button,
+  .msa-popover button:not([role='switch']),
+  .msa-popover input,
+  .msa-popover .msa-letters-control {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .msa-color-options [data-slot='select-item'] {
+    min-height: 44px;
+  }
+
+  .msa-popover input {
+    font-size: max(1rem, 16px);
+  }
+}

@@ -35,6 +35,15 @@ window.
 | **Reset alignment view** | Restores the default alignment viewport. |
 
 The viewer also has horizontal and vertical scrollbars for navigating long alignments and many taxa.
+Focus either scrollbar to use arrow keys, Page Up, Page Down, Home, or End.
+
+Choose **Inspect alignment residue** to read a taxon's name and residue at any row and column.
+The row and column fields use one-based positions and support arrow keys. **Go to residue**
+centers that cell in the canvas. Gaps are identified explicitly, and the inspector follows the
+current row order. Press Escape or choose **Close** to return to the viewer controls.
+
+Open **Alignment options** for row order, coloring, the color legend, and residue letters.
+On short screens, the panel scrolls vertically so enlarged controls leave room for the alignment.
 
 ## Row Order
 

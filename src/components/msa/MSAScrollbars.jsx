@@ -10,7 +10,7 @@ import {
 /**
  * Starts a pointer-capture drag on a scrollbar thumb: tracks pointer moves
  * against the track's bounds along one axis, calling `centerViewportOn` with
- * the resolved item index, until pointer-up releases the drag.
+ * the resolved item index, until the owning pointer ends or capture is lost.
  */
 function startThumbDrag({
   event,
@@ -23,16 +23,19 @@ function startThumbDrag({
   centerViewportOn,
   axisKey,
 }) {
-  event.preventDefault();
-  event.stopPropagation();
-  setDragging(true);
-
+  if (event.button !== 0 || activeDragCleanupRef.current) return;
   const track = trackRef.current;
   if (!track) return;
 
-  event.currentTarget?.setPointerCapture?.(event.pointerId);
+  event.preventDefault();
+  event.stopPropagation();
+  setDragging(true);
+  const thumb = event.currentTarget;
+  const pointerId = event.pointerId;
+  const ownerWindow = track.ownerDocument.defaultView;
 
   const onPointerMove = (moveEvent) => {
+    if (moveEvent.pointerId !== pointerId) return;
     const { trackStart, trackSize } = getTrackBounds(track.getBoundingClientRect());
     const target = getTrackClickTarget({
       pointerClientPosition: getClientPosition(moveEvent),
@@ -43,28 +46,41 @@ function startThumbDrag({
     centerViewportOn({ [axisKey]: target });
   };
 
-  const onPointerUp = () => {
+  const cleanup = () => {
+    if (activeDragCleanupRef.current !== cleanup) return;
+    activeDragCleanupRef.current = null;
     setDragging(false);
-    window.removeEventListener('pointermove', onPointerMove);
-    window.removeEventListener('pointerup', onPointerUp);
-    window.removeEventListener('pointercancel', onPointerUp);
-    if (activeDragCleanupRef.current === onPointerUp) {
-      activeDragCleanupRef.current = null;
+    ownerWindow.removeEventListener('pointermove', onPointerMove);
+    ownerWindow.removeEventListener('pointerup', onPointerEnd);
+    ownerWindow.removeEventListener('pointercancel', onPointerEnd);
+    ownerWindow.removeEventListener('blur', cleanup);
+    thumb.removeEventListener('lostpointercapture', onPointerEnd);
+    if (thumb.hasPointerCapture?.(pointerId)) {
+      thumb.releasePointerCapture(pointerId);
     }
   };
+  function onPointerEnd(endEvent) {
+    if (endEvent.pointerId === pointerId) cleanup();
+  }
 
-  activeDragCleanupRef.current?.();
-  window.addEventListener('pointermove', onPointerMove);
-  window.addEventListener('pointerup', onPointerUp);
-  window.addEventListener('pointercancel', onPointerUp);
-  activeDragCleanupRef.current = onPointerUp;
+  activeDragCleanupRef.current = cleanup;
+  ownerWindow.addEventListener('pointermove', onPointerMove);
+  ownerWindow.addEventListener('pointerup', onPointerEnd);
+  ownerWindow.addEventListener('pointercancel', onPointerEnd);
+  ownerWindow.addEventListener('blur', cleanup);
+  thumb.addEventListener('lostpointercapture', onPointerEnd);
+  try {
+    thumb.setPointerCapture?.(pointerId);
+  } catch {
+    cleanup();
+  }
 }
 
 /**
  * Custom scrollbar overlays that show viewport position within the MSA alignment
  * and allow clicking/dragging to control the DeckGL view state.
  */
-export function MSAScrollbars({ layoutMetrics = null }) {
+export function MSAScrollbars({ layoutMetrics = null, viewportId }) {
   const { processedData, centerViewportOn } = useMSA();
   const { visibleRange } = useMSAViewport();
 
@@ -206,12 +222,14 @@ export function MSAScrollbars({ layoutMetrics = null }) {
       {/* Horizontal Scrollbar - Bottom */}
       <div
         ref={hTrackRef}
-        className="absolute bottom-0 left-0 right-3 h-3 bg-muted/50 backdrop-blur-sm cursor-pointer z-20 border-t border-border"
+        className="msa-scroll-track msa-scroll-track-horizontal absolute bottom-0 left-0 bg-muted/50 cursor-pointer z-20 border-t border-border"
         onClick={handleHTrackClick}
         style={{ marginLeft: `${labelsWidth}px` }}
         aria-label="Horizontal scroll track"
         role="scrollbar"
+        aria-controls={viewportId}
         aria-orientation="horizontal"
+        aria-valuetext={`Columns ${c0 + 1} to ${c1 + 1} of ${cols}`}
         aria-valuenow={c0}
         aria-valuemin={0}
         aria-valuemax={Math.max(0, cols - 1)}
@@ -219,29 +237,31 @@ export function MSAScrollbars({ layoutMetrics = null }) {
         onKeyDown={handleHKeyDown}
       >
         <div
-          className={`absolute top-1 bottom-1 rounded-md transition-colors ${
-            isDraggingH ? 'bg-primary/80' : 'bg-primary/50 hover:bg-primary/70'
-          }`}
+          className="msa-scroll-thumb absolute inset-y-0"
+          data-dragging={isDraggingH}
           style={{
-            left: `${hThumbLeft}%`,
+            left: `min(${hThumbLeft}%, calc(100% - max(${hThumbWidth}%, var(--msa-thumb-min-size))))`,
             width: `${hThumbWidth}%`,
-            minWidth: '24px',
           }}
           onPointerDown={handleHThumbDrag}
           onClick={(e) => e.stopPropagation()}
           aria-label="Horizontal scroll thumb"
-        />
+        >
+          <span className="msa-scroll-thumb-fill absolute rounded-md bg-primary/50" />
+        </div>
       </div>
 
       {/* Vertical Scrollbar - Right */}
       <div
         ref={vTrackRef}
-        className="absolute top-0 right-0 bottom-3 w-3 bg-muted/50 backdrop-blur-sm cursor-pointer z-20 border-l border-border"
+        className="msa-scroll-track msa-scroll-track-vertical absolute top-0 right-0 bg-muted/50 cursor-pointer z-20 border-l border-border"
         onClick={handleVTrackClick}
         style={{ marginTop: `${axisHeight}px` }}
         aria-label="Vertical scroll track"
         role="scrollbar"
+        aria-controls={viewportId}
         aria-orientation="vertical"
+        aria-valuetext={`Rows ${r0 + 1} to ${r1 + 1} of ${rows}`}
         aria-valuenow={r0}
         aria-valuemin={0}
         aria-valuemax={Math.max(0, rows - 1)}
@@ -249,23 +269,23 @@ export function MSAScrollbars({ layoutMetrics = null }) {
         onKeyDown={handleVKeyDown}
       >
         <div
-          className={`absolute left-0.5 right-0.5 rounded-md transition-colors ${
-            isDraggingV ? 'bg-primary/80' : 'bg-primary/50 hover:bg-primary/70'
-          }`}
+          className="msa-scroll-thumb absolute inset-x-0"
+          data-dragging={isDraggingV}
           style={{
-            top: `${vThumbTop}%`,
+            top: `min(${vThumbTop}%, calc(100% - max(${vThumbHeight}%, var(--msa-thumb-min-size))))`,
             height: `${vThumbHeight}%`,
-            minHeight: '24px',
           }}
           onPointerDown={handleVThumbDrag}
           onClick={(e) => e.stopPropagation()}
           aria-label="Vertical scroll thumb"
-        />
+        >
+          <span className="msa-scroll-thumb-fill absolute rounded-md bg-primary/50" />
+        </div>
       </div>
 
       {/* Corner piece to fill gap between scrollbars */}
       <div
-        className="absolute bottom-0 right-0 size-3 bg-muted/50 border-l border-t border-border z-20"
+        className="msa-scroll-corner absolute bottom-0 right-0 bg-muted/50 border-l border-t border-border z-20"
         aria-hidden="true"
       />
     </>

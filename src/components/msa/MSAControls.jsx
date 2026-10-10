@@ -3,7 +3,9 @@ import { useMSA } from './useMSA.js';
 import { Button } from '../ui/button';
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
-import { Separator } from '../ui/separator';
+import { SlidersHorizontal } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { MSAResidueInspector } from './MSAResidueInspector.jsx';
 import {
   Select,
   SelectContent,
@@ -30,6 +32,7 @@ import {
 } from '../../msaViewer/utils/colorSchemeCatalog.js';
 
 export function MSAControls() {
+  const controlsId = React.useId();
   const {
     processedData,
     msaRegion,
@@ -104,106 +107,120 @@ export function MSAControls() {
         aria-label="Alignment viewport controls"
       >
         <MSAViewActions />
+        <MSAResidueInspector />
       </div>
-
-      <Separator
-        orientation="vertical"
-        className="mx-1 self-center opacity-40 data-[orientation=vertical]:h-4"
-      />
-
-      <div
-        className="flex items-center gap-2"
-        role="group"
-        aria-label="Alignment row order controls"
-      >
-        <Button
-          type="button"
-          size="xs"
-          variant="secondary"
-          onClick={handleMatchTreeOrder}
-          disabled={!canMatchTreeOrder}
-          className="h-7 text-2xs font-medium"
-        >
-          Match Tree Order
-        </Button>
-        <Button
-          type="button"
-          size="xs"
-          variant="outline"
-          onClick={handleResetOrder}
-          disabled={!canResetOrder}
-          className="h-7 border-border/40 text-2xs text-muted-foreground hover:text-foreground"
-        >
-          Reset Order
-        </Button>
-      </div>
-
-      <div
-        className="flex items-center gap-2"
-        role="group"
-        aria-label="Alignment coloring controls"
-      >
-        <Label
-          htmlFor="msa-color-scheme"
-          className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider"
-        >
-          Coloring
-        </Label>
-        <Select value={colorScheme} onValueChange={setColorScheme}>
-          <SelectTrigger
-            id="msa-color-scheme"
-            className="w-[160px] h-7 text-xs bg-background/50 border-border/40"
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            aria-label="Alignment options"
+            title="Alignment options"
+            className="text-muted-foreground hover:text-foreground"
           >
-            <SelectValue placeholder="Color Scheme" />
-          </SelectTrigger>
-          <SelectContent className="z-[2000]">
-            {colorSchemeGroups.map((group) => (
-              <SelectGroup key={group.label}>
-                <SelectLabel>{group.label}</SelectLabel>
-                {group.schemes.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
+            <SlidersHorizontal aria-hidden />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          className="msa-popover z-[2000] space-y-4"
+          align="start"
+          collisionPadding={8}
+          aria-label="Alignment options"
+        >
+          <p className="text-sm font-semibold">Alignment options</p>
+
+          <div
+            className="flex flex-wrap items-center gap-2"
+            role="group"
+            aria-label="Alignment row order controls"
+          >
+            <Button
+              type="button"
+              size="xs"
+              variant="secondary"
+              onClick={handleMatchTreeOrder}
+              disabled={!canMatchTreeOrder}
+              className="h-7 text-2xs font-medium"
+            >
+              Match Tree Order
+            </Button>
+            <Button
+              type="button"
+              size="xs"
+              variant="outline"
+              onClick={handleResetOrder}
+              disabled={!canResetOrder}
+              className="h-7 border-border/40 text-2xs text-muted-foreground hover:text-foreground"
+            >
+              Reset Order
+            </Button>
+          </div>
+
+          <div
+            className="flex flex-wrap items-center gap-2"
+            role="group"
+            aria-label="Alignment coloring controls"
+          >
+            <Label
+              htmlFor={`${controlsId}-color-scheme`}
+              className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider"
+            >
+              Coloring
+            </Label>
+            <Select value={colorScheme} onValueChange={setColorScheme}>
+              <SelectTrigger
+                id={`${controlsId}-color-scheme`}
+                className="w-[160px] h-7 text-xs bg-background/50 border-border/40"
+              >
+                <SelectValue placeholder="Color Scheme" />
+              </SelectTrigger>
+              <SelectContent className="msa-color-options z-[2000]">
+                {colorSchemeGroups.map((group) => (
+                  <SelectGroup key={group.label}>
+                    <SelectLabel>{group.label}</SelectLabel>
+                    {group.schemes.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
                 ))}
-              </SelectGroup>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+              </SelectContent>
+            </Select>
+          </div>
 
-      <Separator
-        orientation="vertical"
-        className="mx-1 self-center opacity-40 data-[orientation=vertical]:h-4"
-      />
+          <div
+            className="flex flex-wrap items-center gap-2"
+            role="group"
+            aria-label="Alignment residue display controls"
+          >
+            <Label
+              htmlFor={`${controlsId}-letters`}
+              className="msa-letters-control flex cursor-pointer items-center gap-2 text-xs"
+            >
+              <Switch
+                id={`${controlsId}-letters`}
+                checked={showLetters}
+                onCheckedChange={setShowLetters}
+                aria-label="Toggle residue letters"
+              />
+              Letters
+            </Label>
+          </div>
 
-      <div
-        className="flex items-center gap-2"
-        role="group"
-        aria-label="Alignment residue display controls"
-      >
-        <Switch
-          id="msa-toggle-letters"
-          checked={showLetters}
-          onCheckedChange={setShowLetters}
-          aria-label="Toggle residue letters"
-          className="scale-75"
-        />
-        <Label htmlFor="msa-toggle-letters" className="text-xs">
-          Letters
-        </Label>
-      </div>
-
-      <div className="ml-auto min-w-0">
-        {processedData ? (
-          <MSAColorLegend
-            colorScheme={colorScheme}
-            sequenceType={sequenceType}
-            hasTaxonColors={Object.keys(rowColorMap ?? {}).length > 0}
-          />
-        ) : (
-          <span className="text-xs font-medium text-destructive">No alignment data</span>
-        )}
-      </div>
+          <div className="min-w-0">
+            {processedData ? (
+              <MSAColorLegend
+                colorScheme={colorScheme}
+                sequenceType={sequenceType}
+                hasTaxonColors={Object.keys(rowColorMap ?? {}).length > 0}
+              />
+            ) : (
+              <span className="text-xs font-medium text-destructive">No alignment data</span>
+            )}
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
