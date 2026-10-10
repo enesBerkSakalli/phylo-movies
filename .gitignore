@@ -40,6 +40,12 @@ coverage/
 *.njsproj
 *.sln
 *.sw?
+
+# Local AI tool state
+/.claude/
+/.codex/
+/.impeccable/
+/.serena/
 phylomovie/services/reports/auto
 phylo-io
 backend/logs/debug_log.html
