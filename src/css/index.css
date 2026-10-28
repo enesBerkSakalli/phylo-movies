@@ -197,3 +197,10 @@
     height: 100%;
   }
 }
+
+/* The deck canvas takes keys (deck.gl's keyboard panning), and mjolnir.js sets an inline
+   outline: none on it. The ring sits inside the canvas, which its panel clips at the edge. */
+canvas.phylo-deck-canvas:focus-visible {
+  outline: 2px solid var(--ring) !important;
+  outline-offset: -2px;
+}

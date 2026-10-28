@@ -2,6 +2,7 @@ import {
   BRANCH_ANNOTATION_NONE,
   formatBranchAnnotationLabel,
 } from '../../../../../domain/tree/branchSupportIndex.js';
+import { lastSegmentPoints } from '../../../utils/pathFormat.js';
 
 const SUPPORT_LABEL_Z_OFFSET = 0.18;
 const SUPPORT_LABEL_SIZE_SCALE = 6;
@@ -37,11 +38,14 @@ export function buildSupportLabelData(links = [], supportValueKey = BRANCH_ANNOT
       if (link?.isLeaf === true) return null;
       const text = formatBranchAnnotationLabel(link, supportValueKey);
       if (!text) return null;
-      if (!isFinitePoint(link.sourcePosition) || !isFinitePoint(link.targetPosition)) return null;
+      // On the drawn segment that carries the length (an elbow's run, an arc's radial step); the
+      // parent-to-child chord of an elbow or arc runs between rows, beside other branches.
+      const [from, to] = lastSegmentPoints(link.path) ?? [link.sourcePosition, link.targetPosition];
+      if (!isFinitePoint(from) || !isFinitePoint(to)) return null;
       return {
         id: `support-${link.id ?? link.splitKey ?? text}`,
         text,
-        position: branchNodeAnchor(link.sourcePosition, link.targetPosition),
+        position: branchNodeAnchor(from, to),
         treeSide: link.treeSide,
         split_indices: link.split_indices,
         annotations: link.annotations,

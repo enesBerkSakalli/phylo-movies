@@ -5,6 +5,7 @@ import {
   mergeBounds,
 } from '../utils/TreeBoundsUtils.js';
 import { applyFitAreaToTarget } from '../spatial/projections.js';
+import { LAYOUT_PROJECTION_MODES } from '../layout/hyperbolicProjection/constants.js';
 
 export const VIEWPORT_FIT_MODES = Object.freeze({
   BRANCH: 'branch',
@@ -15,6 +16,16 @@ export const VIEWPORT_AUTO_VISIBLE_FIT_PADDING = 1.2;
 export const VIEWPORT_LABEL_FIT_PADDING = 1.25;
 export const VIEWPORT_BRANCH_FIT_PADDING = 1.12;
 export const VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO = 0.2;
+// FigTree-style fit (TreePane.calibrate): the drawn bounds fill the canvas
+// minus a constant screen margin, instead of a multiplicative zoom-out factor.
+export const VIEWPORT_FIT_PIXEL_PADDING = 16;
+
+// WALRUS_3D keeps its multiplicative fit.
+export function getFitPixelPadding(projectionMode) {
+  return projectionMode === LAYOUT_PROJECTION_MODES.WALRUS_3D
+    ? undefined
+    : VIEWPORT_FIT_PIXEL_PADDING;
+}
 export const VIEWPORT_AUTO_VISIBLE_HIGH_DENSITY_PADDING = 0.55;
 export const VIEWPORT_AUTO_VISIBLE_MEDIUM_DENSITY_PADDING = 0.28;
 export const VIEWPORT_AUTO_VISIBLE_LOW_DENSITY_PADDING = 0.1;
@@ -44,6 +55,7 @@ export function calculateFocusViewport({
   links,
   fitMode = VIEWPORT_FIT_MODES.BRANCH,
   padding,
+  pixelPadding,
   labelSizePx,
   getLabelSize,
   canvasWidth,
@@ -67,7 +79,12 @@ export function calculateFocusViewport({
   const autoVisiblePadding =
     fitMode === VIEWPORT_FIT_MODES.AUTO_VISIBLE ? calculateAutoVisibleDensityPadding(nodes) : 0;
   const fitPadding = getFitPaddingForMode(fitMode);
-  const effectivePadding = padding ?? fitPadding + densityPadding + autoVisiblePadding;
+  // A constant pixel margin replaces the multiplicative padding (an explicit `padding` still wins).
+  const usePixelPadding = padding === undefined && Number.isFinite(pixelPadding);
+  const marginPx = usePixelPadding ? Math.max(0, pixelPadding) : 0;
+  const effectivePadding = usePixelPadding
+    ? 1
+    : (padding ?? fitPadding + densityPadding + autoVisiblePadding);
   const fitArea = selectFitAreaForBounds(
     bounds,
     fitAreas,
@@ -82,8 +99,8 @@ export function calculateFocusViewport({
   const w = Math.max(1e-6, bounds.maxX - bounds.minX);
   const h = Math.max(1e-6, bounds.maxY - bounds.minY);
 
-  const fitWidth = Math.max(1, fitArea.width);
-  const fitHeight = Math.max(1, fitArea.height);
+  const fitWidth = Math.max(1, fitArea.width - 2 * marginPx);
+  const fitHeight = Math.max(1, fitArea.height - 2 * marginPx);
   const zoom = Math.log2(
     Math.min(fitWidth / (w * effectivePadding), fitHeight / (h * effectivePadding))
   );
@@ -142,10 +159,11 @@ export function selectFitAreaForBounds(
   const h = Math.max(1e-6, bounds.maxY - bounds.minY);
   const canvasCenterX = canvasWidth / 2;
   const canvasCenterY = canvasHeight / 2;
-  const maxCenterDriftRatio = Number.isFinite(options.maxCenterDriftRatio)
-    ? Math.max(0, options.maxCenterDriftRatio)
-    : Infinity;
-  const maxCenterDistance = Math.hypot(canvasWidth, canvasHeight) * maxCenterDriftRatio;
+  const maxCenterDistance = maxCenterDistanceFor(
+    canvasWidth,
+    canvasHeight,
+    options.maxCenterDriftRatio
+  );
 
   const scoredAreas = areas.map((area) => {
     const scale = Math.min(
@@ -175,6 +193,11 @@ export function selectFitAreaForBounds(
     if (scored.areaSize !== best.areaSize) return scored.areaSize > best.areaSize ? scored : best;
     return scored.distanceFromCenter < best.distanceFromCenter ? scored : best;
   }, null).area;
+}
+
+function maxCenterDistanceFor(canvasWidth, canvasHeight, maxCenterDriftRatio) {
+  const ratio = Number.isFinite(maxCenterDriftRatio) ? Math.max(0, maxCenterDriftRatio) : Infinity;
+  return Math.hypot(canvasWidth, canvasHeight) * ratio;
 }
 
 function getFitPaddingForMode(fitMode) {

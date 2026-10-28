@@ -84,11 +84,20 @@ export function Dock() {
       }
       saveLayout(storage(), adaptive.layout());
     });
-    const observer = new ResizeObserver(resize);
+    let resizeFrame = null;
+    const observer = new ResizeObserver(() => {
+      if (resizeFrame !== null) return;
+      // Layout can resize dock children; finish the observer delivery first.
+      resizeFrame = requestAnimationFrame(() => {
+        resizeFrame = null;
+        resize();
+      });
+    });
     if (host) observer.observe(host);
 
     cleanupRef.current = () => {
       observer.disconnect();
+      if (resizeFrame !== null) cancelAnimationFrame(resizeFrame);
       layoutSubscription.dispose();
       keptSizes.dispose();
       detach();

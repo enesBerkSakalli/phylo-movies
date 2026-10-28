@@ -71,17 +71,20 @@ export function calculateReadableLabelRadii({
   labelCount,
   fontSize,
   angleSpanRadians,
+  labelsVisible = true,
+  decluttered = false,
 } = {}) {
   const base = Math.max(0, finiteNumber(baseRadius, 0));
   const extensionOffset = finiteNumber(labelOffsets?.EXTENSION, 5);
   const labelOffset = finiteNumber(labelOffsets?.DEFAULT, 20);
   const compactExtensionRadius = base + extensionOffset;
   const compactLabelRadius = compactExtensionRadius + labelOffset;
-  const readableLabelRadius = calculateReadableLabelRadius({
-    labelCount,
-    fontSize,
-    angleSpanRadians,
-  });
+  // Hidden labels need no tangential room, so keep the compact ring; a decluttered tree hides
+  // whatever collides, so it needs none either.
+  const readableLabelRadius =
+    labelsVisible && !decluttered
+      ? calculateReadableLabelRadius({ labelCount, fontSize, angleSpanRadians })
+      : null;
   const labelRadius = Math.max(compactLabelRadius, readableLabelRadius ?? compactLabelRadius);
   const extensionRadius = Math.max(compactExtensionRadius, labelRadius - labelOffset);
 

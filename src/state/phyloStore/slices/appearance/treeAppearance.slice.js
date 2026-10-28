@@ -9,6 +9,7 @@ export const createTreeAppearanceSlice = (set) => ({
   nodeSize: 0.5,
   styleConfig: { labelOffsets: { DEFAULT: 1, EXTENSION: 1 } },
   labelsVisible: true, // Whether node/taxa labels are displayed
+  nodeVisibility: 'all', // 'all' | 'leaves' | 'none' — which node circles are drawn
   branchAnnotationLabelKey: 'none', // Parsed branch annotation field shown on internal branches
 
   // ==========================================================================
@@ -32,6 +33,8 @@ export const createTreeAppearanceSlice = (set) => ({
   },
 
   setLabelsVisible: (visible) => set({ labelsVisible: !!visible }),
+  setNodeVisibility: (visibility) =>
+    set({ nodeVisibility: ['all', 'leaves', 'none'].includes(visibility) ? visibility : 'all' }),
   setBranchAnnotationLabelKey: (valueKey) => {
     const branchAnnotationLabelKey =
       typeof valueKey === 'string' && valueKey.length > 0 ? valueKey : 'none';

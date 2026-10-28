@@ -5,6 +5,7 @@ import {
 } from '../state/phyloStore/store.js';
 import { transformBranchLengths } from '../domain/tree/branchTransform.js';
 import { TidyTreeLayout } from './layout/TidyTreeLayout.js';
+import { getEqualAngleMaxRadius } from './layout/EqualAngleLayout.js';
 import calculateScales, { getMaxScaleValue } from '../domain/tree/scaleUtils.js';
 import {
   createLayoutCacheKey,
@@ -303,18 +304,41 @@ export class TreeLayoutController {
     layoutCalculator.setAngleExtentDegrees(layoutAngleDegrees);
     layoutCalculator.setAngleOffsetDegrees(layoutRotationDegrees);
 
-    const layoutResult = hasUniformScaleValue(this.maxGlobalScale)
-      ? layoutCalculator.constructRadialTreeWithUniformScaling(this.maxGlobalScale)
-      : layoutCalculator.constructRadialTree(false);
     const normalizedProjectionMode = normalizeLayoutProjectionMode(layoutProjectionMode);
-    const projectedLayoutResult = applyLayoutProjection(layoutResult, {
-      projectionMode: normalizedProjectionMode,
-      strength: hyperbolicProjectionStrength,
-      maxRadius: layoutCalculator.getMaxRadius(layoutResult),
-    });
+    const isUnrooted = normalizedProjectionMode === LAYOUT_PROJECTION_MODES.UNROOTED;
+    const isRectangular = normalizedProjectionMode === LAYOUT_PROJECTION_MODES.RECTANGULAR;
+    const isCartesian = isUnrooted || isRectangular;
+
+    // Unrooted is not a warp of the radial layout, so it replaces the
+    // construction rather than post-processing it, and skips uniform scaling:
+    // its coordinates are branch-length units in unbounded world space.
+    const layoutResult = isRectangular
+      ? layoutCalculator.constructRectangularTree()
+      : isUnrooted
+        ? layoutCalculator.constructUnrootedTree({
+            labelsVisible: useAppStore.getState().labelsVisible !== false,
+          })
+        : hasUniformScaleValue(this.maxGlobalScale)
+          ? layoutCalculator.constructRadialTreeWithUniformScaling(this.maxGlobalScale)
+          : layoutCalculator.constructRadialTree(false);
+
+    const projectedLayoutResult = isCartesian
+      ? layoutResult
+      : applyLayoutProjection(layoutResult, {
+          projectionMode: normalizedProjectionMode,
+          strength: hyperbolicProjectionStrength,
+          maxRadius: layoutCalculator.getMaxRadius(layoutResult),
+        });
+
+    // getMaxRadius() reads the accumulated radius the polar layouts build; in
+    // the unrooted embedding radius is derived from position, so extent has to
+    // be measured from the placed coordinates instead.
+    const maxRadius = isCartesian
+      ? getEqualAngleMaxRadius(projectedLayoutResult)
+      : layoutCalculator.getMaxRadius(projectedLayoutResult);
 
     return createLayoutResult(projectedLayoutResult, {
-      max_radius: layoutCalculator.getMaxRadius(projectedLayoutResult),
+      max_radius: maxRadius,
       width: this.width,
       height: this.height,
       margin: layoutCalculator.margin,
@@ -323,6 +347,7 @@ export class TreeLayoutController {
       projectionMode: normalizedProjectionMode,
       hyperbolicProjectionStrength,
       is3dLayout: normalizedProjectionMode === LAYOUT_PROJECTION_MODES.WALRUS_3D,
+      labelsVisible: useAppStore.getState().labelsVisible !== false,
     });
   }
 
@@ -334,7 +359,7 @@ export class TreeLayoutController {
    * Calculates label and extension radii with dynamic positioning.
    */
   _getConsistentRadii(layout) {
-    const { styleConfig } = useAppStore.getState();
+    const { styleConfig, labelsVisible } = useAppStore.getState();
     const offsets = styleConfig?.labelOffsets || { DEFAULT: 20, EXTENSION: 5 };
     const layoutRadius = Number(layout?.max_radius);
     const globalRenderedRadius =
@@ -357,6 +382,7 @@ export class TreeLayoutController {
       labelCount: Array.isArray(layout?.leaves) ? layout.leaves.length : 0,
       fontSize: STABLE_LABEL_LAYOUT_FONT_SIZE,
       angleSpanRadians: calculateLabelAngleSpan(layout?.leaves),
+      labelsVisible: labelsVisible !== false,
     });
   }
 

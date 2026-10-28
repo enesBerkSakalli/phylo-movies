@@ -1,6 +1,20 @@
 import { cluster, hierarchy } from 'd3-hierarchy';
 import { transformBranchLengths } from '../../domain/tree/branchTransform.js';
 import { createLayoutResult } from './LayoutResultAdapter.js';
+import { applyEqualAngleLayout, normalizeEqualAngleExtent } from './EqualAngleLayout.js';
+import { fitTaxonNames } from '../../domain/tree/shortTaxonNames.js';
+import { textWidthPx } from '../../domain/tree/textWidth.js';
+import {
+  LABEL_GAP_PX,
+  RADIAL_NAME_BUDGET_EM,
+} from '../deckgl/builders/data/labels/LabelDataBuilder.js';
+import {
+  labelPixelSize,
+  minNameSpacingPx,
+} from '../deckgl/layers/factory/labels/LabelLayers.js';
+import { NAME_BOX_PAD_PX } from '../deckgl/layers/factory/labels/labelThinning.js';
+import { applyRectangularLayout } from './RectangularLayout.js';
+import { LAYOUT_PROJECTION_MODES } from './hyperbolicProjection/constants.js';
 import {
   assignLayoutNodeIds,
   calculateBranchLengthRadii,
@@ -25,6 +39,26 @@ import {
 /**
  * Tidy tree layout with radial projection and branch-length radii.
  */
+// Daylight makes room for names as drawn when the whole tree fits a canvas about this wide; a
+// fixed width keeps the layout the same at every window size.
+const UNROOTED_LABEL_FIT_PX = 800;
+
+/** The names an unrooted tree draws, as label boxes for daylight (see applyEqualAngleLayout). */
+function unrootedLabelBoxes(root) {
+  const names = root.leaves().map((leaf) => leaf.data?.name ?? '');
+  // The text the label layer draws: long names are cut to the same width budget.
+  const shown = fitTaxonNames(names, RADIAL_NAME_BUDGET_EM);
+  const sizePx = labelPixelSize();
+  return {
+    widthPx: (leaf) => textWidthPx(shown.get(leaf.data?.name) ?? leaf.data?.name ?? '', sizePx),
+    gapPx: LABEL_GAP_PX,
+    heightPx: sizePx,
+    padPx: NAME_BOX_PAD_PX,
+    referencePx: UNROOTED_LABEL_FIT_PX,
+    namePitchPx: minNameSpacingPx(LAYOUT_PROJECTION_MODES.UNROOTED),
+  };
+}
+
 export class TidyTreeLayout {
   constructor(root) {
     const isHierarchyNode = root && typeof root.each === 'function' && root.data !== undefined;
@@ -133,6 +167,31 @@ export class TidyTreeLayout {
     this.uniformScale = uniformScale;
     this.scale = uniformScale;
 
+    return this.root;
+  }
+
+  /**
+   * Equal-angle unrooted embedding. Deliberately skips calcRadius, the tidy
+   * pass and container scaling: position accumulates along edges in
+   * branch-length units, so there is no radius to fit and no centre to fit it
+   * to. Scale stays 1 and the viewport does the work.
+   */
+  constructUnrootedTree({ labelsVisible = false } = {}) {
+    applyEqualAngleLayout(this.root, {
+      angleOffset: this.angleOffset,
+      labels: labelsVisible ? unrootedLabelBoxes(this.root) : undefined,
+    });
+    // Normalised to a fixed world size, deliberately not to the container:
+    // the layout must not change when the window does.
+    this.scale = normalizeEqualAngleExtent(this.root);
+    this.uniformScale = undefined;
+    return this.root;
+  }
+
+  /** Rectangular phylogram in a fixed world extent; see RectangularLayout.js. */
+  constructRectangularTree() {
+    this.scale = applyRectangularLayout(this.root);
+    this.uniformScale = undefined;
     return this.root;
   }
 

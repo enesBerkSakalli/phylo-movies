@@ -84,6 +84,40 @@ describe('MSADeckGLViewer lifecycle', () => {
     });
   });
 
+  it('draws the ruler over the alignment instead of reserving a strip for it', () => {
+    const viewer = makeViewer();
+    viewer.container = { clientWidth: 800, clientHeight: 500 };
+    viewer.LABELS_WIDTH = 100;
+    viewer.AXIS_HEIGHT = 20;
+    viewer.state.rows = 3;
+    viewer.state.cols = 40;
+
+    const views = viewer.buildDeckViews();
+    const byId = Object.fromEntries(views.map((view) => [view.id, view]));
+    // The alignment and its names start at the top and fill the panel.
+    for (const id of ['main', 'labels']) {
+      expect(byId[id].props.y).toBe(0);
+      expect(byId[id].props.height).toBe(500);
+    }
+    // The ruler and its corner follow them, so they are drawn on top without clearing them.
+    const order = views.map((view) => view.id);
+    expect(order.indexOf('axis')).toBeGreaterThan(order.indexOf('main'));
+    expect(order.indexOf('corner')).toBeGreaterThan(order.indexOf('labels'));
+    expect(byId.axis.props.clear).toBe(false);
+    expect(byId.corner.props.clear).toBe(false);
+    // Layout maths no longer set the ruler's height aside.
+    expect(viewer._getViewportDimensions().axisHeight).toBe(0);
+
+    // A translucent strip under the ruler and its corner lets the first rows show through.
+    const backdrops = viewer.buildRulerBackdropLayers();
+    expect(backdrops.map((layer) => layer.props.viewId).sort()).toEqual(['axis', 'corner']);
+    for (const layer of backdrops) {
+      const alpha = layer.props.getFillColor[3];
+      expect(alpha).toBeGreaterThan(0);
+      expect(alpha).toBeLessThan(255);
+    }
+  });
+
   it('updates data, presentation, and regions in one render', () => {
     const viewer = makeViewer();
 

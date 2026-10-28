@@ -1,7 +1,10 @@
 import { shortestAngle, crossesAngle, longArcDelta } from '../../domain/math/mathUtils.js';
 
 const TAU = Math.PI * 2;
-const CARTESIAN_PROJECTION_MODES = new Set(['walrus-3d']);
+// Modes whose node positions are accumulated in x/y rather than derived from a
+// radius, so interpolation must lerp the coordinates directly instead of
+// blending angle and radius around a centre that these layouts do not have.
+const CARTESIAN_PROJECTION_MODES = new Set(['walrus-3d', 'unrooted', 'rectangular']);
 const Z_EPSILON = 1e-9;
 
 export function interpolateScalar(from, to, t, fallback = 0) {

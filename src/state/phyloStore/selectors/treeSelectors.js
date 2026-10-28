@@ -131,3 +131,6 @@ export { selectTimelineFrameAtIndex } from './selectTimelineFrameAtIndex.js';
 export { selectTimelineFrames } from './selectTimelineFrames.js';
 export { selectUpcomingChangesEnabled } from './selectUpcomingChangesEnabled.js';
 export { selectViewsConnected } from './selectViewsConnected.js';
+
+export { selectMsaRowSplitIndex } from './selectMsaRowSplitIndex.js';
+export { selectSetMsaRowSplitIndex } from './selectSetMsaRowSplitIndex.js';

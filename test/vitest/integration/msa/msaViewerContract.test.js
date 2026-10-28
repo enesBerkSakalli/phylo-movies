@@ -449,6 +449,36 @@ describe('MSA viewer contract', () => {
     });
   });
 
+  it('states the alignment summary in the status overlay', async () => {
+    const { MSAViewer } = await import('../../../../src/components/msa/MSAViewer.jsx');
+
+    msaContext = createContext();
+    const { container, root } = await renderReact(React.createElement(MSAViewer));
+    expect(container.textContent).toContain('2 sequences · 4 columns · DNA');
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it('places the toolbar in the empty corner above the row labels, no taller than the ruler', async () => {
+    const { MSAViewer } = await import('../../../../src/components/msa/MSAViewer.jsx');
+    const { MSA_VIEWER_CONSTANTS } = await import('../../../../src/msaViewer/config.js');
+
+    msaContext = createContext();
+    const toolbar = React.createElement('div', { role: 'toolbar', 'aria-label': 'Test toolbar' });
+    const { container, root } = await renderReact(React.createElement(MSAViewer, { toolbar }));
+    const viewport = container.querySelector('[aria-label="Alignment viewport"]');
+    const corner = viewport.querySelector('.msa-corner-controls');
+    expect(corner).not.toBeNull();
+    expect(corner.querySelector('[aria-label="Test toolbar"]')).not.toBeNull();
+    expect(corner.style.height).toBe(`${MSA_VIEWER_CONSTANTS.AXIS_HEIGHT}px`);
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
   it('positions custom scrollbars from viewer layout metrics', async () => {
     const { MSAScrollbars } = await import('../../../../src/components/msa/MSAScrollbars.jsx');
 

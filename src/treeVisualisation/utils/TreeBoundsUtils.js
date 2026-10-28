@@ -1,5 +1,5 @@
+import { textWidthPx } from '../../domain/tree/textWidth.js';
 import {
-  LABEL_BOUNDS_CHAR_WIDTH_RATIO,
   LABEL_BOUNDS_LINE_HEIGHT_RATIO,
   LABEL_BOUNDS_MAX_WIDTH_PX,
   resolveLabelBoundsSize,
@@ -49,7 +49,6 @@ export function calculateLabelBounds(labels, options = {}) {
   if (labels.length === 0) return null;
 
   const sizePx = resolveLabelBoundsSize(options.labelSizePx, options.getLabelSize);
-  const charWidth = LABEL_BOUNDS_CHAR_WIDTH_RATIO * sizePx;
   const fontHeight = LABEL_BOUNDS_LINE_HEIGHT_RATIO * sizePx;
   let minX = Infinity,
     maxX = -Infinity,
@@ -59,7 +58,7 @@ export function calculateLabelBounds(labels, options = {}) {
   for (const label of labels) {
     const [x, y] = label.position;
     const text = label.text || '';
-    const width = Math.min(LABEL_BOUNDS_MAX_WIDTH_PX, text.length * charWidth);
+    const width = Math.min(LABEL_BOUNDS_MAX_WIDTH_PX, textWidthPx(text, sizePx));
     // deck.gl draws getAngle counter-clockwise on screen, and the orthographic
     // view is y-down (flipY), so the world-space rotation is the negated angle.
     const rotationRad = -(label.rotation || 0);
@@ -213,12 +212,12 @@ export function calculateTreeVisualRadius(layerData, center = [0, 0], labelSizeP
   }
 
   if (labelSizePx > 0 && layerData.labels.length > 0) {
-    let longestLabelLength = 0;
+    let longestLabelWidth = 0;
     for (const label of layerData.labels) {
-      const length = (label.text ?? label.name ?? '').length;
-      if (length > longestLabelLength) longestLabelLength = length;
+      const width = textWidthPx(label.text ?? label.name ?? '', labelSizePx);
+      if (width > longestLabelWidth) longestLabelWidth = width;
     }
-    maxRadius += longestLabelLength * labelSizePx * 0.6;
+    maxRadius += longestLabelWidth;
   }
 
   return maxRadius;

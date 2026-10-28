@@ -94,7 +94,8 @@ export function MSAControls() {
 
   return (
     <div
-      className="flex shrink-0 flex-wrap items-center gap-2 overflow-visible border-b border-border/60 bg-muted/30 px-2 py-1"
+      // Ruler-height buttons for the viewer's corner; 4 px gaps keep 24 px between targets.
+      className="flex items-center gap-[4px] [&_button]:size-[20px] [&_svg]:size-[14px]"
       role="toolbar"
       aria-label="Alignment viewer controls"
     >

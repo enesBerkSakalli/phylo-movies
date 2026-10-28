@@ -11,7 +11,8 @@ import type {
 export type NavigationDirection = 'forward' | 'backward' | 'jump';
 export type CameraMode = 'orthographic' | 'orbit';
 export type AnimationStage = 'COLLAPSE' | 'EXPAND' | 'REORDER' | null;
-export type LayoutProjectionMode = 'radial' | 'hyperbolic' | 'walrus-3d';
+export type LayoutProjectionMode =
+  'radial' | 'hyperbolic' | 'walrus-3d' | 'unrooted' | 'rectangular';
 export interface TimelineCursorFrameOptions {
   occurrence?: 'semantic' | 'last';
 }
@@ -169,6 +170,7 @@ export interface AppStoreState {
   nodeSize: number;
   styleConfig: Record<string, unknown>;
   labelsVisible: boolean;
+  nodeVisibility: 'all' | 'leaves' | 'none';
   branchAnnotationLabelKey: string;
 
   // From treeLayout.slice
@@ -200,6 +202,7 @@ export interface AppStoreState {
   msaRegion: MsaRegionRange | null;
   msaPreviousRegion: MsaRegionRange | null;
   msaRowOrder: string[] | null;
+  msaRowSplitIndex: number | null;
   isMsaViewerOpen: boolean;
   syncMSAEnabled: boolean;
 
@@ -284,6 +287,7 @@ export interface AppStoreState {
   setStrokeWidth: (width: number) => void;
   setNodeSize: (size: number) => void;
   setLabelsVisible: (visible: boolean) => void;
+  setNodeVisibility: (visibility: 'all' | 'leaves' | 'none') => void;
   setBranchAnnotationLabelKey: (valueKey: string) => void;
 
   setBranchTransformation: (transform: string) => void;
@@ -312,8 +316,10 @@ export interface AppStoreState {
   clearMsaRegion: () => void;
   setMsaPreviousRegion: (start: number, end: number) => void;
   clearMsaPreviousRegion: () => void;
-  setMsaRowOrder: (order: string[]) => void;
+  setMsaRowOrder: (order: string[] | null) => void;
   clearMsaRowOrder: () => void;
+  setMsaRowSplitIndex: (index: number | null) => void;
+  clearMsaRowSplitIndex: () => void;
   openMsaViewer: () => void;
   closeMsaViewer: () => void;
   setSyncMSAEnabled: (enabled: boolean) => void;

@@ -9,7 +9,6 @@
  * - Frustum Culling: Checking if an object is within the camera's view.
  */
 
-export const LABEL_BOUNDS_CHAR_WIDTH_RATIO = 0.6;
 export const LABEL_BOUNDS_LINE_HEIGHT_RATIO = 1.2;
 export const LABEL_BOUNDS_MAX_WIDTH_PX = 2000;
 export const LABEL_BOUNDS_DEFAULT_SIZE_PX = 16;

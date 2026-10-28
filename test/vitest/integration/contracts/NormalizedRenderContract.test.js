@@ -167,18 +167,20 @@ describe('normalized render contract', () => {
   });
 
   it('uses deck.gl screen-space floors for small rendered tree elements', () => {
+    // Line weight is a screen-pixel width; layers follow the camera through widthScale.
     expect(LAYER_CONFIGS.links.defaultProps).toMatchObject({
-      widthUnits: 'common',
+      widthUnits: 'pixels',
       widthMinPixels: 1,
     });
+    expect(LAYER_CONFIGS.labels.defaultProps).toMatchObject({ sizeUnits: 'pixels' });
     expect(LAYER_CONFIGS.links.defaultProps).not.toHaveProperty('widthMaxPixels');
     expect(LAYER_CONFIGS.links.defaultProps).not.toHaveProperty('billboard');
+    // Node circles are screen-sized and capped, so zooming separates crowded tips.
     expect(LAYER_CONFIGS.nodes.defaultProps).toMatchObject({
-      radiusUnits: 'common',
-      radiusMinPixels: 0.5,
-      billboard: true,
+      radiusUnits: 'pixels',
+      radiusMinPixels: 1,
+      radiusMaxPixels: 8,
     });
-    expect(LAYER_CONFIGS.nodes.defaultProps).not.toHaveProperty('radiusMaxPixels');
     expect(LAYER_CONFIGS.nodes.defaultProps).not.toHaveProperty('lineWidthMinPixels');
     expect(LAYER_CONFIGS.nodes.defaultProps).not.toHaveProperty('lineWidthMaxPixels');
   });

@@ -20,6 +20,7 @@ import { describeCursor } from '../../timeline/describeCursor.js';
 import {
   buildMsaWindowOverlapStatus,
   buildMsaWindowStatus,
+  describeAlignment,
   formatMsaWindowOverlapLabel,
   formatMsaWindowOverlapTooltip,
   formatMsaWindowStatusLabel,
@@ -38,11 +39,16 @@ function rangesEqual(left, right) {
   );
 }
 
-export function MSAViewer() {
+/**
+ * `toolbar` floats in the ruler's corner over the first row labels, and the summary joins the
+ * status overlay: like the ruler, neither takes a row of its own.
+ */
+export function MSAViewer({ toolbar = null } = {}) {
   const {
     processedData,
     msaRegion,
     msaPreviousRegion,
+    msaRowSplitIndex,
     showLetters,
     colorScheme,
     rowColorMap,
@@ -125,6 +131,7 @@ export function MSAViewer() {
       data: processedData,
       currentRegion: msaRegion,
       previousRegion: msaPreviousRegion,
+      rowSplitIndex: msaRowSplitIndex,
       showLetters,
       colorScheme,
       rowColorMap,
@@ -139,7 +146,15 @@ export function MSAViewer() {
       publishedRangeRef.current = null;
       setVisibleRangeRef.current(null);
     }
-  }, [colorScheme, msaPreviousRegion, msaRegion, processedData, rowColorMap, showLetters]);
+  }, [
+    colorScheme,
+    msaPreviousRegion,
+    msaRegion,
+    msaRowSplitIndex,
+    processedData,
+    rowColorMap,
+    showLetters,
+  ]);
 
   useEffect(() => {
     const viewer = viewerRef.current;
@@ -157,14 +172,22 @@ export function MSAViewer() {
         role="group"
         aria-label="Alignment viewport"
       >
-        <MSAStatusOverlay />
+        {toolbar && (
+          <div
+            className="msa-corner-controls absolute left-0 top-0 z-20 flex items-center bg-background/85 px-1 backdrop-blur-sm"
+            style={{ height: MSA_VIEWER_CONSTANTS.AXIS_HEIGHT }}
+          >
+            {toolbar}
+          </div>
+        )}
+        <MSAStatusOverlay summary={describeAlignment(processedData)} />
       </div>
       <MSAScrollbars layoutMetrics={processedData ? layoutMetrics : null} viewportId={viewportId} />
     </div>
   );
 }
 
-function MSAStatusOverlay() {
+function MSAStatusOverlay({ summary }) {
   const { visibleRange } = useMSAViewport();
   const timeline = useAppStore(selectTimeline);
   const timelineCursor = useAppStore(selectTimelineCursor);
@@ -201,6 +224,12 @@ function MSAStatusOverlay() {
         <MSAStatusClipButton clipped onToggle={() => setStatusClipped(false)} />
       ) : (
         <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-end gap-1.5 rounded-md border border-border/60 bg-background/85 px-2 py-1 text-2xs text-foreground shadow-md backdrop-blur-sm tabular-nums">
+          {summary && (
+            <>
+              <span className="text-muted-foreground">{summary}</span>
+              <span className="text-muted-foreground/60">|</span>
+            </>
+          )}
           <span>
             Rows: {visibleRange.r0 + 1}-{visibleRange.r1 + 1}
           </span>

@@ -54,6 +54,8 @@ export function LayoutTransform({
   );
 
   const isHyperbolic = layoutProjectionMode === LAYOUT_PROJECTION_MODES.HYPERBOLIC;
+  const isUnrooted = layoutProjectionMode === LAYOUT_PROJECTION_MODES.UNROOTED;
+  const isRectangular = layoutProjectionMode === LAYOUT_PROJECTION_MODES.RECTANGULAR;
   const strengthPercent = Math.round(Number(hyperbolicProjectionStrength || 0) * 100);
 
   return (
@@ -83,6 +85,8 @@ export function LayoutTransform({
                   <SelectItem value={LAYOUT_PROJECTION_MODES.WALRUS_3D}>
                     Hyperbolic 3D (Walrus)
                   </SelectItem>
+                  <SelectItem value={LAYOUT_PROJECTION_MODES.UNROOTED}>Unrooted</SelectItem>
+                  <SelectItem value={LAYOUT_PROJECTION_MODES.RECTANGULAR}>Rectangular</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
@@ -102,33 +106,43 @@ export function LayoutTransform({
             />
           )}
 
-          <LabeledSlider
-            id="layout-angle"
-            label="Tree Spread"
-            title="Set how much of the circle the radial tree uses"
-            valueDisplay={`${layoutAngleDegrees || 360}°`}
-            value={Number(layoutAngleDegrees || 360)}
-            min={90}
-            max={360}
-            step={10}
-            onChange={handleAngleChange}
-          />
+          {!isUnrooted && !isRectangular && (
+            <LabeledSlider
+              id="layout-angle"
+              label="Tree Spread"
+              title="Set how much of the circle the radial tree uses"
+              valueDisplay={`${layoutAngleDegrees || 360}°`}
+              value={Number(layoutAngleDegrees || 360)}
+              min={90}
+              max={360}
+              step={10}
+              onChange={handleAngleChange}
+            />
+          )}
 
-          <LabeledSlider
-            id="layout-rotation"
-            label="Rotation"
-            title="Rotate the tree"
-            valueDisplay={`${layoutRotationDegrees || 0}°`}
-            value={Number(layoutRotationDegrees || 0)}
-            min={0}
-            max={360}
-            step={5}
-            onChange={handleRotationChange}
-          />
+          {!isRectangular && (
+            <LabeledSlider
+              id="layout-rotation"
+              label="Rotation"
+              title="Rotate the tree"
+              valueDisplay={`${layoutRotationDegrees || 0}°`}
+              value={Number(layoutRotationDegrees || 0)}
+              min={0}
+              max={360}
+              step={5}
+              onChange={handleRotationChange}
+            />
+          )}
 
           <div className="flex items-start gap-2 text-2xs text-muted-foreground italic">
             <Compass className="size-3 shrink-0 mt-1" />
-            <span>Spread controls how open the tree is; rotation turns the whole tree.</span>
+            <span>
+              {isRectangular
+                ? 'Rows follow the tree order; zoom in to reveal taxon labels.'
+                : isUnrooted
+                  ? 'Rotation turns the whole unrooted tree.'
+                  : 'Spread controls how open the tree is; rotation turns the whole tree.'}
+            </span>
           </div>
         </div>
       </SidebarMenuSubItem>

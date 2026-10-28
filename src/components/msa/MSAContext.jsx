@@ -4,6 +4,7 @@ import {
   selectMsaPreviousRegion,
   selectMsaRegion,
   selectMsaRowOrder,
+  selectMsaRowSplitIndex,
   selectMsaSequences,
   selectTaxaColorVersion,
   selectTaxaGrouping,
@@ -19,6 +20,7 @@ export function MSAProvider({ children }) {
   const msaRegion = useAppStore(selectMsaRegion);
   const msaPreviousRegion = useAppStore(selectMsaPreviousRegion);
   const msaRowOrder = useAppStore(selectMsaRowOrder);
+  const msaRowSplitIndex = useAppStore(selectMsaRowSplitIndex);
   const taxaGrouping = useAppStore(selectTaxaGrouping);
   const taxaColorVersion = useAppStore(selectTaxaColorVersion);
 
@@ -111,6 +113,7 @@ export function MSAProvider({ children }) {
       processedData,
       msaRegion,
       msaPreviousRegion,
+      msaRowSplitIndex,
       showLetters,
       setShowLetters,
       colorScheme,
@@ -126,6 +129,7 @@ export function MSAProvider({ children }) {
       processedData,
       msaRegion,
       msaPreviousRegion,
+      msaRowSplitIndex,
       showLetters,
       colorScheme,
       rowColorMap,

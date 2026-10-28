@@ -12,7 +12,8 @@ export function createTaxonTooltip(info, taxaGrouping) {
   const obj = info?.object;
   if (!obj) return null;
 
-  const taxonName = obj.text || obj.name;
+  // A label's text can be shortened; its name is the full taxon name.
+  const taxonName = obj.name || obj.text;
   if (!taxonName) return null;
 
   const tooltipLines = [taxonName];

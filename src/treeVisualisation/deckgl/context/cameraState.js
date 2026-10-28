@@ -3,7 +3,14 @@ import { VIEW_IDS, DEFAULT_ORTHO_STATE, DEFAULT_ORBIT_STATE } from './viewConsta
 
 export function createDeckViews(controllerConfig = true) {
   return {
-    orthographic: new OrthographicView({ id: VIEW_IDS.ORTHO, controller: controllerConfig }),
+    // The ortho view scales z with zoom; a deep near/far range keeps small z offsets
+    // (nodes, history highlights) from being clipped when zoomed in.
+    orthographic: new OrthographicView({
+      id: VIEW_IDS.ORTHO,
+      controller: controllerConfig,
+      near: -1000,
+      far: 1000,
+    }),
     orbit: new OrbitView({
       id: VIEW_IDS.ORBIT,
       fov: 50,

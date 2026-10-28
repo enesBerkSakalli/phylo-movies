@@ -22,6 +22,8 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       datasetVersion: (get().datasetVersion ?? 0) + 1,
       timeline: null,
       selectedTimelineSegmentIndex: null,
+      contextMenuOpen: false,
+      contextMenuNode: null,
     });
   },
 
@@ -78,6 +80,8 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       temporalEvents,
       selectedTimelineSegmentIndex: null,
       labelsVisible: shouldShowLabelsByDefault(leafNamesByIndex),
+      // Above the label threshold, overlapping tip circles hide branch colour.
+      nodeVisibility: shouldShowLabelsByDefault(leafNamesByIndex) ? 'all' : 'none',
       frameIndex: 0,
       playing: false,
     });

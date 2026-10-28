@@ -13,8 +13,9 @@ import { CopyImageButton } from '../media/CopyImageButton.jsx';
 import { SaveImageButton } from '../media/SaveImageButton.jsx';
 import { TourLauncher } from '../../features/tours/TourLauncher.jsx';
 
+// Every button in a group is one size (`icon`, 32 px), 44 px under a finger.
 const TOOL_GROUP_CLASS =
-  'flex items-center gap-1 rounded-md border border-border/60 bg-background/85 p-1 shadow-lg backdrop-blur-sm';
+  'flex items-center gap-1 rounded-md border border-border/60 bg-background/85 p-1 shadow-lg backdrop-blur-sm pointer-coarse:[&_[data-slot=button]]:size-[44px]';
 
 export function TreeCanvasControls() {
   const controller = useAppStore(selectTreeController);
@@ -54,7 +55,7 @@ export function TreeCanvasControls() {
           <Button
             type="button"
             variant="ghost"
-            size="icon-xs"
+            size="icon"
             aria-label="Fit all visible content"
             disabled={disabled}
             onClick={fitVisibleContent}
@@ -67,7 +68,7 @@ export function TreeCanvasControls() {
           <Button
             type="button"
             variant="ghost"
-            size="icon-xs"
+            size="icon"
             aria-label="Zoom out tree"
             disabled={disabled}
             onClick={zoomOut}
@@ -80,7 +81,7 @@ export function TreeCanvasControls() {
           <Button
             type="button"
             variant="ghost"
-            size="icon-xs"
+            size="icon"
             aria-label="Reset tree view"
             disabled={disabled}
             onClick={resetView}
@@ -93,7 +94,7 @@ export function TreeCanvasControls() {
           <Button
             type="button"
             variant="ghost"
-            size="icon-xs"
+            size="icon"
             aria-label="Zoom in tree"
             disabled={disabled}
             onClick={zoomIn}

@@ -24,7 +24,7 @@ import {
   handleContainerResize,
 } from './interaction/InteractionHandlers.js';
 import { ViewportManager } from './viewport/ViewportManager.js';
-import { VIEWPORT_FIT_MODES } from './viewport/viewportFit.js';
+import { getAutoFitLabelOptions, getFitPixelPadding } from './viewport/viewportFit.js';
 import { getClipboardOverlay } from './utils/ClipboardUtils.js';
 import { createLayoutCacheKey } from './utils/layoutCacheKey.js';
 import { getSplitKey } from '../domain/tree/splits.js';
@@ -221,10 +221,12 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
 
     // Rerender when camera moves to update dynamic halo scaling (outlineWidth depends on zoom)
     // OPTIMIZATION: Throttle to avoid redundant renders during pan/zoom
-    this.deckContext.addViewStateListener((viewState) => this._handleViewStateChange(viewState));
+    this.deckContext.addViewStateListener((viewState, meta) =>
+      this._handleViewStateChange(viewState, meta)
+    );
   }
 
-  _handleViewStateChange({ zoom } = {}) {
+  _handleViewStateChange({ zoom } = {}, { inTransition = false } = {}) {
     // Skip layer rebuilds if animation is running (AnimationRunner handles its own renders).
     if (this.animationRunner.isRunning) return;
 
@@ -237,7 +239,8 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     if (zoomDelta < 0.01) return; // Threshold: ~1% zoom change
 
     this._lastZoom = zoom;
-    this._hasUserViewportInteraction = true;
+    // Only a person zooming stops resize refits; the fit's own animation must not.
+    if (!inTransition) this._hasUserViewportInteraction = true;
     this._scheduleRender();
   }
 
@@ -364,11 +367,14 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
       ...(this._lastLayerData.connectors || []),
     ];
 
-    this.viewportManager.focusOnTree(nodes, labelsVisible ? this._lastLayerData.labels : [], {
-      fitMode:
-        options.fitMode ?? (labelsVisible ? VIEWPORT_FIT_MODES.LABELS : VIEWPORT_FIT_MODES.BRANCH),
+    const labels = labelsVisible ? this._lastLayerData.labels || [] : [];
+    const state = useAppStore.getState();
+    // Same label rule as the automatic fit: many labels frame by anchors, not full text.
+    this.viewportManager.focusOnTree(nodes, labels, {
+      ...(options.fitMode ? { fitMode: options.fitMode } : getAutoFitLabelOptions(labels.length)),
       duration: options.duration ?? 350,
       padding: options.padding,
+      pixelPadding: getFitPixelPadding(state.layoutProjectionMode),
       links,
     });
   }
@@ -533,6 +539,7 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
           layoutProjectionMode,
           hyperbolicProjectionStrength,
           labelOffsets: offsets,
+          labelsVisible: state.labelsVisible !== false,
           treeIndex,
           treeSide: 'left',
           renderMode: 'animation',
@@ -560,7 +567,8 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
   }
 
   _getLinkGeometryMode(state = useAppStore.getState()) {
-    if (state?.layoutProjectionMode === 'walrus-3d') return 'straight';
+    if (['walrus-3d', 'unrooted'].includes(state?.layoutProjectionMode)) return 'straight';
+    if (state?.layoutProjectionMode === 'rectangular') return 'rectangular-elbow';
     return state?.linkGeometryMode === 'straight' ? 'straight' : 'radial-elbow';
   }
 
@@ -767,7 +775,13 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
   }
 
   _createLayerRenderContext(layerData = {}) {
-    return createLayerRenderContext(useAppStore.getState(), layerData);
+    // Camera values come from here so the pinned-tree overlay, whose data carries no zoom,
+    // scales branch width against the same fit zoom as the main tree.
+    return createLayerRenderContext(useAppStore.getState(), {
+      ...layerData,
+      zoom: layerData.zoom ?? this.deckContext?.getViewState?.()?.zoom,
+      fitZoom: this.viewportManager?.fitZoom,
+    });
   }
 
   _handleLayerDataChange() {

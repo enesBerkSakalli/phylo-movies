@@ -72,7 +72,6 @@ describe('areBoundsInView', () => {
 
 describe('label bounds constants', () => {
   it('exports named label bounds heuristic constants', () => {
-    expect(spatialBounds.LABEL_BOUNDS_CHAR_WIDTH_RATIO).toBe(0.6);
     expect(spatialBounds.LABEL_BOUNDS_LINE_HEIGHT_RATIO).toBe(1.2);
     expect(spatialBounds.LABEL_BOUNDS_MAX_WIDTH_PX).toBe(2000);
     expect(spatialBounds.LABEL_BOUNDS_DEFAULT_SIZE_PX).toBe(16);

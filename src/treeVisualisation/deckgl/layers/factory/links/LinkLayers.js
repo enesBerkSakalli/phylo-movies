@@ -5,6 +5,7 @@
  * - Leaf Extensions
  */
 import { hasLifecycleHighlightedLinks } from '../../styles/links/linkUtils.js';
+import { getZoomWidthScale } from '../../styles/links/zoomWidthScale.js';
 import { safeDeckPath } from '../../../utils/pathFormat.js';
 
 // ============================================================================
@@ -55,6 +56,7 @@ export function getLinkOutlinesLayerProps(links, state, layerStyles) {
     getColor: (d) => layerStyles.getLinkOutlineColor(d, cached),
     getWidth: (d) => layerStyles.getLinkOutlineWidth(d, cached),
     getDashArray: (d) => layerStyles.getLinkOutlineDashArray(d, cached),
+    widthScale: getZoomWidthScale(state),
     dashJustified: false,
     updateTriggers: {
       getColor: [
@@ -115,6 +117,7 @@ export function getLinksLayerProps(links, state, layerStyles) {
     getColor: (d) => layerStyles.getLinkColor(d, cached),
     getWidth: (d) => layerStyles.getLinkWidth(d, cached),
     getDashArray: (d) => layerStyles.getLinkDashArray(d, cached),
+    widthScale: getZoomWidthScale(state),
     dashJustified: false,
     updateTriggers: {
       getColor: [

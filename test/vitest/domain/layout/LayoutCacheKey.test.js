@@ -68,6 +68,12 @@ describe('layout cache key', () => {
     ).not.toBe(baseKey);
     expect(createLayoutCacheKey({ ...baseOptions, maxGlobalScale: 20 })).not.toBe(baseKey);
     expect(
+      createLayoutCacheKey({ ...baseOptions, state: { ...baseState, labelsVisible: false } })
+    ).not.toBe(baseKey);
+    expect(
+      createLayoutCacheKey({ ...baseOptions, state: { ...baseState, labelsVisible: true } })
+    ).toBe(baseKey);
+    expect(
       createLayoutCacheKey({ ...baseOptions, state: { ...baseState, treeHydrationVersion: 1 } })
     ).not.toBe(baseKey);
   });

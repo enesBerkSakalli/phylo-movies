@@ -33,19 +33,46 @@ export class DeckGLTreeLayerDataFactory {
       canvasHeight: layout.height,
       radiusConfig,
     });
-    const effectiveLinkGeometryMode =
-      layout?.projectionMode === LAYOUT_PROJECTION_MODES.WALRUS_3D ? 'straight' : linkGeometryMode;
+    const usesStraightLinks =
+      layout?.projectionMode === LAYOUT_PROJECTION_MODES.WALRUS_3D ||
+      layout?.projectionMode === LAYOUT_PROJECTION_MODES.UNROOTED;
+    const effectiveLinkGeometryMode = usesStraightLinks
+      ? 'straight'
+      : layout?.projectionMode === LAYOUT_PROJECTION_MODES.RECTANGULAR
+        ? 'rectangular-elbow'
+        : linkGeometryMode;
     const links = this.linkDataBuilder.convertLinks(layout.links, {
       linkGeometryMode: effectiveLinkGeometryMode,
     });
-    const labels = this.labelDataBuilder.convertLabels(
-      layout.leaves,
-      labelRadius || extensionRadius
-    );
-    const extensions = this.extensionDataBuilder.convertExtensions(
-      layout.leaves,
-      extensionRadius || labelRadius
-    );
+    const projectionMode = layout?.projectionMode;
+    // Hidden labels leave nothing for a ring (extensions, label dots) to connect
+    // to; the leaf nodes already mark the tips. 3D and comparison keep the ring.
+    const dropLabels =
+      layout?.labelsVisible === false &&
+      projectionMode !== LAYOUT_PROJECTION_MODES.WALRUS_3D &&
+      renderMode !== 'comparison';
+    // Unrooted and rectangular labels sit just beyond their leaf, so no ring.
+    const dropExtensions =
+      dropLabels ||
+      projectionMode === LAYOUT_PROJECTION_MODES.UNROOTED ||
+      projectionMode === LAYOUT_PROJECTION_MODES.RECTANGULAR;
+    const labels = dropLabels
+      ? []
+      : renderMode === 'comparison'
+        ? // Comparison connectors anchor on the label ring; keep its world-space gap.
+          this.labelDataBuilder
+            .convertLabels(
+              layout.leaves,
+              labelRadius || extensionRadius,
+              labelRadius && extensionRadius ? labelRadius - extensionRadius : 0
+            )
+            .map((label) => ({ ...label, pixelOffset: undefined }))
+        : // Labels start where the guide line ends (tips for unrooted/rectangular);
+          // the gap to the text is a pixel offset, so it stays constant when zooming.
+          this.labelDataBuilder.convertLabels(layout.leaves, extensionRadius || labelRadius, 0);
+    const extensions = dropExtensions
+      ? []
+      : this.extensionDataBuilder.convertExtensions(layout.leaves, extensionRadius || labelRadius);
 
     const layerData = { nodes, links, labels, extensions };
     applyRenderContext(layerData, { treeIndex, treeSide, renderMode });

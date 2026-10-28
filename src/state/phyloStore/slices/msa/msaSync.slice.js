@@ -14,6 +14,7 @@ export const createMsaViewerSlice = (set, get) => ({
   msaRegion: null,
   msaPreviousRegion: null,
   msaRowOrder: null,
+  msaRowSplitIndex: null,
 
   // ==========================================================================
   // STATE: MSA Viewer UI
@@ -40,6 +41,7 @@ export const createMsaViewerSlice = (set, get) => ({
       msaRegion: null,
       msaPreviousRegion: null,
       msaRowOrder: null,
+      msaRowSplitIndex: null,
     });
   },
 
@@ -100,6 +102,12 @@ export const createMsaViewerSlice = (set, get) => ({
   },
 
   clearMsaRowOrder: () => set({ msaRowOrder: null }),
+
+  setMsaRowSplitIndex: (index) => {
+    set({ msaRowSplitIndex: Number.isInteger(index) && index > 0 ? index : null });
+  },
+
+  clearMsaRowSplitIndex: () => set({ msaRowSplitIndex: null }),
 
   // ==========================================================================
   // ACTIONS: MSA Viewer UI

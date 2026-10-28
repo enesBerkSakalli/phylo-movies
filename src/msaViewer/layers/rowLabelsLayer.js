@@ -6,6 +6,11 @@
 import { TextLayer } from '@deck.gl/layers';
 import { colorToRgb, getReadableTextColor } from '../../services/ui/colorUtils.js';
 
+// Printable ASCII plus the ellipsis that starts a shortened name. A fixed set: 'auto' rebuilds the
+// glyph atlas from each new set of rows, and end-anchored text is then laid out against the old one.
+export const ROW_LABEL_CHARACTER_SET =
+  Array.from({ length: 95 }, (_, i) => String.fromCharCode(32 + i)).join('') + '…';
+
 /**
  * Build row labels data
  * @param {number} cellSize - Size of each cell
@@ -24,7 +29,8 @@ export function buildRowLabels(
   viewState,
   zoomScale,
   viewWidth = 120,
-  rowColorMap = {}
+  rowColorMap = {},
+  displayNames = null
 ) {
   if (!sequences || sequences.length === 0) {
     return [];
@@ -58,7 +64,7 @@ export function buildRowLabels(
     data.push({
       kind: 'label',
       row: r,
-      text: seq.id || `Seq ${r + 1}`,
+      text: displayNames?.get(seq.id) ?? (seq.id || `Seq ${r + 1}`),
       position: [worldX, r * cellSize + cellSize / 2, 0],
       cellSize, // Pass cellSize for getSize in 'common' units
       backgroundColor: bg,
@@ -96,6 +102,7 @@ export function createRowLabelsLayer(labelsData) {
     },
     getBackgroundColor: (d) => d.backgroundColor || [255, 255, 255, 255],
     getColor: (d) => d.textColor || [0, 0, 0, 255],
+    characterSet: ROW_LABEL_CHARACTER_SET,
     fontFamily:
       'system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial',
   });

@@ -2,7 +2,7 @@ import { colorToRgb } from '../../../../../../services/ui/colorUtils.js';
 import { SYSTEM_TREE_COLORS } from '../../../../../../constants/TreeColors.js';
 import { resolveChangeDashArray } from '../dashUtils.js';
 import { applyDimmingWithCache } from '../../dimmingUtils.js';
-import { getInnerLinkColor, getSubtreeHighlightRgb } from '../linkUtils.js';
+import { getDecisionDashArray, getInnerLinkColor, getSubtreeHighlightRgb } from '../linkUtils.js';
 import { resolveTreeElementHighlight, TREE_HIGHLIGHT_ROLE } from '../../highlightResolver.js';
 import { applyDenseBaseOpacity } from '../../denseVisualDeclutter.js';
 
@@ -95,5 +95,5 @@ export function getLinkColor(link, cached, helpers) {
 }
 
 export function getLinkDashArray(link, cached) {
-  return resolveChangeDashArray(link, cached, _dashOut);
+  return resolveChangeDashArray(link, cached, _dashOut) ?? getDecisionDashArray(link, cached);
 }

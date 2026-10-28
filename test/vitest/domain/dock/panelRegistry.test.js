@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  PANEL_REGISTRY,
-  SETTINGS_PANEL_ID,
-  TREE_PANEL_ID,
-  getPanelEntry,
-} from '../../../../src/components/dock/panelRegistry.js';
+import { PANEL_REGISTRY, SETTINGS_PANEL_ID, TREE_PANEL_ID, getPanelEntry } from '../../../../src/components/dock/panelRegistry.js';
 
 describe('dock panel registry', () => {
   it('registers the workbench panels under stable ids', () => {
@@ -46,4 +41,5 @@ describe('dock panel registry', () => {
     }
     expect(getPanelEntry('missing')).toBeUndefined();
   });
+
 });

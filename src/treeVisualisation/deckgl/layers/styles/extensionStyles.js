@@ -22,8 +22,6 @@ export function getExtensionColor(extension, cached, helpers) {
 
 export function getExtensionWidth(extension, baseStrokeWidth, cached) {
   const metricScale = getReadableMetricScale(cached);
-  const visualScale = getVisualWidthScale(cached);
-  const baseDisplayWidth = baseStrokeWidth * visualScale;
   const nodeData = extension;
 
   // History highlighting for extensions deactivated
@@ -40,13 +38,8 @@ export function getExtensionWidth(extension, baseStrokeWidth, cached) {
       highlight.role === TREE_HIGHLIGHT_ROLE.ACTIVE_MOVER
         ? getActiveMoverEmphasis(nodeData, cached, 'node')
         : 1;
-    return baseDisplayWidth * 3 * emphasis * metricScale;
+    return baseStrokeWidth * 3 * emphasis * metricScale;
   }
 
-  return baseDisplayWidth * metricScale; // Match link width for consistent appearance
-}
-
-function getVisualWidthScale(cached) {
-  const visualScale = Number(cached?.visualScale);
-  return Number.isFinite(visualScale) && visualScale > 0 ? visualScale : 1;
+  return baseStrokeWidth * metricScale; // Match link width for consistent appearance
 }

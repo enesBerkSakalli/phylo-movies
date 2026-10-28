@@ -4,6 +4,7 @@
  */
 import { addZOffsetToPath, getNodeHistoryZOffset } from '../../../utils/GeometryUtils.js';
 import { safeDeckPath } from '../../../utils/pathFormat.js';
+import { getZoomWidthScale } from '../../styles/links/zoomWidthScale.js';
 
 // ============================================================================
 // HELPERS
@@ -26,6 +27,7 @@ export function getExtensionsLayerProps(extensions, state, layerStyles) {
     getColor: (d) => layerStyles.getExtensionColor(d, cached),
     getWidth: (d) => layerStyles.getExtensionWidth(d, cached),
     getDashArray: [2, 3], // Dotted line
+    widthScale: getZoomWidthScale(state),
     dashJustified: true,
     updateTriggers: {
       getColor: [colorVersion, taxaColorVersion, highlightColorMode, taxaCount],

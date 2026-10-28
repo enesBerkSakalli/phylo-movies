@@ -15,6 +15,7 @@ export function createLayerRenderContext(state, layerData = {}) {
     ...state,
     metricScale: Number.isFinite(layerData.metricScale) ? layerData.metricScale : 1,
     zoom: layerData.zoom ?? state.viewState?.zoom,
+    fitZoom: layerData.fitZoom,
     taxaCount: selectLeafNamesByIndex(state).length,
   };
 }

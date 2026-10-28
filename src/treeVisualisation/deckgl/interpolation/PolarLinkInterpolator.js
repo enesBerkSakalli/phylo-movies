@@ -4,7 +4,7 @@ import {
   polarToPosition,
   positionFromPolar,
 } from '../../utils/polarGeometry.js';
-import { twoPointFloat32Path } from '../utils/pathFormat.js';
+import { rectangularElbowFloat32Path, twoPointFloat32Path } from '../utils/pathFormat.js';
 import { pointsMatch } from './pointUtils.js';
 import { clamp01 } from '../../../domain/math/mathUtils.js';
 
@@ -299,10 +299,12 @@ export class PolarLinkInterpolator {
     const path =
       options.linkGeometryMode === 'straight'
         ? twoPointFloat32Path(sourcePosition, targetPosition)
-        : this.pathInterpolator.createPathFromPolarData(polarData, {
-            linkGeometryMode: options.linkGeometryMode,
-            pathPoolKey: link?.id != null ? `link:${link.id}` : null,
-          });
+        : options.linkGeometryMode === 'rectangular-elbow'
+          ? rectangularElbowFloat32Path(sourcePosition, targetPosition)
+          : this.pathInterpolator.createPathFromPolarData(polarData, {
+              linkGeometryMode: options.linkGeometryMode,
+              pathPoolKey: link?.id != null ? `link:${link.id}` : null,
+            });
 
     // Pooled datums outlive a transition, so clear the lifecycle-only fields before merging:
     // Object.assign never removes keys the new source omits, which would otherwise leave a link

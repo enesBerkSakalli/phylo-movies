@@ -101,7 +101,8 @@ export class DeckGLContext {
         antialias: true,
         preserveDrawingBuffer: false,
       },
-      onViewStateChange: ({ viewState, viewId }) => this._handleViewStateChange(viewState, viewId),
+      onViewStateChange: ({ viewState, viewId, interactionState }) =>
+        this._handleViewStateChange(viewState, viewId, interactionState),
       onClick: (info, event) => this._handleClick(info, event),
       onHover: (info, event) => this._handleHover(info, event),
       onDragStart: (info, event) => this._handleDragStart(info, event),
@@ -205,8 +206,10 @@ export class DeckGLContext {
   // EVENT HANDLERS (Internal)
   // ==========================================================================
 
-  _handleViewStateChange(viewState, viewId) {
+  _handleViewStateChange(viewState, viewId, interactionState) {
     if (this._isDestroyed) return;
+    // A camera animation (fit, focus) also reports here; listeners must not take it for user input.
+    this._pendingInTransition = interactionState?.inTransition === true;
 
     const id = viewId || this._activeViewId();
     this.viewStates[id] = { ...this.viewStates[id], ...viewState };
@@ -224,7 +227,9 @@ export class DeckGLContext {
         this._viewStateNotifyPending = false;
         const notifyId = this._pendingViewStateId || this._activeViewId();
         this._pendingViewStateId = null;
-        this._notifyViewStateListeners(this.viewStates[notifyId]);
+        this._notifyViewStateListeners(this.viewStates[notifyId], {
+          inTransition: this._pendingInTransition,
+        });
       });
     }
   }
@@ -267,10 +272,10 @@ export class DeckGLContext {
     return false;
   }
 
-  _notifyViewStateListeners(viewState) {
+  _notifyViewStateListeners(viewState, meta = {}) {
     this._viewStateListeners.forEach((listener) => {
       try {
-        listener(viewState);
+        listener(viewState, meta);
       } catch (err) {
         console.warn('[DeckGLContext] View-state listener failed; camera update will continue.', {
           error: err,

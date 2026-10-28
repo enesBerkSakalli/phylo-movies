@@ -96,10 +96,11 @@ export function keepSideGroupSizes(api, { paused = () => false } = {}) {
   };
 }
 
-function rightColumnGroup(api) {
+/** The docked group already holding a panel placed in this direction; later ones join it as tabs. */
+function dockedGroup(api, direction) {
   const docked = api.panels.find(
     (panel) =>
-      getPanelEntry(panel.id)?.place?.direction === 'right' &&
+      getPanelEntry(panel.id)?.place?.direction === direction &&
       panel.group.api.location.type === 'grid'
   );
   return docked?.group;
@@ -112,9 +113,9 @@ export function placementFor(id, api, { narrow }) {
   if (narrow || !entry?.place) return { position: { referencePanel: TREE_PANEL_ID } };
 
   const { direction, width, heightShare } = entry.place;
-  if (direction === 'right') {
-    const column = rightColumnGroup(api);
-    if (column) return { position: { referenceGroup: column } };
+  if (direction === 'right' || direction === 'below') {
+    const group = dockedGroup(api, direction);
+    if (group) return { position: { referenceGroup: group } };
   }
   if (direction === 'below') {
     return {

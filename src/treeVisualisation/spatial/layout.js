@@ -82,6 +82,19 @@ function toExpandedCanvasLocalRect(
   );
 }
 
+// Edges are whole pixels below, so a blocking rect grows outward to them: a fractional edge
+// that rounded inwards would leave every area beside it overlapping the rect, and drop them all.
+function growToWholePixels(rect) {
+  const left = Math.floor(rect.left);
+  const top = Math.floor(rect.top);
+  return {
+    left,
+    top,
+    width: Math.ceil(rect.left + rect.width) - left,
+    height: Math.ceil(rect.top + rect.height) - top,
+  };
+}
+
 function normalizeRectEdges(values) {
   return [...new Set(values.map((value) => Math.round(value)))].sort((a, b) => a - b);
 }
@@ -89,7 +102,7 @@ function normalizeRectEdges(values) {
 export function calculateUnobstructedFitAreas(canvasWidth, canvasHeight, obstructions = []) {
   const canvasArea = { left: 0, top: 0, width: canvasWidth, height: canvasHeight };
   const blockingRects = obstructions
-    .map((rect) => clampLocalRect(rect, canvasWidth, canvasHeight))
+    .map((rect) => growToWholePixels(clampLocalRect(rect, canvasWidth, canvasHeight)))
     .filter((rect) => rect.width > 0 && rect.height > 0);
 
   if (blockingRects.length === 0) return [canvasArea];

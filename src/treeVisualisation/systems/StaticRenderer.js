@@ -10,6 +10,7 @@ import { tagTreeSide } from '../utils/layerDataUtils.js';
 import {
   VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO,
   getAutoFitLabelOptions,
+  getFitPixelPadding,
 } from '../viewport/viewportFit.js';
 import { detectAnimationStage } from '../deckgl/interpolation/stages/animationStageDetector.js';
 
@@ -139,6 +140,7 @@ export class StaticRenderer {
           ...getAutoFitLabelOptions(visibleLabels.length),
           obstructionScope: VIEWPORT_FIT_OBSTRUCTION_SCOPES.CANVAS,
           maxFitAreaCenterDriftRatio: VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO,
+          pixelPadding: getFitPixelPadding(currentLayout.projectionMode),
           links: [
             ...layerData.links,
             ...layerData.extensions,

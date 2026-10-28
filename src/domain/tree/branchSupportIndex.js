@@ -12,6 +12,7 @@ export const PRIMARY_BRANCH_SUPPORT_PATHS = [
   'support.iqtree.sh_alrt',
   'support.bootstrap.value',
   'support.bootstrap_rogue.frequency',
+  'support.tree_series.frequency',
 ];
 
 function compareIndexLists(left, right) {

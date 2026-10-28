@@ -1,5 +1,12 @@
 import { calculateWindow } from '../../domain/msa/msaWindowCalculator.js';
 
+/** "1871 sequences · 1947 columns · DNA", or null without an alignment. */
+export function describeAlignment(processedData) {
+  return processedData
+    ? `${processedData.rows} sequences · ${processedData.cols} columns · ${processedData.type.toUpperCase()}`
+    : null;
+}
+
 export function buildMsaWindowStatus(timelineCursor, msaStepSize, msaWindowSize, msaColumnCount) {
   if (!Number.isInteger(timelineCursor?.sourceInputTreeIndex)) return null;
   if (!Number.isFinite(msaColumnCount) || msaColumnCount <= 0) return null;

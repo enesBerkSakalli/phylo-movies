@@ -50,6 +50,8 @@ export function GeometryDimensions({
   treeController,
   labelsVisible,
   onToggleLabels,
+  nodeVisibility = 'all',
+  onChangeNodeVisibility,
   branchAnnotationLabelKey,
   branchAnnotationOptions,
   onChangeBranchAnnotationLabelKey,
@@ -131,6 +133,24 @@ export function GeometryDimensions({
             onChange={handleNodeSizeChange}
           />
 
+          <div className="flex items-center justify-between gap-3">
+            <Label htmlFor="node-visibility" className="text-xs font-medium text-foreground/80">
+              Nodes
+            </Label>
+            <Select value={nodeVisibility} onValueChange={onChangeNodeVisibility}>
+              <SelectTrigger id="node-visibility" className="h-8 w-32 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="leaves">Tips only</SelectItem>
+                  <SelectItem value="none">Hidden</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+
           <LabeledSlider
             id="stroke-width"
             label="Branch Width"
@@ -147,7 +167,7 @@ export function GeometryDimensions({
             id="font-size"
             label="Label Size"
             title="Adjust label text size"
-            valueDisplay={`${clampValue(fontSizeNumber, 1.8).toFixed(1)}×`}
+            valueDisplay={`${(clampValue(fontSizeNumber, 1.8) / 1.8).toFixed(1)}×`}
             value={clampValue(fontSizeNumber, 1.8)}
             min={0.5}
             max={10}
@@ -156,7 +176,8 @@ export function GeometryDimensions({
           />
 
           <div className="text-2xs leading-relaxed text-muted-foreground italic mt-2">
-            Branches and labels adjust with tree size so proportions stay stable.
+            Branch Width is the line weight in pixels at fit zoom. It grows moderately when zooming
+            in.
           </div>
 
           <div className="border-t border-border/20 pt-4 mt-2">

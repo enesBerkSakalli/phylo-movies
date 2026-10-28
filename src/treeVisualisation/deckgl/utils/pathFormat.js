@@ -24,6 +24,39 @@ export function twoPointFloat32Path(from, to) {
   return new Float32Array([from[0], from[1], from[2] ?? 0, to[0], to[1], to[2] ?? 0]);
 }
 
+/**
+ * The last segment of a path: for an elbow or arc branch, the part that carries the branch
+ * length. Flat paths hold three values per point; a path of one segment is returned as it is.
+ */
+export function lastPathSegment(path) {
+  if (isTypedArray(path)) return path.length > 6 ? path.slice(path.length - 6) : path;
+  if (Array.isArray(path) && Array.isArray(path[0])) return path.length > 2 ? path.slice(-2) : path;
+  return path;
+}
+
+/** The two end points ([x, y, z]) of a path's last segment, or null for an empty or flat 2D path. */
+export function lastSegmentPoints(path) {
+  const segment = lastPathSegment(path);
+  if (isTypedArray(segment)) {
+    return segment.length === 6
+      ? [Array.from(segment.slice(0, 3)), Array.from(segment.slice(3))]
+      : null;
+  }
+  return Array.isArray(segment) && segment.length === 2 && Array.isArray(segment[0])
+    ? segment
+    : null;
+}
+
+/** Phylogram branch: down/up the parent's column, then across to the child. */
+export function rectangularElbowFloat32Path(from, to) {
+  if (!hasFinitePoint(from) || !hasFinitePoint(to)) {
+    return emptyPath();
+  }
+
+  const z = from[2] ?? 0;
+  return new Float32Array([from[0], from[1], z, from[0], to[1], z, to[0], to[1], to[2] ?? 0]);
+}
+
 export function safeDeckPath(path) {
   return isFiniteDeckPath(path) ? path : emptyPath();
 }

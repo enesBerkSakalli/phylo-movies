@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAppStore } from '../../../../src/state/phyloStore/store.js';
-import { VIEWPORT_FIT_MODES } from '../../../../src/treeVisualisation/viewport/viewportFit.js';
+import {
+  VIEWPORT_FIT_MODES,
+  VIEWPORT_FIT_PIXEL_PADDING,
+} from '../../../../src/treeVisualisation/viewport/viewportFit.js';
 
 class MockWorker {
   constructor() {
@@ -155,6 +158,7 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
 
     expect(controller.viewportManager.focusOnTree).toHaveBeenCalledWith([node], [label], {
       fitMode: VIEWPORT_FIT_MODES.LABELS,
+      pixelPadding: VIEWPORT_FIT_PIXEL_PADDING,
       duration: 350,
       padding: undefined,
       links: [link, extension, connector],
@@ -182,6 +186,7 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
 
     expect(controller.viewportManager.focusOnTree).toHaveBeenCalledWith([node], [], {
       fitMode: VIEWPORT_FIT_MODES.BRANCH,
+      pixelPadding: VIEWPORT_FIT_PIXEL_PADDING,
       duration: 350,
       padding: undefined,
       links: [extension],
@@ -491,6 +496,27 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     );
   });
 
+  it('sends labelsVisible to the layout worker and relayouts when it toggles', () => {
+    useAppStore.setState({ labelsVisible: false });
+    controller = new ControllerClass(null);
+    controller.renderAllElements = vi.fn();
+
+    controller._prefetchFrame(1);
+    const hiddenOptions = controller.layoutWorker.messages[0].data.options;
+    expect(hiddenOptions.labelsVisible).toBe(false);
+
+    controller._layoutPrefetchTokens.set(1, 'stale-token');
+    useAppStore.setState({ labelsVisible: true });
+
+    expect(controller._layoutPrefetchTokens.size).toBe(0);
+    expect(controller.renderAllElements).toHaveBeenCalledOnce();
+
+    controller._prefetchFrame(1);
+    const visibleOptions = controller.layoutWorker.messages[1].data.options;
+    expect(visibleOptions.labelsVisible).toBe(true);
+    expect(visibleOptions.layoutCacheKey).not.toBe(hiddenOptions.layoutCacheKey);
+  });
+
   it('prefetches trees returned by immutable hydration state updates', () => {
     const hydratedTree = { id: 'hydrated-tree-1', split_indices: [1], children: [] };
     const ensureTreeHydrated = vi.fn((treeIndex) => {
@@ -634,5 +660,20 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     controller._handleViewStateChange({ zoom: 2.001 });
 
     expect(controller._scheduleRender).not.toHaveBeenCalled();
+  });
+
+  it('keeps resize refits after a camera animation and stops them after a user zoom', () => {
+    const controller = Object.create(ControllerClass.prototype);
+    controller.animationRunner = { isRunning: false };
+    controller._lastZoom = 0;
+    controller._hasUserViewportInteraction = false;
+    controller._scheduleRender = vi.fn();
+
+    controller._handleViewStateChange({ zoom: 1 }, { inTransition: true });
+    expect(controller._hasUserViewportInteraction).toBe(false);
+    expect(controller._scheduleRender).toHaveBeenCalledTimes(1);
+
+    controller._handleViewStateChange({ zoom: 2 }, { inTransition: false });
+    expect(controller._hasUserViewportInteraction).toBe(true);
   });
 });

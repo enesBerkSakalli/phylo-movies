@@ -6,6 +6,8 @@ const renderContextFieldGroups = [
     Object.entries({
       labelOffsetsDefault: (state) => state.styleConfig?.labelOffsets?.DEFAULT,
       labelOffsetsExtension: (state) => state.styleConfig?.labelOffsets?.EXTENSION,
+      // Hidden labels use the compact ring, so toggling them changes the layout radii.
+      labelsVisible: (state) => state.labelsVisible,
     }),
   ],
   [
@@ -35,6 +37,7 @@ const renderContextFieldGroups = [
       changePulseEnabled: (state) => state.changePulseEnabled,
       changePulsePhase: (state) => state.changePulsePhase,
       colorVersion: (state) => state.colorVersion,
+      nodeVisibility: (state) => state.nodeVisibility,
       taxaColorVersion: (state) => state.taxaColorVersion,
     }),
   ],

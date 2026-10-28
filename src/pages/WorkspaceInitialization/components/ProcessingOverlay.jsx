@@ -26,6 +26,8 @@ export function ProcessingOverlay({ operationState, onCancel }) {
   }, []);
   const elapsedMs = now - startedAt;
   const progress = describeProcessingProgress(operationState.message, elapsedMs);
+  // Stage-only progress (no measured percent) shows the spinner and elapsed time, not a bar.
+  const measured = Number.isFinite(operationState.percent);
 
   return (
     <Dialog open>
@@ -58,18 +60,22 @@ export function ProcessingOverlay({ operationState, onCancel }) {
           )}
         </div>
         <div className="flex flex-col gap-2">
-          <Progress
-            value={operationState.percent}
-            className="h-1.5 overflow-hidden bg-muted"
-            aria-label="Processing progress"
-          />
+          {measured && (
+            <Progress
+              value={operationState.percent}
+              className="h-1.5 overflow-hidden bg-muted"
+              aria-label="Processing progress"
+            />
+          )}
           <div className="flex items-center justify-between px-1">
             <p className="text-2xs text-muted-foreground tabular-nums">
               Elapsed {formatElapsed(elapsedMs)}
             </p>
-            <p className="text-2xs font-medium tabular-nums text-primary">
-              {Math.round(operationState.percent)}%
-            </p>
+            {measured && (
+              <p className="text-2xs font-medium tabular-nums text-primary">
+                {Math.round(operationState.percent)}%
+              </p>
+            )}
           </div>
         </div>
         {onCancel && (

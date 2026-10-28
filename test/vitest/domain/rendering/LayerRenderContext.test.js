@@ -85,13 +85,14 @@ describe('LayerRenderContext', () => {
       strokeWidth: 4,
     };
 
-    const context = createLayerRenderContext(state, { metricScale: 0.5, zoom: 3 });
+    const context = createLayerRenderContext(state, { metricScale: 0.5, zoom: 3, fitZoom: 1 });
 
     expect(context).toMatchObject({
       strokeWidth: 4,
       taxaCount: 3,
       metricScale: 0.5,
       zoom: 3,
+      fitZoom: 1,
     });
   });
 

@@ -70,6 +70,33 @@ describe('TreeLayoutController radii', () => {
     expect(radii.extensionRadius).toBeCloseTo(radii.labelRadius - 1);
   });
 
+  it('keeps the compact ring for dense trees when labels are hidden and restores it when shown', () => {
+    useAppStore.setState({
+      fontSize: '1.8em',
+      styleConfig: { labelOffsets: { DEFAULT: 1, EXTENSION: 1 } },
+      labelsVisible: false,
+    });
+    const controller = new TreeLayoutController(null);
+    const layout = {
+      width: 1000,
+      height: 1000,
+      margin: 60,
+      max_radius: 200,
+      leaves: Array.from({ length: 350 }, (_value, index) => ({
+        angle: (index / 350) * Math.PI * 2,
+      })),
+    };
+
+    expect(controller._getConsistentRadii(layout)).toEqual({
+      extensionRadius: 201,
+      labelRadius: 202,
+    });
+
+    useAppStore.setState({ labelsVisible: true });
+
+    expect(controller._getConsistentRadii(layout).labelRadius).toBeGreaterThan(400);
+  });
+
   it('keeps label and extension rings stable when visual label size changes', () => {
     const controller = new TreeLayoutController(null);
     const leaves = Array.from({ length: 350 }, (_value, index) => ({

@@ -16,6 +16,8 @@ export class ViewportManager {
 
   constructor(controller) {
     this.controller = controller;
+    // Zoom of the last fit; layers measure branch width zoom from it.
+    this.fitZoom = null;
   }
 
   // ==========================================================================
@@ -64,6 +66,7 @@ export class ViewportManager {
       links: options.links,
       fitMode,
       padding: options.padding,
+      pixelPadding: options.pixelPadding,
       labelSizePx: options.labelSizePx,
       getLabelSize,
       includeLabelAnchorBounds: options.includeLabelAnchorBounds,
@@ -74,6 +77,7 @@ export class ViewportManager {
       activeView,
       currentViewState,
     });
+    this.fitZoom = zoom;
 
     this.controller.deckContext.transitionTo({
       target,

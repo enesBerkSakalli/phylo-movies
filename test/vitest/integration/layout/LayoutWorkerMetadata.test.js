@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { calculateLayoutWorkerResult } from '../../../../src/treeVisualisation/workers/layout.worker.js';
 import { LAYOUT_PROJECTION_MODES } from '../../../../src/treeVisualisation/layout/hyperbolicProjection/index.js';
+import { LABEL_GAP_PX } from '../../../../src/treeVisualisation/deckgl/builders/data/labels/LabelDataBuilder.js';
 
 describe('layout worker metadata', () => {
   it('attaches max_radius to worker layout and layer data', () => {
@@ -102,7 +103,45 @@ describe('layout worker metadata', () => {
     expect(result.layerData.extensions[0].polarData.target.radius).toBe(
       result.layout.max_radius + 1
     );
-    expect(result.layerData.labels[0].polarPosition).toBe(result.layout.max_radius + 3);
+    // Labels start at the end of the guide line; the gap to the text is a pixel offset.
+    expect(result.layerData.labels[0].polarPosition).toBe(result.layout.max_radius + 1);
+    expect(Math.hypot(...result.layerData.labels[0].pixelOffset)).toBeCloseTo(LABEL_GAP_PX);
+  });
+
+  it('uses the compact ring for dense trees only when labels are hidden', () => {
+    const treeData = {
+      name: '',
+      length: 0,
+      split_indices: Array.from({ length: 350 }, (_value, index) => index),
+      children: Array.from({ length: 350 }, (_value, index) => ({
+        name: `taxon_${index}`,
+        length: 1,
+        split_indices: [index],
+        children: [],
+      })),
+    };
+    const options = {
+      width: 800,
+      height: 600,
+      margin: 60,
+      branchTransformation: 'none',
+      layoutAngleDegrees: 360,
+      layoutRotationDegrees: 0,
+      labelOffsets: { DEFAULT: 2, EXTENSION: 1 },
+    };
+
+    // Comparison keeps the ring when labels are hidden, so the compact radii stay observable.
+    const hidden = calculateLayoutWorkerResult(treeData, {
+      ...options,
+      labelsVisible: false,
+      renderMode: 'comparison',
+    });
+    const visible = calculateLayoutWorkerResult(treeData, { ...options, labelsVisible: true });
+
+    const maxRadius = hidden.layout.max_radius;
+    expect(hidden.layerData.extensions[0].polarData.target.radius).toBe(maxRadius + 1);
+    expect(hidden.layerData.labels[0].polarPosition).toBe(maxRadius + 3);
+    expect(visible.layerData.labels[0].polarPosition).toBeGreaterThan(maxRadius + 3);
   });
 
   it('applies hyperbolic projection in worker layout data', () => {
@@ -209,7 +248,7 @@ describe('layout worker metadata', () => {
     expect(result.layerData.labels).toHaveLength(leafCount);
     expect(result.layerData.labels[0].polarPosition).toBeGreaterThan(result.layout.max_radius + 2);
     expect(result.layerData.extensions[0].polarData.target.radius).toBeCloseTo(
-      result.layerData.labels[0].polarPosition - 1
+      result.layerData.labels[0].polarPosition
     );
   });
 

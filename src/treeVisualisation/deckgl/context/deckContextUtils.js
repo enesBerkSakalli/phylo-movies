@@ -1,3 +1,5 @@
+export const DECK_CANVAS_CLASS = 'phylo-deck-canvas';
+
 export function createDeckCanvas(container) {
   if (!container) {
     throw new Error('DeckGLContext: container element is required to initialize deck.gl');
@@ -7,6 +9,8 @@ export function createDeckCanvas(container) {
   canvas.style.width = '100%';
   canvas.style.height = '100%';
   canvas.style.display = 'block';
+  canvas.className = DECK_CANVAS_CLASS; // css/index.css draws its focus ring
+  canvas.tabIndex = 0; // deck.gl's keyboard controller does the same; focus must not wait for it
   // deck.gl makes the canvas focusable for keyboard panning; give it a name.
   canvas.setAttribute('role', 'img');
   canvas.setAttribute(

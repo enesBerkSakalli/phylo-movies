@@ -3,6 +3,7 @@
  */
 
 import { Deck, OrthographicView, OrthographicController } from '@deck.gl/core';
+import { SolidPolygonLayer } from '@deck.gl/layers';
 import { disconnectObserver, teardownDeckRenderer } from '../lib/deckTeardown.js';
 import { calculateConsensus } from './utils/dataUtils.js';
 import {
@@ -18,6 +19,7 @@ import {
   buildRegionAxisMarker,
   createRegionAxisMarkerLayer,
 } from './layers/regionBorderLayer.js';
+import { createRowSplitDividerLayer, buildRowSplitDivider } from './layers/rowSplitDividerLayer.js';
 import { createLettersLayer, buildTextData } from './layers/lettersLayer.js';
 import { createRowLabelsLayer, buildRowLabels } from './layers/rowLabelsLayer.js';
 import { createColumnAxisLayer, buildColumnAxis } from './layers/columnAxisLayer.js';
@@ -31,6 +33,10 @@ import {
   getRegionFocusViewState,
 } from './cameraUtils.js';
 import { normalizeViewerRegion, resolveRegionTargetColumn } from './regionUtils.js';
+import { shortTaxonNames } from '../domain/tree/shortTaxonNames.js';
+
+// The ruler is drawn over the alignment, so the layout sets no strip aside for it.
+const RESERVED_TOP = 0;
 
 function normalizeRegionOrNull(region, columnCount) {
   if (!region) return null;
@@ -91,6 +97,7 @@ export class MSADeckGLViewer {
       cols: 0,
       currentRegion: null,
       previousRegion: null,
+      rowSplitIndex: null,
       // Main view state
       viewState: { target: [0, 0, 0], zoom: 0 },
     };
@@ -107,6 +114,7 @@ export class MSADeckGLViewer {
     this._renderedRange = null;
     this._cellGroupsCache = null;
     this._initialLayoutObserver = null;
+    this._initialLayoutFrame = null;
     this.resizeObserver = null; // ResizeObserver for container resize handling
     this._labelMeasuredWidth = this.DEFAULT_LABELS_WIDTH; // raw text-based width before zoom scaling
     this._scrollZoomSpeed = 0.08; // Custom wheel zoom speed multiplier
@@ -171,7 +179,11 @@ export class MSADeckGLViewer {
       if (!this.hasUsableContainerSize()) return;
       this._initialLayoutObserver?.disconnect();
       this._initialLayoutObserver = null;
-      this.initializeDeck();
+      // Adding the canvas during observer delivery can resize its ancestors.
+      this._initialLayoutFrame = requestAnimationFrame(() => {
+        this._initialLayoutFrame = null;
+        this.initializeDeck();
+      });
     });
     this._initialLayoutObserver.observe(this.container);
   }
@@ -204,7 +216,7 @@ export class MSADeckGLViewer {
       containerWidth,
       containerHeight,
       labelsWidth: this.LABELS_WIDTH,
-      axisHeight: this.AXIS_HEIGHT,
+      axisHeight: RESERVED_TOP,
       cellSize: this.options.cellSize,
       rows: this.state.rows,
       cols: this.state.cols,
@@ -427,6 +439,7 @@ export class MSADeckGLViewer {
     data,
     currentRegion = null,
     previousRegion = null,
+    rowSplitIndex = null,
     showLetters,
     colorScheme,
     rowColorMap,
@@ -443,6 +456,8 @@ export class MSADeckGLViewer {
       changed = true;
       if (data) {
         this.state.seqs = data.sequences;
+        // Long sequence names show their end, as the tree's taxon labels do.
+        this.state.rowNames = shortTaxonNames(data.sequences.map((seq) => seq.id));
         this.state.type = data.type;
         this.state.rows = data.rows;
         this.state.cols = data.cols;
@@ -451,6 +466,7 @@ export class MSADeckGLViewer {
         this.initializeCameraIfReady();
       } else {
         this.state.seqs = [];
+        this.state.rowNames = null;
         this.state.type = 'protein';
         this.state.rows = 0;
         this.state.cols = 0;
@@ -471,6 +487,11 @@ export class MSADeckGLViewer {
       changed = true;
     }
 
+    const nextRowSplitIndex = Number.isInteger(rowSplitIndex) ? rowSplitIndex : null;
+    if (this.state.rowSplitIndex !== nextRowSplitIndex) {
+      this.state.rowSplitIndex = nextRowSplitIndex;
+      changed = true;
+    }
     if (showLetters !== undefined && this.options.showLetters !== showLetters) {
       this.options.showLetters = showLetters;
       changed = true;
@@ -506,7 +527,7 @@ export class MSADeckGLViewer {
           containerWidth: this.container.clientWidth,
           containerHeight: this.container.clientHeight,
           labelsWidth: this.LABELS_WIDTH,
-          axisHeight: this.AXIS_HEIGHT,
+          axisHeight: RESERVED_TOP,
         }),
       },
       { scheduleRender: false }
@@ -524,7 +545,7 @@ export class MSADeckGLViewer {
       containerWidth: this.container.clientWidth,
       containerHeight: this.container.clientHeight,
       labelsWidth: this.LABELS_WIDTH,
-      axisHeight: this.AXIS_HEIGHT,
+      axisHeight: RESERVED_TOP,
       cellSize: this.options.cellSize,
       rows: this.state.rows,
       cols: this.state.cols,
@@ -564,8 +585,12 @@ export class MSADeckGLViewer {
       ...cellsLayers,
       previousRegionLayer,
       currentRegionLayer,
+      createRowSplitDividerLayer(
+        buildRowSplitDivider(cs, this.state.rowSplitIndex, this.state.rows, this.state.cols)
+      ),
       lettersLayer,
       rowLabelsLayer,
+      ...this.buildRulerBackdropLayers(),
       regionAxisMarkerLayer,
       columnAxisLayer,
     ];
@@ -648,7 +673,7 @@ export class MSADeckGLViewer {
       containerWidth: this.container.clientWidth,
       containerHeight: this.container.clientHeight,
       labelsWidth: this.LABELS_WIDTH,
-      axisHeight: this.AXIS_HEIGHT,
+      axisHeight: RESERVED_TOP,
     };
   }
 
@@ -809,7 +834,8 @@ export class MSADeckGLViewer {
       this.state.viewState,
       getZoomScale(this.state.viewState.zoom),
       this.LABELS_WIDTH,
-      this.options.rowColorMap
+      this.options.rowColorMap,
+      this.state.rowNames
     );
     return createRowLabelsLayer(labelsData);
   }
@@ -889,14 +915,14 @@ export class MSADeckGLViewer {
   }
 
   /**
-   * Adjust LABELS_WIDTH based on the longest sequence ID
+   * Adjust LABELS_WIDTH based on the longest displayed sequence name
    */
   adjustLabelWidth({ updateDeck = true } = {}) {
     if (!this.hasSequences()) return;
 
     let maxWidth = 0;
     this.state.seqs.forEach((s) => {
-      const w = this._measureTextWidth(s.id);
+      const w = this._measureTextWidth(this.state.rowNames?.get(s.id) ?? s.id);
       if (w > maxWidth) maxWidth = w;
     });
 
@@ -909,37 +935,20 @@ export class MSADeckGLViewer {
   buildDeckViews() {
     const containerW = this.container.clientWidth;
     const containerH = this.container.clientHeight;
+    // Dock tabs can measure zero while hidden; Deck skips zero-sized views.
+    const contentWidth = Math.max(0, containerW - this.LABELS_WIDTH);
+    const contentHeight = Math.max(0, containerH - RESERVED_TOP);
 
+    // Views draw in order: the names and the alignment fill the panel first, then the ruler and
+    // its corner are drawn over their top rows, on translucent strips instead of a cleared band.
     return [
-      // Top-Left Corner
-      new OrthographicView({
-        id: 'corner',
-        x: 0,
-        y: 0,
-        width: this.LABELS_WIDTH,
-        height: this.AXIS_HEIGHT,
-        flipY: true,
-        controller: false,
-        clear: { color: [248, 248, 248, 1] },
-      }),
       // Left panel (Labels)
       new OrthographicView({
         id: 'labels',
         x: 0,
-        y: this.AXIS_HEIGHT,
+        y: RESERVED_TOP,
         width: this.LABELS_WIDTH,
-        height: containerH - this.AXIS_HEIGHT, // Height in pixels
-        flipY: true,
-        controller: false,
-        clear: { color: [248, 248, 248, 1] },
-      }),
-      // Top panel (Axis)
-      new OrthographicView({
-        id: 'axis',
-        x: this.LABELS_WIDTH,
-        y: 0,
-        width: containerW - this.LABELS_WIDTH, // Width in pixels
-        height: this.AXIS_HEIGHT,
+        height: contentHeight,
         flipY: true,
         controller: false,
         clear: { color: [248, 248, 248, 1] },
@@ -948,9 +957,9 @@ export class MSADeckGLViewer {
       new OrthographicView({
         id: 'main',
         x: this.LABELS_WIDTH,
-        y: this.AXIS_HEIGHT,
-        width: containerW - this.LABELS_WIDTH, // Width in pixels
-        height: containerH - this.AXIS_HEIGHT, // Height in pixels
+        y: RESERVED_TOP,
+        width: contentWidth,
+        height: contentHeight,
         flipY: true,
         controller: {
           type: OrthographicController,
@@ -962,7 +971,54 @@ export class MSADeckGLViewer {
         },
         clear: { color: [255, 255, 255, 1] },
       }),
+      // Top-Left Corner, over the first names
+      new OrthographicView({
+        id: 'corner',
+        x: 0,
+        y: 0,
+        width: this.LABELS_WIDTH,
+        height: this.AXIS_HEIGHT,
+        flipY: true,
+        controller: false,
+        clear: false,
+      }),
+      // Top panel (Axis), over the first alignment rows
+      new OrthographicView({
+        id: 'axis',
+        x: this.LABELS_WIDTH,
+        y: 0,
+        width: contentWidth,
+        height: this.AXIS_HEIGHT,
+        flipY: true,
+        controller: false,
+        clear: false,
+      }),
     ];
+  }
+
+  /**
+   * Translucent strips behind the ruler and its corner, so the rows under them stay visible. They
+   * span far past any alignment; each view clips them to its own band, at every zoom.
+   */
+  buildRulerBackdropLayers() {
+    const reach = 1e6;
+    const strip = [
+      [-reach, -reach],
+      [reach, -reach],
+      [reach, reach],
+      [-reach, reach],
+    ];
+    return ['corner', 'axis'].map(
+      (viewId) =>
+        new SolidPolygonLayer({
+          id: `ruler-backdrop-${viewId}`,
+          viewId,
+          data: [strip],
+          getPolygon: (polygon) => polygon,
+          getFillColor: [248, 248, 248, 215],
+          pickable: false,
+        })
+    );
   }
 
   /**
@@ -1012,6 +1068,8 @@ export class MSADeckGLViewer {
     this._destroyed = true;
 
     this._initialLayoutObserver = disconnectObserver(this._initialLayoutObserver);
+    if (this._initialLayoutFrame != null) cancelAnimationFrame(this._initialLayoutFrame);
+    this._initialLayoutFrame = null;
 
     // Remove wheel handler
     if (this.container && this._handleWheel) {

@@ -1,12 +1,15 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
+import { textWidthPx } from '../../../../src/domain/tree/textWidth.js';
 import { ViewportManager } from '../../../../src/treeVisualisation/viewport/ViewportManager.js';
 import {
   AUTO_FIT_FULL_LABEL_MAX_COUNT,
   calculateFocusViewport,
   getAutoFitLabelOptions,
+  getFitPixelPadding,
   selectFitAreaForBounds,
   VIEWPORT_FIT_MODES,
+  VIEWPORT_FIT_PIXEL_PADDING,
   VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO,
   VIEWPORT_AUTO_VISIBLE_FIT_PADDING,
   VIEWPORT_AUTO_VISIBLE_HIGH_DENSITY_PADDING,
@@ -63,6 +66,52 @@ describe('ViewportManager', () => {
     expect(result.fitArea).toEqual({ left: 0, top: 0, width: 1000, height: 1000 });
   });
 
+  describe('pixel-padded fit (FigTree-style)', () => {
+    const fit = (extra) =>
+      calculateFocusViewport({
+        nodes: [{ position: [1000, 500, 0] }, { position: [1300, 800, 0] }],
+        labels: [],
+        links: [],
+        pixelPadding: 16,
+        canvasWidth: 1000,
+        canvasHeight: 500,
+        fitAreas: null,
+        activeView: null,
+        currentViewState: { target: [0, 0, 0], zoom: 0 },
+        ...extra,
+      });
+
+    it('centres on the geometry bbox midpoint, not the origin', () => {
+      expect(fit().target).toEqual([1150, 650, 0]);
+    });
+
+    it('fills the limiting dimension minus the pixel margin on both sides', () => {
+      // 300x300 world box in a 1000x500 canvas: height limits, (500 - 2*16) / 300 px per unit.
+      expect(fit().zoom).toBeCloseTo(Math.log2((500 - 32) / 300), 10);
+    });
+
+    it('ignores multiplicative and density padding', () => {
+      const manyNodes = Array.from({ length: 450 }, (_, i) => ({ position: [i, i, 0] }));
+      const { zoom } = fit({ nodes: manyNodes });
+      expect(zoom).toBeCloseTo(Math.log2((500 - 32) / 449), 10);
+    });
+
+    it('excludes label text when labels are not passed and includes it when they are', () => {
+      const labels = [{ position: [1300, 800, 0], text: 'a long visible label', rotation: 0 }];
+      const hidden = fit({ fitMode: VIEWPORT_FIT_MODES.BRANCH, labels: [] });
+      const shown = fit({ fitMode: VIEWPORT_FIT_MODES.LABELS, labels, labelSizePx: 16 });
+      expect(hidden.zoom).toBeCloseTo(Math.log2((500 - 32) / 300), 10);
+      expect(shown.zoom).toBeLessThan(hidden.zoom);
+      expect(shown.target[0]).toBeGreaterThan(hidden.target[0]);
+    });
+
+    it('is disabled for WALRUS_3D and defaults on otherwise', () => {
+      expect(getFitPixelPadding('walrus-3d')).toBeUndefined();
+      expect(getFitPixelPadding('unrooted')).toBe(VIEWPORT_FIT_PIXEL_PADDING);
+      expect(getFitPixelPadding('radial')).toBe(VIEWPORT_FIT_PIXEL_PADDING);
+    });
+  });
+
   it('fits branch structure by default instead of distant labels', () => {
     const transitionTo = vi.fn();
     const manager = new ViewportManager({
@@ -107,8 +156,10 @@ describe('ViewportManager', () => {
       currentViewState: { target: [0, 0, 0], zoom: 0 },
     });
 
-    expect(result.target).toEqual([98, 0, 0]);
-    expect(result.zoom).toBeCloseTo(Math.log2(1000 / 196), 10);
+    // The name runs from its anchor at x = 100 to the right, the branches from x = 0.
+    const reach = 100 + textWidthPx('abcdefghij', 16);
+    expect(result.target[0]).toBeCloseTo(reach / 2, 10);
+    expect(result.zoom).toBeCloseTo(Math.log2(1000 / reach), 10);
   });
 
   it('fits into the best unobstructed viewport area when UI overlays cover the canvas', () => {
@@ -526,7 +577,7 @@ describe('TreeBoundsUtils normalized data contract', () => {
       calculateLabelBounds([{ position: [10, 20, 0], text: 'abc' }], { labelSizePx: 10 })
     ).toEqual({
       minX: 10,
-      maxX: 28,
+      maxX: 10 + textWidthPx('abc', 10),
       minY: 14,
       maxY: 26,
     });
@@ -540,13 +591,13 @@ describe('TreeBoundsUtils normalized data contract', () => {
       { labelSizePx: 10 }
     );
     expect(down.minY).toBeCloseTo(0);
-    expect(down.maxY).toBeCloseTo(60);
+    expect(down.maxY).toBeCloseTo(textWidthPx('abcdefghij', 10));
 
     const up = calculateLabelBounds(
       [{ position: [0, 0, 0], text: 'abcdefghij', rotation: Math.PI / 2 }],
       { labelSizePx: 10 }
     );
-    expect(up.minY).toBeCloseTo(-60);
+    expect(up.minY).toBeCloseTo(-textWidthPx('abcdefghij', 10));
     expect(up.maxY).toBeCloseTo(0);
   });
 
@@ -574,14 +625,17 @@ describe('TreeBoundsUtils normalized data contract', () => {
     });
   });
 
-  it('keeps the existing tree visual radius label heuristic unchanged', () => {
+  it('adds the longest label width to the tree visual radius', () => {
     const layerData = {
       nodes: [{ position: [3, 4, 0] }],
       labels: [{ position: [0, 10, 0], text: 'abcd' }],
       extensions: [{ sourcePosition: [0, 12, 0], targetPosition: [0, 20, 0] }],
     };
 
-    expect(calculateTreeVisualRadius(layerData, [0, 0], 10)).toBe(44);
+    // The farthest drawn point is the extension tip at 20.
+    expect(calculateTreeVisualRadius(layerData, [0, 0], 10)).toBeCloseTo(
+      20 + textWidthPx('abcd', 10)
+    );
     expect(calculateSafeVisualRadius(layerData.nodes, layerData.labels, [0, 0], 12)).toBe(28);
   });
 });

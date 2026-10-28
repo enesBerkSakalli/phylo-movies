@@ -118,6 +118,7 @@ export function createLayoutCacheKey({
     `hyperbolicStrength=${projectionStrength}`,
     `labelOffset=${offsets.label}`,
     `extensionOffset=${offsets.extension}`,
+    `labelsVisible=${state?.labelsVisible !== false}`,
     `maxGlobalScale=${scale}`,
   ].join('|');
 }

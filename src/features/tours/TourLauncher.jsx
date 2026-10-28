@@ -19,7 +19,7 @@ export function TourLauncher() {
       <Button
         type="button"
         variant="ghost"
-        size="icon-xs"
+        size="icon"
         aria-label="Start workspace tour"
         onClick={startWorkspaceTour}
         onMouseEnter={preloadWorkspaceTour}

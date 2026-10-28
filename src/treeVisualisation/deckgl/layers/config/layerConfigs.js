@@ -7,20 +7,28 @@ import { PathStyleExtension } from '@deck.gl/extensions';
 import { CLIPBOARD_LAYER_ID_PREFIX, LAYER_ID_PREFIX } from '../../constants/layerIds.js';
 import { themeColor } from '../../../../services/ui/colorUtils.js';
 
-// Hover highlight: the theme's --signal (the pointer's colour), semi-transparent
-export const HOVER_HIGHLIGHT_COLOR = [...themeColor('--signal', [8, 145, 178]), 150];
+// The theme's --signal (the pointer's colour): hover is semi-transparent, a selection opaque.
+export const SIGNAL_COLOR = themeColor('--signal', [8, 145, 178]);
+export const HOVER_HIGHLIGHT_COLOR = [...SIGNAL_COLOR, 150];
 
 // Minimum node radius for internal nodes
 export const MIN_NODE_RADIUS = 3;
-const NODE_RADIUS_MIN_PIXELS = 0.5;
+const NODE_RADIUS_MIN_PIXELS = 1;
+// Tailwind's default sans stack, which the app UI uses (deck.gl's own default is Monaco).
+export const LABEL_FONT_FAMILY = 'ui-sans-serif, system-ui, sans-serif';
+// Nodes are screen-sized so zooming in separates crowded tips instead of growing them.
+const NODE_RADIUS_MAX_PIXELS = 8;
 
 // Node border (stroke) widths
 export const INNER_NODE_STROKE_WIDTH = 0.2;
 export const OUTER_NODE_STROKE_WIDTH = 0.2;
 
+// Branch, guide-line and connector widths are screen pixels (the Branch Width setting is a
+// pixel weight at the fit zoom). Link and extension layers follow the camera moderately through
+// their widthScale prop, see styles/links/zoomWidthScale.js.
 const pathLayerDefaults = {
   _pathType: 'open',
-  widthUnits: 'common',
+  widthUnits: 'pixels',
   widthMinPixels: 1,
   jointRounded: false, // Optimization: save attribute slots
   capRounded: false, // Optimization: save attribute slots
@@ -69,30 +77,32 @@ export const LAYER_CONFIGS = {
     id: `${LAYER_ID_PREFIX}-nodes`,
     LayerClass: ScatterplotLayer,
     defaultProps: {
-      lineWidthUnits: 'common',
-      radiusUnits: 'common',
+      lineWidthUnits: 'pixels',
+      radiusUnits: 'pixels',
       radiusMinPixels: NODE_RADIUS_MIN_PIXELS,
+      radiusMaxPixels: NODE_RADIUS_MAX_PIXELS,
       stroked: true,
-      billboard: true,
-      pointSize: 10,
     },
   },
   labels: {
     id: `${LAYER_ID_PREFIX}-labels`,
     LayerClass: TextLayer,
     defaultProps: {
-      sizeUnits: 'common', // Labels stay fixed screen size like nodes and links
+      // Screen-sized text in the app's sans stack; SDF keeps glyphs and the halo crisp.
+      sizeUnits: 'pixels',
+      fontFamily: LABEL_FONT_FAMILY,
       getAlignmentBaseline: 'center',
       billboard: true,
       characterSet: 'auto',
-      fontSettings: { sdf: true }, // Enable SDF globally for all text layers
+      fontSettings: { sdf: true },
     },
   },
   supportLabels: {
     id: `${LAYER_ID_PREFIX}-support-labels`,
     LayerClass: TextLayer,
     defaultProps: {
-      sizeUnits: 'common',
+      sizeUnits: 'pixels',
+      fontFamily: LABEL_FONT_FAMILY,
       getAlignmentBaseline: 'center',
       billboard: true,
       characterSet: 'auto',

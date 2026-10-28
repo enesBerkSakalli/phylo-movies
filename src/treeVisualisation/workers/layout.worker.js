@@ -1,4 +1,5 @@
 import { TidyTreeLayout } from '../layout/TidyTreeLayout.js';
+import { getEqualAngleMaxRadius } from '../layout/EqualAngleLayout.js';
 import { createLayoutResult } from '../layout/LayoutResultAdapter.js';
 import {
   LAYOUT_PROJECTION_MODES,
@@ -36,17 +37,28 @@ export function calculateLayoutWorkerResult(treeData, options) {
   if (options.margin !== undefined) {
     layoutEngine.setMargin(options.margin);
   }
-  const hasMaxGlobalScale = hasUniformScaleValue(options.maxGlobalScale);
-  const rootNode = hasMaxGlobalScale
-    ? layoutEngine.constructRadialTreeWithUniformScaling(Number(options.maxGlobalScale))
-    : layoutEngine.constructRadialTree(false);
   const normalizedProjectionMode = normalizeLayoutProjectionMode(options.layoutProjectionMode);
-  const projectedRootNode = applyLayoutProjection(rootNode, {
-    projectionMode: normalizedProjectionMode,
-    strength: options.hyperbolicProjectionStrength,
-    maxRadius: layoutEngine.getMaxRadius(rootNode),
-  });
-  const maxRadius = layoutEngine.getMaxRadius(projectedRootNode);
+  const isUnrooted = normalizedProjectionMode === LAYOUT_PROJECTION_MODES.UNROOTED;
+  const isRectangular = normalizedProjectionMode === LAYOUT_PROJECTION_MODES.RECTANGULAR;
+  const isCartesian = isUnrooted || isRectangular;
+  const hasMaxGlobalScale = hasUniformScaleValue(options.maxGlobalScale);
+  const rootNode = isRectangular
+    ? layoutEngine.constructRectangularTree()
+    : isUnrooted
+      ? layoutEngine.constructUnrootedTree({ labelsVisible: options.labelsVisible !== false })
+      : hasMaxGlobalScale
+        ? layoutEngine.constructRadialTreeWithUniformScaling(Number(options.maxGlobalScale))
+        : layoutEngine.constructRadialTree(false);
+  const projectedRootNode = isCartesian
+    ? rootNode
+    : applyLayoutProjection(rootNode, {
+        projectionMode: normalizedProjectionMode,
+        strength: options.hyperbolicProjectionStrength,
+        maxRadius: layoutEngine.getMaxRadius(rootNode),
+      });
+  const maxRadius = isCartesian
+    ? getEqualAngleMaxRadius(projectedRootNode)
+    : layoutEngine.getMaxRadius(projectedRootNode);
   const layoutResult = createLayoutResult(projectedRootNode, {
     max_radius: maxRadius,
     width: options.width,
@@ -58,6 +70,7 @@ export function calculateLayoutWorkerResult(treeData, options) {
     projectionMode: normalizedProjectionMode,
     hyperbolicProjectionStrength: options.hyperbolicProjectionStrength,
     is3dLayout: normalizedProjectionMode === LAYOUT_PROJECTION_MODES.WALRUS_3D,
+    labelsVisible: options.labelsVisible !== false,
   });
   const offsets = options.labelOffsets || { DEFAULT: 20, EXTENSION: 5 };
   const stableGlobalRadius =
@@ -78,6 +91,7 @@ export function calculateLayoutWorkerResult(treeData, options) {
     labelCount: layoutResult.leaves.length,
     fontSize: STABLE_LABEL_LAYOUT_FONT_SIZE,
     angleSpanRadians: calculateLabelAngleSpan(layoutResult.leaves),
+    labelsVisible: options.labelsVisible !== false,
   });
 
   // 3. Convert to Layer Data

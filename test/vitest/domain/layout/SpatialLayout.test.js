@@ -135,6 +135,16 @@ describe('spatial viewport fit layout helpers', () => {
     });
   });
 
+  it('keeps the areas beside an obstruction whose edges fall between pixels', () => {
+    // Its right edge (100.4) rounds down to 100, which must not leave the area that starts
+    // there overlapping it.
+    const areas = calculateUnobstructedFitAreas(400, 300, [
+      { left: 0, top: 200, width: 100.4, height: 100 },
+    ]);
+    expect(areas).toContainEqual({ left: 0, top: 0, width: 400, height: 200 });
+    expect(areas).toContainEqual({ left: 101, top: 0, width: 299, height: 300 });
+  });
+
   it('can calculate a full-canvas fit area for automatic centering', () => {
     const container = elementWithRect({ bounds: rect(0, 0, 390, 607) });
     const controls = elementWithRect({

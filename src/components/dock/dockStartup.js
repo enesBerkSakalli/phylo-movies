@@ -1,18 +1,17 @@
+import { placementFor } from './dockLayout.js';
 import { PANEL_REGISTRY, TREE_PANEL_ID, getPanelEntry } from './panelRegistry.js';
 
 function addPanelFromRegistry(api, id) {
   const entry = getPanelEntry(id);
+  // Panels docked right or below share one group, as when opened later; its first tab stays in front.
+  const placement = entry.place ? placementFor(id, api, { narrow: false }) : {};
   api.addPanel({
     id,
     component: id,
     title: entry.title,
     ...(entry.alwaysRender ? { renderer: 'always' } : {}),
-    ...(entry.place
-      ? {
-          position: { referencePanel: TREE_PANEL_ID, direction: entry.place.direction },
-          initialWidth: entry.place.width,
-        }
-      : {}),
+    ...placement,
+    ...(placement.position?.referenceGroup ? { inactive: true } : {}),
   });
 }
 

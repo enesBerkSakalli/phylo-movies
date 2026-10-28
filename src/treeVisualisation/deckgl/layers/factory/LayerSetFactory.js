@@ -15,6 +15,13 @@ const DEFAULT_LAYER_SET_CONFIGS = {
   labelDots: LABEL_DOTS_CONFIG,
 };
 
+/** 'all' (default), 'leaves' (tips only) or 'none'. */
+export function filterNodesByVisibility(nodes = [], visibility = 'all') {
+  if (visibility === 'none') return [];
+  if (visibility === 'leaves') return nodes.filter((node) => node.isLeaf);
+  return nodes;
+}
+
 const addTreeSide = (items, treeSide) => {
   return treeSide ? items.map((item) => ({ ...item, treeSide })) : items;
 };
@@ -59,7 +66,7 @@ export function createTreeLayerSet({
 }) {
   if (!data) return [];
 
-  const nodes = addTreeSide(data.nodes, treeSide);
+  const nodes = addTreeSide(filterNodesByVisibility(data.nodes, state.nodeVisibility), treeSide);
   const links = addTreeSide(data.links, treeSide);
   const labels = addTreeSide(data.labels, treeSide);
   const extensions = addTreeSide(data.extensions, treeSide);

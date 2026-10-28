@@ -3,18 +3,19 @@
  * Handles arc + radial line paths for phylogenetic tree visualization
  */
 import { calculateBranchCoordinates } from '../../../../layout/RadialTreeGeometry.js';
-import { twoPointFloat32Path } from '../../../utils/pathFormat.js';
+import { rectangularElbowFloat32Path, twoPointFloat32Path } from '../../../utils/pathFormat.js';
 
 /** Default number of segments for arc generation */
 const ARC_SEGMENT_COUNT = 15;
 export const LINK_GEOMETRY_MODES = Object.freeze({
   RADIAL_ELBOW: 'radial-elbow',
   STRAIGHT: 'straight',
+  RECTANGULAR_ELBOW: 'rectangular-elbow',
 });
 
 export function normalizeLinkGeometryMode(mode) {
-  return mode === LINK_GEOMETRY_MODES.STRAIGHT
-    ? LINK_GEOMETRY_MODES.STRAIGHT
+  return mode === LINK_GEOMETRY_MODES.STRAIGHT || mode === LINK_GEOMETRY_MODES.RECTANGULAR_ELBOW
+    ? mode
     : LINK_GEOMETRY_MODES.RADIAL_ELBOW;
 }
 
@@ -43,6 +44,13 @@ export class LinkGeometryBuilder {
 
     if (geometryMode === LINK_GEOMETRY_MODES.STRAIGHT) {
       return this._createDirectPath(linkData);
+    }
+    if (geometryMode === LINK_GEOMETRY_MODES.RECTANGULAR_ELBOW) {
+      const { source = {}, target = {} } = linkData || {};
+      return rectangularElbowFloat32Path(
+        [source.x, source.y, finiteCoordinate(source.z, 0)],
+        [target.x, target.y, finiteCoordinate(target.z, 0)]
+      );
     }
 
     if (!hasFinitePolarEndpoint(linkData.source) || !hasFinitePolarEndpoint(linkData.target)) {

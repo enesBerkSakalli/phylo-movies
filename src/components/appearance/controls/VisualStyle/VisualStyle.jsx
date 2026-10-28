@@ -66,6 +66,8 @@ function GeometryDimensionsContent() {
   const treeController = useAppStore(selectTreeController);
   const activeTreeList = useAppStore(selectActiveTreeList);
   const labelsVisible = useAppStore(selectLabelsVisible);
+  const nodeVisibility = useAppStore((state) => state.nodeVisibility);
+  const setNodeVisibility = useAppStore((state) => state.setNodeVisibility);
   const setLabelsVisible = useAppStore(selectSetLabelsVisible);
   const branchAnnotationLabelKey = useAppStore(selectBranchAnnotationLabelKey);
   const setBranchAnnotationLabelKey = useAppStore(selectSetBranchAnnotationLabelKey);
@@ -102,6 +104,8 @@ function GeometryDimensionsContent() {
       treeController={treeController}
       labelsVisible={labelsVisible}
       onToggleLabels={handleToggleLabels}
+      nodeVisibility={nodeVisibility}
+      onChangeNodeVisibility={setNodeVisibility}
       branchAnnotationLabelKey={branchAnnotationLabelKey}
       branchAnnotationOptions={branchAnnotationOptions}
       onChangeBranchAnnotationLabelKey={handleChangeBranchAnnotationLabelKey}

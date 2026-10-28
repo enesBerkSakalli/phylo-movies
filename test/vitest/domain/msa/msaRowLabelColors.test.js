@@ -42,3 +42,34 @@ describe('MSA row label colors', () => {
     expect(label.textColor).toEqual([255, 255, 255, 255]);
   });
 });
+
+describe('MSA row label names', () => {
+  it('draws the shortened display name and keeps the row for anything without one', () => {
+    const long = 'Bacteria_Proteobacteria_Gammaproteobacteria_Chromatiales_Thiohalospira_halophila_HL3';
+    const displayNames = new Map([[long, '…Thiohalospira_halophila_HL3']]);
+    const [shortened, plain] = buildRowLabels(
+      10,
+      [{ id: long }, { id: 'taxon-b' }],
+      VISIBLE_RANGE,
+      VIEW_STATE,
+      1,
+      120,
+      {},
+      displayNames
+    );
+    expect(shortened.text).toBe('…Thiohalospira_halophila_HL3');
+    expect(plain.text).toBe('taxon-b');
+  });
+});
+
+describe('MSA row label glyphs', () => {
+  it('draws the shortening ellipsis from a fixed character set', async () => {
+    const { createRowLabelsLayer } = await import('../../../../src/msaViewer/layers/rowLabelsLayer.js');
+    const layer = createRowLabelsLayer([{ text: '…halophila_HL3', position: [0, 0, 0] }]);
+    // Fixed, not 'auto': an atlas rebuilt per row set misplaces end-anchored names.
+    expect(typeof layer.props.characterSet).toBe('string');
+    expect(layer.props.characterSet).toContain('…');
+    expect(layer.props.characterSet).toContain('A');
+    expect(layer.props.characterSet).toContain('_');
+  });
+});

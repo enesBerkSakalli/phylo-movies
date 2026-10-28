@@ -109,7 +109,7 @@ describe('deck.gl layer render context', () => {
     expect(layout.layoutTree.children[0]).not.toHaveProperty('treeSide');
   });
 
-  it('places extension targets on the extension radius and labels on the label radius', () => {
+  it('places extension targets and labels on the extension radius, with a pixel gap to the text', () => {
     const factory = new DeckGLTreeLayerDataFactory();
     const layout = makeLayoutTree();
 
@@ -118,7 +118,8 @@ describe('deck.gl layer render context', () => {
       labelRadius: 50,
     });
 
-    expect(layerData.labels[0].polarPosition).toBe(50);
+    expect(layerData.labels[0].polarPosition).toBe(40);
+    expect(layerData.labels[0].pixelOffset).toHaveLength(2);
     expect(layerData.extensions[0].polarData.target.radius).toBe(40);
   });
 

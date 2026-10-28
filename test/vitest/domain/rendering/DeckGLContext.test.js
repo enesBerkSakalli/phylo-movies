@@ -89,7 +89,27 @@ describe('DeckGLContext view state handling', () => {
     context._handleViewStateChange({ zoom: 4 }, VIEW_IDS.ORBIT);
     rafCallbacks[0]();
 
-    expect(listener).toHaveBeenCalledWith(expect.objectContaining({ zoom: 4 }));
+    expect(listener).toHaveBeenCalledWith(expect.objectContaining({ zoom: 4 }), {
+      inTransition: false,
+    });
+  });
+
+  it('tells listeners when a view state change comes from a camera animation', () => {
+    const rafCallbacks = [];
+    vi.stubGlobal('requestAnimationFrame', (callback) => {
+      rafCallbacks.push(callback);
+      return rafCallbacks.length;
+    });
+    const context = createContext();
+    const listener = vi.fn();
+    context.addViewStateListener(listener);
+
+    context._handleViewStateChange({ zoom: 2 }, VIEW_IDS.ORTHO, { inTransition: true });
+    rafCallbacks[0]();
+
+    expect(listener).toHaveBeenCalledWith(expect.objectContaining({ zoom: 2 }), {
+      inTransition: true,
+    });
   });
 
   it('cancels pending view state notification when destroyed', () => {

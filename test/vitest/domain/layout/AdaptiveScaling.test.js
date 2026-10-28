@@ -140,7 +140,7 @@ describe('Adaptive Visual Scaling', () => {
       expect(width).toBeCloseTo(2.0 * MIN_READABLE_METRIC_SCALE);
     });
 
-    it('should reduce unhighlighted link width for dense trees', () => {
+    it('should not shrink pixel link width for dense trees', () => {
       const cached = {
         colorManager: mockColorManager,
         metricScale: 1,
@@ -149,7 +149,7 @@ describe('Adaptive Visual Scaling', () => {
       const link = { split_indices: [] };
 
       const width = getLinkWidth(link, cached, helpers);
-      expect(width).toBeCloseTo(0.6);
+      expect(width).toBeCloseTo(2.0);
     });
 
     it('should fade unhighlighted base links for dense trees without changing deck.gl floors', () => {
@@ -366,7 +366,7 @@ describe('Adaptive Visual Scaling', () => {
       expect(width).toBeCloseTo(2.0 * MIN_READABLE_METRIC_SCALE);
     });
 
-    it('should reduce extension width for dense trees', () => {
+    it('should not shrink pixel extension width for dense trees', () => {
       const cached = {
         metricScale: 1,
         visualScale: 0.3,
@@ -374,7 +374,7 @@ describe('Adaptive Visual Scaling', () => {
       const extension = { split_indices: [] };
 
       const width = getExtensionWidth(extension, 2.0, cached);
-      expect(width).toBeCloseTo(0.6);
+      expect(width).toBeCloseTo(2.0);
     });
 
     it('should fade unhighlighted base extensions for dense trees', () => {

@@ -1,12 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  LAYOUT_STORAGE_KEY,
-  floatingWithin,
-  placementFor,
-  readSavedLayout,
-  saveLayout,
-  withoutFloatingPanels,
-} from '../../../../src/components/dock/dockLayout.js';
+import { LAYOUT_STORAGE_KEY, floatingWithin, placementFor, readSavedLayout, saveLayout, withoutFloatingPanels } from '../../../../src/components/dock/dockLayout.js';
 
 function memoryStorage(initial = {}) {
   const data = new Map(Object.entries(initial));

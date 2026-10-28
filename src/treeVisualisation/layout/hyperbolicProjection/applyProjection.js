@@ -5,7 +5,11 @@ import { applyWalrus3dProjection } from './walrus3d/index.js';
 
 export function applyLayoutProjection(root, options = {}) {
   const projectionMode = normalizeLayoutProjectionMode(options.projectionMode);
-  if (projectionMode === LAYOUT_PROJECTION_MODES.RADIAL) {
+  if (
+    projectionMode === LAYOUT_PROJECTION_MODES.RADIAL ||
+    projectionMode === LAYOUT_PROJECTION_MODES.UNROOTED ||
+    projectionMode === LAYOUT_PROJECTION_MODES.RECTANGULAR
+  ) {
     return root;
   }
 

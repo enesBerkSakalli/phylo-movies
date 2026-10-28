@@ -6,8 +6,12 @@ import { join } from 'node:path';
 import { handleContainerResize } from '../../../../src/treeVisualisation/interaction/InteractionHandlers.js';
 import { useAppStore } from '../../../../src/state/phyloStore/store.js';
 import { VIEWPORT_FIT_OBSTRUCTION_SCOPES } from '../../../../src/treeVisualisation/spatial/layout.js';
+import { getLinksLayerProps } from '../../../../src/treeVisualisation/deckgl/layers/factory/links/LinkLayers.js';
 import { StaticRenderer } from '../../../../src/treeVisualisation/systems/StaticRenderer.js';
-import { VIEWPORT_FIT_MODES } from '../../../../src/treeVisualisation/viewport/viewportFit.js';
+import {
+  VIEWPORT_FIT_MODES,
+  VIEWPORT_FIT_PIXEL_PADDING,
+} from '../../../../src/treeVisualisation/viewport/viewportFit.js';
 
 class MockWorker {
   constructor() {
@@ -87,6 +91,45 @@ describe('tree viewport behavior', () => {
     controller.destroy();
   });
 
+  it('measures branch width zoom from the recorded fit zoom in every render context', () => {
+    useAppStore.setState({ playing: false });
+    const controller = new ControllerClass();
+    let viewZoom = 0;
+    const transitionTo = vi.fn();
+    controller.deckContext = {
+      container: null,
+      getCanvasDimensions: () => mockDimensions,
+      getActiveView: () => null,
+      getViewState: () => ({ target: [0, 0, 0], zoom: viewZoom }),
+      transitionTo,
+      destroy() {},
+    };
+
+    expect(controller._createLayerRenderContext({}).fitZoom).toBeNull();
+
+    controller.viewportManager.focusOnTree(
+      [{ position: [-100, -100, 0] }, { position: [100, 100, 0] }],
+      [],
+      { duration: 0 }
+    );
+    const fitZoom = transitionTo.mock.calls[0][0].zoom;
+    viewZoom = fitZoom + 2;
+
+    // The pinned-tree overlay builds its context from data that carries no camera.
+    const overlayContext = controller._createLayerRenderContext({});
+    expect(overlayContext).toMatchObject({ fitZoom, zoom: fitZoom + 2 });
+    expect(controller._createLayerRenderContext({ zoom: 9 }).zoom).toBe(9);
+
+    const { layerStyles } = controller.layerManager;
+    const widthScale = getLinksLayerProps([], overlayContext, layerStyles).widthScale;
+    expect(widthScale).toBeCloseTo(2);
+    expect(
+      getLinksLayerProps([], { ...overlayContext, fitZoom: null }, layerStyles).widthScale
+    ).not.toBeCloseTo(2);
+
+    controller.destroy();
+  });
+
   it('loads the workspace tour only after the user targets its launcher', () => {
     const source = readFileSync(join(process.cwd(), 'src/features/tours/TourLauncher.jsx'), 'utf8');
 
@@ -133,11 +176,36 @@ describe('tree viewport behavior', () => {
 
     expect(controller.viewportManager.focusOnTree).toHaveBeenCalledWith([node], [label], {
       fitMode: VIEWPORT_FIT_MODES.LABELS,
+      pixelPadding: VIEWPORT_FIT_PIXEL_PADDING,
       obstructionScope: VIEWPORT_FIT_OBSTRUCTION_SCOPES.CANVAS,
       maxFitAreaCenterDriftRatio: 0.2,
       links: [link, extension],
     });
     expect(controller._lastFocusedTreeIndex).toBe(0);
+  });
+
+  it('refits when the layout projection changes, even after the view was moved', () => {
+    const renderAllElements = vi.fn(() => Promise.resolve());
+    const controller = {
+      _lastFocusedTreeIndex: 0,
+      _hasUserViewportInteraction: true,
+      renderAllElements,
+      resetInterpolationCaches: vi.fn(),
+      resetComparisonAutoFit: vi.fn(),
+    };
+    useAppStore.setState({ treeController: controller, layoutProjectionMode: 'unrooted' });
+    try {
+      useAppStore.getState().setLayoutProjectionMode('rectangular');
+      // Clearing the focused index is what makes the next render fit again.
+      expect(controller._lastFocusedTreeIndex).toBeNull();
+      expect(renderAllElements).toHaveBeenCalledTimes(1);
+      // The same projection changes nothing.
+      useAppStore.getState().setLayoutProjectionMode('rectangular');
+      expect(renderAllElements).toHaveBeenCalledTimes(1);
+    } finally {
+      useAppStore.setState({ treeController: null });
+      useAppStore.getState().reset();
+    }
   });
 
   it('automatic static fit frames the pinned tree overlay with the active tree', () => {
@@ -207,6 +275,7 @@ describe('tree viewport behavior', () => {
 
     expect(controller.viewportManager.focusOnTree).toHaveBeenCalledWith([treeOneNode], [], {
       fitMode: VIEWPORT_FIT_MODES.BRANCH,
+      pixelPadding: VIEWPORT_FIT_PIXEL_PADDING,
       obstructionScope: VIEWPORT_FIT_OBSTRUCTION_SCOPES.CANVAS,
       maxFitAreaCenterDriftRatio: 0.2,
       links: [],
@@ -360,6 +429,7 @@ describe('tree viewport behavior', () => {
 
     expect(controller.viewportManager.focusOnTree).toHaveBeenCalledWith([node], [label], {
       fitMode: VIEWPORT_FIT_MODES.LABELS,
+      pixelPadding: VIEWPORT_FIT_PIXEL_PADDING,
       duration: 350,
       padding: undefined,
       links: [link, extension],
@@ -376,6 +446,22 @@ describe('tree viewport behavior', () => {
 
     expect(source).toContain('Fit all visible content');
     expect(source).not.toContain('Fit tree to viewport');
+  });
+
+  it('sizes every canvas control alike: 32 px, 44 px under a finger', () => {
+    const read = (path) => readFileSync(join(process.cwd(), path), 'utf8');
+    const controls = read('src/components/deckgl/TreeCanvasControls.jsx');
+    // The viewport and export groups share one size; the viewport buttons were 24 px.
+    expect(controls).not.toContain('icon-xs');
+    // Fit, Zoom out, Reset and Zoom in.
+    expect(controls.match(/size="icon"/g)).toHaveLength(4);
+    expect(read('src/features/tours/TourLauncher.jsx')).toContain('size="icon"');
+    for (const path of ['CopyImageButton', 'SaveImageButton', 'RecordingControls']) {
+      expect(read(`src/components/media/${path}.jsx`)).toContain('size="icon"');
+    }
+    // `icon` is size-9 (2.25rem of the 14 px root) and a coarse pointer gets 44 px in every group.
+    expect(read('src/components/ui/button.tsx')).toMatch(/icon: 'size-9'/);
+    expect(controls).toContain('pointer-coarse:[&_[data-slot=button]]:size-[44px]');
   });
 
   it('places the workspace tour launcher inside the canvas export controls', () => {
@@ -461,6 +547,7 @@ describe('tree viewport behavior', () => {
 
     expect(controller.viewportManager.focusOnTree).toHaveBeenCalledWith([node], [label], {
       fitMode: VIEWPORT_FIT_MODES.LABELS,
+      pixelPadding: VIEWPORT_FIT_PIXEL_PADDING,
       obstructionScope: VIEWPORT_FIT_OBSTRUCTION_SCOPES.CANVAS,
       maxFitAreaCenterDriftRatio: 0.2,
       links: [link, extension],

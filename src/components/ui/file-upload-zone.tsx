@@ -57,17 +57,9 @@ export const FileUploadZone = React.forwardRef<HTMLDivElement, FileUploadZonePro
     const statusId = `${inputId}-status`;
     const [statusMessage, setStatusMessage] = React.useState('');
     const [hasError, setHasError] = React.useState(false);
-    const previousValueNameRef = React.useRef(value?.name ?? null);
-
     React.useEffect(() => {
-      const previousValueName = previousValueNameRef.current;
-      const currentValueName = value?.name ?? null;
-      previousValueNameRef.current = currentValueName;
-
-      if (previousValueName && !currentValueName) {
-        setHasError(false);
-        setStatusMessage('');
-      }
+      setHasError(false);
+      setStatusMessage(value ? `Selected file: ${value.name}.` : '');
     }, [value]);
 
     const onDrop = React.useCallback(

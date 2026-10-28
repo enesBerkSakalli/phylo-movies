@@ -23,6 +23,7 @@ export function createLayoutResult(root, metadata = {}) {
     hyperbolicProjectionStrength: metadata.hyperbolicProjectionStrength,
     is3dLayout: metadata.is3dLayout,
     layoutCacheKey: metadata.layoutCacheKey,
+    labelsVisible: metadata.labelsVisible,
   };
 }
 
@@ -66,6 +67,7 @@ function normalizeLayoutNode(node, parent = null, path = []) {
     y,
     z,
     angle,
+    ...(Number.isFinite(node?.branchAngle) ? { branchAngle: node.branchAngle } : {}),
     radius,
     polarPosition: radius,
     position,

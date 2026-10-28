@@ -20,9 +20,13 @@ function fakeApi({ fromJSONThrows = false } = {}) {
     }),
     clear: vi.fn(() => panels.splice(0)),
     addPanel: vi.fn((options) => {
+      const group = options.position?.referenceGroup ?? {
+        api: { location: { type: 'grid' } },
+      };
       panels.push({
         id: options.id,
         title: options.title,
+        group,
         api: { setTitle: vi.fn(), setRenderer: vi.fn(), setActive: vi.fn() },
       });
     }),
@@ -70,4 +74,5 @@ describe('dock startup', () => {
     expect(api.getPanel('inspector').api.setTitle).toHaveBeenCalledWith('Transition Inspector');
     expect(api.getPanel('tree').api.setRenderer).toHaveBeenCalledWith('always');
   });
+
 });

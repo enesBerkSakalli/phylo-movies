@@ -117,7 +117,7 @@ describe('Settings controls', () => {
       sliders.find((el) => nameOf(el).startsWith(name)).getAttribute('aria-valuetext');
     expect(text('Connector Opacity')).toBe('60%');
     expect(text('Connector Width')).toBe('1px');
-    expect(text('Label Size')).toBe('1.8×');
+    expect(text('Label Size')).toBe('1.0×');
     expect(text('Tree Spread')).toBe('360°');
   });
 
